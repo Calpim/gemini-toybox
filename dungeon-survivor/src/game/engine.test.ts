@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { tileCenterWorld } from '../core/dungeon';
+import { TILE_SIZE, tileCenterWorld } from '../core/dungeon';
 import {
   ALL_EQUIPMENT_IDS,
   MAX_EQUIP_SLOTS,
+  MAX_TARGET_RANGE,
   createEquippedItem,
   getReactiveCoilStats,
   getRicochetDiscStats,
@@ -16,9 +17,9 @@ import {
   resolveEquipChoice,
   rollDropEquipmentLevel,
   stepGame,
-  unlockSkillNode,
+  upgradeSkillNode,
 } from './engine';
-import { canUnlockSkill } from './skillTree';
+import { MAX_SKILL_LEVEL, SKILL_PREREQ_LEVEL, canUpgradeSkill } from './skillTree';
 
 describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
   it('[APP-MAP-03] does not regenerate HP over time and heals only on recovery orb pickup', () => {
@@ -69,11 +70,72 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.stats.floorsCleared).toBe(1);
   });
 
-  it('[APP-CMB-01 & APP-CMB-03] auto-fires intrinsic base attack (even with 0 gear) and equipped shots, blocking both through walls', () => {
+  it('[APP-MAP-05] pursues player along shortest corridor path around intervening walls via BFS', () => {
+    const state = createGameState({ seed: 150 });
+    state.chests = [];
+    state.pickups = [];
+    state.player.baseAttackCooldown = 999;
+
+    // Carve an isolated arena with an intervening vertical wall at tx=4, ty=3..5 and a top corridor at ty=2
+    for (let ty = 1; ty <= 6; ty++) {
+      for (let tx = 2; tx <= 6; tx++) {
+        const isBorder = ty === 1 || ty === 6 || tx === 2 || tx === 6;
+        const isWallBlock = tx === 4 && ty >= 3 && ty <= 5;
+        state.map.tiles[ty * state.map.width + tx] = isBorder || isWallBlock ? 'wall' : 'floor';
+      }
+    }
+
+    const playerStart = tileCenterWorld(3, 3);
+    const enemyStart = tileCenterWorld(5, 3);
+    state.player.x = playerStart.x;
+    state.player.y = playerStart.y;
+    state.enemies = [
+      {
+        id: 550,
+        x: enemyStart.x,
+        y: enemyStart.y,
+        radius: 13,
+        speed: 110,
+        hp: 100,
+        maxHp: 100,
+        damage: 0,
+        aggroRange: MAX_TARGET_RANGE,
+        awake: true,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+
+    for (let f = 0; f < 130; f++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+
+    const enemy = state.enemies[0];
+    // Should have navigated around the wall (past tx=4 wall center) toward the player
+    expect(enemy.x).toBeLessThan(4 * TILE_SIZE);
+    expect(Math.hypot(enemy.x - state.player.x, enemy.y - state.player.y)).toBeLessThan(45);
+  });
+
+  it('[APP-CMB-01 & APP-CMB-03] auto-fires intrinsic base attack, caps range at MAX_TARGET_RANGE (180px), and blocks through walls', () => {
+    expect(MAX_TARGET_RANGE).toBe(180);
+
     const state = createGameState({ seed: 303 });
     state.pickups = [];
     state.chests = [];
     expect(state.player.equipment).toEqual([]);
+
+    // Carve a wide horizontal open corridor around player so wall check doesn't interfere
+    const ptx = Math.floor(state.player.x / TILE_SIZE);
+    const pty = Math.floor(state.player.y / TILE_SIZE);
+    for (let dx = -1; dx <= 6; dx++) {
+      const tx = ptx + dx;
+      if (tx > 0 && tx < state.map.width - 1) {
+        state.map.tiles[pty * state.map.width + tx] = 'floor';
+      }
+    }
+    state.player.x = tileCenterWorld(ptx, pty).x;
+    state.player.y = tileCenterWorld(ptx, pty).y;
+
     state.enemies = [
       {
         id: 500,
@@ -84,7 +146,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
         hp: 40,
         maxHp: 40,
         damage: 10,
-        aggroRange: 200,
+        aggroRange: MAX_TARGET_RANGE,
         awake: false,
         hitFlash: 0,
         bitHitCooldown: 0,
@@ -94,12 +156,23 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.projectiles.some((p) => p.kind === 'base')).toBe(true);
 
-    const wallTx = Math.floor((state.player.x + 40) / 40);
-    const wallTy = Math.floor(state.player.y / 40);
+    // Enemy beyond MAX_TARGET_RANGE (180px) is not targeted even with def_sensor Lv5
+    state.projectiles = [];
+    state.player.baseAttackCooldown = 0;
+    state.player.skillLevels = { def_sensor: MAX_SKILL_LEVEL };
+    state.player.equipment = [createEquippedItem('seeker_drone')];
+    state.enemies[0].x = state.player.x + MAX_TARGET_RANGE + 15;
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.projectiles.length).toBe(0);
+
+    // Wall occlusion blocks targeting inside range
+    state.enemies[0].x = state.player.x + 80;
+    const wallTx = Math.floor((state.player.x + 40) / TILE_SIZE);
+    const wallTy = Math.floor(state.player.y / TILE_SIZE);
     state.map.tiles[wallTy * state.map.width + wallTx] = 'wall';
     state.projectiles = [];
     state.player.baseAttackCooldown = 0;
-    state.player.equipment = [createEquippedItem('seeker_drone')];
+    state.player.equipment[0].cooldown = 0;
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.projectiles.length).toBe(0);
@@ -135,7 +208,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
         hp: 200,
         maxHp: 200,
         damage: 10,
-        aggroRange: 200,
+        aggroRange: MAX_TARGET_RANGE,
         awake: false,
         hitFlash: 0,
         bitHitCooldown: 0,
@@ -210,8 +283,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(bladeState.visualFx.some((fx) => fx.kind === 'slash' && fx.fullCircle)).toBe(true);
 
     // 3. Reactive coil maxTargets & ricochet disc count/bounces evolve by level
-    expect(getReactiveCoilStats(1, 80, 1).maxTargets).toBe(3);
-    expect(getReactiveCoilStats(3, 80, 1).maxTargets).toBe(5);
+    expect(getReactiveCoilStats(1, 74, 1).maxTargets).toBe(3);
+    expect(getReactiveCoilStats(3, 74, 1).maxTargets).toBe(5);
     expect(getRicochetDiscStats(1)).toMatchObject({ count: 1, maxBounces: 2 });
     expect(getRicochetDiscStats(3)).toMatchObject({ count: 2, maxBounces: 4 });
 
@@ -258,34 +331,34 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(discState.enemies[1].hp).toBeLessThan(100);
   });
 
-  it('[APP-CMB-06] scales player intrinsic Core Shot by both player level and skill rank', () => {
+  it('[APP-CMB-06] scales player intrinsic Core Shot by spent SP and skills, NOT by player.level alone', () => {
     const state = createGameState({ seed: 460 });
     state.chests = [];
     state.pickups = [];
     expect(state.player.equipment).toEqual([]);
 
-    const lv1Stats = getPlayerBaseAttackStats(state.player);
-    expect(lv1Stats).toMatchObject({ damage: 12, shotCount: 1, skillRank: 0 });
+    const initialStats = getPlayerBaseAttackStats(state.player);
+    expect(initialStats).toMatchObject({ damage: 12, shotCount: 1, range: 140, spentSp: 0 });
 
-    // Leveling player up to Lv3 increases damage, range, shotCount, and reduces cooldown
-    state.player.level = 3;
-    const lv3Stats = getPlayerBaseAttackStats(state.player);
-    expect(lv3Stats.damage).toBeGreaterThan(lv1Stats.damage);
-    expect(lv3Stats.range).toBeGreaterThan(lv1Stats.range);
-    expect(lv3Stats.cooldown).toBeLessThan(lv1Stats.cooldown);
-    expect(lv3Stats.shotCount).toBe(2);
+    // Raising player.level alone without spending SP does NOT alter Core Shot
+    state.player.level = 5;
+    expect(getPlayerBaseAttackStats(state.player)).toEqual(initialStats);
 
-    // Unlocking skills (Tier1 + Tier2 => skillRank 3) further boosts damage, cooldown, and shotCount
+    // Spending 3 SP (arm_base Lv3) strengthens damage, range, cooldown, and unlocks 2-way shot
     state.player.skillPoints = 3;
-    expect(unlockSkillNode(state, 'arm_base')).toBe(true);
-    expect(unlockSkillNode(state, 'arm_parallel')).toBe(true);
-    const skilledStats = getPlayerBaseAttackStats(state.player);
-    expect(skilledStats.skillRank).toBe(3);
-    expect(skilledStats.damage).toBeGreaterThan(lv3Stats.damage);
-    expect(skilledStats.cooldown).toBeLessThan(lv3Stats.cooldown);
-    expect(skilledStats.shotCount).toBe(3);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
+    expect(state.player.spentSkillPoints).toBe(3);
 
-    // Fires 3 base shots simultaneously at a visible enemy with 0 equipment
+    const skilledStats = getPlayerBaseAttackStats(state.player);
+    expect(skilledStats.spentSp).toBe(3);
+    expect(skilledStats.damage).toBeGreaterThan(initialStats.damage);
+    expect(skilledStats.range).toBeGreaterThan(initialStats.range);
+    expect(skilledStats.cooldown).toBeLessThan(initialStats.cooldown);
+    expect(skilledStats.shotCount).toBe(2);
+
+    // Fires 2 base shots simultaneously at a visible enemy with 0 equipment
     state.enemies = [
       {
         id: 910,
@@ -303,10 +376,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(3);
+    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(2);
   });
 
-  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces DAG prerequisites and tiered SP costs (1/2/3)', () => {
+  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Lv1-5 per-skill scaling, Lv3+ prerequisites, and tiered SP costs (1/2/3)', () => {
+    expect(MAX_SKILL_LEVEL).toBe(5);
+    expect(SKILL_PREREQ_LEVEL).toBe(3);
+
     const state = createGameState({ seed: 505 });
     state.enemies = [];
     state.chests = [];
@@ -322,38 +398,54 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.level).toBe(2);
     expect(state.player.skillPoints).toBe(1);
 
-    // Cannot unlock Tier 2 before Tier 1 prerequisite
-    expect(unlockSkillNode(state, 'arm_parallel')).toBe(false);
-    expect(state.player.skillPoints).toBe(1);
+    // Cannot unlock Tier 2 before Tier 1 reaches Lv3
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(false);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv1
+    state.player.skillPoints = 5;
+    expect(canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, 'arm_parallel')).toBe(false);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv2
+    expect(canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, 'arm_parallel')).toBe(false);
 
-    // Unlock Tier 1 (cost 1 SP)
-    expect(unlockSkillNode(state, 'arm_base')).toBe(true);
-    expect(state.player.skillPoints).toBe(0);
+    // Reaching Tier 1 Lv3 unlocks Tier 2 (cost 2 SP)
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv3
+    expect(state.player.skillLevels.arm_base).toBe(3);
 
-    // With only 1 SP, Tier 2 (cost 2 SP) remains locked even though prerequisite is met
     state.player.skillPoints = 1;
-    expect(canUnlockSkill(new Set(state.player.unlockedSkills), state.player.skillPoints, 'arm_parallel')).toBe(false);
-    expect(unlockSkillNode(state, 'arm_parallel')).toBe(false);
+    expect(canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, 'arm_parallel')).toBe(false);
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(false);
 
-    // With 2 SP, Tier 2 unlocks and deducts 2 SP
     state.player.skillPoints = 2;
-    expect(unlockSkillNode(state, 'arm_parallel')).toBe(true);
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // arm_parallel Lv1
     expect(state.player.skillPoints).toBe(0);
     expect(getOrbitBitPositions(state).length).toBe(2);
     expect(getSeekerDronePositions(state).length).toBe(2);
 
-    // Tier 3 requires 3 SP
-    state.player.skillPoints = 2;
-    expect(unlockSkillNode(state, 'arm_overclock')).toBe(false);
-    state.player.skillPoints = 3;
-    expect(unlockSkillNode(state, 'arm_overclock')).toBe(true);
-    expect(state.player.skillPoints).toBe(0);
+    // Tier 1 caps at MAX_SKILL_LEVEL = 5
+    state.player.skillPoints = 5;
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv5
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // capped at Lv5
 
-    // mob_magnet enhances heal orb effectiveness (+25%)
-    state.player.skillPoints = 1;
-    expect(unlockSkillNode(state, 'mob_magnet')).toBe(true);
+    // Tier 3 requires Tier 2 Lv3 and 3 SP per level
+    state.player.skillPoints = 4;
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv2
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv3
+    state.player.skillPoints = 2;
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(false);
+    state.player.skillPoints = 3;
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true); // Lv1
+
+    // mob_magnet scales heal orb effectiveness per level (+12%/Lv)
+    state.player.skillPoints = 2;
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv1 (+12%)
     state.player.hp = 50;
     state.pickups = [{ id: 701, kind: 'heal', x: state.player.x, y: state.player.y, value: 20 }];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.player.hp).toBe(72);
+
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv2 (+24%)
+    state.player.hp = 50;
+    state.pickups = [{ id: 702, kind: 'heal', x: state.player.x, y: state.player.y, value: 20 }];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(75);
   });
@@ -435,14 +527,46 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.stats.kills).toBe(1);
   });
 
-  it('[APP-GRW-07] scales drop levels around player average level and equips ground equip drops on direct pickup', () => {
+  it('[APP-GRW-07] scales drop levels around lowest equipped level, drops rarely from enemies (~1.5%), and equips ground drops on direct pickup', () => {
     expect(rollDropEquipmentLevel([], () => 0.99)).toBe(1);
 
-    const avg4 = [createEquippedItem('pulse_blade', 3), createEquippedItem('orbit_shield', 5)];
-    expect(rollDropEquipmentLevel(avg4, () => 0.1)).toBe(3);
-    expect(rollDropEquipmentLevel(avg4, () => 0.4)).toBe(4);
-    expect(rollDropEquipmentLevel(avg4, () => 0.7)).toBe(5);
-    expect(rollDropEquipmentLevel(avg4, () => 0.95)).toBe(6);
+    // Lowest level is 2 (not average 5)
+    const minLv2 = [
+      createEquippedItem('pulse_blade', 2),
+      createEquippedItem('orbit_shield', 6),
+      createEquippedItem('seeker_drone', 8),
+    ];
+    expect(rollDropEquipmentLevel(minLv2, () => 0.1)).toBe(1);
+    expect(rollDropEquipmentLevel(minLv2, () => 0.4)).toBe(2);
+    expect(rollDropEquipmentLevel(minLv2, () => 0.8)).toBe(3);
+    expect(rollDropEquipmentLevel(minLv2, () => 0.95)).toBe(4);
+
+    // Enemy drop rate is low (~1.5% base) across many kills
+    const dropSim = createGameState({ seed: 809 });
+    dropSim.chests = [];
+    dropSim.pickups = [];
+    for (let k = 0; k < 500; k++) {
+      dropSim.enemies = [
+        {
+          id: 2000 + k,
+          x: dropSim.player.x + 120,
+          y: dropSim.player.y,
+          radius: 13,
+          speed: 0,
+          hp: 0,
+          maxHp: 26,
+          damage: 0,
+          aggroRange: 0,
+          awake: false,
+          hitFlash: 0,
+          bitHitCooldown: 0,
+        },
+      ];
+      stepGame(dropSim, { x: 0, y: 0 }, 1 / 60);
+    }
+    const equipDropCount = dropSim.pickups.filter((p) => p.kind === 'equip').length;
+    expect(equipDropCount).toBeGreaterThanOrEqual(1);
+    expect(equipDropCount).toBeLessThan(18);
 
     const state = createGameState({ seed: 808 });
     state.enemies = [];

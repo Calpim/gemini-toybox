@@ -1,6 +1,6 @@
 import { TILE_SIZE, getTile, tileCenterWorld } from '../core/dungeon';
 import { getOrbitBitPositions, getSeekerDronePositions } from '../game/engine';
-import { EQUIPMENT_CATALOG } from '../game/equipment';
+import { EQUIPMENT_CATALOG, MAX_TARGET_RANGE } from '../game/equipment';
 import { computeSkillModifiers } from '../game/skillTree';
 import type { GameState } from '../game/types';
 import type { VirtualStickState } from '../input/controller';
@@ -14,7 +14,7 @@ export function renderGame(
   nowSec: number
 ): void {
   const { map, player } = state;
-  const mods = computeSkillModifiers(new Set(player.unlockedSkills));
+  const mods = computeSkillModifiers(player.skillLevels);
 
   ctx.fillStyle = '#050811';
   ctx.fillRect(0, 0, width, height);
@@ -155,7 +155,13 @@ export function renderGame(
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(player.x, player.y, EQUIPMENT_CATALOG.seeker_drone.baseRange * mods.rangeMult, 0, Math.PI * 2);
+    ctx.arc(
+      player.x,
+      player.y,
+      Math.min(MAX_TARGET_RANGE, EQUIPMENT_CATALOG.seeker_drone.baseRange * mods.rangeMult),
+      0,
+      Math.PI * 2
+    );
     ctx.stroke();
   }
 

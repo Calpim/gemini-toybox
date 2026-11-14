@@ -5,8 +5,12 @@ import {
   getEquipmentEvolutionSummary,
 } from '../game/equipment';
 import {
+  MAX_SKILL_LEVEL,
+  SKILL_PREREQ_LEVEL,
   SKILL_TREE_NODES,
-  canUnlockSkill,
+  canUpgradeSkill,
+  getSkillEffectSummary,
+  getSkillLevel,
   getSkillNode,
   type SkillBranch,
   type SkillNodeId,
@@ -41,8 +45,7 @@ export function renderModals(
   // 1. Skill Tree Modal
   if (state.status === 'skill_tree') {
     els.skillModal.classList.remove('hidden');
-    els.skillSpBadge.textContent = `所持 SP: ${state.player.skillPoints}`;
-    const unlockedSet = new Set(state.player.unlockedSkills);
+    els.skillSpBadge.textContent = `所持 SP: ${state.player.skillPoints} (使用済 ${state.player.spentSkillPoints})`;
 
     els.skillColumns.innerHTML = '';
     for (const branch of BRANCH_META) {
@@ -62,39 +65,53 @@ export function renderModals(
         if (idx > 0) {
           const arrow = document.createElement('div');
           arrow.className = 'tree-arrow';
-          arrow.textContent = '↓';
+          arrow.textContent = `↓ 前提 Lv${SKILL_PREREQ_LEVEL}+`;
           col.appendChild(arrow);
         }
 
-        const isUnlocked = unlockedSet.has(node.id);
-        const isAvailable = canUnlockSkill(unlockedSet, state.player.skillPoints, node.id);
-        const prereqMet = node.requires === null || unlockedSet.has(node.requires);
+        const currLv = getSkillLevel(state.player.skillLevels, node.id);
+        const isMax = currLv >= MAX_SKILL_LEVEL;
+        const isAvailable = canUpgradeSkill(
+          state.player.skillLevels,
+          state.player.skillPoints,
+          node.id
+        );
+        const prereqMet =
+          node.requires === null ||
+          getSkillLevel(state.player.skillLevels, node.requires) >= SKILL_PREREQ_LEVEL;
 
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `tree-node ${
-          isUnlocked ? 'unlocked' : isAvailable ? 'available' : 'locked'
+          isMax ? 'unlocked' : isAvailable ? 'available' : currLv > 0 ? 'unlocked' : 'locked'
         }`;
         btn.disabled = !isAvailable;
 
         const reqLabel = node.requires
-          ? `Tier ${node.tier} · 必要 ${node.cost} SP · 前提: ${getSkillNode(node.requires).name}`
-          : `Tier ${node.tier} · 必要 ${node.cost} SP · 基本ノード`;
+          ? `Tier ${node.tier} · 必要 ${node.cost} SP/Lv · 前提: ${getSkillNode(node.requires).name} Lv${SKILL_PREREQ_LEVEL}+`
+          : `Tier ${node.tier} · 必要 ${node.cost} SP/Lv · 基本ノード`;
 
-        const stateLabel = isUnlocked
-          ? '習得済'
+        const stateLabel = isMax
+          ? `MAX (${currLv}/${MAX_SKILL_LEVEL})`
           : isAvailable
-          ? `習得可 (-${node.cost} SP)`
+          ? currLv === 0
+            ? `習得 (-${node.cost} SP)`
+            : `Lv${currLv}→${currLv + 1} (-${node.cost} SP)`
           : prereqMet
-          ? `🔒 SP不足 (要${node.cost})`
-          : `🔒 要${node.cost} SP`;
+          ? `🔒 SP不足 (Lv${currLv}/${MAX_SKILL_LEVEL})`
+          : `🔒 前提Lv${SKILL_PREREQ_LEVEL}要`;
+
+        const effectText =
+          currLv > 0
+            ? `${node.description} ｜ 現在: ${getSkillEffectSummary(node.id, currLv)}`
+            : node.description;
 
         btn.innerHTML = `
           <div class="node-top">
-            <strong>${node.name}</strong>
+            <strong>${node.name} <span style="opacity:0.8;font-size:11px">Lv${currLv}/${MAX_SKILL_LEVEL}</span></strong>
             <span class="node-state">${stateLabel}</span>
           </div>
-          <div class="node-desc">${node.description}</div>
+          <div class="node-desc">${effectText}</div>
           <div class="node-req">${reqLabel}</div>
         `;
 
@@ -108,7 +125,7 @@ export function renderModals(
     }
 
     const baseStats = getPlayerBaseAttackStats(state.player);
-    const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">自機コアショット (Lv${state.player.level} / スキルR${baseStats.skillRank}): 威力${baseStats.damage} / ${baseStats.shotCount}発 / ${baseStats.cooldown.toFixed(2)}s</span>`;
+    const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">自機コアショット (使用SP ${baseStats.spentSp}): 威力${baseStats.damage} / ${baseStats.shotCount}発 / ${baseStats.cooldown.toFixed(2)}s / 射程${baseStats.range}px</span>`;
     const gearPills =
       state.player.equipment.length === 0
         ? '<span style="font-size:12px;color:#94a3b8;">装備枠 0/3（探索や敵ドロップで装備を追加可能）</span>'

@@ -54,7 +54,8 @@ function resizeCanvas(): void {
 }
 
 function getModalKey(): string {
-  return `${state.status}:${state.player.skillPoints}:${state.player.unlockedSkills.join(',')}:${state.player.equipment
+  const skillsKey = SKILL_TREE_NODES.map((n) => state.player.skillLevels[n.id] ?? 0).join(',');
+  return `${state.status}:${state.player.level}:${state.player.skillPoints}:${state.player.spentSkillPoints}:${skillsKey}:${state.player.equipment
     .map((e) => `${e.id}${e.level}`)
     .join(',')}:${state.pendingEquipDrop?.item.id ?? ''}`;
 }
@@ -66,9 +67,8 @@ function syncUi(forceModals = false): void {
   hpFill.style.width = `${hpPct}%`;
   floorText.textContent = `${floor}F`;
   skillBtn.textContent = `🌳 LV${player.level} (SP ${player.skillPoints})`;
-  const unlockedSet = new Set(player.unlockedSkills);
   const canUnlockAny = SKILL_TREE_NODES.some((n) =>
-    canUnlockSkill(unlockedSet, player.skillPoints, n.id)
+    canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
   );
   skillBtn.classList.toggle('has-sp', canUnlockAny);
   gearCountText.textContent = `GEAR ${player.equipment.length}/${MAX_EQUIP_SLOTS}`;

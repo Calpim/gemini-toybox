@@ -221,13 +221,13 @@
     </header>
 
     <div class="stats">
-      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">19</div></div>
-      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">19</div></div>
-      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">19</div></div>
+      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">20</div></div>
+      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">20</div></div>
+      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">21</div></div>
       <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">19</div></div>
     </div>
 
-    <div class="ok-banner">✅ トレーサビリティチェック OK：全 19 件のビジネス仕様と 19 件のアプリ仕様が ID 紐付けされています</div>
+    <div class="ok-banner">✅ トレーサビリティチェック OK：全 20 件のビジネス仕様と 20 件のアプリ仕様が ID 紐付けされています</div>
 
     <div class="controls">
       <button class="tab-btn active" data-filter="all">🔗 すべて表示 (紐付けツリー)</button>
@@ -378,6 +378,41 @@
               </div>
         </div>
       </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-05</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>敵は壁に引っかからず通路を含めた最短経路でプレイヤーを追跡する</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが壁や角を挟んで別の通路・部屋へ移動している</span></li><li><span class="kw">もし</span><span class="st-text">追跡状態になった敵がプレイヤーとの間に壁を挟む位置にいる</span></li><li><span class="kw">ならば</span><span class="st-text">直線移動で壁に引っかかり続けるのではなく、通路や曲がり角を通る最短経路でプレイヤーを追跡してくる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-05</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-05</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                
+                <h4>覚醒した敵はプレイヤータイル起点のBFS最短距離マップで通路経由追跡を行う</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">敵が覚醒（awake = true）しており、自機と敵を結ぶ回廊幅（半径の0.75倍オフセット含む）に壁が干渉している</span></li><li><span class="kw">もし</span><span class="st-text">stepGame が敵の移動ベクトルを計算する</span></li><li><span class="kw">ならば</span><span class="st-text">computeBfsDistances によるプレイヤータイルからの最短歩数マップを参照し、壁角で斜め抜けせず安全に通れる隣接タイル中心へ誘導して追跡する</span></li><li><span class="kw">かつ</span><span class="st-text">障害物のない直線視界に入れば滑らかな直接追尾へ切り替わる</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false">
         <div class="biz-card">
           <div class="card-head">
@@ -455,13 +490,13 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが以下の装備を組み合わせてスロットに装着している</span><div class="table-wrap"><table>
               <thead><tr><th>装備ID</th><th>カテゴリ</th><th>挙動パラメータ</th></tr></thead>
-              <tbody><tr><td>pulse_blade</td><td>近接迎撃</td><td>半径 90px の敵へ自動薙ぎ払い</td></tr><tr><td>orbit_shield</td><td>公転ビット</td><td>半径 64px を角速度 2.4 rad/s で周回し接触ダメージ＋敵弾消去</td></tr><tr><td>seeker_drone</td><td>自律ドローン</td><td>半径 260px 内の敵へ誘導弾を自動発射</td></tr><tr><td>reactive_coil</td><td>カウンター</td><td>敵が 80px 以内に接近、または被弾時に周囲へ連鎖放電</td></tr><tr><td>ricochet_disc</td><td>跳弾投擲</td><td>半径 230px 内の敵へ最大2回跳弾するディスクを発射（AI仮提案の第5装備）</td></tr></tbody>
+              <tbody><tr><td>pulse_blade</td><td>近接迎撃</td><td>半径 78px の敵へ自動薙ぎ払い</td></tr><tr><td>orbit_shield</td><td>公転ビット</td><td>半径 64px を角速度 2.4 rad/s で周回し接触ダメージ＋敵弾消去</td></tr><tr><td>seeker_drone</td><td>自律ドローン</td><td>半径 155px（上限180px）内の敵へ誘導弾を自動発射</td></tr><tr><td>reactive_coil</td><td>カウンター</td><td>敵が 74px 以内に接近、または被弾時に周囲へ連鎖放電</td></tr><tr><td>ricochet_disc</td><td>跳弾投擲</td><td>半径 145px（上限180px）内の敵へ最大2回跳弾するディスクを発射（AI仮提案の第5装備）</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">戦闘ループ（60fps固定タイムステップまたはdeltaTime更新）が進行する</span></li><li><span class="kw">ならば</span><span class="st-text">全装備のタイマーおよびビット座標が独立して更新され、同時に迎撃を実行する</span></li>
   </ul>
               </div>
         </div>
       </section>
-      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true">
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
         <div class="biz-card">
           <div class="card-head">
             <div class="id-group">
@@ -469,12 +504,12 @@
               <span class="file-pill">02-combat-and-loadout.feature</span>
               <span class="feature-pill">自動迎撃アクションと多彩な装備システム（ビジネス仕様）</span>
             </div>
-            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>壁を使った一方的な安全地帯からのハメ攻撃を防ぐ</h3>
+          <h3>壁による射線遮断と部屋・通路に収まる索敵上限で遠距離スナイプを防ぐ</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の間にダンジョンの壁がある</span></li><li><span class="kw">もし</span><span class="st-text">自動迎撃の射線上に壁が挟まっている</span></li><li><span class="kw">ならば</span><span class="st-text">通常の弾やレーザーは壁で遮られ、地形を意識した位置取りが求められる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の間に壁がある、または長い通路の先に2つ隣の部屋が見えている</span></li><li><span class="kw">もし</span><span class="st-text">自動迎撃の射線上に壁が挟まる、または索敵上限距離を超える</span></li><li><span class="kw">ならば</span><span class="st-text">壁越し攻撃が遮断されるだけでなく、2つ隣の部屋にまで届かない部屋・通路規模の索敵範囲に収まる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -489,9 +524,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>通常弾と索敵レーザーはレイキャスト判定により壁タイルで遮断される</h4>
+                <h4>レイキャストによる壁遮蔽と最大索敵上限 MAX_TARGET_RANGE（180px）を適用する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の位置を結ぶ線分上に「壁」属性のタイルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃または索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">グリッドDDAまたはレイキャストが壁との交差を検知し、壁越しのロックオンと弾の通過をブロックする</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅（ヒットエフェクト発生）する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">索敵上限定数 MAX_TARGET_RANGE が 180px（4.5タイル相当＝1部屋〜隣通路規模）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃・自機ショット・索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">壁タイルとの交差は遮断され、さらにスキル等でレンジが伸びても 180px を超える2部屋先の敵はロックオンしない</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅する</span></li>
   </ul>
               </div>
         </div>
@@ -580,9 +615,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>自機からの基本攻撃はプレイヤーレベルとスキル習得によって強化される</h3>
+          <h3>自機からの基本攻撃はレベルアップ単体では変わらず使用したSP量に応じて強化される</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で自機固有の基本攻撃を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーのレベルが上昇する、またはスキルツリーでスキルを習得（スキルレベル上昇）する</span></li><li><span class="kw">ならば</span><span class="st-text">自機の基本攻撃の威力・連射速度・同時発射数などが段階的に強化される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で自機固有の基本攻撃を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベルが上がっただけの場合、またはスキルレベル上昇のためにSPを使用した場合</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーレベルの数値だけでは自機攻撃は変化せず、スキルへ投資（使用）したSP総量と習得スキル効果に応じて段階的に強化される</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -597,9 +632,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>自機固有のコアショットがプレイヤーレベルとスキル習得ランク（Tier合計）に応じて強化される</h4>
+                <h4>自機固有のコアショットはレベルアップ単体では据え置き、使用済みSP量に応じて強化される</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で基本攻撃「コアショット」（初期射程 210px / 威力 12 / CD 0.62s / 1発）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベルが上昇する、またはスキルツリーでノードを習得しスキルランク（習得ノードのTier合計）が上がる</span></li><li><span class="kw">ならば</span><span class="st-text">基本攻撃の威力（+3/Lv・+2/SkillRank）・連射CD・射程が上昇し、Lv3到達およびスキルランク3到達で同時発射数が最大4発まで増加する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で基本攻撃「コアショット」（初期射程 140px / 威力 12 / CD 0.62s / 1発）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーのレベルだけが上昇した場合、またはスキルレベル上げに SP を消費（spentSkillPoints 増加）した場合</span></li><li><span class="kw">ならば</span><span class="st-text">player.level のみの上昇ではコアショット性能は変わらず、使用済みSP総量に応じて威力・CD・射程（最大180px）・発射数（3/7/12 SPで最大4発）が強化される</span></li>
   </ul>
               </div>
         </div>
@@ -617,7 +652,7 @@
           <div class="bg-box">
     <div class="bg-title">📋 背景: ハイブリッド成長ルールの決定経緯</div>
     <ul class="bg-steps">
-      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット3枠（5種から選択）」「重複装備の自動レベルアップ」「段階SPコスト」「初期ノーアイテム開始」「敵からの低確率装備ドロップ」「所持平均レベル連動のドロップレベル変動」を確定</li>
+      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット3枠（5種から選択）」「重複装備の自動レベルアップ」「スキル毎の最大Lv5・Lv3で次解放・段階SPコスト」「初期ノーアイテム開始（自機ショットあり）」「敵からの低確率ドロップ（頻度抑えめ）」「所持装備の中で最低レベル基準のドロップLv変動」を確定</li>
     </ul>
   </div>
           <h3>探索で拾った装備とレベルアップ成長を組み合わせて強化する</h3>
@@ -660,9 +695,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>前提スキルを習得するとより強力な上位スキルへ成長できる</h3>
+          <h3>各スキルは最大Lv5まで成長し、Lv3到達で次のスキルが解放される</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">スキルツリー上に前提関係を持つ下位スキルと上位スキルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">前提となる下位スキルを習得した状態でさらにスキルポイントを使う</span></li><li><span class="kw">ならば</span><span class="st-text">上位の強力なスキルや装備シナジーが解放され、ビルドが大きく進化する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">スキルツリー上に前提関係を持つ下位スキルと上位スキルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">下位スキルにポイントを振ってスキルレベルを上げ、Lv3以上に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベル毎にそのスキルの性能が上昇するだけでなく、次の段階の強力な上位スキルが解放可能になる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -677,12 +712,12 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>DAG構造のスキルツリーで前提ノード解放済みかつ必要SP到達時のみ上位ノードを習得できる</h4>
+                <h4>スキル毎のレベル制（最大Lv5・Lv毎に性能上昇）と前提Lv3による上位解放を行う</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">スキルツリーが以下のような前提依存関係（requires）と段階的消費SPで定義されている（移動速度スキルは標準速度引き上げに伴い磁力・回復強化へ変更）</span><div class="table-wrap"><table>
-              <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>必要SP</th><th>前提ノード</th><th>主な効果</th></tr></thead>
-              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>1</td><td>なし</td><td>全自動攻撃ダメージ +15%</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>2</td><td>2</td><td>arm_base</td><td>公転ビット・ドローンの同時展開数 +1</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>3</td><td>arm_parallel</td><td>全装備のクールダウン -20% &amp; ドローン弾貫通化</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>1</td><td>なし</td><td>全迎撃レンジ +20%</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>2</td><td>def_sensor</td><td>接近敵を周期的にノックバック＋放電</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>3</td><td>def_pulse</td><td>6秒ごとに被弾を1回無効化し反射衝撃</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>1</td><td>なし</td><td>アイテム吸引範囲 +50% &amp; 回復オーブ効果 +25%</td></tr><tr><td>mob_dash</td><td>探索</td><td>戦術ステップ</td><td>2</td><td>2</td><td>mob_magnet</td><td>被弾時の無敵時間を延長＋緊急回避加速</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>3</td><td>3</td><td>mob_dash</td><td>回復アイテム・宝箱ドロップ率 +35% &amp; EXP +20%</td></tr></tbody>
-            </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を未習得の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンは無効化（ロック表示）され、arm_base を先に習得かつ必要SPを満たした場合にのみ arm_parallel が解放可能になる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">各スキルが最大レベル 5（Lv0〜Lv5）・前提ノード Lv3 以上で次Tier解放として定義されている</span><div class="table-wrap"><table>
+              <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>必要SP/Lv</th><th>前提(Lv3+)</th><th>主なLv毎成長効果（最大Lv5）</th></tr></thead>
+              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>1</td><td>なし</td><td>Lv毎に全自動攻撃ダメージ +10%（最大+50%）</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>2</td><td>2</td><td>arm_base</td><td>Lv1/3/5で展開数+1 &amp; ビット/ドローン威力 +6%/Lv</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>3</td><td>arm_parallel</td><td>Lv毎にCD -7% &amp; 弾速UP（Lv1以上でドローン貫通）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>1</td><td>なし</td><td>Lv毎に迎撃レンジ +10%（索敵上限180px内）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>2</td><td>def_sensor</td><td>Lv1解放・Lv毎にノックバック威力/範囲UP＆CD短縮</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>3</td><td>def_pulse</td><td>Lv1解放・Lv毎にパリィCD短縮＆反射ダメUP</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>1</td><td>なし</td><td>Lv毎に吸引範囲 +25% &amp; 回復オーブ効果 +12%</td></tr><tr><td>mob_dash</td><td>探索</td><td>戦術ステップ</td><td>2</td><td>2</td><td>mob_magnet</td><td>Lv1解放・Lv毎に回避距離＆無敵延長＆CD短縮</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>3</td><td>3</td><td>mob_dash</td><td>Lv毎に回復/宝箱+10%・装備Drop補正・EXP+10%</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を Lv2 以下の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンはロック表示となり、arm_base を Lv3 まで育成しかつ必要SP（2）を満たした時点で arm_parallel が解放可能になる</span></li>
   </ul>
               </div>
         </div>
@@ -770,7 +805,7 @@
           
           <h3>上位スキルほど多くのスキルポイントを要し横展開か一点突破かを選べる</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">スキルツリーに下位・中位・上位の階層（Tier）が存在する</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがレベルアップで獲得したスキルポイントを配分する</span></li><li><span class="kw">ならば</span><span class="st-text">下位スキルを複数系統で並行習得するか、ポイントを温存して上位スキルへ一気に育成するかの戦略選択ができる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">スキルツリーに下位・中位・上位の階層（Tier）が存在する</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがレベルアップで獲得したスキルポイントを配分する</span></li><li><span class="kw">ならば</span><span class="st-text">下位スキルを複数系統で並行育成するか、ポイントを投じてLv3→上位スキルへ一気に育成するかの戦略選択ができる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -787,7 +822,7 @@
                 
                 <h4>Tier 1・Tier 2・Tier 3 ごとに必要SP（1 / 2 / 3）を消費して習得制御する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">スキルツリーの消費SPが Tier 1 = 1 SP、Tier 2 = 2 SP、Tier 3 = 3 SP に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが arm_base を習得済みで所持 SP が 1 の状態で Tier 2 ノード arm_parallel を判定する</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2）のため解放不可となり、SP を 2 まで温存した時点で解放・消費（2 SP 減算）が可能になる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">スキルツリーの1レベルあたり消費SPが Tier 1 = 1 SP、Tier 2 = 2 SP、Tier 3 = 3 SP に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが arm_base (Lv3) 習得済みで所持 SP が 1 の状態で Tier 2 ノード arm_parallel を判定する</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2）のため強化不可となり、SP を 2 まで温存した時点で強化（2 SP 減算）が可能になる</span></li>
   </ul>
               </div>
         </div>
@@ -805,7 +840,7 @@
           
           <h3>ゲーム開始時は装備ゼロからスタートし探索で初期装備を手に入れる</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">新しいダンジョンランを開始する</span></li><li><span class="kw">もし</span><span class="st-text">1F の開始状態を生成する</span></li><li><span class="kw">ならば</span><span class="st-text">初期装備は 0 個（ノーアイテム）で開始し、探索やドロップで装備を拾いながらビルドを構築する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">新しいダンジョンランを開始する</span></li><li><span class="kw">もし</span><span class="st-text">1F の開始状態を生成する</span></li><li><span class="kw">ならば</span><span class="st-text">初期装備は 0 個（ノーアイテム）で開始し、自機攻撃で戦いながら探索やドロップで装備を拾いビルドを構築する</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -838,9 +873,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>敵からの低確率ドロップや平均レベル連動のレベル抽選で高レベル装備も狙える</h3>
+          <h3>敵からの希少ドロップや所持最低レベル連動のレベル抽選で高レベル装備も狙える</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">宝箱または敵のドロップから装備アイテムが出現する</span></li><li><span class="kw">ならば</span><span class="st-text">敵からも低確率で装備がドロップし、出現アイテムのレベルは現在の所持装備の平均レベルを基準に上下ランダム（高レベルの上振れあり）で決まる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">宝箱または敵の低確率ドロップから装備アイテムが出現する</span></li><li><span class="kw">ならば</span><span class="st-text">敵からは希少な確率で装備がドロップし、出現アイテムのレベルは現在の所持装備の中で一番低いレベルを基準に上下ランダム（高レベルの上振れあり）で決まる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -855,9 +890,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>敵撃破時の低確率（5%）装備ドロップと所持平均レベル連動のレベル抽選を行う</h4>
+                <h4>敵撃破時の希少（1.5%）装備ドロップと所持最低レベル連動のレベル抽選を行う</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの所持装備レベルの丸め平均値が A である（0個所持時は 1）</span></li><li><span class="kw">もし</span><span class="st-text">宝箱を開封する、または敵を撃破して低確率ドロップ（基礎 5%・トレジャー解析で +2.5%）が成立する</span></li><li><span class="kw">ならば</span><span class="st-text">出現する装備レベルは A を基準に確率配分（20%で max(1, A-1) / 45%で A / 25%で A+1 / 10%で A+2）で決定される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの所持装備の中で一番低いレベルが M である（0個所持時は 1）</span></li><li><span class="kw">もし</span><span class="st-text">宝箱を開封する、または敵を撃破して低確率ドロップ（基礎 1.5%・トレジャー解析で +0.3%/Lv）が成立する</span></li><li><span class="kw">ならば</span><span class="st-text">出現する装備レベルは M を基準に確率配分（20%で max(1, M-1) / 50%で M / 22%で M+1 / 8%で M+2）で決定される</span></li>
   </ul>
               </div>
         </div>

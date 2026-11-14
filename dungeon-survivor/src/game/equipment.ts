@@ -25,6 +25,7 @@ export interface EquippedItem {
 }
 
 export const MAX_EQUIP_SLOTS = 3;
+export const MAX_TARGET_RANGE = 180;
 
 export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
   pulse_blade: {
@@ -33,7 +34,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     category: '近接迎撃',
     color: '#22d3ee',
     baseCooldown: 1.05,
-    baseRange: 90,
+    baseRange: 78,
     baseDamage: 22,
     description: 'Lvで斬撃範囲拡大・Lv3以上で360°全方位斬撃へ進化',
   },
@@ -53,7 +54,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     category: '自律ドローン',
     color: '#38bdf8',
     baseCooldown: 0.48,
-    baseRange: 260,
+    baseRange: 155,
     baseDamage: 15,
     description: 'Lvでドローン展開数＆弾速が強化される自動追尾射撃',
   },
@@ -63,7 +64,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     category: 'カウンター',
     color: '#f472b6',
     baseCooldown: 1.5,
-    baseRange: 80,
+    baseRange: 74,
     baseDamage: 18,
     description: 'Lvごとに連鎖数＋1・放電範囲が拡大する電撃カウンター',
   },
@@ -73,7 +74,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     category: '跳弾投擲',
     color: '#fb923c',
     baseCooldown: 1.15,
-    baseRange: 230,
+    baseRange: 145,
     baseDamage: 17,
     description: '敵の間を跳ね回る回転刃。Lvで跳弾回数増・Lv3で2枚投擲',
   },

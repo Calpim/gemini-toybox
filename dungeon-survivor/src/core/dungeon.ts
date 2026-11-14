@@ -117,7 +117,7 @@ function roomsOverlap(a: Omit<Room, 'id' | 'cx' | 'cy'>, b: Room, padding = 2): 
   );
 }
 
-function computeBfsDistances(width: number, height: number, tiles: TileType[], startTx: number, startTy: number): Int32Array {
+export function computeBfsDistances(width: number, height: number, tiles: TileType[], startTx: number, startTy: number): Int32Array {
   const dist = new Int32Array(width * height).fill(-1);
   const startIdx = startTy * width + startTx;
   if (tiles[startIdx] === 'wall') return dist;

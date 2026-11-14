@@ -22,7 +22,8 @@ export interface PlayerState {
   exp: number;
   expToNext: number;
   skillPoints: number;
-  unlockedSkills: SkillNodeId[];
+  spentSkillPoints: number;
+  skillLevels: Partial<Record<SkillNodeId, number>>;
   equipment: EquippedItem[];
   invulnTimer: number;
   facingAngle: number;
