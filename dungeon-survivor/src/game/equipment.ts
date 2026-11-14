@@ -2,10 +2,9 @@ export type EquipmentId =
   | 'pulse_blade'
   | 'orbit_shield'
   | 'seeker_drone'
-  | 'auto_turret'
   | 'reactive_coil';
 
-export type EquipmentCategory = '近接迎撃' | '公転ビット' | '自律ドローン' | '設置迎撃' | 'カウンター';
+export type EquipmentCategory = '近接迎撃' | '公転ビット' | '自律ドローン' | 'カウンター';
 
 export interface EquipmentDef {
   id: EquipmentId;
@@ -24,7 +23,7 @@ export interface EquippedItem {
   cooldown: number;
 }
 
-export const MAX_EQUIP_SLOTS = 5;
+export const MAX_EQUIP_SLOTS = 3;
 
 export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
   pulse_blade: {
@@ -57,16 +56,6 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     baseDamage: 15,
     description: '半径260px内の敵へ自動追尾ショットを発射',
   },
-  auto_turret: {
-    id: 'auto_turret',
-    name: 'オートタレット',
-    category: '設置迎撃',
-    color: '#fbbf24',
-    baseCooldown: 5.0,
-    baseRange: 210,
-    baseDamage: 12,
-    description: '5秒ごとに足元へ10秒持続する迎撃砲台を展開',
-  },
   reactive_coil: {
     id: 'reactive_coil',
     name: '迎撃サンダーコイル',
@@ -83,7 +72,6 @@ export const ALL_EQUIPMENT_IDS: readonly EquipmentId[] = [
   'pulse_blade',
   'orbit_shield',
   'seeker_drone',
-  'auto_turret',
   'reactive_coil',
 ];
 
@@ -98,4 +86,8 @@ export function createEquippedItem(id: EquipmentId, level = 1): EquippedItem {
 export function getEquipmentDamage(item: EquippedItem, damageMult: number): number {
   const def = EQUIPMENT_CATALOG[item.id];
   return def.baseDamage * (1 + (item.level - 1) * 0.25) * damageMult;
+}
+
+export function getEquipmentCooldownMultiplier(level: number): number {
+  return Math.max(0.7, 1 - (level - 1) * 0.05);
 }

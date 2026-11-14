@@ -184,6 +184,27 @@
       text-align: left;
     }
     th { background: rgba(30, 41, 59, 0.8); color: #cbd5e1; }
+    .bg-box {
+      margin: 8px 0 12px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .bg-title {
+      font-weight: 700;
+      color: #93c5fd;
+      margin-bottom: 4px;
+    }
+    .bg-steps {
+      margin: 0;
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
     .empty-link { color: #fca5a5; font-size: 13px; padding: 8px; }
     .hidden { display: none !important; }
   </style>
@@ -200,13 +221,13 @@
     </header>
 
     <div class="stats">
-      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">12</div></div>
-      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">12</div></div>
-      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">10</div></div>
-      <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">14</div></div>
+      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">15</div></div>
+      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">15</div></div>
+      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">15</div></div>
+      <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">15</div></div>
     </div>
 
-    <div class="ok-banner">✅ トレーサビリティチェック OK：全 12 件のビジネス仕様と 12 件のアプリ仕様が ID 紐付けされています</div>
+    <div class="ok-banner">✅ トレーサビリティチェック OK：全 15 件のビジネス仕様と 15 件のアプリ仕様が ID 紐付けされています</div>
 
     <div class="controls">
       <button class="tab-btn active" data-filter="all">🔗 すべて表示 (紐付けツリー)</button>
@@ -227,6 +248,7 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          
           <h3>毎回異なる構造のダンジョンを探索し階段で次の階層へ進む</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョンのある階層にいる</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがフロア内を探索して上り階段に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">次の階層へ進み、新しいランダム構造のダンジョンが生成される</span></li>
@@ -243,6 +265,7 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                
                 <h4>シード値に基づき部屋・広め通路・上り階段を持つフロアを生成する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間分割（BSP等）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の長方形の部屋と幅 2〜3 タイル以上の通路が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">スタート部屋から到達可能な最遠方の部屋に「上り階段」タイルが1つ配置される</span></li><li><span class="kw">かつ</span><span class="st-text">プレイヤーが上り階段の当たり判定に触れるとフロア番号 N+1 が生成される</span></li>
@@ -260,6 +283,7 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          
           <h3>部屋と通路をシームレスに探索中に敵と遭遇する</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが部屋または通路を移動している</span></li><li><span class="kw">もし</span><span class="st-text">敵が待機または徘徊しているエリアに近づく</span></li><li><span class="kw">ならば</span><span class="st-text">部屋が封鎖されることなくシームレスに戦闘が始まる</span></li>
@@ -276,9 +300,10 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                
                 <h4>PCキーボードとスマホ片手ジョイスティックでシームレスに移動し壁で止まる</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、またはタッチ画面で任意の場所をドラッグする</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが連続座標上で指定ベクトルへ移動し、壁タイルとのAABB/円衝突で滑らかに押し戻される</span></li><li><span class="kw">かつ</span><span class="st-text">通路の途中でも部屋の封鎖は発生せず、視界または感知半径内の敵が追尾状態へ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、またはタッチ画面で任意の場所をドラッグする</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが連続座標上で指定ベクトルへ移動し、壁タイルとのAABB/円衝突で滑らかに押し戻される</span></li><li><span class="kw">かつ</span><span class="st-text">通路の途中でも部屋の封鎖は発生せず、視界または感知半径内の敵が追尾状態へ遷移する</span></li>
   </ul>
               </div>
         </div>
@@ -293,6 +318,7 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          
           <h3>自然回復はせず回復アイテムの獲得でHPを維持する</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーのHPが最大値より減っている</span></li><li><span class="kw">もし</span><span class="st-text">戦闘や探索を続けて時間が経過する</span></li><li><span class="kw">ならば</span><span class="st-text">HPは時間経過では自動回復せず、回復アイテムを拾うことで回復する</span></li>
@@ -309,6 +335,7 @@
                   </div>
                   <span class="badge badge-confirmed">Confirmed（決定済み）</span>
                 </div>
+                
                 <h4>時間経過による自然回復を行わず回復オーブ取得時のみHPを回復する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーの HP が 60 / 100 であり、自動回復レートが 0 / sec に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">10秒間ダメージを受けずに移動する</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーの HP は 60 のまま変化しない</span></li><li><span class="kw">かつ</span><span class="st-text">敵ドロップまたは宝箱から出現した回復アイテム（HP +30等）に触れた時のみ HP が回復する（上限 100）</span></li>
@@ -326,6 +353,7 @@
             </div>
             <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
           </div>
+          
           <h3>同じ階層への長居を防ぐ緊張感ギミックが働く</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが同一フロアに一定時間以上滞在している</span></li><li><span class="kw">もし</span><span class="st-text">フロア滞在警告の制限時間を超過する</span></li><li><span class="kw">ならば</span><span class="st-text">警告後に強力な監視敵が出現し、階段へ向かう動機が生まれる</span></li>
@@ -342,6 +370,7 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                
                 <h4>フロア滞在タイマー超過により警告表示後に監視ドローンが出現する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">通常フロアの滞在警告タイマーが 90 秒に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">フロア経過時間が 90 秒に達する</span></li><li><span class="kw">ならば</span><span class="st-text">画面上部に「WATCHER APPROACHING」の警告バナーと警告SEが鳴る</span></li><li><span class="kw">かつ</span><span class="st-text">10秒後（100秒時点）からプレイヤー位置へ向かう高耐久の監視ドローンがスポーンする</span></li>
@@ -359,6 +388,12 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          <div class="bg-box">
+    <div class="bg-title">📋 背景: 装備方針とオートタレット不採用の記録</div>
+    <ul class="bg-steps">
+      <li>決定経緯: 2026-11-14 先輩プレイバックによる仕様確定</li><li>不採用装備「設置型オートタレット」: 移動して探索し続けるゲーム性では、敵を殲滅した後に足元へタレットが置かれてしまい何もせず放置されるため不採用とした</li>
+    </ul>
+  </div>
           <h3>敵が近づくと装備が自動で迎撃を行う</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが攻撃可能な装備またはビットを所持している</span></li><li><span class="kw">もし</span><span class="st-text">敵が装備ごとの有効射程内に入る</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが攻撃ボタンを押さなくても自動で迎撃攻撃が発生する</span></li>
@@ -375,6 +410,12 @@
                   </div>
                   <span class="badge badge-confirmed">Confirmed（決定済み）</span>
                 </div>
+                <div class="bg-box">
+    <div class="bg-title">📋 背景: オートタレット不採用に伴う装備ラインナップ整理</div>
+    <ul class="bg-steps">
+      <li>決定経緯: auto_turret 不採用は人間確定（2026-11-14）、各装備の数値パラメータは AI仮提案（@Inferred）</li><li>不採用理由（auto_turret）: 5秒ごとの足元固定設置は敵殲滅後に空撃ち設置となって次の移動に活かせないため削除</li>
+    </ul>
+  </div>
                 <h4>装備ごとのクールダウンと射程判定により最短距離または条件合致の敵を自動攻撃する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが有効射程 R、クールダウン CD を持つ自動攻撃装備を1つ以上所持している</span></li><li><span class="kw">もし</span><span class="st-text">射程 R 以内に敵が存在し、かつ装備の残りクールダウンが 0 以下になる</span></li><li><span class="kw">ならば</span><span class="st-text">入力ボタン操作なしで即座に攻撃インスタンス（弾・斬撃・電撃）を生成し、CD をリセットする</span></li>
@@ -392,9 +433,10 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          
           <h3>武器や盾だけでなくビットや迎撃系装備を組み合わせて戦う</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが探索中に様々な系統の装備を入手している</span></li><li><span class="kw">もし</span><span class="st-text">主武装・公転シールド・自律ドローン・設置タレット・迎撃装置などを装備する</span></li><li><span class="kw">ならば</span><span class="st-text">それぞれの役割に応じた自動攻撃や防御が同時に機能する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが探索中に様々な系統の装備を入手している</span></li><li><span class="kw">もし</span><span class="st-text">主武装・公転シールド・自律ドローン・カウンター迎撃装置などを装備する</span></li><li><span class="kw">ならば</span><span class="st-text">それぞれの役割に応じた自動攻撃や防御が同時に機能する</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -408,11 +450,12 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                
                 <h4>役割の異なる4カテゴリの自動迎撃装備が独立して並列稼働する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが以下の装備を組み合わせてスロットに装着している</span><div class="table-wrap"><table>
               <thead><tr><th>装備ID</th><th>カテゴリ</th><th>挙動パラメータ</th></tr></thead>
-              <tbody><tr><td>pulse_blade</td><td>近接迎撃</td><td>半径 90px の敵へ自動薙ぎ払い</td></tr><tr><td>orbit_shield</td><td>公転ビット</td><td>半径 64px を角速度 2.4 rad/s で周回し接触ダメージ＋敵弾消去</td></tr><tr><td>seeker_drone</td><td>自律ドローン</td><td>半径 260px 内の敵へ誘導弾を自動発射</td></tr><tr><td>auto_turret</td><td>設置迎撃</td><td>5秒ごとに足元へ10秒持続する固定砲台をドロップ</td></tr><tr><td>reactive_coil</td><td>カウンター</td><td>敵が 80px 以内に接近、または被弾時に周囲へ連鎖放電</td></tr></tbody>
+              <tbody><tr><td>pulse_blade</td><td>近接迎撃</td><td>半径 90px の敵へ自動薙ぎ払い</td></tr><tr><td>orbit_shield</td><td>公転ビット</td><td>半径 64px を角速度 2.4 rad/s で周回し接触ダメージ＋敵弾消去</td></tr><tr><td>seeker_drone</td><td>自律ドローン</td><td>半径 260px 内の敵へ誘導弾を自動発射</td></tr><tr><td>reactive_coil</td><td>カウンター</td><td>敵が 80px 以内に接近、または被弾時に周囲へ連鎖放電</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">戦闘ループ（60fps固定タイムステップまたはdeltaTime更新）が進行する</span></li><li><span class="kw">ならば</span><span class="st-text">全装備のタイマーおよびビット座標が独立して更新され、同時に迎撃を実行する</span></li>
   </ul>
               </div>
@@ -428,6 +471,7 @@
             </div>
             <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
           </div>
+          
           <h3>壁を使った一方的な安全地帯からのハメ攻撃を防ぐ</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の間にダンジョンの壁がある</span></li><li><span class="kw">もし</span><span class="st-text">自動迎撃の射線上に壁が挟まっている</span></li><li><span class="kw">ならば</span><span class="st-text">通常の弾やレーザーは壁で遮られ、地形を意識した位置取りが求められる</span></li>
@@ -444,9 +488,45 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                
                 <h4>通常弾と索敵レーザーはレイキャスト判定により壁タイルで遮断される</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の位置を結ぶ線分上に「壁」属性のタイルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃または索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">グリッドDDAまたはレイキャストが壁との交差を検知し、壁越しのロックオンと弾の通過をブロックする</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅（ヒットエフェクト発生）する</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-CMB-04</span>
+              <span class="file-pill">02-combat-and-loadout.feature</span>
+              <span class="feature-pill">自動迎撃アクションと多彩な装備システム（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>移動と噛み合わない足元設置型タレットを不採用とする</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">決定経緯: 先輩テストプレイによる人間確定（2026-11-14）</span></li><li><span class="kw">かつ</span><span class="st-text">プレイヤーは部屋や通路を移動し続け、敵を倒した後はすぐに次のエリアへ進む</span></li><li><span class="kw">もし</span><span class="st-text">足元固定型の設置タレット（オートタレット）の採用を評価する</span></li><li><span class="kw">ならば</span><span class="st-text">敵殲滅後に設置されて何もせず終わる問題がゲーム性に合わないため不採用とし、プレイヤー追従型の4系統のみを採用する</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Confirmed" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-CMB-04</span>
+                    <span class="ref-pill">↳ ref: BIZ-CMB-04</span>
+                    <span class="file-pill">02-auto-intercept.feature</span>
+                  </div>
+                  <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+                </div>
+                
+                <h4>オートタレット（auto_turret）を装備カタログと出現プールから除外する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">決定経緯: 2026-11-14 先輩プレイバックによる人間確定</span></li><li><span class="kw">もし</span><span class="st-text">装備定義 ALL_EQUIPMENT_IDS および宝箱抽選ロジックを参照する</span></li><li><span class="kw">ならば</span><span class="st-text">出現・装着対象は pulse_blade / orbit_shield / seeker_drone / reactive_coil の4種のみとなり、固定砲台エンティティは生成されない</span></li>
   </ul>
               </div>
         </div>
@@ -461,6 +541,12 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          <div class="bg-box">
+    <div class="bg-title">📋 背景: ハイブリッド成長ルールの決定経緯</div>
+    <ul class="bg-steps">
+      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット3枠」「重複装備の自動レベルアップ」「上位スキルほど必要SP増加」「移動速度の標準引き上げと別スキルへの差し替え」を確定</li>
+    </ul>
+  </div>
           <h3>探索で拾った装備とレベルアップ成長を組み合わせて強化する</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">装備品ドロップを獲得し、かつ経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">装備の付け替え・強化と、スキルツリーによる能力強化の両方で強くなる</span></li>
@@ -477,9 +563,15 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                <div class="bg-box">
+    <div class="bg-title">📋 背景: 3スロット制・重複強化・段階SPコスト・移動速度スキル差し替えのアプリ仕様</div>
+    <ul class="bg-steps">
+      <li>決定経緯: ルールの大枠は2026-11-14先輩確定、SPコスト数値（1/2/3）・重複時強化率・新スキル「磁力回収フレーム」の数値パラメータは AI提案（@Inferred）</li>
+    </ul>
+  </div>
                 <h4>経験値ジェム回収でスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 である</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベルが 2 に上がり、スキルポイント（SP）を +1 獲得してツリーボタンが強調表示される</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触または確認ダイアログで入手できる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 である</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベルが 2 に上がり、スキルポイント（SP）を +1 獲得してツリーボタンが強調表示される</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
   </ul>
               </div>
         </div>
@@ -494,6 +586,7 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          
           <h3>前提スキルを習得するとより強力な上位スキルへ成長できる</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">スキルツリー上に前提関係を持つ下位スキルと上位スキルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">前提となる下位スキルを習得した状態でさらにスキルポイントを使う</span></li><li><span class="kw">ならば</span><span class="st-text">上位の強力なスキルや装備シナジーが解放され、ビルドが大きく進化する</span></li>
@@ -510,17 +603,18 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
-                <h4>DAG構造のスキルツリーで前提ノード解放済みの場合のみ上位ノードを習得できる</h4>
+                
+                <h4>DAG構造のスキルツリーで前提ノード解放済みかつ必要SP到達時のみ上位ノードを習得できる</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">スキルツリーが以下のような前提依存関係（requires）で定義されている</span><div class="table-wrap"><table>
-              <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>前提ノード</th><th>主な効果</th></tr></thead>
-              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>なし</td><td>全自動攻撃ダメージ +15%</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>arm_base</td><td>公転ビット・ドローンの同時展開数 +1</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>arm_parallel</td><td>全装備のクールダウン -20% &amp; レーザー貫通化</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>なし</td><td>全迎撃レンジ +20%</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>def_sensor</td><td>接近敵を周期的にノックバック</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>def_pulse</td><td>一定間隔で敵弾・近接を無効化し反射</td></tr><tr><td>mob_speed</td><td>機動</td><td>軽量化フレーム</td><td>なし</td><td>移動速度 +12% &amp; ジェム吸引範囲 +35%</td></tr><tr><td>mob_dash</td><td>機動</td><td>戦術ステップ</td><td>mob_speed</td><td>クールダウン付き無敵回避または自動緊急回避</td></tr><tr><td>mob_loot</td><td>機動</td><td>トレジャー解析</td><td>mob_dash</td><td>回復アイテム・宝箱ドロップ率 +25%</td></tr></tbody>
-            </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが SP &gt;= 1 を所持し、前提ノード arm_base を未習得の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンは無効化（ロック表示）され、arm_base を先に習得した後にのみ arm_parallel が解放可能になる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">スキルツリーが以下のような前提依存関係（requires）と段階的消費SPで定義されている（移動速度スキルは標準速度引き上げに伴い磁力・回復強化へ変更）</span><div class="table-wrap"><table>
+              <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>必要SP</th><th>前提ノード</th><th>主な効果</th></tr></thead>
+              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>1</td><td>なし</td><td>全自動攻撃ダメージ +15%</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>2</td><td>2</td><td>arm_base</td><td>公転ビット・ドローンの同時展開数 +1</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>3</td><td>arm_parallel</td><td>全装備のクールダウン -20% &amp; ドローン弾貫通化</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>1</td><td>なし</td><td>全迎撃レンジ +20%</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>2</td><td>def_sensor</td><td>接近敵を周期的にノックバック＋放電</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>3</td><td>def_pulse</td><td>6秒ごとに被弾を1回無効化し反射衝撃</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>1</td><td>なし</td><td>アイテム吸引範囲 +50% &amp; 回復オーブ効果 +25%</td></tr><tr><td>mob_dash</td><td>探索</td><td>戦術ステップ</td><td>2</td><td>2</td><td>mob_magnet</td><td>被弾時の無敵時間を延長＋緊急回避加速</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>3</td><td>3</td><td>mob_dash</td><td>回復アイテム・宝箱ドロップ率 +35% &amp; EXP +20%</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を未習得の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンは無効化（ロック表示）され、arm_base を先に習得かつ必要SPを満たした場合にのみ arm_parallel が解放可能になる</span></li>
   </ul>
               </div>
         </div>
       </section>
-      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true">
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
         <div class="biz-card">
           <div class="card-head">
             <div class="id-group">
@@ -528,11 +622,12 @@
               <span class="file-pill">03-growth-skill-tree.feature</span>
               <span class="feature-pill">ハイブリッド成長と前提付きスキルツリー（ビジネス仕様）</span>
             </div>
-            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
-          <h3>装備枠に上限を設けてビルドの取捨選択を生み出す</h3>
+          
+          <h3>装備枠に上限（3枠）を設けてビルドの取捨選択を生み出す</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロットがすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、既存装備の強化素材・分解ボーナスにするかを選択できる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロット上限（3枠）がすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、既存装備全体の強化（スクラップ変換）にするかを選択できる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -546,9 +641,80 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
-                <h4>装備スロット上限到達時は入れ替えまたはスクラップ変換を選べる</h4>
+                
+                <h4>装備スロット上限（3枠）到達時の未所持装備獲得時は入れ替えまたはスクラップ変換を選べる</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの最大装備スロット数が 5 であり、すでに 5 個の装備を装着している</span></li><li><span class="kw">もし</span><span class="st-text">6 個目の新しい装備を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">ゲームを一時停止して「入れ替えるスロット選択」または「既存装備を強化（スクラップ変換で全体Lv+1）」モーダルを表示する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの最大装備スロット数 MAX_EQUIP_SLOTS が 3 であり、すでに異なる 3 個の装備を装着している</span></li><li><span class="kw">もし</span><span class="st-text">未所持の新しい装備（4種目）を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">ゲームを一時停止して「入れ替えるスロット選択（枠1〜3）」または「スクラップ変換（装着中の全装備 Lv+1）」モーダルを表示する</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-GRW-04</span>
+              <span class="file-pill">03-growth-skill-tree.feature</span>
+              <span class="feature-pill">ハイブリッド成長と前提付きスキルツリー（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>すでに所持している装備と同じアイテムを拾うと自動でレベルアップする</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに特定の装備を装着している</span></li><li><span class="kw">もし</span><span class="st-text">宝箱などからすでに所持している装備と同じ種類のアイテムを獲得する</span></li><li><span class="kw">ならば</span><span class="st-text">入れ替えモーダルや追加スロット消費を行わず、所持中の該当装備が自動でレベルアップする</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-GRW-04</span>
+                    <span class="ref-pill">↳ ref: BIZ-GRW-04</span>
+                    <span class="file-pill">03-hybrid-skill-tree.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                
+                <h4>所持済み装備と同種のドロップ時は対象装備のレベルを自動加算する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロットに seeker_drone (Lv1) が装着されている</span></li><li><span class="kw">もし</span><span class="st-text">acquireEquipment により seeker_drone (Lv1) を追加取得する</span></li><li><span class="kw">ならば</span><span class="st-text">スロット数は増加せず equip_choice モーダルも開かずに、既存の seeker_drone が Lv2 へ自動強化される</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-GRW-05</span>
+              <span class="file-pill">03-growth-skill-tree.feature</span>
+              <span class="feature-pill">ハイブリッド成長と前提付きスキルツリー（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>上位スキルほど多くのスキルポイントを要し横展開か一点突破かを選べる</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">スキルツリーに下位・中位・上位の階層（Tier）が存在する</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがレベルアップで獲得したスキルポイントを配分する</span></li><li><span class="kw">ならば</span><span class="st-text">下位スキルを複数系統で並行習得するか、ポイントを温存して上位スキルへ一気に育成するかの戦略選択ができる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-GRW-05</span>
+                    <span class="ref-pill">↳ ref: BIZ-GRW-05</span>
+                    <span class="file-pill">03-hybrid-skill-tree.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                
+                <h4>Tier 1・Tier 2・Tier 3 ごとに必要SP（1 / 2 / 3）を消費して習得制御する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">スキルツリーの消費SPが Tier 1 = 1 SP、Tier 2 = 2 SP、Tier 3 = 3 SP に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが arm_base を習得済みで所持 SP が 1 の状態で Tier 2 ノード arm_parallel を判定する</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2）のため解放不可となり、SP を 2 まで温存した時点で解放・消費（2 SP 減算）が可能になる</span></li>
   </ul>
               </div>
         </div>
@@ -563,6 +729,7 @@
             </div>
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
+          
           <h3>ボス戦の前に回復の泉がありこれからボスだと直感できる</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがボスが待ち受ける節目階層に到達している</span></li><li><span class="kw">もし</span><span class="st-text">ボスエリアの手前にある安全部屋に足を踏み入れる</span></li><li><span class="kw">ならば</span><span class="st-text">回復の泉が配置されており、回復とビルド確認を行って「この先がボス戦だ」とわかる</span></li>
@@ -579,6 +746,7 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                
                 <h4>5Fのボス階層ではボス部屋の手前に敵不在の回復の泉部屋を確定生成する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">目標ボス階層が 5F に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが 4F の上り階段から 5F へ進入する</span></li><li><span class="kw">ならば</span><span class="st-text">5F は「スタート部屋 → 回復の泉部屋（安全地帯） → ボスアリーナ部屋」の一本道構成で生成される</span></li><li><span class="kw">かつ</span><span class="st-text">回復の泉部屋には敵がスポーンせず、フロア滞在タイマーも停止する</span></li><li><span class="kw">かつ</span><span class="st-text">泉エリアに入ると HP を 100% 回復（1回限定）し、画面上に「この先：守護者エリア」とボス警告が表示される</span></li>
@@ -596,6 +764,7 @@
             </div>
             <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
           </div>
+          
           <h3>節目ボスを撃破して踏破達成または深層チャレンジへ進む</h3>
           <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが目標階層のボス戦に突入している</span></li><li><span class="kw">もし</span><span class="st-text">ボスの攻撃パターンをかいくぐりながら自動迎撃でHPを削り切る</span></li><li><span class="kw">ならば</span><span class="st-text">目標階層クリアが記録され、そのままエンドレス深層へ挑むか終了するかを選べる</span></li>
@@ -612,6 +781,7 @@
                   </div>
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
+                
                 <h4>ボス部屋の閾値を超えるとボス戦が開始し撃破でクリア選択を表示する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが 5F の回復の泉部屋を抜けてボスアリーナ部屋へ足を踏み入れる</span></li><li><span class="kw">もし</span><span class="st-text">ボス部屋の進入トリガーを通過する</span></li><li><span class="kw">ならば</span><span class="st-text">背後のゲートが閉じてボスHPゲージが画面上部に表示され、ボスAI（弾幕＋突進フェーズ）が起動する</span></li><li><span class="kw">かつ</span><span class="st-text">ボスの HP を 0 にするとリザルトモーダルが開き、「ゲームクリア（終了）」または「エンドレス深層（6F〜）へ進む」を選択できる</span></li>

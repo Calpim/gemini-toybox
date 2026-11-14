@@ -6,6 +6,7 @@ import {
   EQUIPMENT_CATALOG,
   MAX_EQUIP_SLOTS,
   createEquippedItem,
+  getEquipmentCooldownMultiplier,
   getEquipmentDamage,
   type EquipmentId,
   type EquippedItem,
@@ -141,7 +142,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       x: startPos.x,
       y: startPos.y,
       radius: 13,
-      baseSpeed: 175,
+      baseSpeed: 210,
       hp: 100,
       maxHp: 100,
       autoRegenPerSec: 0,
@@ -162,7 +163,6 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     enemies: populated.enemies,
     projectiles: [],
     enemyProjectiles: [],
-    turrets: [],
     chests: populated.chests,
     pendingEquipDrop: null,
     pickups: populated.pickups,
@@ -197,7 +197,6 @@ export function advanceToNextFloor(state: GameState): void {
   state.chests = populated.chests;
   state.projectiles = [];
   state.enemyProjectiles = [];
-  state.turrets = [];
   state.floatingTexts = [];
   state.visualFx = [];
   state.nextEntityId = populated.nextId;
@@ -209,9 +208,9 @@ export function unlockSkillNode(state: GameState, nodeId: SkillNodeId): boolean 
   if (!canUnlockSkill(unlocked, state.player.skillPoints, nodeId)) {
     return false;
   }
-  state.player.skillPoints -= 1;
-  state.player.unlockedSkills.push(nodeId);
   const node = getSkillNode(nodeId);
+  state.player.skillPoints -= node.cost;
+  state.player.unlockedSkills.push(nodeId);
   state.floatingTexts.push({
     x: state.player.x,
     y: state.player.y - 24,
@@ -237,6 +236,21 @@ export function closeSkillTree(state: GameState): void {
 
 export function acquireEquipment(state: GameState, droppedItem: EquippedItem): void {
   const { equipment } = state.player;
+  const existing = equipment.find((eq) => eq.id === droppedItem.id);
+  if (existing) {
+    existing.level += Math.max(1, droppedItem.level);
+    const def = EQUIPMENT_CATALOG[existing.id];
+    state.floatingTexts.push({
+      x: state.player.x,
+      y: state.player.y - 26,
+      text: `LV UP! ${def.name} Lv${existing.level}`,
+      color: def.color,
+      life: 1.25,
+      maxLife: 1.25,
+    });
+    return;
+  }
+
   if (equipment.length < MAX_EQUIP_SLOTS) {
     equipment.push(droppedItem);
     const def = EQUIPMENT_CATALOG[droppedItem.id];
@@ -337,11 +351,6 @@ export function getSeekerDronePositions(state: GameState): Vec2[] {
 
 function pickChestEquipmentId(state: GameState, chestId: number): EquipmentId {
   const rng = createRng((state.seed ^ (state.floor * 4999) ^ (chestId * 3571)) >>> 0);
-  const owned = new Set(state.player.equipment.map((e) => e.id));
-  const unowned = ALL_EQUIPMENT_IDS.filter((id) => !owned.has(id));
-  if (unowned.length > 0 && state.player.equipment.length < MAX_EQUIP_SLOTS) {
-    return rng.pick(unowned);
-  }
   return rng.pick(ALL_EQUIPMENT_IDS);
 }
 
@@ -451,7 +460,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   if (player.tacticalStepCooldown > 0) player.tacticalStepCooldown = Math.max(0, player.tacticalStepCooldown - clampedDt);
 
   // 1. Player movement & smooth wall collision (APP-MAP-02)
-  const moveSpeed = player.baseSpeed * mods.moveSpeedMult;
+  const moveSpeed = player.baseSpeed;
   const inputMag = Math.hypot(rawInput.x, rawInput.y);
   if (inputMag > 1e-4) {
     const scale = inputMag > 1 ? 1 / inputMag : 1;
@@ -476,7 +485,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     return;
   }
 
-  // 3. Chest check -> acquire equipment or trigger 6th-slot choice modal (APP-GRW-03)
+  // 3. Chest check -> acquire/upgrade equipment or trigger 4th-item slot choice modal (APP-GRW-03/04)
   for (const chest of state.chests) {
     if (!chest.opened && Math.hypot(player.x - chest.x, player.y - chest.y) <= player.radius + 16) {
       chest.opened = true;
@@ -540,6 +549,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     const dmg = getEquipmentDamage(item, mods.damageMult);
     const range = def.baseRange * mods.rangeMult;
+    const cdMult = mods.cooldownMult * getEquipmentCooldownMultiplier(item.level);
 
     if (item.id === 'pulse_blade') {
       const targets = state.enemies.filter(
@@ -563,7 +573,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           life: 0.22,
           maxLife: 0.22,
         });
-        item.cooldown = def.baseCooldown * mods.cooldownMult;
+        item.cooldown = def.baseCooldown * cdMult;
       }
     } else if (item.id === 'seeker_drone') {
       const target = findNearestVisibleEnemy(player.x, player.y, range, state);
@@ -588,54 +598,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           });
         }
         droneCursor++;
-        item.cooldown = def.baseCooldown * mods.cooldownMult;
+        item.cooldown = def.baseCooldown * cdMult;
       }
-    } else if (item.id === 'auto_turret') {
-      state.turrets.push({
-        id: state.nextEntityId++,
-        x: player.x,
-        y: player.y,
-        life: 10,
-        maxLife: 10,
-        fireCooldown: 0.2,
-        range: def.baseRange * mods.rangeMult,
-        damage: dmg,
-      });
-      item.cooldown = def.baseCooldown * mods.cooldownMult;
     } else if (item.id === 'reactive_coil') {
       if (triggerChainLightning(state, player.x, player.y, range, dmg)) {
-        item.cooldown = def.baseCooldown * mods.cooldownMult;
-      }
-    }
-  }
-
-  // 6. Deployed turrets
-  for (let i = state.turrets.length - 1; i >= 0; i--) {
-    const turret = state.turrets[i];
-    turret.life -= clampedDt;
-    if (turret.life <= 0) {
-      state.turrets.splice(i, 1);
-      continue;
-    }
-    turret.fireCooldown = Math.max(0, turret.fireCooldown - clampedDt);
-    if (turret.fireCooldown <= 0) {
-      const target = findNearestVisibleEnemy(turret.x, turret.y, turret.range, state);
-      if (target) {
-        const angle = Math.atan2(target.y - turret.y, target.x - turret.x);
-        state.projectiles.push({
-          id: state.nextEntityId++,
-          x: turret.x,
-          y: turret.y,
-          vx: Math.cos(angle) * 440,
-          vy: Math.sin(angle) * 440,
-          radius: 4.5,
-          damage: turret.damage,
-          life: 0.85,
-          pierce: false,
-          hitEnemyIds: [],
-          color: '#fbbf24',
-        });
-        turret.fireCooldown = 0.62 * mods.cooldownMult;
+        item.cooldown = def.baseCooldown * cdMult;
       }
     }
   }
@@ -846,7 +813,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 10. Pickups (magnet scaled by mob_speed)
+  // 10. Pickups (magnet & heal bonus scaled by mob_magnet, EXP by mob_loot)
   const magnetRange = 95 * mods.pickupMagnetMult;
   for (let i = state.pickups.length - 1; i >= 0; i--) {
     const p = state.pickups[i];
@@ -863,7 +830,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if (Math.hypot(player.x - p.x, player.y - p.y) <= player.radius + 12) {
       if (p.kind === 'heal') {
         const before = player.hp;
-        player.hp = Math.min(player.maxHp, player.hp + p.value);
+        const healAmount = Math.round(p.value * mods.healBonusMult);
+        player.hp = Math.min(player.maxHp, player.hp + healAmount);
         const healed = Math.round(player.hp - before);
         state.floatingTexts.push({
           x: player.x,
@@ -874,8 +842,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           maxLife: 0.7,
         });
       } else {
-        player.exp += p.value;
-        state.stats.totalExp += p.value;
+        const gainedExp = Math.round(p.value * mods.expMult);
+        player.exp += gainedExp;
+        state.stats.totalExp += gainedExp;
         while (player.exp >= player.expToNext) {
           player.exp -= player.expToNext;
           player.level += 1;

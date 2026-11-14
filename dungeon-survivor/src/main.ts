@@ -7,6 +7,7 @@ import {
   unlockSkillNode,
 } from './game/engine';
 import { MAX_EQUIP_SLOTS } from './game/equipment';
+import { SKILL_TREE_NODES, canUnlockSkill } from './game/skillTree';
 import type { GameState } from './game/types';
 import { InputController } from './input/controller';
 import { renderGame } from './render/canvasRenderer';
@@ -65,7 +66,11 @@ function syncUi(forceModals = false): void {
   hpFill.style.width = `${hpPct}%`;
   floorText.textContent = `${floor}F`;
   skillBtn.textContent = `🌳 LV${player.level} (SP ${player.skillPoints})`;
-  skillBtn.classList.toggle('has-sp', player.skillPoints > 0);
+  const unlockedSet = new Set(player.unlockedSkills);
+  const canUnlockAny = SKILL_TREE_NODES.some((n) =>
+    canUnlockSkill(unlockedSet, player.skillPoints, n.id)
+  );
+  skillBtn.classList.toggle('has-sp', canUnlockAny);
   gearCountText.textContent = `GEAR ${player.equipment.length}/${MAX_EQUIP_SLOTS}`;
   killsText.textContent = `KILLS ${stats.kills}`;
 

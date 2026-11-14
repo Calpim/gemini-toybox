@@ -48,6 +48,8 @@ describe('build-spec-html', () => {
 
     const html = renderHtml(graph);
     assert.match(html, /BIZ-EXP-01/);
+    assert.match(html, /BIZ-CMB-04/);
+    assert.match(html, /不採用/);
     assert.match(html, /APP-BOS-01/);
     assert.match(html, /回復の泉/);
   });

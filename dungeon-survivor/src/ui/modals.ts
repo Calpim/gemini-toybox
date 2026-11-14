@@ -63,6 +63,7 @@ export function renderModals(
 
         const isUnlocked = unlockedSet.has(node.id);
         const isAvailable = canUnlockSkill(unlockedSet, state.player.skillPoints, node.id);
+        const prereqMet = node.requires === null || unlockedSet.has(node.requires);
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -72,13 +73,21 @@ export function renderModals(
         btn.disabled = !isAvailable;
 
         const reqLabel = node.requires
-          ? `前提: ${getSkillNode(node.requires).name}`
-          : '基本ノード';
+          ? `Tier ${node.tier} · 必要 ${node.cost} SP · 前提: ${getSkillNode(node.requires).name}`
+          : `Tier ${node.tier} · 必要 ${node.cost} SP · 基本ノード`;
+
+        const stateLabel = isUnlocked
+          ? '習得済'
+          : isAvailable
+          ? `習得可 (-${node.cost} SP)`
+          : prereqMet
+          ? `🔒 SP不足 (要${node.cost})`
+          : `🔒 要${node.cost} SP`;
 
         btn.innerHTML = `
           <div class="node-top">
             <strong>${node.name}</strong>
-            <span class="node-state">${isUnlocked ? '習得済' : isAvailable ? '習得可 (-1 SP)' : '🔒 ロック'}</span>
+            <span class="node-state">${stateLabel}</span>
           </div>
           <div class="node-desc">${node.description}</div>
           <div class="node-req">${reqLabel}</div>

@@ -73,17 +73,6 @@ export interface EnemyProjectileState {
   life: number;
 }
 
-export interface TurretState {
-  id: number;
-  x: number;
-  y: number;
-  life: number;
-  maxLife: number;
-  fireCooldown: number;
-  range: number;
-  damage: number;
-}
-
 export interface ChestState {
   id: number;
   x: number;
@@ -143,7 +132,6 @@ export interface GameState {
   enemies: EnemyState[];
   projectiles: ProjectileState[];
   enemyProjectiles: EnemyProjectileState[];
-  turrets: TurretState[];
   chests: ChestState[];
   pendingEquipDrop: PendingEquipDrop | null;
   pickups: PickupState[];

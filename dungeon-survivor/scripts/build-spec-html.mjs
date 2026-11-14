@@ -145,6 +145,8 @@ export function buildTraceabilityGraph(businessFeatures, appFeatures) {
         layer: 'business',
         featureName: feat.name,
         fileName: feat.fileName,
+        featureBackground: feat.background,
+        isFirstInFeature: feat.scenarios[0] === sc,
         linkedApps: [],
       });
     }
@@ -162,6 +164,8 @@ export function buildTraceabilityGraph(businessFeatures, appFeatures) {
         layer: 'app',
         featureName: feat.name,
         fileName: feat.fileName,
+        featureBackground: feat.background,
+        isFirstInFeature: feat.scenarios[0] === sc,
         brokenRefs: [],
       };
       appScenarios.push(enriched);
@@ -241,8 +245,19 @@ function renderSteps(steps) {
   </ul>`;
 }
 
+function renderBackgroundBox(bg) {
+  if (!bg || !bg.steps || bg.steps.length === 0) return '';
+  const title = bg.name ? `背景: ${bg.name}` : '背景・決定経緯';
+  return `<div class="bg-box">
+    <div class="bg-title">📋 ${escapeHtml(title)}</div>
+    <ul class="bg-steps">
+      ${bg.steps.map((s) => `<li>${escapeHtml(s.text)}</li>`).join('')}
+    </ul>
+  </div>`;
+}
+
 export function renderHtml(graph, title = 'Dungeon Survivor — Gherkin 仕様書ビューア') {
-  const { stats, bizScenarios, appScenarios, unlinkedBiz, orphanApps } = graph;
+  const { stats, bizScenarios, unlinkedBiz, orphanApps } = graph;
 
   const traceCards = bizScenarios
     .map((biz) => {
@@ -260,6 +275,7 @@ export function renderHtml(graph, title = 'Dungeon Survivor — Gherkin 仕様�
                   </div>
                   ${renderStatusBadge(app.status)}
                 </div>
+                ${app.isFirstInFeature ? renderBackgroundBox(app.featureBackground) : ''}
                 <h4>${escapeHtml(app.name)}</h4>
                 ${renderSteps(app.steps)}
               </div>`
@@ -280,6 +296,7 @@ export function renderHtml(graph, title = 'Dungeon Survivor — Gherkin 仕様�
             </div>
             ${renderStatusBadge(biz.status)}
           </div>
+          ${biz.isFirstInFeature ? renderBackgroundBox(biz.featureBackground) : ''}
           <h3>${escapeHtml(biz.name)}</h3>
           ${renderSteps(biz.steps)}
         </div>
@@ -485,6 +502,27 @@ export function renderHtml(graph, title = 'Dungeon Survivor — Gherkin 仕様�
       text-align: left;
     }
     th { background: rgba(30, 41, 59, 0.8); color: #cbd5e1; }
+    .bg-box {
+      margin: 8px 0 12px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .bg-title {
+      font-weight: 700;
+      color: #93c5fd;
+      margin-bottom: 4px;
+    }
+    .bg-steps {
+      margin: 0;
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
     .empty-link { color: #fca5a5; font-size: 13px; padding: 8px; }
     .hidden { display: none !important; }
   </style>

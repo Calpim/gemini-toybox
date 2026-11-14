@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tileCenterWorld } from '../core/dungeon';
-import { MAX_EQUIP_SLOTS, createEquippedItem } from './equipment';
+import { ALL_EQUIPMENT_IDS, MAX_EQUIP_SLOTS, createEquippedItem } from './equipment';
 import {
   acquireEquipment,
   createGameState,
@@ -10,8 +10,9 @@ import {
   stepGame,
   unlockSkillNode,
 } from './engine';
+import { canUnlockSkill } from './skillTree';
 
-describe('Game simulation engine (Phase 1 & Phase 2-A)', () => {
+describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
   it('[APP-MAP-03] does not regenerate HP over time and heals only on recovery orb pickup', () => {
     const state = createGameState({ seed: 100 });
     state.enemies = [];
@@ -33,6 +34,17 @@ describe('Game simulation engine (Phase 1 & Phase 2-A)', () => {
     });
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(90);
+  });
+
+  it('[APP-MAP-02] moves with raised baseSpeed (210 px/s) without speed skill', () => {
+    const state = createGameState({ seed: 123 });
+    state.enemies = [];
+    state.pickups = [];
+    expect(state.player.baseSpeed).toBe(210);
+
+    const startX = state.player.x;
+    stepGame(state, { x: 1, y: 0 }, 0.05);
+    expect(state.player.x - startX).toBeCloseTo(210 * 0.05, 1);
   });
 
   it('[APP-MAP-01] advances to floor N+1 when player touches upstairs tile', () => {
@@ -80,7 +92,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A)', () => {
     expect(state.projectiles.length).toBe(0);
   });
 
-  it('[APP-CMB-02] runs all 5 equipment categories in parallel (blade, orbit, drone, turret, coil)', () => {
+  it('[APP-CMB-02 & APP-CMB-04] excludes auto_turret and runs 4 active equipment categories in parallel', () => {
+    expect(ALL_EQUIPMENT_IDS).toEqual(['pulse_blade', 'orbit_shield', 'seeker_drone', 'reactive_coil']);
+
     const state = createGameState({ seed: 404 });
     state.pickups = [];
     state.chests = [];
@@ -88,7 +102,6 @@ describe('Game simulation engine (Phase 1 & Phase 2-A)', () => {
       createEquippedItem('pulse_blade'),
       createEquippedItem('orbit_shield'),
       createEquippedItem('seeker_drone'),
-      createEquippedItem('auto_turret'),
       createEquippedItem('reactive_coil'),
     ];
     state.enemies = [
@@ -109,15 +122,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A)', () => {
     ];
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    // pulse_blade (22) + reactive_coil (18) hit immediately, seeker_drone fired projectile, auto_turret deployed
     expect(state.enemies[0].hp).toBeLessThan(200);
     expect(state.projectiles.length).toBeGreaterThanOrEqual(1);
-    expect(state.turrets.length).toBe(1);
     expect(state.visualFx.some((fx) => fx.kind === 'slash')).toBe(true);
     expect(state.visualFx.some((fx) => fx.kind === 'lightning')).toBe(true);
   });
 
-  it('[APP-GRW-01 & APP-GRW-02] enforces DAG skill tree prerequisites and applies bit/overclock upgrades', () => {
+  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces DAG prerequisites and tiered SP costs (1/2/3)', () => {
     const state = createGameState({ seed: 505 });
     state.enemies = [];
     state.pickups = [
@@ -128,45 +139,73 @@ describe('Game simulation engine (Phase 1 & Phase 2-A)', () => {
     expect(state.player.level).toBe(2);
     expect(state.player.skillPoints).toBe(1);
 
-    // Cannot unlock tier 2 before tier 1 prerequisite
+    // Cannot unlock Tier 2 before Tier 1 prerequisite
     expect(unlockSkillNode(state, 'arm_parallel')).toBe(false);
     expect(state.player.skillPoints).toBe(1);
 
-    // Unlock arm_base then give 2 more SP for arm_parallel and arm_overclock
+    // Unlock Tier 1 (cost 1 SP)
     expect(unlockSkillNode(state, 'arm_base')).toBe(true);
+    expect(state.player.skillPoints).toBe(0);
+
+    // With only 1 SP, Tier 2 (cost 2 SP) remains locked even though prerequisite is met
+    state.player.skillPoints = 1;
+    expect(canUnlockSkill(new Set(state.player.unlockedSkills), state.player.skillPoints, 'arm_parallel')).toBe(false);
+    expect(unlockSkillNode(state, 'arm_parallel')).toBe(false);
+
+    // With 2 SP, Tier 2 unlocks and deducts 2 SP
     state.player.skillPoints = 2;
     expect(unlockSkillNode(state, 'arm_parallel')).toBe(true);
+    expect(state.player.skillPoints).toBe(0);
     expect(getOrbitBitPositions(state).length).toBe(2);
     expect(getSeekerDronePositions(state).length).toBe(2);
 
+    // Tier 3 requires 3 SP
+    state.player.skillPoints = 2;
+    expect(unlockSkillNode(state, 'arm_overclock')).toBe(false);
+    state.player.skillPoints = 3;
     expect(unlockSkillNode(state, 'arm_overclock')).toBe(true);
     expect(state.player.skillPoints).toBe(0);
+
+    // mob_magnet enhances heal orb effectiveness (+25%)
+    state.player.skillPoints = 1;
+    expect(unlockSkillNode(state, 'mob_magnet')).toBe(true);
+    state.player.hp = 50;
+    state.pickups = [{ id: 701, kind: 'heal', x: state.player.x, y: state.player.y, value: 20 }];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.player.hp).toBe(75);
   });
 
-  it('[APP-GRW-03] pauses for replace or scrap choice when 6th equipment is acquired at 5/5 slots', () => {
+  it('[APP-GRW-03 & APP-GRW-04] enforces 3-slot limit, auto-levels owned duplicates, and prompts on 4th unowned gear', () => {
+    expect(MAX_EQUIP_SLOTS).toBe(3);
+
     const state = createGameState({ seed: 606 });
     state.player.equipment = [
       createEquippedItem('pulse_blade'),
       createEquippedItem('orbit_shield'),
       createEquippedItem('seeker_drone'),
-      createEquippedItem('auto_turret'),
-      createEquippedItem('reactive_coil'),
     ];
     expect(state.player.equipment.length).toBe(MAX_EQUIP_SLOTS);
 
-    acquireEquipment(state, createEquippedItem('pulse_blade', 2));
+    // Duplicate item auto-levels up without opening modal
+    acquireEquipment(state, createEquippedItem('seeker_drone', 1));
+    expect(state.status).toBe('playing');
+    expect(state.pendingEquipDrop).toBeNull();
+    expect(state.player.equipment.find((e) => e.id === 'seeker_drone')?.level).toBe(2);
+
+    // Unowned 4th item triggers replace/scrap choice modal
+    acquireEquipment(state, createEquippedItem('reactive_coil', 1));
     expect(state.status).toBe('equip_choice');
     expect(state.pendingEquipDrop).not.toBeNull();
 
-    // Scrap upgrades all 5 equipped items by Lv+1
+    // Scrap upgrades all 3 equipped items by Lv+1
     expect(resolveEquipChoice(state, { type: 'scrap' })).toBe(true);
     expect(state.status).toBe('playing');
-    expect(state.player.equipment.every((e) => e.level === 2)).toBe(true);
+    expect(state.player.equipment.map((e) => e.level)).toEqual([2, 2, 3]);
 
-    // Replace slot 0 on next 6th drop
-    acquireEquipment(state, createEquippedItem('seeker_drone', 3));
+    // Replace slot 0 on next unowned drop
+    acquireEquipment(state, createEquippedItem('reactive_coil', 1));
     expect(resolveEquipChoice(state, { type: 'replace', slotIndex: 0 })).toBe(true);
-    expect(state.player.equipment[0].id).toBe('seeker_drone');
-    expect(state.player.equipment[0].level).toBe(3);
+    expect(state.player.equipment[0].id).toBe('reactive_coil');
+    expect(state.player.equipment[0].level).toBe(1);
   });
 });

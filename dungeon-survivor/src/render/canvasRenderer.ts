@@ -104,29 +104,7 @@ export function renderGame(
     ctx.restore();
   }
 
-  // 3. Deployed turrets
-  for (const turret of state.turrets) {
-    const lifeRatio = Math.max(0, turret.life / turret.maxLife);
-    ctx.save();
-    ctx.translate(turret.x, turret.y);
-    ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, 0, 14, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * lifeRatio);
-    ctx.stroke();
-
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath();
-    ctx.arc(0, 0, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fef3c7';
-    ctx.beginPath();
-    ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // 4. Pickups
+  // 3. Pickups
   for (const p of state.pickups) {
     if (p.kind === 'heal') {
       ctx.fillStyle = '#10b981';

@@ -7,7 +7,7 @@ export type SkillNodeId =
   | 'def_sensor'
   | 'def_pulse'
   | 'def_aegis'
-  | 'mob_speed'
+  | 'mob_magnet'
   | 'mob_dash'
   | 'mob_loot';
 
@@ -15,6 +15,7 @@ export interface SkillNodeDef {
   id: SkillNodeId;
   branch: SkillBranch;
   tier: 1 | 2 | 3;
+  cost: number;
   name: string;
   requires: SkillNodeId | null;
   description: string;
@@ -25,6 +26,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'arm_base',
     branch: 'arms',
     tier: 1,
+    cost: 1,
     name: '出力強化',
     requires: null,
     description: '全自動攻撃ダメージ +15%',
@@ -33,6 +35,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'arm_parallel',
     branch: 'arms',
     tier: 2,
+    cost: 2,
     name: 'ビット並列制御',
     requires: 'arm_base',
     description: '公転ビット・自律ドローン展開数 +1',
@@ -41,6 +44,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'arm_overclock',
     branch: 'arms',
     tier: 3,
+    cost: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
     description: '全装備クールダウン -20% & ドローン弾貫通化',
@@ -49,6 +53,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'def_sensor',
     branch: 'defense',
     tier: 1,
+    cost: 1,
     name: '広域索敵',
     requires: null,
     description: '全迎撃レンジ +20%',
@@ -57,6 +62,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'def_pulse',
     branch: 'defense',
     tier: 2,
+    cost: 2,
     name: '電磁リパルサー',
     requires: 'def_sensor',
     description: '周期的に接近敵をノックバック＋放電ダメージ',
@@ -65,33 +71,37 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'def_aegis',
     branch: 'defense',
     tier: 3,
+    cost: 3,
     name: 'オートパリィ盾',
     requires: 'def_pulse',
     description: '6秒ごとに被弾を1回無効化し周囲へ反射衝撃',
   },
   {
-    id: 'mob_speed',
+    id: 'mob_magnet',
     branch: 'mobility',
     tier: 1,
-    name: '軽量化フレーム',
+    cost: 1,
+    name: '磁力回収フレーム',
     requires: null,
-    description: '移動速度 +12% & アイテム吸引範囲 +35%',
+    description: 'アイテム吸引範囲 +50% & 回復オーブ効果 +25%',
   },
   {
     id: 'mob_dash',
     branch: 'mobility',
     tier: 2,
+    cost: 2,
     name: '戦術ステップ',
-    requires: 'mob_speed',
-    description: '被弾時の無敵時間を延長＋緊急回避加速',
+    requires: 'mob_magnet',
+    description: '被弾時の無敵時間を延長＋緊急回避ステップ',
   },
   {
     id: 'mob_loot',
     branch: 'mobility',
     tier: 3,
+    cost: 3,
     name: 'トレジャー解析',
     requires: 'mob_dash',
-    description: '回復アイテム・宝箱の出現率 +25%',
+    description: '回復アイテム・宝箱の出現率 +35% & 獲得EXP +20%',
   },
 ] as const;
 
@@ -108,8 +118,9 @@ export function canUnlockSkill(
   skillPoints: number,
   nodeId: SkillNodeId
 ): boolean {
-  if (skillPoints < 1 || unlocked.has(nodeId)) return false;
+  if (unlocked.has(nodeId)) return false;
   const node = getSkillNode(nodeId);
+  if (skillPoints < node.cost) return false;
   if (node.requires === null) return true;
   return unlocked.has(node.requires);
 }
@@ -122,10 +133,11 @@ export interface ComputedSkillModifiers {
   rangeMult: number;
   hasRepulsor: boolean;
   hasAegisParry: boolean;
-  moveSpeedMult: number;
   pickupMagnetMult: number;
+  healBonusMult: number;
   hasTacticalStep: boolean;
   lootBonusRate: number;
+  expMult: number;
 }
 
 export function computeSkillModifiers(unlocked: ReadonlySet<SkillNodeId>): ComputedSkillModifiers {
@@ -137,9 +149,10 @@ export function computeSkillModifiers(unlocked: ReadonlySet<SkillNodeId>): Compu
     rangeMult: unlocked.has('def_sensor') ? 1.2 : 1.0,
     hasRepulsor: unlocked.has('def_pulse'),
     hasAegisParry: unlocked.has('def_aegis'),
-    moveSpeedMult: unlocked.has('mob_speed') ? 1.12 : 1.0,
-    pickupMagnetMult: unlocked.has('mob_speed') ? 1.35 : 1.0,
+    pickupMagnetMult: unlocked.has('mob_magnet') ? 1.5 : 1.0,
+    healBonusMult: unlocked.has('mob_magnet') ? 1.25 : 1.0,
     hasTacticalStep: unlocked.has('mob_dash'),
-    lootBonusRate: unlocked.has('mob_loot') ? 0.25 : 0,
+    lootBonusRate: unlocked.has('mob_loot') ? 0.35 : 0,
+    expMult: unlocked.has('mob_loot') ? 1.2 : 1.0,
   };
 }
