@@ -430,9 +430,9 @@
       <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (22/22)</a>
       <a class="nav-pill" href="#sec-glossary">📖 用語集 (13)</a>
       <a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (16)</a>
-      <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (10)</a>
+      <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (11)</a>
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (8)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (6)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (7)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -446,14 +446,14 @@
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">22</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">57</div></div>
-        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">31</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">53</div></div>
+        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">36</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">6</div></div>
-        <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">3</div></div>
+        <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">4</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 22 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 53 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 55 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -489,7 +489,7 @@
     </div>
     <div class="dash-panel dash-undefined">
       <div class="dash-panel-head">
-        <h3>⚠️ 「未定義」の状態遷移 <span class="count-pill-amber">3件</span></h3>
+        <h3>⚠️ 「未定義」の状態遷移 <span class="count-pill-amber">4件</span></h3>
         <span class="dash-sub">遷移先が未定義・未実装の遷移</span>
       </div>
       <ul class="dash-list">
@@ -524,6 +524,17 @@
                     <div class="dash-item-desc"><code class="inline-code">GameStatus</code> にクリア選択状態（<code class="inline-code">victory</code> 等）が未定義</div>
                     <div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-10" data-source-file="specs/state-transitions.md" data-item-id="ST-10" title="元仕様ファイル specs/state-transitions.md (ST-10)">specs/state-transitions.md#ST-10</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div>
+                  </li><li class="dash-item" data-status="Unknown">
+                    <div class="dash-item-head">
+                      <a class="id-pill id-doc" href="#ST-11">ST-11</a>
+                      <span class="trans-chain"><code class="inline-code">equip_choice</code> → 一定数の余剰装備スクラップ蓄積による装備枠拡張 → <span class="undef-pill">未定義</span></span>
+                      <span class="badge badge-unknown">Unknown（未確定）</span>
+                    </div>
+                    <div class="dash-item-desc">先輩アイデア案（一定数スクラップで枠4以上へ拡張、未定義・未実装）</div>
+                    <div class="source-cell">
+    <a class="source-link" href="../specs/state-transitions.md#ST-11" data-source-file="specs/state-transitions.md" data-item-id="ST-11" title="元仕様ファイル specs/state-transitions.md (ST-11)">specs/state-transitions.md#ST-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div>
                   </li>
@@ -963,7 +974,7 @@
           
           <h3>装備のレベルが上がると威力だけでなくビット数や攻撃挙動も進化する</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">同種装備の獲得やスクラップ変換によって装備レベルが上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">ダメージやクールダウンだけでなく、公転ビット数の増加・攻撃範囲や跳弾数の増加など挙動そのものが変化する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">同種装備の獲得等によって装備レベルが上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">ダメージやクールダウンだけでなく、公転ビット数の増加・攻撃範囲や跳弾数の増加など挙動そのものが変化する</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1106,7 +1117,7 @@
               </div>
         </div>
       </section>
-      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true" data-has-disputed="false" data-has-unknown="false">
+      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-03">
           <div class="card-head">
             <div class="id-group">
@@ -1114,12 +1125,12 @@
               <span class="file-pill">03-growth-skill-tree.feature</span>
               <span class="feature-pill">ハイブリッド成長と前提付きスキルツリー（ビジネス仕様）</span>
             </div>
-            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
           </div>
           
-          <h3>装備枠に上限（3枠）を設けてビルドの取捨選択を生み出す</h3>
+          <h3>装備枠に上限（3枠）を設けてビルドの取捨選択を生み出す（余剰装備の扱いは暫定）</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロット上限（3枠）がすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、既存装備全体の強化（スクラップ変換）にするかを選択できる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロット上限（3枠）は確定仕様としてすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、暫定実装のスクラップ変換（他装備強化・あるいは一定数スクラップでの装備枠拡張など未確定案）の扱いとする</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1461,13 +1472,13 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="GLS-09" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-09" data-source-file="specs/glossary.md">
+      <tr id="GLS-09" class="spec-row" data-section="glossary" data-status="Inferred" data-item-id="GLS-09" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-09">GLS-09</a></td>
-        <td><strong>スクラップ変換</strong><div class="sub-code"><code class="inline-code">resolveEquipChoice(&#39;scrap&#39;)</code></div></td>
-        <td>装備枠3枠が満杯の状態で未所持装備を入手した際、入れ替えずに既存所持装備すべてのレベルを+1する成長選択肢。</td>
-        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a></div></td>
-        <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
+        <td><strong>スクラップ変換（暫定）</strong><div class="sub-code"><code class="inline-code">resolveEquipChoice(&#39;scrap&#39;)</code></div></td>
+        <td>装備枠3枠が満杯の状態で未所持装備を入手した際の暫定処理（AI追加案）。現行コードでは既存全装備Lv+1だが、仕様としては未確定（「他装備の強化」または「一定数スクラップ蓄積で装備枠拡張」等の候補あり）。</td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>（仕様未決定・要確認）</div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-09" data-source-file="specs/glossary.md" data-item-id="GLS-09" title="元仕様ファイル specs/glossary.md (GLS-09)">specs/glossary.md#GLS-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1755,7 +1766,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">STATE TRANSITIONS / 状態遷移図</div>
-        <h2>🔀 状態遷移図 <span class="count-pill" data-section-count="transitions">(10件)</span></h2>
+        <h2>🔀 状態遷移図 <span class="count-pill" data-section-count="transitions">(11件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md" data-source-file="specs/state-transitions.md" data-item-id="" title="元仕様ファイル specs/state-transitions.md ()">specs/state-transitions.md</a>
@@ -1810,26 +1821,26 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="ST-03" class="spec-row " data-section="transitions" data-status="Confirmed" data-undefined="false" data-item-id="ST-03" data-source-file="specs/state-transitions.md">
+      <tr id="ST-03" class="spec-row " data-section="transitions" data-status="Inferred" data-undefined="false" data-item-id="ST-03" data-source-file="specs/state-transitions.md">
         <td><a class="id-pill id-doc" href="#ST-03">ST-03</a></td>
         <td><code class="inline-code">playing</code></td>
         <td>装備枠3/3が満杯の状態で未所持装備を拾う</td>
         <td><code class="inline-code">equip_choice</code></td>
-        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
-        <td><div class="note-text">入れ替え／スクラップ選択モーダルへ移行</div><div class="source-cell">
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a></div></td>
+        <td><div class="note-text">3枠上限は確定、余剰装備モーダル仕様は暫定</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-03" data-source-file="specs/state-transitions.md" data-item-id="ST-03" title="元仕様ファイル specs/state-transitions.md (ST-03)">specs/state-transitions.md#ST-03</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="ST-04" class="spec-row " data-section="transitions" data-status="Confirmed" data-undefined="false" data-item-id="ST-04" data-source-file="specs/state-transitions.md">
+      <tr id="ST-04" class="spec-row " data-section="transitions" data-status="Inferred" data-undefined="false" data-item-id="ST-04" data-source-file="specs/state-transitions.md">
         <td><a class="id-pill id-doc" href="#ST-04">ST-04</a></td>
         <td><code class="inline-code">equip_choice</code></td>
-        <td>入れ替えスロット選択またはスクラップ実行</td>
+        <td>入れ替えスロット選択または暫定スクラップ実行</td>
         <td><code class="inline-code">playing</code></td>
-        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a></div></td>
-        <td><div class="note-text"><code class="inline-code">pendingEquipDrop</code> を確定し再開</div><div class="source-cell">
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a></div></td>
+        <td><div class="note-text">AI追加の暫定スクラップ変換（全装備Lv+1）は未確定</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-04" data-source-file="specs/state-transitions.md" data-item-id="ST-04" title="元仕様ファイル specs/state-transitions.md (ST-04)">specs/state-transitions.md#ST-04</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1903,6 +1914,18 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a></div></td>
         <td><div class="note-text"><code class="inline-code">GameStatus</code> にクリア選択状態（<code class="inline-code">victory</code> 等）が未定義</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-10" data-source-file="specs/state-transitions.md" data-item-id="ST-10" title="元仕様ファイル specs/state-transitions.md (ST-10)">specs/state-transitions.md#ST-10</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="ST-11" class="spec-row row-undefined" data-section="transitions" data-status="Unknown" data-undefined="true" data-item-id="ST-11" data-source-file="specs/state-transitions.md">
+        <td><a class="id-pill id-doc" href="#ST-11">ST-11</a></td>
+        <td><code class="inline-code">equip_choice</code></td>
+        <td>一定数の余剰装備スクラップ蓄積による装備枠拡張</td>
+        <td><span class="undef-pill">⚠️ 未定義</span></td>
+        <td><span class="badge badge-unknown">Unknown（未確定）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a></div></td>
+        <td><div class="note-text">先輩アイデア案（一定数スクラップで枠4以上へ拡張、未定義・未実装）</div><div class="source-cell">
+    <a class="source-link" href="../specs/state-transitions.md#ST-11" data-source-file="specs/state-transitions.md" data-item-id="ST-11" title="元仕様ファイル specs/state-transitions.md (ST-11)">specs/state-transitions.md#ST-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>
@@ -2033,7 +2056,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(6件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(7件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -2109,6 +2132,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#ST-10">ST-10</a></div></td>
         <td><div class="note-text">5Fボスフェーズを実装する、または仕様から外す判断を下す時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-06" data-source-file="specs/decisions.md" data-item-id="DEC-06" title="元仕様ファイル specs/decisions.md (DEC-06)">specs/decisions.md#DEC-06</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-07" class="spec-row" data-section="decisions" data-status="Inferred" data-item-id="DEC-07" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-07">DEC-07</a></td>
+        <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
+        <td><strong>装備枠3枠上限は確定とし、満杯時の余剰装備処理（スクラップ変換）は <code class="inline-code">Confirmed</code> から <code class="inline-code">Inferred</code>（暫定）へ変更</strong><div class="note-text">現行のスクラップ変換（全装備Lv+1）はAIが暫定追加したもので未定義のため。候補として「他装備強化」「一定数スクラップ蓄積で装備枠拡張」を検討中</div></td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span><div class="sub-code">Confirmed → Inferred</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#ST-03">ST-03</a><a class="ref-pill ref-link" href="#ST-04">ST-04</a><a class="ref-pill ref-link" href="#ST-11">ST-11</a></div></td>
+        <td><div class="note-text">余剰装備の扱い（強化変換か枠拡張か）を正式確定する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-07" data-source-file="specs/decisions.md" data-item-id="DEC-07" title="元仕様ファイル specs/decisions.md (DEC-07)">specs/decisions.md#DEC-07</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>

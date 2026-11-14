@@ -12,7 +12,7 @@ Dungeon Survivor のドメイン用語・コード表記・仕様ステータス
 | GLS-06 | 追撃発光ランナー | `isAmbush` (`runner`) | トレーサー発見時に2〜3体ポップする高速敵。暗い通路でも視認できるよう周囲を照らす光輪（64px）を持つが、稼ぎ防止のためドロップは一切なし。 | Confirmed | BIZ-EXP-07, APP-MAP-07, INV-05 | `src/game/engine.ts`, `src/render/canvasRenderer.ts` |
 | GLS-07 | 階段守護中ボス（GUARDIAN） | `isRoomBoss` / `isStairsGuard` | 各階層の階段部屋に初期配置される強化タンク型の中ボス。守護敵および階段部屋内の敵を全滅させるまで階段が封印（LOCKED）される。 | Confirmed | BIZ-EXP-01, APP-MAP-01, INV-04 | `src/game/engine.ts` |
 | GLS-08 | Fog of War（部屋・通路視界） | `CORRIDOR_VISION_RADIUS` / `explored` | 通路滞在時は自機周囲の円形ライトのみ明るく、部屋入室時は該当部屋全体が点灯する段階的視界制御。 | Confirmed | BIZ-EXP-06, APP-MAP-06, PRM-12 | `src/render/canvasRenderer.ts` |
-| GLS-09 | スクラップ変換 | `resolveEquipChoice('scrap')` | 装備枠3枠が満杯の状態で未所持装備を入手した際、入れ替えずに既存所持装備すべてのレベルを+1する成長選択肢。 | Confirmed | BIZ-GRW-03, APP-GRW-03 | `src/game/engine.ts` |
+| GLS-09 | スクラップ変換（暫定） | `resolveEquipChoice('scrap')` | 装備枠3枠が満杯の状態で未所持装備を入手した際の暫定処理（AI追加案）。現行コードでは既存全装備Lv+1だが、仕様としては未確定（「他装備の強化」または「一定数スクラップ蓄積で装備枠拡張」等の候補あり）。 | Inferred | BIZ-GRW-03, APP-GRW-03, DEC-07 | `src/game/engine.ts`（仕様未決定・要確認） |
 | GLS-10 | 回復の泉（安全前室） | `（未実装）` | 節目階（5F）のボス戦手前に配置され、敵不在・タイマー停止でHPを100%回復するとされる部屋。現行コードでは5F通常生成のまま未実装であり仕様と齟齬がある。 | Disputed | BIZ-BOS-01, APP-BOS-01, PRM-16, ST-09, DEC-06 | `specs/app/04-fountain-and-boss.feature` vs `src/game/engine.ts` |
 | GLS-11 | 節目フロアボス戦（5F守護者） | `（未実装）` | 5F最奥で背後ゲート閉鎖後に弾幕・突進ボスと戦い、撃破時にクリア／エンドレス選択モーダルを出す想定。毎階階段GUARDIAN制との位置づけ調整が未決。 | Disputed | BIZ-BOS-02, APP-BOS-02, PRM-16, ST-10, DEC-06 | `specs/app/04-fountain-and-boss.feature` vs `src/game/engine.ts` |
 | GLS-12 | 装備強化レベル上限 | `EquippedItem.level` | 同種装備取得やスクラップ変換で装備レベルをどこまで上げられるかの仕様（公転ビット数のみ最大6で頭打ち、他装備は上限未定義）。 | Unknown | BIZ-CMB-05, APP-CMB-05, PRM-13 | `src/game/equipment.ts` |
