@@ -11,6 +11,7 @@ import {
   acquireEquipment,
   createGameState,
   getOrbitBitPositions,
+  getPlayerBaseAttackStats,
   getSeekerDronePositions,
   resolveEquipChoice,
   rollDropEquipmentLevel,
@@ -68,11 +69,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.stats.floorsCleared).toBe(1);
   });
 
-  it('[APP-CMB-01 & APP-CMB-03] auto-fires at visible enemy in range and blocks shots through walls', () => {
+  it('[APP-CMB-01 & APP-CMB-03] auto-fires intrinsic base attack (even with 0 gear) and equipped shots, blocking both through walls', () => {
     const state = createGameState({ seed: 303 });
     state.pickups = [];
     state.chests = [];
-    state.player.equipment = [createEquippedItem('seeker_drone')];
+    expect(state.player.equipment).toEqual([]);
     state.enemies = [
       {
         id: 500,
@@ -91,13 +92,14 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ];
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    expect(state.projectiles.length).toBe(1);
+    expect(state.projectiles.some((p) => p.kind === 'base')).toBe(true);
 
     const wallTx = Math.floor((state.player.x + 40) / 40);
     const wallTy = Math.floor(state.player.y / 40);
     state.map.tiles[wallTy * state.map.width + wallTx] = 'wall';
     state.projectiles = [];
-    for (const eq of state.player.equipment) eq.cooldown = 0;
+    state.player.baseAttackCooldown = 0;
+    state.player.equipment = [createEquippedItem('seeker_drone')];
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.projectiles.length).toBe(0);
@@ -165,6 +167,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const bladeState = createGameState({ seed: 451 });
     bladeState.chests = [];
     bladeState.pickups = [];
+    bladeState.player.baseAttackCooldown = 999;
     bladeState.player.equipment = [createEquippedItem('pulse_blade', 1)];
     bladeState.enemies = [
       {
@@ -216,6 +219,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const discState = createGameState({ seed: 452 });
     discState.chests = [];
     discState.pickups = [];
+    discState.player.baseAttackCooldown = 999;
     discState.player.equipment = [createEquippedItem('ricochet_disc', 1)];
     discState.enemies = [
       {
@@ -252,6 +256,54 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     expect(discState.enemies[0].hp).toBeLessThan(100);
     expect(discState.enemies[1].hp).toBeLessThan(100);
+  });
+
+  it('[APP-CMB-06] scales player intrinsic Core Shot by both player level and skill rank', () => {
+    const state = createGameState({ seed: 460 });
+    state.chests = [];
+    state.pickups = [];
+    expect(state.player.equipment).toEqual([]);
+
+    const lv1Stats = getPlayerBaseAttackStats(state.player);
+    expect(lv1Stats).toMatchObject({ damage: 12, shotCount: 1, skillRank: 0 });
+
+    // Leveling player up to Lv3 increases damage, range, shotCount, and reduces cooldown
+    state.player.level = 3;
+    const lv3Stats = getPlayerBaseAttackStats(state.player);
+    expect(lv3Stats.damage).toBeGreaterThan(lv1Stats.damage);
+    expect(lv3Stats.range).toBeGreaterThan(lv1Stats.range);
+    expect(lv3Stats.cooldown).toBeLessThan(lv1Stats.cooldown);
+    expect(lv3Stats.shotCount).toBe(2);
+
+    // Unlocking skills (Tier1 + Tier2 => skillRank 3) further boosts damage, cooldown, and shotCount
+    state.player.skillPoints = 3;
+    expect(unlockSkillNode(state, 'arm_base')).toBe(true);
+    expect(unlockSkillNode(state, 'arm_parallel')).toBe(true);
+    const skilledStats = getPlayerBaseAttackStats(state.player);
+    expect(skilledStats.skillRank).toBe(3);
+    expect(skilledStats.damage).toBeGreaterThan(lv3Stats.damage);
+    expect(skilledStats.cooldown).toBeLessThan(lv3Stats.cooldown);
+    expect(skilledStats.shotCount).toBe(3);
+
+    // Fires 3 base shots simultaneously at a visible enemy with 0 equipment
+    state.enemies = [
+      {
+        id: 910,
+        x: state.player.x + 90,
+        y: state.player.y,
+        radius: 13,
+        speed: 0,
+        hp: 100,
+        maxHp: 100,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(3);
   });
 
   it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces DAG prerequisites and tiered SP costs (1/2/3)', () => {
@@ -344,7 +396,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.equipment[0].level).toBe(4);
   });
 
-  it('[APP-GRW-06] starts run with 0 items and guarantees an accessible 1F starter chest in Room 0', () => {
+  it('[APP-GRW-06] starts run with 0 items without Room 0 chest and fights using intrinsic base attack', () => {
     const state = createGameState({ seed: 707 });
     expect(state.player.equipment).toEqual([]);
 
@@ -354,17 +406,33 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const minY = startRoom.y * 40;
     const maxY = (startRoom.y + startRoom.h) * 40;
 
-    const starterChest = state.chests.find(
+    const chestInStartRoom = state.chests.find(
       (c) => c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY
     );
-    expect(starterChest).toBeDefined();
+    expect(chestInStartRoom).toBeUndefined();
+    expect(state.chests.length).toBeGreaterThanOrEqual(1);
 
-    // Walking right reaches the guaranteed starter chest and grants Lv1 equipment
-    for (let i = 0; i < 15; i++) {
-      stepGame(state, { x: 1, y: 0 }, 0.03);
+    // Even with 0 equipment, player defeats an approaching enemy using intrinsic Core Shot
+    state.enemies = [
+      {
+        id: 777,
+        x: state.player.x + 80,
+        y: state.player.y,
+        radius: 13,
+        speed: 0,
+        hp: 20,
+        maxHp: 20,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    for (let i = 0; i < 60; i++) {
+      stepGame(state, { x: 0, y: 0 }, 0.02);
     }
-    expect(state.player.equipment.length).toBe(1);
-    expect(state.player.equipment[0].level).toBe(1);
+    expect(state.stats.kills).toBe(1);
   });
 
   it('[APP-GRW-07] scales drop levels around player average level and equips ground equip drops on direct pickup', () => {

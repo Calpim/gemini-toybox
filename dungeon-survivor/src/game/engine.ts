@@ -22,7 +22,7 @@ import {
   getSkillNode,
   type SkillNodeId,
 } from './skillTree';
-import type { ChestState, EnemyState, GameState, PickupState, Vec2 } from './types';
+import type { ChestState, EnemyState, GameState, PickupState, PlayerState, Vec2 } from './types';
 
 export interface CreateGameOptions {
   seed?: number;
@@ -61,19 +61,6 @@ function populateFloor(
   const pickups: PickupState[] = [];
   const chests: ChestState[] = [];
   let nextId = startId;
-
-  // Guarantee 1 starter chest inside 1F start room so zero-item starts always have an accessible first weapon
-  if (floor === 1 && map.rooms.length > 0) {
-    const startRoom = map.rooms[0];
-    const chestTx = Math.min(startRoom.x + startRoom.w - 2, map.startTile.tx + 1);
-    const chestPos = tileCenterWorld(chestTx, map.startTile.ty);
-    chests.push({
-      id: nextId++,
-      x: chestPos.x,
-      y: chestPos.y,
-      opened: false,
-    });
-  }
 
   const chestCandidates: number[] = [];
 
@@ -174,6 +161,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       facingAngle: 0,
       orbitAngle: 0,
       orbitRadius: 64,
+      baseAttackCooldown: 0,
       repulsorCooldown: 0,
       aegisCooldown: 0,
       tacticalStepCooldown: 0,
@@ -472,6 +460,33 @@ function triggerChainLightning(
   return true;
 }
 
+export interface PlayerBaseAttackStats {
+  damage: number;
+  cooldown: number;
+  range: number;
+  shotCount: number;
+  speed: number;
+  skillRank: number;
+}
+
+export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackStats {
+  const mods = computeSkillModifiers(new Set(player.unlockedSkills));
+  const lvlBonus = Math.max(0, player.level - 1);
+  const { skillRank } = mods;
+  const damage = Math.round((12 + lvlBonus * 3 + skillRank * 2) * mods.damageMult);
+  const cooldown = Math.max(
+    0.25,
+    (0.62 - Math.min(0.24, lvlBonus * 0.025 + skillRank * 0.015)) * mods.cooldownMult
+  );
+  const range = Math.round((210 + lvlBonus * 8 + skillRank * 5) * mods.rangeMult);
+  const shotCount = Math.min(
+    4,
+    1 + (player.level >= 3 ? 1 : 0) + (skillRank >= 3 ? 1 : 0) + (player.level >= 6 && skillRank >= 6 ? 1 : 0)
+  );
+  const speed = 460 + lvlBonus * 12;
+  return { damage, cooldown, range, shotCount, speed, skillRank };
+}
+
 /**
  * Advances the simulation by dt seconds.
  * Pure domain update: decoupled from DOM/Canvas for deterministic Vitest verification.
@@ -493,6 +508,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   }
 
   if (player.invulnTimer > 0) player.invulnTimer = Math.max(0, player.invulnTimer - clampedDt);
+  if (player.baseAttackCooldown > 0) {
+    player.baseAttackCooldown = Math.max(0, player.baseAttackCooldown - clampedDt);
+  }
   if (player.repulsorCooldown > 0) player.repulsorCooldown = Math.max(0, player.repulsorCooldown - clampedDt);
   if (player.aegisCooldown > 0) player.aegisCooldown = Math.max(0, player.aegisCooldown - clampedDt);
   if (player.tacticalStepCooldown > 0) player.tacticalStepCooldown = Math.max(0, player.tacticalStepCooldown - clampedDt);
@@ -567,6 +585,35 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         maxLife: 0.25,
       });
       player.repulsorCooldown = 3.5 * mods.cooldownMult;
+    }
+  }
+
+  // 4.5. Player intrinsic Core Shot auto-attack (scales with player.level & skillRank; APP-CMB-01, APP-CMB-06)
+  if (player.baseAttackCooldown <= 0 && state.enemies.length > 0) {
+    const baseStats = getPlayerBaseAttackStats(player);
+    const target = findNearestVisibleEnemy(player.x, player.y, baseStats.range, state);
+    if (target) {
+      const centerAngle = Math.atan2(target.y - player.y, target.x - player.x);
+      const spreadStep = 0.14;
+      for (let s = 0; s < baseStats.shotCount; s++) {
+        const offset = (s - (baseStats.shotCount - 1) / 2) * spreadStep;
+        const angle = centerAngle + offset;
+        state.projectiles.push({
+          id: state.nextEntityId++,
+          kind: 'base',
+          x: player.x,
+          y: player.y,
+          vx: Math.cos(angle) * baseStats.speed,
+          vy: Math.sin(angle) * baseStats.speed,
+          radius: 5,
+          damage: baseStats.damage,
+          life: 0.75,
+          pierce: false,
+          hitEnemyIds: [],
+          color: '#34d399',
+        });
+      }
+      player.baseAttackCooldown = baseStats.cooldown;
     }
   }
 

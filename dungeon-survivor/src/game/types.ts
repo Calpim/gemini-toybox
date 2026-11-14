@@ -28,6 +28,7 @@ export interface PlayerState {
   facingAngle: number;
   orbitAngle: number;
   orbitRadius: number;
+  baseAttackCooldown: number;
   repulsorCooldown: number;
   aegisCooldown: number;
   tacticalStepCooldown: number;
@@ -50,7 +51,7 @@ export interface EnemyState {
 
 export interface ProjectileState {
   id: number;
-  kind?: 'drone' | 'disc';
+  kind?: 'base' | 'drone' | 'disc';
   x: number;
   y: number;
   vx: number;

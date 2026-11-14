@@ -1,3 +1,4 @@
+import { getPlayerBaseAttackStats } from '../game/engine';
 import {
   EQUIPMENT_CATALOG,
   MAX_EQUIP_SLOTS,
@@ -106,9 +107,11 @@ export function renderModals(
       els.skillColumns.appendChild(col);
     }
 
-    els.skillGearSummary.innerHTML =
+    const baseStats = getPlayerBaseAttackStats(state.player);
+    const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">自機コアショット (Lv${state.player.level} / スキルR${baseStats.skillRank}): 威力${baseStats.damage} / ${baseStats.shotCount}発 / ${baseStats.cooldown.toFixed(2)}s</span>`;
+    const gearPills =
       state.player.equipment.length === 0
-        ? '<span style="font-size:12px;color:#94a3b8;">未装備（スタート部屋やダンジョン内の宝箱・敵ドロップから獲得）</span>'
+        ? '<span style="font-size:12px;color:#94a3b8;">装備枠 0/3（探索や敵ドロップで装備を追加可能）</span>'
         : state.player.equipment
             .map((eq) => {
               const def = EQUIPMENT_CATALOG[eq.id];
@@ -116,6 +119,7 @@ export function renderModals(
               return `<span class="gear-pill" style="border-color:${def.color}55;color:${def.color}">${def.name} Lv${eq.level} (${evo})</span>`;
             })
             .join('');
+    els.skillGearSummary.innerHTML = `${basePill}${gearPills}`;
   } else {
     els.skillModal.classList.add('hidden');
   }

@@ -126,6 +126,7 @@ export function canUnlockSkill(
 }
 
 export interface ComputedSkillModifiers {
+  skillRank: number;
   damageMult: number;
   extraBits: number;
   cooldownMult: number;
@@ -141,7 +142,13 @@ export interface ComputedSkillModifiers {
 }
 
 export function computeSkillModifiers(unlocked: ReadonlySet<SkillNodeId>): ComputedSkillModifiers {
+  let skillRank = 0;
+  for (const id of unlocked) {
+    skillRank += getSkillNode(id).tier;
+  }
+
   return {
+    skillRank,
     damageMult: unlocked.has('arm_base') ? 1.15 : 1.0,
     extraBits: unlocked.has('arm_parallel') ? 1 : 0,
     cooldownMult: unlocked.has('arm_overclock') ? 0.8 : 1.0,

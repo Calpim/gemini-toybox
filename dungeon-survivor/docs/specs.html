@@ -221,13 +221,13 @@
     </header>
 
     <div class="stats">
-      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">18</div></div>
-      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">18</div></div>
-      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">18</div></div>
-      <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">18</div></div>
+      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">19</div></div>
+      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">19</div></div>
+      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">19</div></div>
+      <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">19</div></div>
     </div>
 
-    <div class="ok-banner">✅ トレーサビリティチェック OK：全 18 件のビジネス仕様と 18 件のアプリ仕様が ID 紐付けされています</div>
+    <div class="ok-banner">✅ トレーサビリティチェック OK：全 19 件のビジネス仕様と 19 件のアプリ仕様が ID 紐付けされています</div>
 
     <div class="controls">
       <button class="tab-btn active" data-filter="all">🔗 すべて表示 (紐付けツリー)</button>
@@ -394,9 +394,9 @@
       <li>決定経緯: 2026-11-14 先輩プレイバックによる仕様確定</li><li>不採用装備「設置型オートタレット」: 移動して探索し続けるゲーム性では、敵を殲滅した後に足元へタレットが置かれてしまい何もせず放置されるため不採用とした</li>
     </ul>
   </div>
-          <h3>敵が近づくと装備が自動で迎撃を行う</h3>
+          <h3>装備とは別に自機の基本攻撃があり、敵が近づくと自動で迎撃を行う</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが攻撃可能な装備またはビットを所持している</span></li><li><span class="kw">もし</span><span class="st-text">敵が装備ごとの有効射程内に入る</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが攻撃ボタンを押さなくても自動で迎撃攻撃が発生する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備 0 個の状態、または装備・ビットを所持している</span></li><li><span class="kw">もし</span><span class="st-text">敵が自機基本攻撃または装備ごとの有効射程内に入る</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが攻撃ボタンを押さなくても、自機の基本攻撃と所持装備による自動迎撃が発生する</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -416,9 +416,9 @@
       <li>決定経緯: auto_turret 不採用は人間確定（2026-11-14）、各装備の数値パラメータは AI仮提案（@Inferred）</li><li>不採用理由（auto_turret）: 5秒ごとの足元固定設置は敵殲滅後に空撃ち設置となって次の移動に活かせないため削除</li>
     </ul>
   </div>
-                <h4>装備ごとのクールダウンと射程判定により最短距離または条件合致の敵を自動攻撃する</h4>
+                <h4>自機基本攻撃と各装備のクールダウン・射程判定により最短距離の敵を自動攻撃する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが有効射程 R、クールダウン CD を持つ自動攻撃装備を1つ以上所持している</span></li><li><span class="kw">もし</span><span class="st-text">射程 R 以内に敵が存在し、かつ装備の残りクールダウンが 0 以下になる</span></li><li><span class="kw">ならば</span><span class="st-text">入力ボタン操作なしで即座に攻撃インスタンス（弾・斬撃・電撃）を生成し、CD をリセットする</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが自機固有の基本攻撃（コアショット）、および任意の数の自動攻撃装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">射程 R 以内・視線上に敵が存在し、かつ自機基本攻撃または装備の残りクールダウンが 0 以下になる</span></li><li><span class="kw">ならば</span><span class="st-text">入力ボタン操作なしで即座に攻撃インスタンス（コアショット・弾・斬撃・電撃）を生成し、CD をリセットする</span></li>
   </ul>
               </div>
         </div>
@@ -565,6 +565,41 @@
               <thead><tr><th>装備ID</th><th>Lv上昇による能力・挙動変化</th></tr></thead>
               <tbody><tr><td>orbit_shield</td><td>Lv1=1個, Lv2=2個, Lv3=3個…（最大6個）とレベルごとに公転ビット数が増加＋回転速度微増</td></tr><tr><td>pulse_blade</td><td>Lv上昇で斬撃半径拡大（+12px/Lv）、Lv3以上で360度全方位スラッシュへ進化</td></tr><tr><td>seeker_drone</td><td>Lv2・Lv4…で展開ドローン数増加（+1機/2Lv）＋弾速強化</td></tr><tr><td>reactive_coil</td><td>Lv上昇ごとに最大連鎖数 +1＆放電レンジ +14px</td></tr><tr><td>ricochet_disc</td><td>Lv上昇ごとに跳弾回数 +1、Lv3以上で2枚同時投擲へ進化</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">装備のレベルが Lv1 から Lv2・Lv3 へと上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">攻撃力とCDだけでなく、ビット数や跳弾数・攻撃範囲・同時発射数などの挙動パラメータがリアルタイムに強化される</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-CMB-06</span>
+              <span class="file-pill">02-combat-and-loadout.feature</span>
+              <span class="feature-pill">自動迎撃アクションと多彩な装備システム（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>自機からの基本攻撃はプレイヤーレベルとスキル習得によって強化される</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で自機固有の基本攻撃を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーのレベルが上昇する、またはスキルツリーでスキルを習得（スキルレベル上昇）する</span></li><li><span class="kw">ならば</span><span class="st-text">自機の基本攻撃の威力・連射速度・同時発射数などが段階的に強化される</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-CMB-06</span>
+                    <span class="ref-pill">↳ ref: BIZ-CMB-06</span>
+                    <span class="file-pill">02-auto-intercept.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                
+                <h4>自機固有のコアショットがプレイヤーレベルとスキル習得ランク（Tier合計）に応じて強化される</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で基本攻撃「コアショット」（初期射程 210px / 威力 12 / CD 0.62s / 1発）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベルが上昇する、またはスキルツリーでノードを習得しスキルランク（習得ノードのTier合計）が上がる</span></li><li><span class="kw">ならば</span><span class="st-text">基本攻撃の威力（+3/Lv・+2/SkillRank）・連射CD・射程が上昇し、Lv3到達およびスキルランク3到達で同時発射数が最大4発まで増加する</span></li>
   </ul>
               </div>
         </div>
@@ -785,9 +820,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>初期装備 0 個で開始し、1F スタート部屋に初期宝箱を1個保証する</h4>
+                <h4>初期装備 0 個（GEAR 0/3）で開始し、自機基本攻撃で戦いながら探索で装備を集める</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">決定経緯: ノーアイテム開始は人間確定（2026-11-14）、1Fスタート部屋の初期宝箱配置は「初戦の攻撃不能詰み」を防ぐための AI仮提案</span></li><li><span class="kw">もし</span><span class="st-text">createGameState で新規ランを開始する</span></li><li><span class="kw">ならば</span><span class="st-text">player.equipment は空配列（GEAR 0/3）で初期化され、1F のスタート部屋内に最初の装備を得るための確定宝箱が 1 つ配置される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">決定経緯: ノーアイテム開始と自機基本攻撃は人間確定（2026-11-14）</span></li><li><span class="kw">もし</span><span class="st-text">createGameState で新規ランを開始する</span></li><li><span class="kw">ならば</span><span class="st-text">player.equipment は空配列（GEAR 0/3）で初期化され、自機の基本攻撃で初戦を戦いながらダンジョン内の宝箱や敵ドロップで装備を獲得する</span></li>
   </ul>
               </div>
         </div>

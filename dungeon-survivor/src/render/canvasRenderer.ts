@@ -266,6 +266,16 @@ export function renderGame(
       ctx.lineTo(0, proj.radius + 2);
       ctx.stroke();
       ctx.restore();
+    } else if (proj.kind === 'base') {
+      ctx.save();
+      ctx.fillStyle = proj.color;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ecfdf5';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
     } else {
       ctx.fillStyle = proj.color;
       ctx.beginPath();
