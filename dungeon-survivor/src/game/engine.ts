@@ -1,7 +1,22 @@
 import { hasLineOfSight, resolveCircleGridCollision } from '../core/collision';
 import { TILE_SIZE, generateDungeon, isWallAtWorld, tileCenterWorld, type DungeonMap } from '../core/dungeon';
 import { createRng } from '../core/rng';
-import type { EnemyState, GameState, PickupState, Vec2 } from './types';
+import {
+  ALL_EQUIPMENT_IDS,
+  EQUIPMENT_CATALOG,
+  MAX_EQUIP_SLOTS,
+  createEquippedItem,
+  getEquipmentDamage,
+  type EquipmentId,
+  type EquippedItem,
+} from './equipment';
+import {
+  canUnlockSkill,
+  computeSkillModifiers,
+  getSkillNode,
+  type SkillNodeId,
+} from './skillTree';
+import type { ChestState, EnemyState, GameState, PickupState, Vec2 } from './types';
 
 export interface CreateGameOptions {
   seed?: number;
@@ -32,14 +47,17 @@ function populateFloor(
   map: DungeonMap,
   floor: number,
   seed: number,
-  startId: number
-): { enemies: EnemyState[]; pickups: PickupState[]; nextId: number } {
+  startId: number,
+  lootBonusRate = 0
+): { enemies: EnemyState[]; pickups: PickupState[]; chests: ChestState[]; nextId: number } {
   const rng = createRng(seed ^ (floor * 0x517cc1b7));
   const enemies: EnemyState[] = [];
   const pickups: PickupState[] = [];
+  const chests: ChestState[] = [];
   let nextId = startId;
 
-  // Keep rooms[0] (start room) safe on entry
+  const chestCandidates: number[] = [];
+
   for (let i = 1; i < map.rooms.length; i++) {
     const room = map.rooms[i];
     const isStairsRoom = room.cx === map.stairsTile.tx && room.cy === map.stairsTile.ty;
@@ -49,13 +67,13 @@ function populateFloor(
       const tx = rng.int(room.x + 1, room.x + room.w - 2);
       const ty = rng.int(room.y + 1, room.y + room.h - 2);
       const pos = tileCenterWorld(tx, ty);
-      const hp = 26 + (floor - 1) * 8;
+      const hp = 26 + (floor - 1) * 9;
       enemies.push({
         id: nextId++,
         x: pos.x,
         y: pos.y,
         radius: 13,
-        speed: 78 + Math.min(45, (floor - 1) * 6),
+        speed: 78 + Math.min(48, (floor - 1) * 6),
         hp,
         maxHp: hp,
         damage: 10 + (floor - 1) * 2,
@@ -66,8 +84,11 @@ function populateFloor(
       });
     }
 
-    // Place an occasional recovery orb in non-start rooms to reward exploration
-    if (rng.next() < 0.35) {
+    if (!isStairsRoom) {
+      chestCandidates.push(i);
+    }
+
+    if (rng.next() < 0.3 + lootBonusRate * 0.4) {
       const pos = tileCenterWorld(room.cx, room.cy);
       pickups.push({
         id: nextId++,
@@ -79,7 +100,25 @@ function populateFloor(
     }
   }
 
-  return { enemies, pickups, nextId };
+  // Place 1-2 treasure chests per floor (extra chest chance with mob_loot)
+  const targetChests = Math.min(
+    chestCandidates.length,
+    1 + (rng.next() < 0.45 + lootBonusRate ? 1 : 0)
+  );
+  for (let c = 0; c < targetChests && chestCandidates.length > 0; c++) {
+    const pickIdx = rng.int(0, chestCandidates.length - 1);
+    const roomIdx = chestCandidates.splice(pickIdx, 1)[0];
+    const room = map.rooms[roomIdx];
+    const pos = tileCenterWorld(room.cx, room.cy);
+    chests.push({
+      id: nextId++,
+      x: pos.x,
+      y: pos.y,
+      opened: false,
+    });
+  }
+
+  return { enemies, pickups, chests, nextId };
 }
 
 export function createGameState(options: CreateGameOptions = {}): GameState {
@@ -90,7 +129,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
   const explored = new Uint8Array(map.width * map.height);
   revealAroundPlayer(map, explored, startPos.x, startPos.y);
 
-  const populated = populateFloor(map, floor, seed, 1);
+  const populated = populateFloor(map, floor, seed, 1, 0);
 
   return {
     seed,
@@ -102,34 +141,40 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       x: startPos.x,
       y: startPos.y,
       radius: 13,
-      speed: 175,
+      baseSpeed: 175,
       hp: 100,
       maxHp: 100,
       autoRegenPerSec: 0,
       level: 1,
       exp: 0,
-      expToNext: 30,
+      expToNext: 25,
       skillPoints: 0,
+      unlockedSkills: [],
+      equipment: [createEquippedItem('seeker_drone', 1), createEquippedItem('orbit_shield', 1)],
       invulnTimer: 0,
       facingAngle: 0,
-      blasterCooldown: 0,
-      blasterRange: 270,
-      blasterDamage: 14,
       orbitAngle: 0,
-      orbitRadius: 54,
-      orbitCount: 1,
-      orbitDamage: 12,
+      orbitRadius: 64,
+      repulsorCooldown: 0,
+      aegisCooldown: 0,
+      tacticalStepCooldown: 0,
     },
     enemies: populated.enemies,
     projectiles: [],
+    enemyProjectiles: [],
+    turrets: [],
+    chests: populated.chests,
+    pendingEquipDrop: null,
     pickups: populated.pickups,
     floatingTexts: [],
+    visualFx: [],
     nextEntityId: populated.nextId,
     floorBannerTimer: 2.2,
     stats: {
       kills: 0,
       floorsCleared: 0,
       totalExp: 0,
+      chestsOpened: 0,
     },
   };
 }
@@ -145,26 +190,159 @@ export function advanceToNextFloor(state: GameState): void {
   state.player.y = startPos.y;
   revealAroundPlayer(state.map, state.explored, startPos.x, startPos.y);
 
-  const populated = populateFloor(state.map, state.floor, state.seed, state.nextEntityId);
+  const mods = computeSkillModifiers(new Set(state.player.unlockedSkills));
+  const populated = populateFloor(state.map, state.floor, state.seed, state.nextEntityId, mods.lootBonusRate);
   state.enemies = populated.enemies;
   state.pickups = populated.pickups;
+  state.chests = populated.chests;
   state.projectiles = [];
+  state.enemyProjectiles = [];
+  state.turrets = [];
   state.floatingTexts = [];
+  state.visualFx = [];
   state.nextEntityId = populated.nextId;
   state.floorBannerTimer = 2.2;
 }
 
+export function unlockSkillNode(state: GameState, nodeId: SkillNodeId): boolean {
+  const unlocked = new Set(state.player.unlockedSkills);
+  if (!canUnlockSkill(unlocked, state.player.skillPoints, nodeId)) {
+    return false;
+  }
+  state.player.skillPoints -= 1;
+  state.player.unlockedSkills.push(nodeId);
+  const node = getSkillNode(nodeId);
+  state.floatingTexts.push({
+    x: state.player.x,
+    y: state.player.y - 24,
+    text: `SKILL: ${node.name}`,
+    color: '#a7f3d0',
+    life: 1.0,
+    maxLife: 1.0,
+  });
+  return true;
+}
+
+export function openSkillTree(state: GameState): void {
+  if (state.status === 'playing') {
+    state.status = 'skill_tree';
+  }
+}
+
+export function closeSkillTree(state: GameState): void {
+  if (state.status === 'skill_tree') {
+    state.status = 'playing';
+  }
+}
+
+export function acquireEquipment(state: GameState, droppedItem: EquippedItem): void {
+  const { equipment } = state.player;
+  if (equipment.length < MAX_EQUIP_SLOTS) {
+    equipment.push(droppedItem);
+    const def = EQUIPMENT_CATALOG[droppedItem.id];
+    state.floatingTexts.push({
+      x: state.player.x,
+      y: state.player.y - 26,
+      text: `+GEAR: ${def.name}`,
+      color: def.color,
+      life: 1.2,
+      maxLife: 1.2,
+    });
+    return;
+  }
+
+  state.pendingEquipDrop = { item: droppedItem };
+  state.status = 'equip_choice';
+}
+
+export function resolveEquipChoice(
+  state: GameState,
+  choice: { type: 'replace'; slotIndex: number } | { type: 'scrap' }
+): boolean {
+  if (state.status !== 'equip_choice' || !state.pendingEquipDrop) {
+    return false;
+  }
+
+  const dropped = state.pendingEquipDrop.item;
+  if (choice.type === 'replace') {
+    if (choice.slotIndex < 0 || choice.slotIndex >= state.player.equipment.length) {
+      return false;
+    }
+    state.player.equipment[choice.slotIndex] = dropped;
+    const def = EQUIPMENT_CATALOG[dropped.id];
+    state.floatingTexts.push({
+      x: state.player.x,
+      y: state.player.y - 26,
+      text: `EQUIPPED: ${def.name}`,
+      color: def.color,
+      life: 1.1,
+      maxLife: 1.1,
+    });
+  } else {
+    for (const eq of state.player.equipment) {
+      eq.level += 1;
+    }
+    state.floatingTexts.push({
+      x: state.player.x,
+      y: state.player.y - 26,
+      text: 'ALL GEAR LV+1!',
+      color: '#fbbf24',
+      life: 1.2,
+      maxLife: 1.2,
+    });
+  }
+
+  state.pendingEquipDrop = null;
+  state.status = 'playing';
+  return true;
+}
+
 export function getOrbitBitPositions(state: GameState): Vec2[] {
   const { player } = state;
+  const orbitItems = player.equipment.filter((e) => e.id === 'orbit_shield');
+  if (orbitItems.length === 0) return [];
+
+  const mods = computeSkillModifiers(new Set(player.unlockedSkills));
+  const totalLevelBonus = orbitItems.reduce((acc, item) => acc + Math.floor((item.level - 1) / 2), 0);
+  const count = orbitItems.length + mods.extraBits + totalLevelBonus;
+
   const positions: Vec2[] = [];
-  for (let i = 0; i < player.orbitCount; i++) {
-    const a = player.orbitAngle + (i * Math.PI * 2) / player.orbitCount;
+  for (let i = 0; i < count; i++) {
+    const a = player.orbitAngle + (i * Math.PI * 2) / count;
     positions.push({
       x: player.x + Math.cos(a) * player.orbitRadius,
       y: player.y + Math.sin(a) * player.orbitRadius,
     });
   }
   return positions;
+}
+
+export function getSeekerDronePositions(state: GameState): Vec2[] {
+  const { player } = state;
+  const drones = player.equipment.filter((e) => e.id === 'seeker_drone');
+  if (drones.length === 0) return [];
+
+  const mods = computeSkillModifiers(new Set(player.unlockedSkills));
+  const count = drones.length + mods.extraBits;
+  const positions: Vec2[] = [];
+  for (let i = 0; i < count; i++) {
+    const a = -player.orbitAngle * 1.4 + (i * Math.PI * 2) / count;
+    positions.push({
+      x: player.x + Math.cos(a) * 28,
+      y: player.y + Math.sin(a) * 28,
+    });
+  }
+  return positions;
+}
+
+function pickChestEquipmentId(state: GameState, chestId: number): EquipmentId {
+  const rng = createRng((state.seed ^ (state.floor * 4999) ^ (chestId * 3571)) >>> 0);
+  const owned = new Set(state.player.equipment.map((e) => e.id));
+  const unowned = ALL_EQUIPMENT_IDS.filter((id) => !owned.has(id));
+  if (unowned.length > 0 && state.player.equipment.length < MAX_EQUIP_SLOTS) {
+    return rng.pick(unowned);
+  }
+  return rng.pick(ALL_EQUIPMENT_IDS);
 }
 
 function damageEnemy(state: GameState, enemy: EnemyState, amount: number): void {
@@ -181,6 +359,72 @@ function damageEnemy(state: GameState, enemy: EnemyState, amount: number): void 
   });
 }
 
+function findNearestVisibleEnemy(
+  originX: number,
+  originY: number,
+  range: number,
+  state: GameState
+): EnemyState | null {
+  let bestEnemy: EnemyState | null = null;
+  let bestDist = range;
+  for (const enemy of state.enemies) {
+    const d = Math.hypot(enemy.x - originX, enemy.y - originY);
+    if (d <= bestDist && hasLineOfSight(originX, originY, enemy.x, enemy.y, state.map)) {
+      bestDist = d;
+      bestEnemy = enemy;
+    }
+  }
+  return bestEnemy;
+}
+
+function triggerChainLightning(
+  state: GameState,
+  sourceX: number,
+  sourceY: number,
+  range: number,
+  damage: number
+): boolean {
+  const first = findNearestVisibleEnemy(sourceX, sourceY, range, state);
+  if (!first) return false;
+
+  const hitIds = new Set<number>([first.id]);
+  const points: Vec2[] = [
+    { x: sourceX, y: sourceY },
+    { x: first.x, y: first.y },
+  ];
+  damageEnemy(state, first, damage);
+
+  let curr = first;
+  for (let hop = 0; hop < 2; hop++) {
+    let nextTarget: EnemyState | null = null;
+    let nextDist = 115;
+    for (const candidate of state.enemies) {
+      if (hitIds.has(candidate.id) || candidate.hp <= 0) continue;
+      const d = Math.hypot(candidate.x - curr.x, candidate.y - curr.y);
+      if (d <= nextDist && hasLineOfSight(curr.x, curr.y, candidate.x, candidate.y, state.map)) {
+        nextDist = d;
+        nextTarget = candidate;
+      }
+    }
+    if (!nextTarget) break;
+    hitIds.add(nextTarget.id);
+    points.push({ x: nextTarget.x, y: nextTarget.y });
+    damageEnemy(state, nextTarget, damage * 0.8);
+    curr = nextTarget;
+  }
+
+  state.visualFx.push({
+    kind: 'lightning',
+    x: sourceX,
+    y: sourceY,
+    points,
+    color: '#f472b6',
+    life: 0.22,
+    maxLife: 0.22,
+  });
+  return true;
+}
+
 /**
  * Advances the simulation by dt seconds.
  * Pure domain update: decoupled from DOM/Canvas for deterministic Vitest verification.
@@ -190,6 +434,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   const clampedDt = Math.min(dt, 0.05);
   const { player, map } = state;
+  const mods = computeSkillModifiers(new Set(player.unlockedSkills));
 
   if (state.floorBannerTimer > 0) {
     state.floorBannerTimer = Math.max(0, state.floorBannerTimer - clampedDt);
@@ -200,16 +445,18 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     player.hp = Math.min(player.maxHp, player.hp + player.autoRegenPerSec * clampedDt);
   }
 
-  if (player.invulnTimer > 0) {
-    player.invulnTimer = Math.max(0, player.invulnTimer - clampedDt);
-  }
+  if (player.invulnTimer > 0) player.invulnTimer = Math.max(0, player.invulnTimer - clampedDt);
+  if (player.repulsorCooldown > 0) player.repulsorCooldown = Math.max(0, player.repulsorCooldown - clampedDt);
+  if (player.aegisCooldown > 0) player.aegisCooldown = Math.max(0, player.aegisCooldown - clampedDt);
+  if (player.tacticalStepCooldown > 0) player.tacticalStepCooldown = Math.max(0, player.tacticalStepCooldown - clampedDt);
 
   // 1. Player movement & smooth wall collision (APP-MAP-02)
+  const moveSpeed = player.baseSpeed * mods.moveSpeedMult;
   const inputMag = Math.hypot(rawInput.x, rawInput.y);
   if (inputMag > 1e-4) {
     const scale = inputMag > 1 ? 1 / inputMag : 1;
-    const vx = rawInput.x * scale * player.speed;
-    const vy = rawInput.y * scale * player.speed;
+    const vx = rawInput.x * scale * moveSpeed;
+    const vy = rawInput.y * scale * moveSpeed;
     const resolved = resolveCircleGridCollision(
       player.x + vx * clampedDt,
       player.y + vy * clampedDt,
@@ -229,40 +476,191 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     return;
   }
 
-  // 3. Auto-intercept: Pulse Blaster (APP-CMB-01, APP-CMB-03)
-  player.blasterCooldown = Math.max(0, player.blasterCooldown - clampedDt);
-  if (player.blasterCooldown <= 0 && state.enemies.length > 0) {
-    let bestEnemy: EnemyState | null = null;
-    let bestDist = player.blasterRange;
-    for (const enemy of state.enemies) {
-      const d = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-      if (d <= bestDist && hasLineOfSight(player.x, player.y, enemy.x, enemy.y, map)) {
-        bestDist = d;
-        bestEnemy = enemy;
-      }
-    }
-    if (bestEnemy) {
-      const angle = Math.atan2(bestEnemy.y - player.y, bestEnemy.x - player.x);
-      const speed = 430;
-      state.projectiles.push({
-        id: state.nextEntityId++,
-        x: player.x + Math.cos(angle) * (player.radius + 4),
-        y: player.y + Math.sin(angle) * (player.radius + 4),
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        radius: 5,
-        damage: player.blasterDamage,
-        life: 0.9,
-      });
-      player.blasterCooldown = 0.42;
+  // 3. Chest check -> acquire equipment or trigger 6th-slot choice modal (APP-GRW-03)
+  for (const chest of state.chests) {
+    if (!chest.opened && Math.hypot(player.x - chest.x, player.y - chest.y) <= player.radius + 16) {
+      chest.opened = true;
+      state.stats.chestsOpened += 1;
+      const eqId = pickChestEquipmentId(state, chest.id);
+      acquireEquipment(state, createEquippedItem(eqId, 1));
+      if (state.status !== 'playing') return;
     }
   }
 
-  // 4. Auto-intercept: Orbit Shield Bit
-  player.orbitAngle = (player.orbitAngle + 2.7 * clampedDt) % (Math.PI * 2);
-  const bits = getOrbitBitPositions(state);
+  // 4. Skill tree active modules: Repulsor Pulse (def_pulse)
+  if (mods.hasRepulsor && player.repulsorCooldown <= 0 && state.enemies.length > 0) {
+    const pulseRange = 115 * mods.rangeMult;
+    const nearby = state.enemies.filter(
+      (e) =>
+        Math.hypot(e.x - player.x, e.y - player.y) <= pulseRange &&
+        hasLineOfSight(player.x, player.y, e.x, e.y, map)
+    );
+    if (nearby.length > 0) {
+      for (const e of nearby) {
+        const dx = e.x - player.x;
+        const dy = e.y - player.y;
+        const d = Math.max(1, Math.hypot(dx, dy));
+        const pushed = resolveCircleGridCollision(
+          e.x + (dx / d) * 38,
+          e.y + (dy / d) * 38,
+          e.radius,
+          map
+        );
+        e.x = pushed.x;
+        e.y = pushed.y;
+        damageEnemy(state, e, 10 * mods.damageMult);
+      }
+      state.visualFx.push({
+        kind: 'pulse',
+        x: player.x,
+        y: player.y,
+        radius: pulseRange,
+        color: '#60a5fa',
+        life: 0.25,
+        maxLife: 0.25,
+      });
+      player.repulsorCooldown = 3.5 * mods.cooldownMult;
+    }
+  }
 
-  // 5. Update projectiles & wall/enemy collisions (APP-CMB-03)
+  // 5. Equipment parallel execution (APP-CMB-01, APP-CMB-02)
+  player.orbitAngle = (player.orbitAngle + 2.4 * clampedDt) % (Math.PI * 2);
+  const seekerDrones = getSeekerDronePositions(state);
+  let droneCursor = 0;
+
+  for (const item of player.equipment) {
+    const def = EQUIPMENT_CATALOG[item.id];
+    item.cooldown = Math.max(0, item.cooldown - clampedDt);
+
+    if (item.id === 'orbit_shield') {
+      continue;
+    }
+
+    if (item.cooldown > 0) continue;
+
+    const dmg = getEquipmentDamage(item, mods.damageMult);
+    const range = def.baseRange * mods.rangeMult;
+
+    if (item.id === 'pulse_blade') {
+      const targets = state.enemies.filter(
+        (e) =>
+          Math.hypot(e.x - player.x, e.y - player.y) <= range &&
+          hasLineOfSight(player.x, player.y, e.x, e.y, map)
+      );
+      if (targets.length > 0) {
+        const lead = targets[0];
+        const slashAngle = Math.atan2(lead.y - player.y, lead.x - player.x);
+        for (const t of targets) {
+          damageEnemy(state, t, dmg);
+        }
+        state.visualFx.push({
+          kind: 'slash',
+          x: player.x,
+          y: player.y,
+          radius: range,
+          angle: slashAngle,
+          color: def.color,
+          life: 0.22,
+          maxLife: 0.22,
+        });
+        item.cooldown = def.baseCooldown * mods.cooldownMult;
+      }
+    } else if (item.id === 'seeker_drone') {
+      const target = findNearestVisibleEnemy(player.x, player.y, range, state);
+      if (target) {
+        const dronesToFire = Math.max(1, Math.min(seekerDrones.length, 1 + mods.extraBits));
+        for (let dIdx = 0; dIdx < dronesToFire; dIdx++) {
+          const origin = seekerDrones[(droneCursor + dIdx) % Math.max(1, seekerDrones.length)] ?? player;
+          const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+          const speed = mods.piercingDrones ? 520 : 430;
+          state.projectiles.push({
+            id: state.nextEntityId++,
+            x: origin.x,
+            y: origin.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: mods.piercingDrones ? 6 : 5,
+            damage: dmg,
+            life: 0.95,
+            pierce: mods.piercingDrones,
+            hitEnemyIds: [],
+            color: mods.piercingDrones ? '#22d3ee' : '#7dd3fc',
+          });
+        }
+        droneCursor++;
+        item.cooldown = def.baseCooldown * mods.cooldownMult;
+      }
+    } else if (item.id === 'auto_turret') {
+      state.turrets.push({
+        id: state.nextEntityId++,
+        x: player.x,
+        y: player.y,
+        life: 10,
+        maxLife: 10,
+        fireCooldown: 0.2,
+        range: def.baseRange * mods.rangeMult,
+        damage: dmg,
+      });
+      item.cooldown = def.baseCooldown * mods.cooldownMult;
+    } else if (item.id === 'reactive_coil') {
+      if (triggerChainLightning(state, player.x, player.y, range, dmg)) {
+        item.cooldown = def.baseCooldown * mods.cooldownMult;
+      }
+    }
+  }
+
+  // 6. Deployed turrets
+  for (let i = state.turrets.length - 1; i >= 0; i--) {
+    const turret = state.turrets[i];
+    turret.life -= clampedDt;
+    if (turret.life <= 0) {
+      state.turrets.splice(i, 1);
+      continue;
+    }
+    turret.fireCooldown = Math.max(0, turret.fireCooldown - clampedDt);
+    if (turret.fireCooldown <= 0) {
+      const target = findNearestVisibleEnemy(turret.x, turret.y, turret.range, state);
+      if (target) {
+        const angle = Math.atan2(target.y - turret.y, target.x - turret.x);
+        state.projectiles.push({
+          id: state.nextEntityId++,
+          x: turret.x,
+          y: turret.y,
+          vx: Math.cos(angle) * 440,
+          vy: Math.sin(angle) * 440,
+          radius: 4.5,
+          damage: turret.damage,
+          life: 0.85,
+          pierce: false,
+          hitEnemyIds: [],
+          color: '#fbbf24',
+        });
+        turret.fireCooldown = 0.62 * mods.cooldownMult;
+      }
+    }
+  }
+
+  // 7. Orbit Shield Bits & projectile destruction
+  const bits = getOrbitBitPositions(state);
+  const orbitItem = player.equipment.find((e) => e.id === 'orbit_shield');
+  const orbitDmg = orbitItem ? getEquipmentDamage(orbitItem, mods.damageMult) : 0;
+
+  for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
+    const ep = state.enemyProjectiles[i];
+    ep.x += ep.vx * clampedDt;
+    ep.y += ep.vy * clampedDt;
+    ep.life -= clampedDt;
+    if (ep.life <= 0 || isWallAtWorld(map, ep.x, ep.y)) {
+      state.enemyProjectiles.splice(i, 1);
+      continue;
+    }
+    const blockedByBit = bits.some((bit) => Math.hypot(bit.x - ep.x, bit.y - ep.y) <= ep.radius + 10);
+    if (blockedByBit) {
+      state.enemyProjectiles.splice(i, 1);
+    }
+  }
+
+  // 8. Player projectiles & wall/enemy collision (APP-CMB-03)
   for (let i = state.projectiles.length - 1; i >= 0; i--) {
     const proj = state.projectiles[i];
     proj.x += proj.vx * clampedDt;
@@ -274,34 +672,37 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       continue;
     }
 
-    let hit = false;
+    let consumed = false;
     for (const enemy of state.enemies) {
+      if (proj.hitEnemyIds.includes(enemy.id)) continue;
       if (Math.hypot(enemy.x - proj.x, enemy.y - proj.y) <= enemy.radius + proj.radius) {
         damageEnemy(state, enemy, proj.damage);
-        hit = true;
-        break;
+        proj.hitEnemyIds.push(enemy.id);
+        if (!proj.pierce) {
+          consumed = true;
+          break;
+        }
       }
     }
-    if (hit) {
+    if (consumed) {
       state.projectiles.splice(i, 1);
     }
   }
 
-  // 6. Update enemies, orbit bit hits, separation, and player contact damage
+  // 9. Update enemies, orbit bit contact, and player damage / Aegis / Tactical Step
   const rng = createRng((state.seed ^ (state.stats.kills * 7919) ^ (state.floor * 131)) >>> 0);
   for (let i = state.enemies.length - 1; i >= 0; i--) {
     const enemy = state.enemies[i];
     if (enemy.hitFlash > 0) enemy.hitFlash = Math.max(0, enemy.hitFlash - clampedDt);
     if (enemy.bitHitCooldown > 0) enemy.bitHitCooldown = Math.max(0, enemy.bitHitCooldown - clampedDt);
 
-    // Check Orbit Bit contact (blocked if wall sits between player & bit)
-    if (enemy.bitHitCooldown <= 0) {
+    if (orbitItem && enemy.bitHitCooldown <= 0) {
       for (const bit of bits) {
         if (
           !isWallAtWorld(map, bit.x, bit.y) &&
           Math.hypot(enemy.x - bit.x, enemy.y - bit.y) <= enemy.radius + 9
         ) {
-          damageEnemy(state, enemy, player.orbitDamage);
+          damageEnemy(state, enemy, orbitDmg);
           enemy.bitHitCooldown = 0.35;
           break;
         }
@@ -317,7 +718,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         y: enemy.y,
         value: 10,
       });
-      if (rng.next() < 0.22) {
+      if (rng.next() < 0.22 + mods.lootBonusRate * 0.4) {
         state.pickups.push({
           id: state.nextEntityId++,
           kind: 'heal',
@@ -347,7 +748,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       let moveX = (dx / distToPlayer) * enemy.speed;
       let moveY = (dy / distToPlayer) * enemy.speed;
 
-      // Soft separation from neighboring enemies so swarms stay readable
       for (let j = 0; j < state.enemies.length; j++) {
         if (i === j) continue;
         const other = state.enemies[j];
@@ -377,8 +777,59 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       player.invulnTimer <= 0 &&
       Math.hypot(player.x - enemy.x, player.y - enemy.y) <= player.radius + enemy.radius
     ) {
+      if (mods.hasAegisParry && player.aegisCooldown <= 0) {
+        player.aegisCooldown = 6.0;
+        player.invulnTimer = 0.6;
+        damageEnemy(state, enemy, 25 * mods.damageMult);
+        state.visualFx.push({
+          kind: 'pulse',
+          x: player.x,
+          y: player.y,
+          radius: 70,
+          color: '#34d399',
+          life: 0.25,
+          maxLife: 0.25,
+        });
+        state.floatingTexts.push({
+          x: player.x,
+          y: player.y - 20,
+          text: 'PARRY!',
+          color: '#34d399',
+          life: 0.7,
+          maxLife: 0.7,
+        });
+        continue;
+      }
+
       player.hp = Math.max(0, player.hp - enemy.damage);
-      player.invulnTimer = 0.55;
+      if (mods.hasTacticalStep && player.tacticalStepCooldown <= 0) {
+        player.tacticalStepCooldown = 6.0;
+        player.invulnTimer = 1.0;
+        const awayLen = Math.max(1, Math.hypot(player.x - enemy.x, player.y - enemy.y));
+        const stepped = resolveCircleGridCollision(
+          player.x + ((player.x - enemy.x) / awayLen) * 44,
+          player.y + ((player.y - enemy.y) / awayLen) * 44,
+          player.radius,
+          map
+        );
+        player.x = stepped.x;
+        player.y = stepped.y;
+      } else {
+        player.invulnTimer = 0.55;
+      }
+
+      // Trigger reactive coil counter immediately on hit if equipped
+      const coil = player.equipment.find((e) => e.id === 'reactive_coil');
+      if (coil) {
+        triggerChainLightning(
+          state,
+          player.x,
+          player.y,
+          EQUIPMENT_CATALOG.reactive_coil.baseRange * mods.rangeMult,
+          getEquipmentDamage(coil, mods.damageMult)
+        );
+      }
+
       state.floatingTexts.push({
         x: player.x,
         y: player.y - player.radius - 6,
@@ -387,6 +838,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         life: 0.7,
         maxLife: 0.7,
       });
+
       if (player.hp <= 0) {
         state.status = 'gameover';
         return;
@@ -394,15 +846,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 7. Pickups (magnet pull + collect)
+  // 10. Pickups (magnet scaled by mob_speed)
+  const magnetRange = 95 * mods.pickupMagnetMult;
   for (let i = state.pickups.length - 1; i >= 0; i--) {
     const p = state.pickups[i];
     const dx = player.x - p.x;
     const dy = player.y - p.y;
     const dist = Math.hypot(dx, dy);
 
-    if (dist < 95 && dist > 1e-3) {
-      const pull = 280 * clampedDt;
+    if (dist < magnetRange && dist > 1e-3) {
+      const pull = 300 * clampedDt;
       p.x += (dx / dist) * Math.min(pull, dist);
       p.y += (dy / dist) * Math.min(pull, dist);
     }
@@ -428,8 +881,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           player.level += 1;
           player.skillPoints += 1;
           player.expToNext = Math.round(player.expToNext * 1.35);
-          // Phase 1 baseline stat bump (Phase 2 replaces with interactive Skill Tree spending)
-          player.blasterDamage += 2;
           state.floatingTexts.push({
             x: player.x,
             y: player.y - 24,
@@ -444,13 +895,17 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 8. Floating texts lifetime
+  // 11. Floating texts & Visual FX lifetimes
   for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
     const ft = state.floatingTexts[i];
     ft.y -= 26 * clampedDt;
     ft.life -= clampedDt;
-    if (ft.life <= 0) {
-      state.floatingTexts.splice(i, 1);
-    }
+    if (ft.life <= 0) state.floatingTexts.splice(i, 1);
+  }
+
+  for (let i = state.visualFx.length - 1; i >= 0; i--) {
+    const fx = state.visualFx[i];
+    fx.life -= clampedDt;
+    if (fx.life <= 0) state.visualFx.splice(i, 1);
   }
 }

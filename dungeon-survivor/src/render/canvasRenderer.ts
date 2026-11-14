@@ -1,5 +1,7 @@
 import { TILE_SIZE, getTile, tileCenterWorld } from '../core/dungeon';
-import { getOrbitBitPositions } from '../game/engine';
+import { getOrbitBitPositions, getSeekerDronePositions } from '../game/engine';
+import { EQUIPMENT_CATALOG } from '../game/equipment';
+import { computeSkillModifiers } from '../game/skillTree';
 import type { GameState } from '../game/types';
 import type { VirtualStickState } from '../input/controller';
 
@@ -12,6 +14,7 @@ export function renderGame(
   nowSec: number
 ): void {
   const { map, player } = state;
+  const mods = computeSkillModifiers(new Set(player.unlockedSkills));
 
   ctx.fillStyle = '#050811';
   ctx.fillRect(0, 0, width, height);
@@ -73,7 +76,57 @@ export function renderGame(
     }
   }
 
-  // 2. Pickups
+  // 2. Treasure chests
+  for (const chest of state.chests) {
+    ctx.save();
+    ctx.translate(chest.x, chest.y);
+    if (chest.opened) {
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(-11, -8, 22, 16);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeRect(-11, -8, 22, 16);
+    } else {
+      const glow = 0.75 + 0.25 * Math.sin(nowSec * 5);
+      ctx.fillStyle = `rgba(251, 191, 36, ${0.2 * glow})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(-11, -8, 22, 16);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-11, -8, 22, 6);
+      ctx.fillRect(-3, -2, 6, 5);
+      ctx.strokeStyle = '#fef3c7';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-11, -8, 22, 16);
+    }
+    ctx.restore();
+  }
+
+  // 3. Deployed turrets
+  for (const turret of state.turrets) {
+    const lifeRatio = Math.max(0, turret.life / turret.maxLife);
+    ctx.save();
+    ctx.translate(turret.x, turret.y);
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * lifeRatio);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 4. Pickups
   for (const p of state.pickups) {
     if (p.kind === 'heal') {
       ctx.fillStyle = '#10b981';
@@ -95,32 +148,81 @@ export function renderGame(
     }
   }
 
-  // 3. Auto-intercept range & orbit ring
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.blasterRange, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.strokeStyle = 'rgba(167, 139, 250, 0.22)';
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.orbitRadius, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // 4. Orbit Shield Bits
-  for (const bit of getOrbitBitPositions(state)) {
-    ctx.fillStyle = '#a78bfa';
+  // 5. Intercept range rings & Aegis ready indicator
+  const droneEquip = player.equipment.find((e) => e.id === 'seeker_drone');
+  if (droneEquip) {
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(bit.x, bit.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#ede9fe';
-    ctx.lineWidth = 2;
+    ctx.arc(player.x, player.y, EQUIPMENT_CATALOG.seeker_drone.baseRange * mods.rangeMult, 0, Math.PI * 2);
     ctx.stroke();
   }
 
-  // 5. Enemies
+  const bits = getOrbitBitPositions(state);
+  if (bits.length > 0) {
+    ctx.strokeStyle = 'rgba(167, 139, 250, 0.22)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.orbitRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    for (const bit of bits) {
+      ctx.fillStyle = '#a78bfa';
+      ctx.beginPath();
+      ctx.arc(bit.x, bit.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ede9fe';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  // Hovering Seeker Drones
+  for (const drone of getSeekerDronePositions(state)) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(drone.x, drone.y - 6);
+    ctx.lineTo(drone.x + 6, drone.y + 4);
+    ctx.lineTo(drone.x - 6, drone.y + 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#e0f2fe';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // 6. Visual FX (Slash / Lightning / Pulse)
+  for (const fx of state.visualFx) {
+    const alpha = Math.max(0, fx.life / fx.maxLife);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (fx.kind === 'slash' && fx.radius !== undefined && fx.angle !== undefined) {
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, fx.radius * 0.8, fx.angle - 1.05, fx.angle + 1.05);
+      ctx.stroke();
+    } else if (fx.kind === 'pulse' && fx.radius !== undefined) {
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, fx.radius * (1 - alpha * 0.4), 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (fx.kind === 'lightning' && fx.points && fx.points.length >= 2) {
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(fx.points[0].x, fx.points[0].y);
+      for (let idx = 1; idx < fx.points.length; idx++) {
+        ctx.lineTo(fx.points[idx].x, fx.points[idx].y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 7. Enemies
   for (const enemy of state.enemies) {
     ctx.fillStyle = enemy.hitFlash > 0 ? '#ffffff' : enemy.awake ? '#f43f5e' : '#9f1239';
     ctx.beginPath();
@@ -140,15 +242,30 @@ export function renderGame(
     }
   }
 
-  // 6. Projectiles
+  // 8. Projectiles
   for (const proj of state.projectiles) {
-    ctx.fillStyle = '#7dd3fc';
+    ctx.fillStyle = proj.color;
     ctx.beginPath();
     ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 7. Player
+  for (const ep of state.enemyProjectiles) {
+    ctx.fillStyle = '#fb7185';
+    ctx.beginPath();
+    ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 9. Player & Aegis ready aura
+  if (mods.hasAegisParry && player.aegisCooldown <= 0) {
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.65)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.radius + 7, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   const blink = player.invulnTimer > 0 && Math.floor(nowSec * 20) % 2 === 0;
   if (!blink) {
     ctx.save();
@@ -162,7 +279,6 @@ export function renderGame(
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Direction visor
     ctx.fillStyle = '#f8fafc';
     ctx.beginPath();
     ctx.arc(6, 0, 3.5, 0, Math.PI * 2);
@@ -170,7 +286,7 @@ export function renderGame(
     ctx.restore();
   }
 
-  // 8. Floating damage / pickup texts
+  // 10. Floating damage / pickup texts
   ctx.font = 'bold 12px monospace';
   ctx.textAlign = 'center';
   for (const ft of state.floatingTexts) {
@@ -182,10 +298,10 @@ export function renderGame(
 
   ctx.restore();
 
-  // 9. Mini-map (top-right)
+  // 11. Mini-map (top-right, responsive for smartphone portrait)
   renderMinimap(ctx, width, state);
 
-  // 10. Virtual joystick indicator (if active)
+  // 12. Virtual joystick indicator (if active)
   if (stick.active) {
     const dx = stick.currentX - stick.originX;
     const dy = stick.currentY - stick.originY;
@@ -206,7 +322,7 @@ export function renderGame(
     ctx.fill();
   }
 
-  // 11. Floor entry banner
+  // 13. Floor entry banner
   if (state.floorBannerTimer > 0) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
@@ -245,6 +361,17 @@ function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state
       if (t === 'wall') continue;
       ctx.fillStyle = t === 'stairs' ? '#22d3ee' : 'rgba(148, 163, 184, 0.45)';
       ctx.fillRect(ox + tx * cell, oy + ty * cell, cell, cell);
+    }
+  }
+
+  // Unopened chests within explored tiles
+  ctx.fillStyle = '#fbbf24';
+  for (const chest of state.chests) {
+    if (chest.opened) continue;
+    const ctxTx = Math.floor(chest.x / TILE_SIZE);
+    const ctxTy = Math.floor(chest.y / TILE_SIZE);
+    if (explored[ctxTy * map.width + ctxTx]) {
+      ctx.fillRect(ox + ctxTx * cell, oy + ctxTy * cell, cell + 1, cell + 1);
     }
   }
 

@@ -1,21 +1,45 @@
-import { createGameState, stepGame } from './game/engine';
+import {
+  closeSkillTree,
+  createGameState,
+  openSkillTree,
+  resolveEquipChoice,
+  stepGame,
+  unlockSkillNode,
+} from './game/engine';
+import { MAX_EQUIP_SLOTS } from './game/equipment';
 import type { GameState } from './game/types';
 import { InputController } from './input/controller';
 import { renderGame } from './render/canvasRenderer';
+import { renderModals } from './ui/modals';
 
 const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 const hpText = document.getElementById('hpText')!;
 const hpFill = document.getElementById('hpFill')!;
 const floorText = document.getElementById('floorText')!;
-const levelText = document.getElementById('levelText')!;
+const skillBtn = document.getElementById('skillBtn')!;
+const gearCountText = document.getElementById('gearCountText')!;
 const killsText = document.getElementById('killsText')!;
 const gameOverModal = document.getElementById('gameOverModal')!;
 const gameOverSummary = document.getElementById('gameOverSummary')!;
 const retryBtn = document.getElementById('retryBtn')!;
 
+const modalEls = {
+  skillModal: document.getElementById('skillModal')!,
+  skillSpBadge: document.getElementById('skillSpBadge')!,
+  skillColumns: document.getElementById('skillColumns')!,
+  skillGearSummary: document.getElementById('skillGearSummary')!,
+  equipModal: document.getElementById('equipModal')!,
+  equipDropCard: document.getElementById('equipDropCard')!,
+  equipSlotList: document.getElementById('equipSlotList')!,
+};
+
+const closeSkillBtn = document.getElementById('closeSkillBtn')!;
+const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
+
 let state: GameState = createGameState();
 const controller = new InputController(canvas);
+let lastRenderedModalKey = '';
 
 function resizeCanvas(): void {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -28,13 +52,21 @@ function resizeCanvas(): void {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function syncHud(): void {
+function getModalKey(): string {
+  return `${state.status}:${state.player.skillPoints}:${state.player.unlockedSkills.join(',')}:${state.player.equipment
+    .map((e) => `${e.id}${e.level}`)
+    .join(',')}:${state.pendingEquipDrop?.item.id ?? ''}`;
+}
+
+function syncUi(forceModals = false): void {
   const { player, floor, stats } = state;
   const hpPct = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
   hpText.textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
   hpFill.style.width = `${hpPct}%`;
   floorText.textContent = `${floor}F`;
-  levelText.textContent = `LV ${player.level} (SP ${player.skillPoints})`;
+  skillBtn.textContent = `🌳 LV${player.level} (SP ${player.skillPoints})`;
+  skillBtn.classList.toggle('has-sp', player.skillPoints > 0);
+  gearCountText.textContent = `GEAR ${player.equipment.length}/${MAX_EQUIP_SLOTS}`;
   killsText.textContent = `KILLS ${stats.kills}`;
 
   if (state.status === 'gameover') {
@@ -43,11 +75,57 @@ function syncHud(): void {
   } else {
     gameOverModal.classList.add('hidden');
   }
+
+  const key = getModalKey();
+  if (forceModals || key !== lastRenderedModalKey) {
+    lastRenderedModalKey = key;
+    renderModals(state, modalEls, {
+      onUnlockSkill: (nodeId) => {
+        unlockSkillNode(state, nodeId);
+        syncUi(true);
+      },
+      onCloseSkillTree: () => {
+        closeSkillTree(state);
+        syncUi(true);
+      },
+      onResolveEquip: (choice) => {
+        resolveEquipChoice(state, choice);
+        syncUi(true);
+      },
+    });
+  }
 }
+
+skillBtn.addEventListener('click', () => {
+  if (state.status === 'playing') {
+    openSkillTree(state);
+  } else if (state.status === 'skill_tree') {
+    closeSkillTree(state);
+  }
+  syncUi(true);
+});
+
+closeSkillBtn.addEventListener('click', () => {
+  closeSkillTree(state);
+  syncUi(true);
+});
+
+scrapEquipBtn.addEventListener('click', () => {
+  resolveEquipChoice(state, { type: 'scrap' });
+  syncUi(true);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'k') {
+    if (state.status === 'playing') openSkillTree(state);
+    else if (state.status === 'skill_tree') closeSkillTree(state);
+    syncUi(true);
+  }
+});
 
 retryBtn.addEventListener('click', () => {
   state = createGameState();
-  syncHud();
+  syncUi(true);
 });
 
 window.addEventListener('resize', resizeCanvas);
@@ -60,7 +138,7 @@ function loop(now: number): void {
 
   stepGame(state, controller.getMoveVector(), dt);
   renderGame(ctx, window.innerWidth, window.innerHeight, state, controller.stick, now / 1000);
-  syncHud();
+  syncUi();
 
   requestAnimationFrame(loop);
 }
