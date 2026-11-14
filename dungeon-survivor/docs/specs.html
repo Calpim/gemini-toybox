@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dungeon Survivor — Gherkin 仕様書ビューア</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --surface: #0f1626;
+      --surface-2: #151f34;
+      --border: #24324d;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --biz: #38bdf8;
+      --app: #a78bfa;
+      --confirmed: #34d399;
+      --inferred: #fbbf24;
+      --disputed: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: radial-gradient(circle at top right, #111b33, var(--bg) 55%);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px 16px 64px;
+    }
+    .container { max-width: 1080px; margin: 0 auto; }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 18px;
+      margin-bottom: 20px;
+    }
+    .eyebrow {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      color: var(--biz);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 6px 0 8px; font-size: 26px; }
+    .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); }
+    .stat-val { font-size: 24px; font-weight: 800; margin-top: 2px; }
+    .ok-banner, .warn-banner {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+    .ok-banner { background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.35); color: #6ee7b7; }
+    .warn-banner { background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.4); color: #fca5a5; }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+      background: var(--surface);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: #1d4ed8;
+      border-color: #60a5fa;
+      color: #fff;
+    }
+    .search-input {
+      margin-left: auto;
+      min-width: 220px;
+      flex: 1;
+      max-width: 320px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .trace-group {
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(15, 22, 38, 0.72);
+      overflow: hidden;
+    }
+    .biz-card {
+      padding: 16px 18px;
+      border-left: 4px solid var(--biz);
+      background: var(--surface);
+    }
+    .app-branch {
+      padding: 12px 18px 16px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .app-card {
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--app);
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .id-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .id-pill, .ref-pill, .file-pill, .feature-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .id-biz { background: rgba(56, 189, 248, 0.16); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); font-weight: 700; }
+    .id-app { background: rgba(167, 139, 250, 0.16); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.4); font-weight: 700; }
+    .ref-pill { background: rgba(148, 163, 184, 0.12); color: #cbd5e1; }
+    .file-pill { color: var(--muted); background: rgba(15, 23, 42, 0.8); }
+    .feature-pill { color: #93c5fd; font-family: inherit; }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .badge-confirmed { background: rgba(52, 211, 153, 0.16); color: var(--confirmed); border: 1px solid rgba(52, 211, 153, 0.4); }
+    .badge-inferred { background: rgba(251, 191, 36, 0.16); color: var(--inferred); border: 1px solid rgba(251, 191, 36, 0.45); }
+    .badge-implemented { background: rgba(56, 189, 248, 0.16); color: var(--biz); border: 1px solid rgba(56, 189, 248, 0.4); }
+    .badge-disputed { background: rgba(248, 113, 113, 0.16); color: var(--disputed); border: 1px solid rgba(248, 113, 113, 0.4); }
+    .badge-unknown { background: rgba(148, 163, 184, 0.16); color: var(--muted); border: 1px solid rgba(148, 163, 184, 0.35); }
+    h3 { margin: 4px 0 10px; font-size: 17px; color: #f8fafc; }
+    h4 { margin: 4px 0 10px; font-size: 15px; color: #f1f5f9; }
+    .steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+    .steps li { font-size: 14px; }
+    .kw {
+      display: inline-block;
+      min-width: 58px;
+      font-weight: 700;
+      color: #60a5fa;
+      margin-right: 6px;
+    }
+    .table-wrap { overflow-x: auto; margin: 8px 0 4px 64px; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      text-align: left;
+    }
+    th { background: rgba(30, 41, 59, 0.8); color: #cbd5e1; }
+    .empty-link { color: #fca5a5; font-size: 13px; padding: 8px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="eyebrow">BDD / Gherkin Living Specification</div>
+      <h1>Dungeon Survivor — Gherkin 仕様書ビューア</h1>
+      <p class="subtitle">
+        ビジネス仕様（@BIZ-*：体験とルール）とアプリ仕様（@APP-*：実装・パラメータ）を @ref ID で自動紐付けした人間レビュー用HTMLです。
+        黄色バッジ（Inferred）は AI が補完した仮仕様なので、「これあってる？」の観点でチェックできます。
+      </p>
+    </header>
+
+    <div class="stats">
+      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">12</div></div>
+      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">12</div></div>
+      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">10</div></div>
+      <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">14</div></div>
+    </div>
+
+    <div class="ok-banner">✅ トレーサビリティチェック OK：全 12 件のビジネス仕様と 12 件のアプリ仕様が ID 紐付けされています</div>
+
+    <div class="controls">
+      <button class="tab-btn active" data-filter="all">🔗 すべて表示 (紐付けツリー)</button>
+      <button class="tab-btn" data-filter="inferred">⚠️ AI仮仕様（要確認）のみ</button>
+      <button class="tab-btn" data-filter="confirmed">✅ 確定済みのみ</button>
+      <input type="search" class="search-input" id="searchBox" placeholder="ID・キーワードで検索（例: 泉, BIZ-CMB, タレット）" />
+    </div>
+
+    <main id="specList">
+      
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-01</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>毎回異なる構造のダンジョンを探索し階段で次の階層へ進む</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョンのある階層にいる</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがフロア内を探索して上り階段に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">次の階層へ進み、新しいランダム構造のダンジョンが生成される</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-01</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-01</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>シード値に基づき部屋・広め通路・上り階段を持つフロアを生成する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間分割（BSP等）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の長方形の部屋と幅 2〜3 タイル以上の通路が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">スタート部屋から到達可能な最遠方の部屋に「上り階段」タイルが1つ配置される</span></li><li><span class="kw">かつ</span><span class="st-text">プレイヤーが上り階段の当たり判定に触れるとフロア番号 N+1 が生成される</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-02</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>部屋と通路をシームレスに探索中に敵と遭遇する</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが部屋または通路を移動している</span></li><li><span class="kw">もし</span><span class="st-text">敵が待機または徘徊しているエリアに近づく</span></li><li><span class="kw">ならば</span><span class="st-text">部屋が封鎖されることなくシームレスに戦闘が始まる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-02</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-02</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>PCキーボードとスマホ片手ジョイスティックでシームレスに移動し壁で止まる</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、またはタッチ画面で任意の場所をドラッグする</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが連続座標上で指定ベクトルへ移動し、壁タイルとのAABB/円衝突で滑らかに押し戻される</span></li><li><span class="kw">かつ</span><span class="st-text">通路の途中でも部屋の封鎖は発生せず、視界または感知半径内の敵が追尾状態へ遷移する</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-03</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>自然回復はせず回復アイテムの獲得でHPを維持する</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーのHPが最大値より減っている</span></li><li><span class="kw">もし</span><span class="st-text">戦闘や探索を続けて時間が経過する</span></li><li><span class="kw">ならば</span><span class="st-text">HPは時間経過では自動回復せず、回復アイテムを拾うことで回復する</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Confirmed" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-03</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-03</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+                </div>
+                <h4>時間経過による自然回復を行わず回復オーブ取得時のみHPを回復する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの HP が 60 / 100 であり、自動回復レートが 0 / sec に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">10秒間ダメージを受けずに移動する</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーの HP は 60 のまま変化しない</span></li><li><span class="kw">かつ</span><span class="st-text">敵ドロップまたは宝箱から出現した回復アイテム（HP +30等）に触れた時のみ HP が回復する（上限 100）</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-04</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+          </div>
+          <h3>同じ階層への長居を防ぐ緊張感ギミックが働く</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが同一フロアに一定時間以上滞在している</span></li><li><span class="kw">もし</span><span class="st-text">フロア滞在警告の制限時間を超過する</span></li><li><span class="kw">ならば</span><span class="st-text">警告後に強力な監視敵が出現し、階段へ向かう動機が生まれる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-04</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-04</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>フロア滞在タイマー超過により警告表示後に監視ドローンが出現する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">通常フロアの滞在警告タイマーが 90 秒に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">フロア経過時間が 90 秒に達する</span></li><li><span class="kw">ならば</span><span class="st-text">画面上部に「WATCHER APPROACHING」の警告バナーと警告SEが鳴る</span></li><li><span class="kw">かつ</span><span class="st-text">10秒後（100秒時点）からプレイヤー位置へ向かう高耐久の監視ドローンがスポーンする</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-CMB-01</span>
+              <span class="file-pill">02-combat-and-loadout.feature</span>
+              <span class="feature-pill">自動迎撃アクションと多彩な装備システム（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>敵が近づくと装備が自動で迎撃を行う</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが攻撃可能な装備またはビットを所持している</span></li><li><span class="kw">もし</span><span class="st-text">敵が装備ごとの有効射程内に入る</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが攻撃ボタンを押さなくても自動で迎撃攻撃が発生する</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Confirmed" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-CMB-01</span>
+                    <span class="ref-pill">↳ ref: BIZ-CMB-01</span>
+                    <span class="file-pill">02-auto-intercept.feature</span>
+                  </div>
+                  <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+                </div>
+                <h4>装備ごとのクールダウンと射程判定により最短距離または条件合致の敵を自動攻撃する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが有効射程 R、クールダウン CD を持つ自動攻撃装備を1つ以上所持している</span></li><li><span class="kw">もし</span><span class="st-text">射程 R 以内に敵が存在し、かつ装備の残りクールダウンが 0 以下になる</span></li><li><span class="kw">ならば</span><span class="st-text">入力ボタン操作なしで即座に攻撃インスタンス（弾・斬撃・電撃）を生成し、CD をリセットする</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-CMB-02</span>
+              <span class="file-pill">02-combat-and-loadout.feature</span>
+              <span class="feature-pill">自動迎撃アクションと多彩な装備システム（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>武器や盾だけでなくビットや迎撃系装備を組み合わせて戦う</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが探索中に様々な系統の装備を入手している</span></li><li><span class="kw">もし</span><span class="st-text">主武装・公転シールド・自律ドローン・設置タレット・迎撃装置などを装備する</span></li><li><span class="kw">ならば</span><span class="st-text">それぞれの役割に応じた自動攻撃や防御が同時に機能する</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-CMB-02</span>
+                    <span class="ref-pill">↳ ref: BIZ-CMB-02</span>
+                    <span class="file-pill">02-auto-intercept.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>役割の異なる4カテゴリの自動迎撃装備が独立して並列稼働する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが以下の装備を組み合わせてスロットに装着している</span><div class="table-wrap"><table>
+              <thead><tr><th>装備ID</th><th>カテゴリ</th><th>挙動パラメータ</th></tr></thead>
+              <tbody><tr><td>pulse_blade</td><td>近接迎撃</td><td>半径 90px の敵へ自動薙ぎ払い</td></tr><tr><td>orbit_shield</td><td>公転ビット</td><td>半径 64px を角速度 2.4 rad/s で周回し接触ダメージ＋敵弾消去</td></tr><tr><td>seeker_drone</td><td>自律ドローン</td><td>半径 260px 内の敵へ誘導弾を自動発射</td></tr><tr><td>auto_turret</td><td>設置迎撃</td><td>5秒ごとに足元へ10秒持続する固定砲台をドロップ</td></tr><tr><td>reactive_coil</td><td>カウンター</td><td>敵が 80px 以内に接近、または被弾時に周囲へ連鎖放電</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">戦闘ループ（60fps固定タイムステップまたはdeltaTime更新）が進行する</span></li><li><span class="kw">ならば</span><span class="st-text">全装備のタイマーおよびビット座標が独立して更新され、同時に迎撃を実行する</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-CMB-03</span>
+              <span class="file-pill">02-combat-and-loadout.feature</span>
+              <span class="feature-pill">自動迎撃アクションと多彩な装備システム（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+          </div>
+          <h3>壁を使った一方的な安全地帯からのハメ攻撃を防ぐ</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の間にダンジョンの壁がある</span></li><li><span class="kw">もし</span><span class="st-text">自動迎撃の射線上に壁が挟まっている</span></li><li><span class="kw">ならば</span><span class="st-text">通常の弾やレーザーは壁で遮られ、地形を意識した位置取りが求められる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-CMB-03</span>
+                    <span class="ref-pill">↳ ref: BIZ-CMB-03</span>
+                    <span class="file-pill">02-auto-intercept.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>通常弾と索敵レーザーはレイキャスト判定により壁タイルで遮断される</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の位置を結ぶ線分上に「壁」属性のタイルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃または索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">グリッドDDAまたはレイキャストが壁との交差を検知し、壁越しのロックオンと弾の通過をブロックする</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅（ヒットエフェクト発生）する</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-GRW-01</span>
+              <span class="file-pill">03-growth-skill-tree.feature</span>
+              <span class="feature-pill">ハイブリッド成長と前提付きスキルツリー（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>探索で拾った装備とレベルアップ成長を組み合わせて強化する</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">装備品ドロップを獲得し、かつ経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">装備の付け替え・強化と、スキルツリーによる能力強化の両方で強くなる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-GRW-01</span>
+                    <span class="ref-pill">↳ ref: BIZ-GRW-01</span>
+                    <span class="file-pill">03-hybrid-skill-tree.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>経験値ジェム回収でスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 である</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベルが 2 に上がり、スキルポイント（SP）を +1 獲得してツリーボタンが強調表示される</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触または確認ダイアログで入手できる</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-GRW-02</span>
+              <span class="file-pill">03-growth-skill-tree.feature</span>
+              <span class="feature-pill">ハイブリッド成長と前提付きスキルツリー（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>前提スキルを習得するとより強力な上位スキルへ成長できる</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">スキルツリー上に前提関係を持つ下位スキルと上位スキルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">前提となる下位スキルを習得した状態でさらにスキルポイントを使う</span></li><li><span class="kw">ならば</span><span class="st-text">上位の強力なスキルや装備シナジーが解放され、ビルドが大きく進化する</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-GRW-02</span>
+                    <span class="ref-pill">↳ ref: BIZ-GRW-02</span>
+                    <span class="file-pill">03-hybrid-skill-tree.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>DAG構造のスキルツリーで前提ノード解放済みの場合のみ上位ノードを習得できる</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">スキルツリーが以下のような前提依存関係（requires）で定義されている</span><div class="table-wrap"><table>
+              <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>前提ノード</th><th>主な効果</th></tr></thead>
+              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>なし</td><td>全自動攻撃ダメージ +15%</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>arm_base</td><td>公転ビット・ドローンの同時展開数 +1</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>arm_parallel</td><td>全装備のクールダウン -20% &amp; レーザー貫通化</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>なし</td><td>全迎撃レンジ +20%</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>def_sensor</td><td>接近敵を周期的にノックバック</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>def_pulse</td><td>一定間隔で敵弾・近接を無効化し反射</td></tr><tr><td>mob_speed</td><td>機動</td><td>軽量化フレーム</td><td>なし</td><td>移動速度 +12% &amp; ジェム吸引範囲 +35%</td></tr><tr><td>mob_dash</td><td>機動</td><td>戦術ステップ</td><td>mob_speed</td><td>クールダウン付き無敵回避または自動緊急回避</td></tr><tr><td>mob_loot</td><td>機動</td><td>トレジャー解析</td><td>mob_dash</td><td>回復アイテム・宝箱ドロップ率 +25%</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが SP &gt;= 1 を所持し、前提ノード arm_base を未習得の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンは無効化（ロック表示）され、arm_base を先に習得した後にのみ arm_parallel が解放可能になる</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-GRW-03</span>
+              <span class="file-pill">03-growth-skill-tree.feature</span>
+              <span class="feature-pill">ハイブリッド成長と前提付きスキルツリー（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+          </div>
+          <h3>装備枠に上限を設けてビルドの取捨選択を生み出す</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロットがすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、既存装備の強化素材・分解ボーナスにするかを選択できる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-GRW-03</span>
+                    <span class="ref-pill">↳ ref: BIZ-GRW-03</span>
+                    <span class="file-pill">03-hybrid-skill-tree.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>装備スロット上限到達時は入れ替えまたはスクラップ変換を選べる</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの最大装備スロット数が 5 であり、すでに 5 個の装備を装着している</span></li><li><span class="kw">もし</span><span class="st-text">6 個目の新しい装備を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">ゲームを一時停止して「入れ替えるスロット選択」または「既存装備を強化（スクラップ変換で全体Lv+1）」モーダルを表示する</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-BOS-01</span>
+              <span class="file-pill">04-boss-and-fountain.feature</span>
+              <span class="feature-pill">ボス前の回復の泉と節目ボス戦（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          <h3>ボス戦の前に回復の泉がありこれからボスだと直感できる</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがボスが待ち受ける節目階層に到達している</span></li><li><span class="kw">もし</span><span class="st-text">ボスエリアの手前にある安全部屋に足を踏み入れる</span></li><li><span class="kw">ならば</span><span class="st-text">回復の泉が配置されており、回復とビルド確認を行って「この先がボス戦だ」とわかる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-BOS-01</span>
+                    <span class="ref-pill">↳ ref: BIZ-BOS-01</span>
+                    <span class="file-pill">04-fountain-and-boss.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>5Fのボス階層ではボス部屋の手前に敵不在の回復の泉部屋を確定生成する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">目標ボス階層が 5F に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが 4F の上り階段から 5F へ進入する</span></li><li><span class="kw">ならば</span><span class="st-text">5F は「スタート部屋 → 回復の泉部屋（安全地帯） → ボスアリーナ部屋」の一本道構成で生成される</span></li><li><span class="kw">かつ</span><span class="st-text">回復の泉部屋には敵がスポーンせず、フロア滞在タイマーも停止する</span></li><li><span class="kw">かつ</span><span class="st-text">泉エリアに入ると HP を 100% 回復（1回限定）し、画面上に「この先：守護者エリア」とボス警告が表示される</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-BOS-02</span>
+              <span class="file-pill">04-boss-and-fountain.feature</span>
+              <span class="feature-pill">ボス前の回復の泉と節目ボス戦（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+          </div>
+          <h3>節目ボスを撃破して踏破達成または深層チャレンジへ進む</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが目標階層のボス戦に突入している</span></li><li><span class="kw">もし</span><span class="st-text">ボスの攻撃パターンをかいくぐりながら自動迎撃でHPを削り切る</span></li><li><span class="kw">ならば</span><span class="st-text">目標階層クリアが記録され、そのままエンドレス深層へ挑むか終了するかを選べる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-BOS-02</span>
+                    <span class="ref-pill">↳ ref: BIZ-BOS-02</span>
+                    <span class="file-pill">04-fountain-and-boss.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                <h4>ボス部屋の閾値を超えるとボス戦が開始し撃破でクリア選択を表示する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが 5F の回復の泉部屋を抜けてボスアリーナ部屋へ足を踏み入れる</span></li><li><span class="kw">もし</span><span class="st-text">ボス部屋の進入トリガーを通過する</span></li><li><span class="kw">ならば</span><span class="st-text">背後のゲートが閉じてボスHPゲージが画面上部に表示され、ボスAI（弾幕＋突進フェーズ）が起動する</span></li><li><span class="kw">かつ</span><span class="st-text">ボスの HP を 0 にするとリザルトモーダルが開き、「ゲームクリア（終了）」または「エンドレス深層（6F〜）へ進む」を選択できる</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll('.tab-btn');
+    const searchBox = document.getElementById('searchBox');
+    const groups = document.querySelectorAll('.trace-group');
+    let activeFilter = 'all';
+
+    function applyFilters() {
+      const q = searchBox.value.trim().toLowerCase();
+      for (const group of groups) {
+        const text = (group.textContent || '').toLowerCase();
+        const matchesSearch = !q || text.includes(q);
+        const hasInferred = group.dataset.hasInferred === 'true';
+        const isConfirmedBiz = group.dataset.bizStatus === 'Confirmed';
+
+        let matchesTab = true;
+        if (activeFilter === 'inferred') matchesTab = hasInferred;
+        if (activeFilter === 'confirmed') matchesTab = isConfirmedBiz;
+
+        group.classList.toggle('hidden', !(matchesSearch && matchesTab));
+
+        const appCards = group.querySelectorAll('.app-card');
+        for (const card of appCards) {
+          if (activeFilter === 'inferred') {
+            card.classList.toggle('hidden', card.dataset.status !== 'Inferred' && group.dataset.bizStatus !== 'Inferred');
+          } else {
+            card.classList.remove('hidden');
+          }
+        }
+      }
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        buttons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        applyFilters();
+      });
+    });
+
+    searchBox.addEventListener('input', applyFilters);
+  </script>
+</body>
+</html>
