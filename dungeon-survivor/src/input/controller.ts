@@ -18,7 +18,7 @@ export class InputController {
     originY: 0,
     currentX: 0,
     currentY: 0,
-    maxRadius: 48,
+    maxRadius: 44,
   };
 
   constructor(private readonly target: HTMLElement) {
@@ -27,10 +27,16 @@ export class InputController {
     window.addEventListener('blur', this.onBlur);
 
     target.addEventListener('pointerdown', this.onPointerDown);
+    target.addEventListener('touchstart', this.preventTouchDefault, { passive: false });
+    target.addEventListener('touchmove', this.preventTouchDefault, { passive: false });
     window.addEventListener('pointermove', this.onPointerMove);
     window.addEventListener('pointerup', this.onPointerUp);
     window.addEventListener('pointercancel', this.onPointerUp);
   }
+
+  private readonly preventTouchDefault = (e: TouchEvent): void => {
+    e.preventDefault();
+  };
 
   private readonly onKeyDown = (e: KeyboardEvent): void => {
     this.keys.add(e.key.toLowerCase());
@@ -48,6 +54,12 @@ export class InputController {
   private readonly onPointerDown = (e: PointerEvent): void => {
     if (this.activePointerId !== null) return;
     if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault();
+    try {
+      this.target.setPointerCapture?.(e.pointerId);
+    } catch {
+      // Ignore synthetic events that lack active pointer capture support
+    }
     const rect = this.target.getBoundingClientRect();
     this.activePointerId = e.pointerId;
     this.stick.active = true;
@@ -66,6 +78,13 @@ export class InputController {
 
   private readonly onPointerUp = (e: PointerEvent): void => {
     if (e.pointerId !== this.activePointerId) return;
+    try {
+      if (this.target.hasPointerCapture?.(e.pointerId)) {
+        this.target.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Ignore release errors
+    }
     this.resetStick();
   };
 
@@ -92,7 +111,7 @@ export class InputController {
       const dx = this.stick.currentX - this.stick.originX;
       const dy = this.stick.currentY - this.stick.originY;
       const dist = Math.hypot(dx, dy);
-      if (dist > 6) {
+      if (dist > 4) {
         const clamped = Math.min(dist, this.stick.maxRadius) / this.stick.maxRadius;
         return {
           x: (dx / dist) * clamped,
@@ -109,6 +128,8 @@ export class InputController {
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('blur', this.onBlur);
     this.target.removeEventListener('pointerdown', this.onPointerDown);
+    this.target.removeEventListener('touchstart', this.preventTouchDefault);
+    this.target.removeEventListener('touchmove', this.preventTouchDefault);
     window.removeEventListener('pointermove', this.onPointerMove);
     window.removeEventListener('pointerup', this.onPointerUp);
     window.removeEventListener('pointercancel', this.onPointerUp);

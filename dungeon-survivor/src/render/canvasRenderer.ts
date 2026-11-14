@@ -224,11 +224,12 @@ export function renderGame(
 
 function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state: GameState): void {
   const { map, explored, player } = state;
-  const cell = 3;
+  const isNarrow = canvasWidth < 540;
+  const cell = isNarrow ? 2 : 3;
   const mapW = map.width * cell;
   const mapH = map.height * cell;
-  const ox = canvasWidth - mapW - 14;
-  const oy = 64;
+  const ox = canvasWidth - mapW - 12;
+  const oy = isNarrow ? 94 : 64;
 
   ctx.save();
   ctx.fillStyle = 'rgba(7, 11, 20, 0.78)';
