@@ -12,6 +12,7 @@ import {
   getSkillEffectSummary,
   getSkillLevel,
   getSkillNode,
+  getSkillUpgradeCost,
   type SkillBranch,
   type SkillNodeId,
 } from '../game/skillTree';
@@ -71,6 +72,7 @@ export function renderModals(
 
         const currLv = getSkillLevel(state.player.skillLevels, node.id);
         const isMax = currLv >= MAX_SKILL_LEVEL;
+        const nextCost = getSkillUpgradeCost(currLv);
         const isAvailable = canUpgradeSkill(
           state.player.skillLevels,
           state.player.skillPoints,
@@ -87,18 +89,19 @@ export function renderModals(
         }`;
         btn.disabled = !isAvailable;
 
+        const costLabel = isMax ? 'MAX' : `次Lv必要 ${nextCost} SP（Lv1-3:1 / Lv4:2 / Lv5:3）`;
         const reqLabel = node.requires
-          ? `Tier ${node.tier} · 必要 ${node.cost} SP/Lv · 前提: ${getSkillNode(node.requires).name} Lv${SKILL_PREREQ_LEVEL}+`
-          : `Tier ${node.tier} · 必要 ${node.cost} SP/Lv · 基本ノード`;
+          ? `Tier ${node.tier} · ${costLabel} · 前提: ${getSkillNode(node.requires).name} Lv${SKILL_PREREQ_LEVEL}+`
+          : `Tier ${node.tier} · ${costLabel} · 基本ノード`;
 
         const stateLabel = isMax
           ? `MAX (${currLv}/${MAX_SKILL_LEVEL})`
           : isAvailable
           ? currLv === 0
-            ? `習得 (-${node.cost} SP)`
-            : `Lv${currLv}→${currLv + 1} (-${node.cost} SP)`
+            ? `習得 (-${nextCost} SP)`
+            : `Lv${currLv}→${currLv + 1} (-${nextCost} SP)`
           : prereqMet
-          ? `🔒 SP不足 (Lv${currLv}/${MAX_SKILL_LEVEL})`
+          ? `🔒 SP不足 (必要${nextCost})`
           : `🔒 前提Lv${SKILL_PREREQ_LEVEL}要`;
 
         const effectText =

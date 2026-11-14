@@ -35,8 +35,11 @@ export interface PlayerState {
   tacticalStepCooldown: number;
 }
 
+export type EnemyKind = 'normal' | 'tank' | 'runner' | 'shooter' | 'caller';
+
 export interface EnemyState {
   id: number;
+  kind?: EnemyKind;
   x: number;
   y: number;
   radius: number;
@@ -48,6 +51,10 @@ export interface EnemyState {
   awake: boolean;
   hitFlash: number;
   bitHitCooldown: number;
+  attackCooldown?: number;
+  alertCooldown?: number;
+  wanderTarget?: Vec2 | null;
+  wanderTimer?: number;
 }
 
 export interface ProjectileState {
@@ -125,6 +132,15 @@ export interface FloatingText {
   maxLife: number;
 }
 
+export interface GameNotification {
+  id: number;
+  kind: 'levelup' | 'alert' | 'info';
+  text: string;
+  color: string;
+  life: number;
+  maxLife: number;
+}
+
 export interface GameStats {
   kills: number;
   floorsCleared: number;
@@ -147,6 +163,9 @@ export interface GameState {
   pickups: PickupState[];
   floatingTexts: FloatingText[];
   visualFx: VisualFx[];
+  notifications: GameNotification[];
+  elapsedFloorTime: number;
+  respawnTimer: number;
   nextEntityId: number;
   floorBannerTimer: number;
   stats: GameStats;

@@ -1,9 +1,144 @@
-import { TILE_SIZE, getTile, tileCenterWorld } from '../core/dungeon';
-import { getOrbitBitPositions, getSeekerDronePositions } from '../game/engine';
+import { TILE_SIZE, findRoomAtTile, getTile, tileCenterWorld } from '../core/dungeon';
+import {
+  CORRIDOR_VISION_RADIUS,
+  getOrbitBitPositions,
+  getSeekerDronePositions,
+  isPointInPlayerVision,
+} from '../game/engine';
 import { EQUIPMENT_CATALOG, MAX_TARGET_RANGE } from '../game/equipment';
 import { computeSkillModifiers } from '../game/skillTree';
-import type { GameState } from '../game/types';
+import type { EnemyState, GameState } from '../game/types';
 import type { VirtualStickState } from '../input/controller';
+
+export const TARGET_VIEW_WORLD_WIDTH = 640; // ~16 tiles across on desktop/web
+
+export function computeCameraZoom(viewportWidth: number, viewportHeight: number): number {
+  const widthZoom = Math.max(1.0, viewportWidth / TARGET_VIEW_WORLD_WIDTH);
+  const heightMaxZoom = Math.max(1.0, viewportHeight / 340);
+  return Math.min(3.0, widthZoom, heightMaxZoom);
+}
+
+let fogCanvas: HTMLCanvasElement | null = null;
+
+function getFogCanvas(w: number, h: number): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') return null;
+  if (!fogCanvas) {
+    fogCanvas = document.createElement('canvas');
+  }
+  const cw = Math.max(1, Math.ceil(w));
+  const ch = Math.max(1, Math.ceil(h));
+  if (fogCanvas.width !== cw || fogCanvas.height !== ch) {
+    fogCanvas.width = cw;
+    fogCanvas.height = ch;
+  }
+  return fogCanvas;
+}
+
+function drawEnemyBody(
+  ctx: CanvasRenderingContext2D,
+  enemy: EnemyState,
+  playerX: number,
+  playerY: number,
+  nowSec: number
+): void {
+  const kind = enemy.kind ?? 'normal';
+  const flash = enemy.hitFlash > 0;
+
+  ctx.save();
+  ctx.translate(enemy.x, enemy.y);
+
+  if (kind === 'tank') {
+    // Heavy armored hexagon
+    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#7c3aed' : '#4c1d95';
+    ctx.strokeStyle = enemy.awake ? '#ddd6fe' : '#6d28d9';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let s = 0; s < 6; s++) {
+      const a = (s * Math.PI) / 3;
+      const vx = Math.cos(a) * enemy.radius;
+      const vy = Math.sin(a) * enemy.radius;
+      if (s === 0) ctx.moveTo(vx, vy);
+      else ctx.lineTo(vx, vy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(221, 214, 254, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius * 0.55, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (kind === 'runner') {
+    // Fast agile diamond
+    const r = enemy.radius + 1;
+    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#f59e0b' : '#92400e';
+    ctx.strokeStyle = enemy.awake ? '#fef08a' : '#78350f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -r);
+    ctx.lineTo(r, 0);
+    ctx.lineTo(0, r);
+    ctx.lineTo(-r, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (kind === 'shooter') {
+    // Stationary ranged turret
+    const s = enemy.radius;
+    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#db2777' : '#831843';
+    ctx.strokeStyle = enemy.awake ? '#fbcfe8' : '#500724';
+    ctx.lineWidth = 2;
+    ctx.fillRect(-s, -s, s * 2, s * 2);
+    ctx.strokeRect(-s, -s, s * 2, s * 2);
+
+    const aimAngle = Math.atan2(playerY - enemy.y, playerX - enemy.x);
+    ctx.rotate(aimAngle);
+    ctx.fillStyle = '#fdf2f8';
+    ctx.fillRect(0, -3, s + 6, 6);
+  } else if (kind === 'caller') {
+    // Wandering scout & caller with radar ring
+    const pulse = 0.65 + 0.35 * Math.sin(nowSec * 6);
+    ctx.strokeStyle = enemy.awake
+      ? `rgba(249, 115, 22, ${0.75 * pulse})`
+      : `rgba(250, 204, 21, ${0.45 * pulse})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + 5 + pulse * 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#f97316' : '#eab308';
+    ctx.strokeStyle = '#fef9c3';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -enemy.radius - 2);
+    ctx.lineTo(enemy.radius + 1, enemy.radius);
+    ctx.lineTo(-enemy.radius - 1, enemy.radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    // Standard chaser
+    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#f43f5e' : '#9f1239';
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = enemy.awake ? '#fda4af' : '#4c0519';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  if (enemy.hp < enemy.maxHp) {
+    const bw = Math.max(24, enemy.radius * 2);
+    const ratio = Math.max(0, enemy.hp / enemy.maxHp);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw, 4);
+    ctx.fillStyle = '#fb7185';
+    ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw * ratio, 4);
+  }
+}
 
 export function renderGame(
   ctx: CanvasRenderingContext2D,
@@ -13,26 +148,31 @@ export function renderGame(
   stick: VirtualStickState,
   nowSec: number
 ): void {
-  const { map, player } = state;
+  const { map, player, explored } = state;
   const mods = computeSkillModifiers(player.skillLevels);
 
   ctx.fillStyle = '#050811';
   ctx.fillRect(0, 0, width, height);
 
-  const camX = player.x - width / 2;
-  const camY = player.y - height / 2;
+  const zoom = computeCameraZoom(width, height);
+  const viewW = width / zoom;
+  const viewH = height / zoom;
+  const camX = player.x - viewW / 2;
+  const camY = player.y - viewH / 2;
 
   ctx.save();
+  ctx.scale(zoom, zoom);
   ctx.translate(-camX, -camY);
 
-  // 1. Visible tile culling & dungeon floor/walls
+  // 1. Visible tile culling & explored dungeon floor/walls
   const minTx = Math.max(0, Math.floor(camX / TILE_SIZE) - 1);
-  const maxTx = Math.min(map.width - 1, Math.ceil((camX + width) / TILE_SIZE) + 1);
+  const maxTx = Math.min(map.width - 1, Math.ceil((camX + viewW) / TILE_SIZE) + 1);
   const minTy = Math.max(0, Math.floor(camY / TILE_SIZE) - 1);
-  const maxTy = Math.min(map.height - 1, Math.ceil((camY + height) / TILE_SIZE) + 1);
+  const maxTy = Math.min(map.height - 1, Math.ceil((camY + viewH) / TILE_SIZE) + 1);
 
   for (let ty = minTy; ty <= maxTy; ty++) {
     for (let tx = minTx; tx <= maxTx; tx++) {
+      if (!explored[ty * map.width + tx]) continue;
       const tile = getTile(map, tx, ty);
       const px = tx * TILE_SIZE;
       const py = ty * TILE_SIZE;
@@ -76,8 +216,12 @@ export function renderGame(
     }
   }
 
-  // 2. Treasure chests
+  // 2. Treasure chests (only on explored tiles)
   for (const chest of state.chests) {
+    const cx = Math.floor(chest.x / TILE_SIZE);
+    const cy = Math.floor(chest.y / TILE_SIZE);
+    if (!explored[cy * map.width + cx]) continue;
+
     ctx.save();
     ctx.translate(chest.x, chest.y);
     if (chest.opened) {
@@ -104,8 +248,12 @@ export function renderGame(
     ctx.restore();
   }
 
-  // 3. Pickups
+  // 3. Pickups (only on explored tiles)
   for (const p of state.pickups) {
+    const ptx = Math.floor(p.x / TILE_SIZE);
+    const pty = Math.floor(p.y / TILE_SIZE);
+    if (!explored[pty * map.width + ptx]) continue;
+
     if (p.kind === 'heal') {
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
@@ -149,7 +297,7 @@ export function renderGame(
     }
   }
 
-  // 5. Intercept range rings & Aegis ready indicator
+  // 5. Intercept range rings & Orbit Bits
   const droneEquip = player.equipment.find((e) => e.id === 'seeker_drone');
   if (droneEquip) {
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
@@ -234,24 +382,12 @@ export function renderGame(
     ctx.restore();
   }
 
-  // 7. Enemies
+  // 7. Enemies (rendered only when inside player's current vision)
   for (const enemy of state.enemies) {
-    ctx.fillStyle = enemy.hitFlash > 0 ? '#ffffff' : enemy.awake ? '#f43f5e' : '#9f1239';
-    ctx.beginPath();
-    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = enemy.awake ? '#fda4af' : '#4c0519';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    if (enemy.hp < enemy.maxHp) {
-      const bw = 26;
-      const ratio = Math.max(0, enemy.hp / enemy.maxHp);
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-      ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw, 4);
-      ctx.fillStyle = '#fb7185';
-      ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw * ratio, 4);
+    if (!isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y)) {
+      continue;
     }
+    drawEnemyBody(ctx, enemy, player.x, player.y, nowSec);
   }
 
   // 8. Projectiles
@@ -291,10 +427,14 @@ export function renderGame(
   }
 
   for (const ep of state.enemyProjectiles) {
+    if (!isPointInPlayerVision(map, player.x, player.y, ep.x, ep.y)) continue;
     ctx.fillStyle = '#fb7185';
     ctx.beginPath();
     ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#ffe4e6';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
   }
 
   // 9. Player & Aegis ready aura
@@ -338,6 +478,9 @@ export function renderGame(
 
   ctx.restore();
 
+  // 10.5. Fog of War overlay (corridor circular light vs lit room)
+  renderFogOverlay(ctx, width, height, zoom, camX, camY, state);
+
   // 11. Mini-map (top-right, responsive for smartphone portrait)
   renderMinimap(ctx, width, state);
 
@@ -362,7 +505,9 @@ export function renderGame(
     ctx.fill();
   }
 
-  // 13. Floor entry banner
+  // 13. Toast Notifications (Level-up & Caller Alert) & Floor entry banner
+  renderNotifications(ctx, width, state);
+
   if (state.floorBannerTimer > 0) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
@@ -376,6 +521,105 @@ export function renderGame(
     ctx.fillText(`FLOOR ${state.floor}F`, width / 2, 101);
     ctx.restore();
   }
+}
+
+function renderFogOverlay(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  zoom: number,
+  camX: number,
+  camY: number,
+  state: GameState
+): void {
+  const fCanvas = getFogCanvas(width, height);
+  if (!fCanvas) return;
+  const fCtx = fCanvas.getContext('2d');
+  if (!fCtx) return;
+
+  const { map, player } = state;
+  const cw = fCanvas.width;
+  const ch = fCanvas.height;
+
+  fCtx.save();
+  fCtx.globalCompositeOperation = 'source-over';
+  fCtx.clearRect(0, 0, cw, ch);
+  fCtx.fillStyle = 'rgba(5, 8, 17, 0.82)';
+  fCtx.fillRect(0, 0, cw, ch);
+
+  // Carve out current active vision
+  fCtx.globalCompositeOperation = 'destination-out';
+
+  const psx = (player.x - camX) * zoom;
+  const psy = (player.y - camY) * zoom;
+  const circleRadius = CORRIDOR_VISION_RADIUS * zoom;
+
+  const grad = fCtx.createRadialGradient(psx, psy, circleRadius * 0.45, psx, psy, circleRadius);
+  grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+  grad.addColorStop(0.75, 'rgba(0, 0, 0, 0.85)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  fCtx.fillStyle = grad;
+  fCtx.beginPath();
+  fCtx.arc(psx, psy, circleRadius, 0, Math.PI * 2);
+  fCtx.fill();
+
+  const ptx = Math.floor(player.x / TILE_SIZE);
+  const pty = Math.floor(player.y / TILE_SIZE);
+  const activeRoom = findRoomAtTile(map, ptx, pty);
+  if (activeRoom) {
+    const pad = TILE_SIZE * 0.75;
+    const rx = (activeRoom.x * TILE_SIZE - pad - camX) * zoom;
+    const ry = (activeRoom.y * TILE_SIZE - pad - camY) * zoom;
+    const rw = (activeRoom.w * TILE_SIZE + pad * 2) * zoom;
+    const rh = (activeRoom.h * TILE_SIZE + pad * 2) * zoom;
+
+    fCtx.fillStyle = 'rgba(0, 0, 0, 0.92)';
+    fCtx.beginPath();
+    if (typeof fCtx.roundRect === 'function') {
+      fCtx.roundRect(rx, ry, rw, rh, 14 * zoom);
+    } else {
+      fCtx.rect(rx, ry, rw, rh);
+    }
+    fCtx.fill();
+  }
+
+  fCtx.restore();
+
+  ctx.save();
+  ctx.drawImage(fCanvas, 0, 0, width, height);
+  ctx.restore();
+}
+
+function renderNotifications(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  state: GameState
+): void {
+  if (state.notifications.length === 0) return;
+
+  ctx.save();
+  let y = state.floorBannerTimer > 0 ? 126 : 74;
+  ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+
+  for (let i = state.notifications.length - 1; i >= 0; i--) {
+    const n = state.notifications[i];
+    const alpha = Math.min(1, n.life * 2);
+    const tw = Math.min(width - 28, Math.max(210, ctx.measureText(n.text).width + 28));
+    const x = width / 2 - tw / 2;
+
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = n.kind === 'alert' ? 'rgba(69, 10, 10, 0.9)' : 'rgba(15, 23, 42, 0.9)';
+    ctx.fillRect(x, y, tw, 30);
+    ctx.strokeStyle = n.color;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x, y, tw, 30);
+
+    ctx.fillStyle = n.kind === 'alert' ? '#fed7aa' : '#f8fafc';
+    ctx.fillText(n.text, width / 2, y + 19);
+    y += 36;
+  }
+  ctx.restore();
 }
 
 function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state: GameState): void {

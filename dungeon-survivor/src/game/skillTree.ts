@@ -20,10 +20,20 @@ export interface SkillNodeDef {
   id: SkillNodeId;
   branch: SkillBranch;
   tier: 1 | 2 | 3;
-  cost: number;
   name: string;
   requires: SkillNodeId | null;
   description: string;
+}
+
+/**
+ * Required SP to upgrade from `currentLevel` to `currentLevel + 1`:
+ * Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 3
+ */
+export function getSkillUpgradeCost(currentLevel: number): number {
+  if (currentLevel >= MAX_SKILL_LEVEL) return Infinity;
+  if (currentLevel <= 2) return 1;
+  if (currentLevel === 3) return 2;
+  return 3;
 }
 
 export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
@@ -31,82 +41,73 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'arm_base',
     branch: 'arms',
     tier: 1,
-    cost: 1,
     name: '出力強化',
     requires: null,
-    description: 'Lv毎に全自動攻撃ダメージ +10%（最大+50%）',
+    description: '全攻撃ダメージ強化（Lv1〜3: +8%/Lv → Lv4: +42% / Lv5: +68%）',
   },
   {
     id: 'arm_parallel',
     branch: 'arms',
     tier: 2,
-    cost: 2,
     name: 'ビット並列制御',
     requires: 'arm_base',
-    description: 'Lv1/3/5でビット・ドローン展開数+1 & 威力+6%/Lv',
+    description: 'ビット・ドローン展開数増 & 威力UP（Lv4〜5で展開+3/+4 & 威力大幅増）',
   },
   {
     id: 'arm_overclock',
     branch: 'arms',
     tier: 3,
-    cost: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    description: 'Lv毎にCD-7% & 弾速UP（Lv1以上でドローン貫通）',
+    description: 'CD短縮 & 弾速UP + ドローン貫通（Lv4: CD-28% / Lv5: CD-40%）',
   },
   {
     id: 'def_sensor',
     branch: 'defense',
     tier: 1,
-    cost: 1,
     name: '広域索敵',
     requires: null,
-    description: 'Lv毎に迎撃レンジ +10%（部屋・通路上限180px内）',
+    description: '迎撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px）',
   },
   {
     id: 'def_pulse',
     branch: 'defense',
     tier: 2,
-    cost: 2,
     name: '電磁リパルサー',
     requires: 'def_sensor',
-    description: '接近敵を周期ノックバック（Lv毎に威力UP・CD短縮）',
+    description: '接近敵を周期ノックバック（Lv4〜5で高威力・高回転＆広範囲）',
   },
   {
     id: 'def_aegis',
     branch: 'defense',
     tier: 3,
-    cost: 3,
     name: 'オートパリィ盾',
     requires: 'def_pulse',
-    description: '被弾無効パリィ＋反射（Lv毎にCD短縮・反撃強化）',
+    description: '被弾無効パリィ＋反射（Lv4〜5で高反射・短CD）',
   },
   {
     id: 'mob_magnet',
     branch: 'mobility',
     tier: 1,
-    cost: 1,
     name: '磁力回収フレーム',
     requires: null,
-    description: 'Lv毎に吸引範囲 +25% & 回復オーブ効果 +12%',
+    description: '吸引範囲＆回復オーブ強化（Lv4: 回復+50% / Lv5: 吸引+160% & 回復+75%）',
   },
   {
     id: 'mob_dash',
     branch: 'mobility',
     tier: 2,
-    cost: 2,
     name: '戦術ステップ',
     requires: 'mob_magnet',
-    description: '被弾時の無敵延長＆回避（Lv毎に距離・無敵延長）',
+    description: '被弾時の無敵延長＆回避距離（Lv4〜5で大幅延長＆CD半減級）',
   },
   {
     id: 'mob_loot',
     branch: 'mobility',
     tier: 3,
-    cost: 3,
     name: 'トレジャー解析',
     requires: 'mob_dash',
-    description: 'Lv毎に宝箱・回復率+10% / 装備ドロップ補正 / EXP+10%',
+    description: '宝箱・装備ドロップ・EXP強化（Lv4: EXP+42% / Lv5: EXP+68% & 希少率UP）',
   },
 ] as const;
 
@@ -130,12 +131,36 @@ export function canUpgradeSkill(
   const currLevel = getSkillLevel(levels, nodeId);
   if (currLevel >= MAX_SKILL_LEVEL) return false;
   const node = getSkillNode(nodeId);
-  if (skillPoints < node.cost) return false;
+  const cost = getSkillUpgradeCost(currLevel);
+  if (skillPoints < cost) return false;
   if (node.requires === null) return true;
   return getSkillLevel(levels, node.requires) >= SKILL_PREREQ_LEVEL;
 }
 
 export const canUnlockSkill = canUpgradeSkill;
+
+// Per-level scaling curves [Lv0, Lv1, Lv2, Lv3, Lv4, Lv5] with sharp Lv4 & Lv5 breakthroughs
+const ARM_DAMAGE_PCT = [0, 0.08, 0.16, 0.24, 0.42, 0.68] as const;
+const ARM_EXTRA_BITS = [0, 1, 1, 2, 3, 4] as const;
+const ARM_BIT_DMG_PCT = [0, 0.06, 0.12, 0.18, 0.32, 0.52] as const;
+const ARM_CD_REDUCTION = [0, 0.06, 0.12, 0.18, 0.28, 0.4] as const;
+const ARM_DRONE_SPEED = [0, 20, 40, 60, 100, 150] as const;
+
+const DEF_RANGE_PCT = [0, 0.08, 0.16, 0.24, 0.38, 0.55] as const;
+const DEF_PULSE_DMG = [0, 12, 16, 20, 32, 48] as const;
+const DEF_PULSE_CD = [0, 3.8, 3.5, 3.2, 2.5, 1.8] as const;
+const DEF_PULSE_RANGE = [0, 105, 112, 120, 138, 160] as const;
+const DEF_AEGIS_DMG = [0, 24, 32, 40, 64, 96] as const;
+const DEF_AEGIS_CD = [0, 6.4, 5.8, 5.2, 4.0, 2.8] as const;
+
+const MOB_MAGNET_PCT = [0, 0.22, 0.44, 0.66, 1.05, 1.6] as const;
+const MOB_HEAL_PCT = [0, 0.1, 0.2, 0.3, 0.5, 0.75] as const;
+const MOB_DASH_INVULN = [0.55, 0.85, 0.95, 1.05, 1.3, 1.65] as const;
+const MOB_DASH_DIST = [0, 40, 46, 52, 66, 84] as const;
+const MOB_DASH_CD = [0, 6.4, 5.8, 5.2, 4.0, 2.8] as const;
+const MOB_LOOT_PCT = [0, 0.08, 0.16, 0.24, 0.4, 0.6] as const;
+const MOB_DROP_BONUS = [0, 0.002, 0.004, 0.006, 0.011, 0.018] as const;
+const MOB_EXP_PCT = [0, 0.08, 0.16, 0.24, 0.42, 0.68] as const;
 
 export interface ComputedSkillModifiers {
   totalSkillLevels: number;
@@ -188,52 +213,53 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
 
   return {
     totalSkillLevels,
-    damageMult: 1 + armBaseLv * 0.1,
-    extraBits: armParallelLv === 0 ? 0 : Math.ceil(armParallelLv / 2),
-    bitDroneDamageMult: 1 + armParallelLv * 0.06,
-    cooldownMult: Math.max(0.65, 1 - armOverclockLv * 0.07),
+    damageMult: 1 + ARM_DAMAGE_PCT[armBaseLv],
+    extraBits: ARM_EXTRA_BITS[armParallelLv],
+    bitDroneDamageMult: 1 + ARM_BIT_DMG_PCT[armParallelLv],
+    cooldownMult: Math.max(0.55, 1 - ARM_CD_REDUCTION[armOverclockLv]),
     piercingDrones: armOverclockLv >= 1,
-    droneSpeedBonus: armOverclockLv * 22,
-    rangeMult: 1 + defSensorLv * 0.1,
+    droneSpeedBonus: ARM_DRONE_SPEED[armOverclockLv],
+    rangeMult: 1 + DEF_RANGE_PCT[defSensorLv],
     hasRepulsor: defPulseLv >= 1,
-    repulsorDamage: 8 + defPulseLv * 4,
-    repulsorCooldown: Math.max(2.0, 4.0 - defPulseLv * 0.35),
-    repulsorRange: 100 + defPulseLv * 8,
+    repulsorDamage: DEF_PULSE_DMG[defPulseLv],
+    repulsorCooldown: DEF_PULSE_CD[defPulseLv],
+    repulsorRange: DEF_PULSE_RANGE[defPulseLv],
     hasAegisParry: defAegisLv >= 1,
-    aegisCooldown: Math.max(3.0, 7.0 - defAegisLv * 0.7),
-    aegisDamage: 18 + defAegisLv * 8,
-    pickupMagnetMult: 1 + mobMagnetLv * 0.25,
-    healBonusMult: 1 + mobMagnetLv * 0.12,
+    aegisCooldown: DEF_AEGIS_CD[defAegisLv],
+    aegisDamage: DEF_AEGIS_DMG[defAegisLv],
+    pickupMagnetMult: 1 + MOB_MAGNET_PCT[mobMagnetLv],
+    healBonusMult: 1 + MOB_HEAL_PCT[mobMagnetLv],
     hasTacticalStep: mobDashLv >= 1,
-    tacticalInvulnDuration: 0.75 + mobDashLv * 0.12,
-    tacticalStepDist: 36 + mobDashLv * 6,
-    tacticalStepCooldown: Math.max(3.0, 7.0 - mobDashLv * 0.7),
-    lootBonusRate: mobLootLv * 0.1,
-    equipDropBonus: mobLootLv * 0.003,
-    expMult: 1 + mobLootLv * 0.1,
+    tacticalInvulnDuration: MOB_DASH_INVULN[mobDashLv],
+    tacticalStepDist: MOB_DASH_DIST[mobDashLv],
+    tacticalStepCooldown: MOB_DASH_CD[mobDashLv],
+    lootBonusRate: MOB_LOOT_PCT[mobLootLv],
+    equipDropBonus: MOB_DROP_BONUS[mobLootLv],
+    expMult: 1 + MOB_EXP_PCT[mobLootLv],
   };
 }
 
 export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): string {
-  if (level <= 0) return '未習得';
+  const lv = Math.max(0, Math.min(MAX_SKILL_LEVEL, level));
+  if (lv <= 0) return '未習得';
   switch (nodeId) {
     case 'arm_base':
-      return `全攻撃 +${level * 10}%`;
+      return `全攻撃 +${Math.round(ARM_DAMAGE_PCT[lv] * 100)}%`;
     case 'arm_parallel':
-      return `展開 +${Math.ceil(level / 2)} / 威力 +${level * 6}%`;
+      return `展開 +${ARM_EXTRA_BITS[lv]} / 威力 +${Math.round(ARM_BIT_DMG_PCT[lv] * 100)}%`;
     case 'arm_overclock':
-      return `CD -${level * 7}% / 貫通`;
+      return `CD -${Math.round(ARM_CD_REDUCTION[lv] * 100)}% / 貫通`;
     case 'def_sensor':
-      return `レンジ +${level * 10}%`;
+      return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
     case 'def_pulse':
-      return `威力${8 + level * 4} / CD ${(4.0 - level * 0.35).toFixed(2)}s`;
+      return `威力${DEF_PULSE_DMG[lv]} / 範囲${DEF_PULSE_RANGE[lv]} / CD ${DEF_PULSE_CD[lv].toFixed(1)}s`;
     case 'def_aegis':
-      return `反撃${18 + level * 8} / CD ${(7.0 - level * 0.7).toFixed(1)}s`;
+      return `反撃${DEF_AEGIS_DMG[lv]} / CD ${DEF_AEGIS_CD[lv].toFixed(1)}s`;
     case 'mob_magnet':
-      return `吸引 +${level * 25}% / 回復 +${level * 12}%`;
+      return `吸引 +${Math.round(MOB_MAGNET_PCT[lv] * 100)}% / 回復 +${Math.round(MOB_HEAL_PCT[lv] * 100)}%`;
     case 'mob_dash':
-      return `無敵 ${(0.75 + level * 0.12).toFixed(2)}s / 回避${36 + level * 6}px`;
+      return `無敵 ${MOB_DASH_INVULN[lv].toFixed(2)}s / 回避${MOB_DASH_DIST[lv]}px`;
     case 'mob_loot':
-      return `宝 +${level * 10}% / EXP +${level * 10}%`;
+      return `宝 +${Math.round(MOB_LOOT_PCT[lv] * 100)}% / EXP +${Math.round(MOB_EXP_PCT[lv] * 100)}%`;
   }
 }

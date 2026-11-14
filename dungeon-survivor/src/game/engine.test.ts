@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TILE_SIZE, tileCenterWorld } from '../core/dungeon';
+import { computeCameraZoom } from '../render/canvasRenderer';
 import {
   ALL_EQUIPMENT_IDS,
   MAX_EQUIP_SLOTS,
@@ -9,17 +10,28 @@ import {
   getRicochetDiscStats,
 } from './equipment';
 import {
+  CALLER_ALERT_RADIUS,
+  CORRIDOR_VISION_RADIUS,
   acquireEquipment,
+  createEnemyByKind,
   createGameState,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
   getSeekerDronePositions,
+  isPointInPlayerVision,
+  pickEnemyKindForFloor,
   resolveEquipChoice,
   rollDropEquipmentLevel,
   stepGame,
   upgradeSkillNode,
 } from './engine';
-import { MAX_SKILL_LEVEL, SKILL_PREREQ_LEVEL, canUpgradeSkill } from './skillTree';
+import {
+  MAX_SKILL_LEVEL,
+  SKILL_PREREQ_LEVEL,
+  canUpgradeSkill,
+  computeSkillModifiers,
+  getSkillUpgradeCost,
+} from './skillTree';
 
 describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
   it('[APP-MAP-03] does not regenerate HP over time and heals only on recovery orb pickup', () => {
@@ -379,9 +391,10 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(2);
   });
 
-  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Lv1-5 per-skill scaling, Lv3+ prerequisites, and tiered SP costs (1/2/3)', () => {
+  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Lv1-3=1SP / Lv4=2SP / Lv5=3SP, Lv4-5 breakthroughs, Lv3+ prereqs, and level-up notifications', () => {
     expect(MAX_SKILL_LEVEL).toBe(5);
     expect(SKILL_PREREQ_LEVEL).toBe(3);
+    expect([0, 1, 2, 3, 4].map((lv) => getSkillUpgradeCost(lv))).toEqual([1, 1, 1, 2, 3]);
 
     const state = createGameState({ seed: 505 });
     state.enemies = [];
@@ -397,57 +410,64 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.level).toBe(2);
     expect(state.player.skillPoints).toBe(1);
+    expect(state.notifications.some((n) => n.kind === 'levelup' && n.text.includes('Lv2'))).toBe(true);
 
     // Cannot unlock Tier 2 before Tier 1 reaches Lv3
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(false);
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv1
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv1 (cost 1)
     state.player.skillPoints = 5;
     expect(canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, 'arm_parallel')).toBe(false);
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv2
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv2 (cost 1)
     expect(canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, 'arm_parallel')).toBe(false);
 
-    // Reaching Tier 1 Lv3 unlocks Tier 2 (cost 2 SP)
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv3
+    // Reaching Tier 1 Lv3 unlocks Tier 2 (cost 1 SP each up to Lv3)
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv3 (cost 1)
     expect(state.player.skillLevels.arm_base).toBe(3);
+    expect(state.player.skillPoints).toBe(3);
 
+    // Lv4 requires 2 SP and delivers a large breakthrough jump; Lv5 requires 3 SP
     state.player.skillPoints = 1;
-    expect(canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, 'arm_parallel')).toBe(false);
-    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(false);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 2 SP for Lv4
+    state.player.skillPoints = 2;
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4 (cost 2)
+    expect(computeSkillModifiers(state.player.skillLevels).damageMult).toBeCloseTo(1.42, 4);
 
     state.player.skillPoints = 2;
-    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // arm_parallel Lv1
-    expect(state.player.skillPoints).toBe(0);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 3 SP for Lv5
+    state.player.skillPoints = 3;
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv5 (cost 3)
+    expect(computeSkillModifiers(state.player.skillLevels).damageMult).toBeCloseTo(1.68, 4);
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // capped at Lv5
+
+    // Tier 2 also costs 1 SP up to Lv3, and immediately deploys extra bits/drones at Lv1
+    state.player.skillPoints = 3;
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv1 (cost 1)
+    expect(state.player.skillPoints).toBe(2);
     expect(getOrbitBitPositions(state).length).toBe(2);
     expect(getSeekerDronePositions(state).length).toBe(2);
 
-    // Tier 1 caps at MAX_SKILL_LEVEL = 5
-    state.player.skillPoints = 5;
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv5
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // capped at Lv5
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv2 (cost 1)
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv3 (cost 1)
+    expect(state.player.skillPoints).toBe(0);
 
-    // Tier 3 requires Tier 2 Lv3 and 3 SP per level
-    state.player.skillPoints = 4;
-    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv2
-    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv3
-    state.player.skillPoints = 2;
-    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(false);
-    state.player.skillPoints = 3;
-    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true); // Lv1
+    // Tier 3 unlocks at Tier 2 Lv3 and costs 1 SP for Lv1
+    state.player.skillPoints = 1;
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true); // Lv1 (cost 1)
+    expect(state.player.skillPoints).toBe(0);
 
-    // mob_magnet scales heal orb effectiveness per level (+12%/Lv)
+    // mob_magnet scales heal orb effectiveness (+10% Lv1, +20% Lv2)
     state.player.skillPoints = 2;
-    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv1 (+12%)
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv1 (+10%)
     state.player.hp = 50;
     state.pickups = [{ id: 701, kind: 'heal', x: state.player.x, y: state.player.y, value: 20 }];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(72);
 
-    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv2 (+24%)
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv2 (+20%)
     state.player.hp = 50;
     state.pickups = [{ id: 702, kind: 'heal', x: state.player.x, y: state.player.y, value: 20 }];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    expect(state.player.hp).toBe(75);
+    expect(state.player.hp).toBe(74);
   });
 
   it('[APP-GRW-03 & APP-GRW-04] enforces 3-slot limit, auto-levels owned duplicates (including higher-Lv drops), and prompts on 4th unowned gear', () => {
@@ -594,6 +614,117 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.pickups.length).toBe(0);
     expect(state.player.equipment).toHaveLength(1);
     expect(state.player.equipment[0]).toMatchObject({ id: 'ricochet_disc', level: 4 });
+  });
+
+  it('[APP-MAP-04] respawns reinforcements away from player on long floor stays and scales tricky enemy types by floor', () => {
+    // 1F has only normal/runner/tank; 2F+ introduces shooter and caller with rising rates
+    const f1Kinds = new Set([0, 0.2, 0.5, 0.7, 0.9].map((r) => pickEnemyKindForFloor(1, r)));
+    expect(f1Kinds.has('shooter')).toBe(false);
+    expect(f1Kinds.has('caller')).toBe(false);
+
+    const f4Kinds = [0.02, 0.22, 0.42, 0.65, 0.95].map((r) => pickEnemyKindForFloor(4, r));
+    expect(f4Kinds).toContain('shooter');
+    expect(f4Kinds).toContain('caller');
+
+    const state = createGameState({ seed: 910, startFloor: 2 });
+    state.enemies = [];
+    state.respawnTimer = 0.01;
+    stepGame(state, { x: 0, y: 0 }, 0.02);
+
+    expect(state.enemies.length).toBeGreaterThanOrEqual(1);
+    for (const spawned of state.enemies) {
+      expect(Math.hypot(spawned.x - state.player.x, spawned.y - state.player.y)).toBeGreaterThanOrEqual(260);
+    }
+    expect(state.notifications.some((n) => n.kind === 'info')).toBe(true);
+  });
+
+  it('[APP-MAP-06] scales camera zoom by viewport width and switches between room illumination and corridor circular vision', () => {
+    // Smartphone keeps ~1.0x view; PC zooms up so whole map is not visible at once
+    expect(computeCameraZoom(390, 844)).toBe(1);
+    expect(computeCameraZoom(1280, 720)).toBe(2);
+    expect(computeCameraZoom(1440, 900)).toBe(2.25);
+
+    const state = createGameState({ seed: 920 });
+    const room0 = state.map.rooms[0];
+    // Corner inside room 0 is visible when player stands in room 0
+    const roomCorner = tileCenterWorld(room0.x, room0.y);
+    expect(isPointInPlayerVision(state.map, state.player.x, state.player.y, roomCorner.x, roomCorner.y)).toBe(true);
+
+    // When in a corridor (isolated non-room floor), vision is limited to CORRIDOR_VISION_RADIUS (165px)
+    const testMap = {
+      ...state.map,
+      rooms: [],
+      tiles: new Array(state.map.width * state.map.height).fill('floor' as const),
+    };
+    expect(
+      isPointInPlayerVision(testMap, 200, 200, 200 + CORRIDOR_VISION_RADIUS - 10, 200)
+    ).toBe(true);
+    expect(
+      isPointInPlayerVision(testMap, 200, 200, 200 + CORRIDOR_VISION_RADIUS + 20, 200)
+    ).toBe(false);
+  });
+
+  it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter/caller archetypes with alert notifications', () => {
+    // Verify no duplicate exact spawn positions across multiple seeds
+    for (const seed of [101, 202, 303]) {
+      const s = createGameState({ seed, startFloor: 3 });
+      const coords = new Set(s.enemies.map((e) => `${Math.round(e.x)},${Math.round(e.y)}`));
+      expect(coords.size).toBe(s.enemies.length);
+    }
+
+    // Stat comparison across tank / runner / normal
+    const tank = createEnemyByKind(1, 'tank', 0, 0, 2);
+    const runner = createEnemyByKind(2, 'runner', 0, 0, 2);
+    const normal = createEnemyByKind(3, 'normal', 0, 0, 2);
+    expect(tank.hp).toBeGreaterThan(normal.hp * 2);
+    expect(tank.speed).toBeLessThan(normal.speed);
+    expect(runner.hp).toBeLessThan(normal.hp);
+    expect(runner.speed).toBeGreaterThan(normal.speed);
+
+    // Shooter stays stationary (speed 0) and fires enemyProjectiles in LOS
+    const shootState = createGameState({ seed: 930, startFloor: 2 });
+    shootState.chests = [];
+    shootState.pickups = [];
+    shootState.player.baseAttackCooldown = 999;
+    shootState.map.tiles.fill('floor');
+    const turret = createEnemyByKind(9001, 'shooter', shootState.player.x + 120, shootState.player.y, 2);
+    turret.awake = true;
+    turret.attackCooldown = 0;
+    shootState.enemies = [turret];
+    const turretStartX = turret.x;
+    stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
+    expect(turret.x).toBe(turretStartX);
+    expect(shootState.enemyProjectiles.length).toBe(1);
+
+    // Caller wanders while unawakened, and on spotting player wakes nearby allies + raises alert notification
+    const callState = createGameState({ seed: 931, startFloor: 2 });
+    callState.chests = [];
+    callState.pickups = [];
+    callState.player.baseAttackCooldown = 999;
+    callState.map.tiles.fill('floor');
+
+    const wanderCaller = createEnemyByKind(9010, 'caller', callState.player.x + 400, callState.player.y, 2);
+    const wanderStart = { x: wanderCaller.x, y: wanderCaller.y };
+    callState.enemies = [wanderCaller];
+    for (let f = 0; f < 30; f++) {
+      stepGame(callState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(Math.hypot(wanderCaller.x - wanderStart.x, wanderCaller.y - wanderStart.y)).toBeGreaterThan(5);
+
+    // Spot player -> alert nearby ally within CALLER_ALERT_RADIUS
+    const spotCaller = createEnemyByKind(9011, 'caller', callState.player.x + 100, callState.player.y, 2);
+    const nearbyAlly = createEnemyByKind(
+      9012,
+      'normal',
+      spotCaller.x + CALLER_ALERT_RADIUS - 30,
+      spotCaller.y,
+      2
+    );
+    callState.enemies = [spotCaller, nearbyAlly];
+    stepGame(callState, { x: 0, y: 0 }, 1 / 60);
+    expect(spotCaller.awake).toBe(true);
+    expect(nearbyAlly.awake).toBe(true);
+    expect(callState.notifications.some((n) => n.kind === 'alert')).toBe(true);
   });
 });
 

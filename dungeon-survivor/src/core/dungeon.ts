@@ -59,6 +59,24 @@ export function tileCenterWorld(tx: number, ty: number): { x: number; y: number 
   };
 }
 
+export function findRoomAtTile(map: Pick<DungeonMap, 'rooms'>, tx: number, ty: number): Room | null {
+  for (const room of map.rooms) {
+    if (tx >= room.x && tx < room.x + room.w && ty >= room.y && ty < room.y + room.h) {
+      return room;
+    }
+  }
+  return null;
+}
+
+export function isTileInRoom(room: Room, tx: number, ty: number, margin = 0): boolean {
+  return (
+    tx >= room.x - margin &&
+    tx < room.x + room.w + margin &&
+    ty >= room.y - margin &&
+    ty < room.y + room.h + margin
+  );
+}
+
 function carveRect(tiles: TileType[], width: number, height: number, rx: number, ry: number, rw: number, rh: number): void {
   const x0 = Math.max(1, rx);
   const y0 = Math.max(1, ry);

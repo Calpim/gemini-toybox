@@ -2,10 +2,13 @@ import { hasLineOfSight, resolveCircleGridCollision } from '../core/collision';
 import {
   TILE_SIZE,
   computeBfsDistances,
+  findRoomAtTile,
   generateDungeon,
+  isTileInRoom,
   isWallAtWorld,
   isWallTile,
   tileCenterWorld,
+  tileIndex,
   type DungeonMap,
 } from '../core/dungeon';
 import { createRng } from '../core/rng';
@@ -30,19 +33,105 @@ import {
   computeSkillModifiers,
   getSkillLevel,
   getSkillNode,
+  getSkillUpgradeCost,
   type SkillNodeId,
 } from './skillTree';
-import type { ChestState, EnemyState, GameState, PickupState, PlayerState, Vec2 } from './types';
+import type {
+  ChestState,
+  EnemyKind,
+  EnemyState,
+  GameNotification,
+  GameState,
+  PickupState,
+  PlayerState,
+  Vec2,
+} from './types';
+
+export const CORRIDOR_VISION_RADIUS = 165;
+export const CALLER_ALERT_RADIUS = 300;
+export const INITIAL_RESPAWN_DELAY = 24;
 
 export interface CreateGameOptions {
   seed?: number;
   startFloor?: number;
 }
 
-function revealAroundPlayer(map: DungeonMap, explored: Uint8Array, px: number, py: number, radiusTiles = 7): void {
+export function isPointInPlayerVision(
+  map: DungeonMap,
+  px: number,
+  py: number,
+  wx: number,
+  wy: number,
+  corridorRadius = CORRIDOR_VISION_RADIUS
+): boolean {
   const ptx = Math.floor(px / TILE_SIZE);
   const pty = Math.floor(py / TILE_SIZE);
-  const r2 = radiusTiles * radiusTiles;
+  const activeRoom = findRoomAtTile(map, ptx, pty);
+  if (activeRoom) {
+    const wtx = Math.floor(wx / TILE_SIZE);
+    const wty = Math.floor(wy / TILE_SIZE);
+    if (isTileInRoom(activeRoom, wtx, wty, 1)) {
+      return true;
+    }
+  }
+  const dist = Math.hypot(wx - px, wy - py);
+  return dist <= corridorRadius && hasLineOfSight(px, py, wx, wy, map);
+}
+
+export function pushNotification(
+  state: GameState,
+  kind: GameNotification['kind'],
+  text: string,
+  color: string,
+  life = 2.6
+): void {
+  if (kind === 'alert') {
+    const existingAlert = state.notifications.find((n) => n.kind === 'alert' && n.life > 1.2);
+    if (existingAlert) {
+      existingAlert.life = life;
+      existingAlert.maxLife = life;
+      existingAlert.text = text;
+      return;
+    }
+  }
+  state.notifications.push({
+    id: state.nextEntityId++,
+    kind,
+    text,
+    color,
+    life,
+    maxLife: life,
+  });
+  if (state.notifications.length > 3) {
+    state.notifications.shift();
+  }
+}
+
+function revealAroundPlayer(
+  map: DungeonMap,
+  explored: Uint8Array,
+  px: number,
+  py: number
+): void {
+  const ptx = Math.floor(px / TILE_SIZE);
+  const pty = Math.floor(py / TILE_SIZE);
+  const room = findRoomAtTile(map, ptx, pty);
+
+  if (room) {
+    const minY = Math.max(0, room.y - 1);
+    const maxY = Math.min(map.height - 1, room.y + room.h);
+    const minX = Math.max(0, room.x - 1);
+    const maxX = Math.min(map.width - 1, room.x + room.w);
+    for (let ty = minY; ty <= maxY; ty++) {
+      for (let tx = minX; tx <= maxX; tx++) {
+        explored[ty * map.width + tx] = 1;
+      }
+    }
+  }
+
+  // Corridor narrow radius (3.6 tiles) also smoothly connects doorways when inside a room
+  const radiusTiles = room ? 3 : 4;
+  const r2 = room ? 9 : 13;
   const minY = Math.max(0, pty - radiusTiles);
   const maxY = Math.min(map.height - 1, pty + radiusTiles);
   const minX = Math.max(0, ptx - radiusTiles);
@@ -59,6 +148,125 @@ function revealAroundPlayer(map: DungeonMap, explored: Uint8Array, px: number, p
   }
 }
 
+export function createEnemyByKind(
+  id: number,
+  kind: EnemyKind,
+  x: number,
+  y: number,
+  floor: number,
+  aggroRange = MAX_TARGET_RANGE
+): EnemyState {
+  const baseHp = 26 + (floor - 1) * 9;
+  const baseSpeed = 78 + Math.min(48, (floor - 1) * 6);
+  const baseDmg = 10 + (floor - 1) * 2;
+
+  switch (kind) {
+    case 'tank':
+      return {
+        id,
+        kind,
+        x,
+        y,
+        radius: 17,
+        speed: Math.round(baseSpeed * 0.56),
+        hp: Math.round(baseHp * 2.4),
+        maxHp: Math.round(baseHp * 2.4),
+        damage: Math.round(baseDmg * 1.45),
+        aggroRange,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      };
+    case 'runner':
+      return {
+        id,
+        kind,
+        x,
+        y,
+        radius: 10,
+        speed: Math.min(195, Math.round(baseSpeed * 1.55)),
+        hp: Math.round(baseHp * 0.55),
+        maxHp: Math.round(baseHp * 0.55),
+        damage: Math.round(baseDmg * 0.8),
+        aggroRange,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      };
+    case 'shooter':
+      return {
+        id,
+        kind,
+        x,
+        y,
+        radius: 14,
+        speed: 0,
+        hp: Math.round(baseHp * 1.15),
+        maxHp: Math.round(baseHp * 1.15),
+        damage: Math.round(baseDmg * 0.9),
+        aggroRange,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+        attackCooldown: 1.1,
+      };
+    case 'caller':
+      return {
+        id,
+        kind,
+        x,
+        y,
+        radius: 12,
+        speed: Math.round(baseSpeed * 1.05),
+        hp: Math.round(baseHp * 0.95),
+        maxHp: Math.round(baseHp * 0.95),
+        damage: Math.round(baseDmg * 0.85),
+        aggroRange,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+        alertCooldown: 0,
+        wanderTimer: 0,
+        wanderTarget: null,
+      };
+    default:
+      return {
+        id,
+        kind: 'normal',
+        x,
+        y,
+        radius: 13,
+        speed: baseSpeed,
+        hp: baseHp,
+        maxHp: baseHp,
+        damage: baseDmg,
+        aggroRange,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      };
+  }
+}
+
+export function pickEnemyKindForFloor(floor: number, roll: number): EnemyKind {
+  if (floor <= 1) {
+    if (roll < 0.55) return 'normal';
+    if (roll < 0.82) return 'runner';
+    return 'tank';
+  }
+  const extra = Math.min(0.18, (floor - 2) * 0.045);
+  const shooterWeight = 0.13 + extra * 0.55;
+  const callerWeight = 0.11 + extra * 0.45;
+  const tankWeight = 0.16 + Math.min(0.05, (floor - 2) * 0.015);
+  const runnerWeight = 0.22;
+
+  if (roll < shooterWeight) return 'shooter';
+  if (roll < shooterWeight + callerWeight) return 'caller';
+  if (roll < shooterWeight + callerWeight + tankWeight) return 'tank';
+  if (roll < shooterWeight + callerWeight + tankWeight + runnerWeight) return 'runner';
+  return 'normal';
+}
+
 function populateFloor(
   map: DungeonMap,
   floor: number,
@@ -72,51 +280,20 @@ function populateFloor(
   const chests: ChestState[] = [];
   let nextId = startId;
 
-  const chestCandidates: number[] = [];
+  const occupiedTiles = new Set<number>();
+  occupiedTiles.add(tileIndex(map, map.startTile.tx, map.startTile.ty));
+  occupiedTiles.add(tileIndex(map, map.stairsTile.tx, map.stairsTile.ty));
 
+  const chestCandidates: number[] = [];
   for (let i = 1; i < map.rooms.length; i++) {
     const room = map.rooms[i];
     const isStairsRoom = room.cx === map.stairsTile.tx && room.cy === map.stairsTile.ty;
-    const count = rng.int(2, 3 + Math.min(3, Math.floor(floor / 2))) + (isStairsRoom ? 1 : 0);
-
-    for (let k = 0; k < count; k++) {
-      const tx = rng.int(room.x + 1, room.x + room.w - 2);
-      const ty = rng.int(room.y + 1, room.y + room.h - 2);
-      const pos = tileCenterWorld(tx, ty);
-      const hp = 26 + (floor - 1) * 9;
-      enemies.push({
-        id: nextId++,
-        x: pos.x,
-        y: pos.y,
-        radius: 13,
-        speed: 78 + Math.min(48, (floor - 1) * 6),
-        hp,
-        maxHp: hp,
-        damage: 10 + (floor - 1) * 2,
-        aggroRange: MAX_TARGET_RANGE,
-        awake: false,
-        hitFlash: 0,
-        bitHitCooldown: 0,
-      });
-    }
-
     if (!isStairsRoom) {
       chestCandidates.push(i);
     }
-
-    if (rng.next() < 0.3 + lootBonusRate * 0.4) {
-      const pos = tileCenterWorld(room.cx, room.cy);
-      pickups.push({
-        id: nextId++,
-        kind: 'heal',
-        x: pos.x + (rng.next() - 0.5) * 24,
-        y: pos.y + (rng.next() - 0.5) * 24,
-        value: 25,
-      });
-    }
   }
 
-  // Place 1-2 treasure chests per floor (extra chest chance with mob_loot)
+  // 1. Place 1-2 treasure chests on distinct center tiles first
   const targetChests = Math.min(
     chestCandidates.length,
     1 + (rng.next() < 0.45 + lootBonusRate ? 1 : 0)
@@ -132,6 +309,64 @@ function populateFloor(
       y: pos.y,
       opened: false,
     });
+    occupiedTiles.add(tileIndex(map, room.cx, room.cy));
+  }
+
+  // 2. Populate rooms with non-overlapping heal orbs & enemies
+  for (let i = 1; i < map.rooms.length; i++) {
+    const room = map.rooms[i];
+    const isStairsRoom = room.cx === map.stairsTile.tx && room.cy === map.stairsTile.ty;
+
+    const freeTiles: { tx: number; ty: number }[] = [];
+    for (let ty = room.y + 1; ty <= room.y + room.h - 2; ty++) {
+      for (let tx = room.x + 1; tx <= room.x + room.w - 2; tx++) {
+        const idx = tileIndex(map, tx, ty);
+        if (!isWallTile(map, tx, ty) && !occupiedTiles.has(idx)) {
+          freeTiles.push({ tx, ty });
+        }
+      }
+    }
+    // Fisher-Yates shuffle for unique non-overlapping tile picks
+    for (let j = freeTiles.length - 1; j > 0; j--) {
+      const swapIdx = rng.int(0, j);
+      const tmp = freeTiles[j];
+      freeTiles[j] = freeTiles[swapIdx];
+      freeTiles[swapIdx] = tmp;
+    }
+
+    let tileCursor = 0;
+    if (rng.next() < 0.3 + lootBonusRate * 0.4 && tileCursor < freeTiles.length) {
+      const tile = freeTiles[tileCursor++];
+      occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
+      const pos = tileCenterWorld(tile.tx, tile.ty);
+      pickups.push({
+        id: nextId++,
+        kind: 'heal',
+        x: pos.x,
+        y: pos.y,
+        value: 25,
+      });
+    }
+
+    const count = rng.int(2, 3 + Math.min(3, Math.floor(floor / 2))) + (isStairsRoom ? 1 : 0);
+    for (let k = 0; k < count; k++) {
+      let wx: number;
+      let wy: number;
+      if (tileCursor < freeTiles.length) {
+        const tile = freeTiles[tileCursor++];
+        occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
+        const pos = tileCenterWorld(tile.tx, tile.ty);
+        wx = pos.x;
+        wy = pos.y;
+      } else {
+        const fallback = tileCenterWorld(room.cx, room.cy);
+        const angle = (k * Math.PI * 2) / Math.max(1, count);
+        wx = fallback.x + Math.cos(angle) * 26;
+        wy = fallback.y + Math.sin(angle) * 26;
+      }
+      const kind = pickEnemyKindForFloor(floor, rng.next());
+      enemies.push(createEnemyByKind(nextId++, kind, wx, wy, floor, MAX_TARGET_RANGE));
+    }
   }
 
   return { enemies, pickups, chests, nextId };
@@ -185,6 +420,9 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     pickups: populated.pickups,
     floatingTexts: [],
     visualFx: [],
+    notifications: [],
+    elapsedFloorTime: 0,
+    respawnTimer: INITIAL_RESPAWN_DELAY,
     nextEntityId: populated.nextId,
     floorBannerTimer: 2.2,
     stats: {
@@ -216,6 +454,9 @@ export function advanceToNextFloor(state: GameState): void {
   state.enemyProjectiles = [];
   state.floatingTexts = [];
   state.visualFx = [];
+  state.notifications = [];
+  state.elapsedFloorTime = 0;
+  state.respawnTimer = INITIAL_RESPAWN_DELAY;
   state.nextEntityId = populated.nextId;
   state.floorBannerTimer = 2.2;
 }
@@ -225,9 +466,11 @@ export function upgradeSkillNode(state: GameState, nodeId: SkillNodeId): boolean
     return false;
   }
   const node = getSkillNode(nodeId);
-  const nextLv = getSkillLevel(state.player.skillLevels, nodeId) + 1;
-  state.player.skillPoints -= node.cost;
-  state.player.spentSkillPoints += node.cost;
+  const currLv = getSkillLevel(state.player.skillLevels, nodeId);
+  const cost = getSkillUpgradeCost(currLv);
+  const nextLv = currLv + 1;
+  state.player.skillPoints -= cost;
+  state.player.spentSkillPoints += cost;
   state.player.skillLevels[nodeId] = nextLv;
   state.floatingTexts.push({
     x: state.player.x,
@@ -901,8 +1144,51 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 9. Update enemies (with BFS corridor pathfinding), orbit bit contact, and player damage / Aegis / Tactical Step
-  const rng = createRng((state.seed ^ (state.stats.kills * 7919) ^ (state.floor * 131)) >>> 0);
+  // 9. Update enemies (with BFS corridor pathfinding, caller wander/alert, shooter projectiles, timed repop)
+  const rng = createRng(
+    (state.seed ^ (state.stats.kills * 7919) ^ (state.floor * 131) ^ Math.floor(state.elapsedFloorTime * 10)) >>> 0
+  );
+
+  // 9a. Timed reinforcement respawn for long exploration (APP-MAP-04)
+  state.elapsedFloorTime += clampedDt;
+  state.respawnTimer -= clampedDt;
+  const maxAlive = 26 + state.floor * 3;
+  if (state.respawnTimer <= 0) {
+    state.respawnTimer = Math.max(9, 14 - (state.floor - 1) * 0.8);
+    if (state.enemies.length < maxAlive) {
+      const occupied = new Set<number>();
+      for (const e of state.enemies) {
+        occupied.add(tileIndex(map, Math.floor(e.x / TILE_SIZE), Math.floor(e.y / TILE_SIZE)));
+      }
+      for (const c of state.chests) {
+        occupied.add(tileIndex(map, Math.floor(c.x / TILE_SIZE), Math.floor(c.y / TILE_SIZE)));
+      }
+      const candidates: { tx: number; ty: number }[] = [];
+      for (let ty = 1; ty < map.height - 1; ty++) {
+        for (let tx = 1; tx < map.width - 1; tx++) {
+          if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+          const pos = tileCenterWorld(tx, ty);
+          if (Math.hypot(pos.x - player.x, pos.y - player.y) >= 260) {
+            candidates.push({ tx, ty });
+          }
+        }
+      }
+      if (candidates.length > 0) {
+        const spawnCount = Math.min(candidates.length, maxAlive - state.enemies.length, rng.next() < 0.45 ? 2 : 1);
+        for (let s = 0; s < spawnCount; s++) {
+          const pickIdx = rng.int(0, candidates.length - 1);
+          const picked = candidates.splice(pickIdx, 1)[0];
+          const pos = tileCenterWorld(picked.tx, picked.ty);
+          const kind = pickEnemyKindForFloor(state.floor, rng.next());
+          state.enemies.push(
+            createEnemyByKind(state.nextEntityId++, kind, pos.x, pos.y, state.floor, MAX_TARGET_RANGE)
+          );
+        }
+        pushNotification(state, 'info', '👾 ダンジョン奥に新たな敵の気配…', '#c084fc', 2.2);
+      }
+    }
+  }
+
   let bfsDist: Int32Array | null = null;
   const ptx = Math.floor(player.x / TILE_SIZE);
   const pty = Math.floor(player.y / TILE_SIZE);
@@ -911,6 +1197,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     const enemy = state.enemies[i];
     if (enemy.hitFlash > 0) enemy.hitFlash = Math.max(0, enemy.hitFlash - clampedDt);
     if (enemy.bitHitCooldown > 0) enemy.bitHitCooldown = Math.max(0, enemy.bitHitCooldown - clampedDt);
+    if ((enemy.attackCooldown ?? 0) > 0) {
+      enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+    }
+    if ((enemy.alertCooldown ?? 0) > 0) {
+      enemy.alertCooldown = Math.max(0, (enemy.alertCooldown ?? 0) - clampedDt);
+    }
 
     if (orbitItem && enemy.bitHitCooldown <= 0) {
       for (const bit of bits) {
@@ -975,7 +1267,111 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    if (enemy.awake && distToPlayer > 1e-3) {
+    // Caller archetype: alert nearby enemies & notify player on sight, or wander while unalerted
+    if (enemy.kind === 'caller') {
+      if (enemy.awake) {
+        if ((enemy.alertCooldown ?? 0) <= 0) {
+          enemy.alertCooldown = 6.0;
+          for (const ally of state.enemies) {
+            if (ally.id !== enemy.id && Math.hypot(ally.x - enemy.x, ally.y - enemy.y) <= CALLER_ALERT_RADIUS) {
+              ally.awake = true;
+            }
+          }
+          state.visualFx.push({
+            kind: 'pulse',
+            x: enemy.x,
+            y: enemy.y,
+            radius: 130,
+            color: '#f97316',
+            life: 0.45,
+            maxLife: 0.45,
+          });
+          state.floatingTexts.push({
+            x: enemy.x,
+            y: enemy.y - enemy.radius - 10,
+            text: 'ALERT!!',
+            color: '#fb923c',
+            life: 1.0,
+            maxLife: 1.0,
+          });
+          pushNotification(
+            state,
+            'alert',
+            '⚠️ 偵察型に発見された！周囲の敵が集結中！',
+            '#f97316',
+            2.8
+          );
+        }
+      } else if (enemy.speed > 0) {
+        enemy.wanderTimer = (enemy.wanderTimer ?? 0) - clampedDt;
+        const arrived = enemy.wanderTarget
+          ? Math.hypot(enemy.wanderTarget.x - enemy.x, enemy.wanderTarget.y - enemy.y) <= 10
+          : true;
+        if (!enemy.wanderTarget || arrived || (enemy.wanderTimer ?? 0) <= 0) {
+          const etx = Math.floor(enemy.x / TILE_SIZE);
+          const ety = Math.floor(enemy.y / TILE_SIZE);
+          const wanderCandidates: Vec2[] = [];
+          for (let oy = -3; oy <= 3; oy++) {
+            for (let ox = -3; ox <= 3; ox++) {
+              if (ox === 0 && oy === 0) continue;
+              const ntx = etx + ox;
+              const nty = ety + oy;
+              if (ntx <= 0 || nty <= 0 || ntx >= map.width - 1 || nty >= map.height - 1) continue;
+              if (isWallTile(map, ntx, nty)) continue;
+              const c = tileCenterWorld(ntx, nty);
+              if (hasClearCorridorPath(enemy.x, enemy.y, c.x, c.y, enemy.radius, map)) {
+                wanderCandidates.push(c);
+              }
+            }
+          }
+          enemy.wanderTarget =
+            wanderCandidates.length > 0 ? wanderCandidates[rng.int(0, wanderCandidates.length - 1)] : null;
+          enemy.wanderTimer = 1.6;
+        }
+        if (enemy.wanderTarget) {
+          const wdx = enemy.wanderTarget.x - enemy.x;
+          const wdy = enemy.wanderTarget.y - enemy.y;
+          const wDist = Math.hypot(wdx, wdy);
+          if (wDist > 1e-3) {
+            const wanderSpeed = enemy.speed * 0.72;
+            const resolved = resolveCircleGridCollision(
+              enemy.x + (wdx / wDist) * wanderSpeed * clampedDt,
+              enemy.y + (wdy / wDist) * wanderSpeed * clampedDt,
+              enemy.radius,
+              map
+            );
+            enemy.x = resolved.x;
+            enemy.y = resolved.y;
+          }
+        }
+      }
+    }
+
+    // Shooter archetype: stationary turret firing enemy projectiles within LOS & target range
+    if (enemy.kind === 'shooter' && enemy.awake) {
+      if (
+        (enemy.attackCooldown ?? 0) <= 0 &&
+        distToPlayer > 1e-3 &&
+        distToPlayer <= MAX_TARGET_RANGE &&
+        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)
+      ) {
+        const projSpeed = 215 + Math.min(65, (state.floor - 1) * 10);
+        const angle = Math.atan2(dy, dx);
+        state.enemyProjectiles.push({
+          id: state.nextEntityId++,
+          x: enemy.x,
+          y: enemy.y,
+          vx: Math.cos(angle) * projSpeed,
+          vy: Math.sin(angle) * projSpeed,
+          radius: 5,
+          damage: enemy.damage,
+          life: 1.5,
+        });
+        enemy.attackCooldown = Math.max(1.25, 2.0 - (state.floor - 1) * 0.1);
+      }
+    }
+
+    if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0) {
       let steerX = player.x;
       let steerY = player.y;
       if (!hasClearCorridorPath(enemy.x, enemy.y, player.x, player.y, enemy.radius, map)) {
@@ -1097,6 +1493,44 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
+  // 9b. Enemy projectiles hitting player
+  for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
+    const ep = state.enemyProjectiles[i];
+    if (
+      player.invulnTimer <= 0 &&
+      Math.hypot(player.x - ep.x, player.y - ep.y) <= player.radius + ep.radius
+    ) {
+      state.enemyProjectiles.splice(i, 1);
+      if (mods.hasAegisParry && player.aegisCooldown <= 0) {
+        player.aegisCooldown = mods.aegisCooldown;
+        player.invulnTimer = 0.6;
+        state.floatingTexts.push({
+          x: player.x,
+          y: player.y - 20,
+          text: 'PARRY!',
+          color: '#34d399',
+          life: 0.7,
+          maxLife: 0.7,
+        });
+      } else {
+        player.hp = Math.max(0, player.hp - ep.damage);
+        player.invulnTimer = 0.5;
+        state.floatingTexts.push({
+          x: player.x,
+          y: player.y - player.radius - 6,
+          text: `-${ep.damage}`,
+          color: '#f87171',
+          life: 0.7,
+          maxLife: 0.7,
+        });
+        if (player.hp <= 0) {
+          state.status = 'gameover';
+          return;
+        }
+      }
+    }
+  }
+
   // 10. Pickups (magnet & heal bonus scaled by mob_magnet, EXP by mob_loot; equip drops require direct pickup)
   const magnetRange = 95 * mods.pickupMagnetMult;
   for (let i = state.pickups.length - 1; i >= 0; i--) {
@@ -1147,12 +1581,19 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             life: 1.0,
             maxLife: 1.0,
           });
+          pushNotification(
+            state,
+            'levelup',
+            `🎉 LEVEL UP! Lv${player.level} (+1 SP)`,
+            '#38bdf8',
+            2.6
+          );
         }
       }
     }
   }
 
-  // 11. Floating texts & Visual FX lifetimes
+  // 11. Floating texts, Visual FX, and Toast Notifications lifetimes
   for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
     const ft = state.floatingTexts[i];
     ft.y -= 26 * clampedDt;
@@ -1164,5 +1605,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     const fx = state.visualFx[i];
     fx.life -= clampedDt;
     if (fx.life <= 0) state.visualFx.splice(i, 1);
+  }
+
+  for (let i = state.notifications.length - 1; i >= 0; i--) {
+    const n = state.notifications[i];
+    n.life -= clampedDt;
+    if (n.life <= 0) state.notifications.splice(i, 1);
   }
 }

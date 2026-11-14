@@ -221,13 +221,13 @@
     </header>
 
     <div class="stats">
-      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">20</div></div>
-      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">20</div></div>
-      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">21</div></div>
-      <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">19</div></div>
+      <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">22</div></div>
+      <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
+      <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">24</div></div>
+      <div class="stat-card"><div class="stat-label">AI仮提案・要確認 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">20</div></div>
     </div>
 
-    <div class="ok-banner">✅ トレーサビリティチェック OK：全 20 件のビジネス仕様と 20 件のアプリ仕様が ID 紐付けされています</div>
+    <div class="ok-banner">✅ トレーサビリティチェック OK：全 22 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
 
     <div class="controls">
       <button class="tab-btn active" data-filter="all">🔗 すべて表示 (紐付けツリー)</button>
@@ -343,7 +343,7 @@
               </div>
         </div>
       </section>
-      <section class="trace-group" data-biz-status="Inferred" data-has-inferred="true">
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
         <div class="biz-card">
           <div class="card-head">
             <div class="id-group">
@@ -351,12 +351,12 @@
               <span class="file-pill">01-exploration.feature</span>
               <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
             </div>
-            <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>同じ階層への長居を防ぐ緊張感ギミックが働く</h3>
+          <h3>長い探索で敵がリポップし、階層が上がるほど手強い敵の割合が増える</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが同一フロアに一定時間以上滞在している</span></li><li><span class="kw">もし</span><span class="st-text">フロア滞在警告の制限時間を超過する</span></li><li><span class="kw">ならば</span><span class="st-text">警告後に強力な監視敵が出現し、階段へ向かう動機が生まれる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが同一フロアを探索し続けて一定時間が経過する、または深い階層へ進む</span></li><li><span class="kw">もし</span><span class="st-text">フロア滞在時間が長引く、またはより上位の階層に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">離れた探索エリアへ新しい敵がリポップし、階層上昇に伴って厄介な特殊敵の出現比率が増えていく</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -371,9 +371,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>フロア滞在タイマー超過により警告表示後に監視ドローンが出現する</h4>
+                <h4>長期滞在による視界外リポップと階層に応じた敵テーブル変化を行う</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">通常フロアの滞在警告タイマーが 90 秒に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">フロア経過時間が 90 秒に達する</span></li><li><span class="kw">ならば</span><span class="st-text">画面上部に「WATCHER APPROACHING」の警告バナーと警告SEが鳴る</span></li><li><span class="kw">かつ</span><span class="st-text">10秒後（100秒時点）からプレイヤー位置へ向かう高耐久の監視ドローンがスポーンする</span></li>
+    <li><span class="kw">前提</span><span class="st-text">フロア滞在時間 elapsedFloorTime が記録されている</span></li><li><span class="kw">もし</span><span class="st-text">滞在時間が初回 24秒（以降 9〜14秒間隔）に達し、生存敵数が上限未満である</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーから 260px 以上離れた未重複の床タイルに敵が 1〜2体リポップする</span></li><li><span class="kw">かつ</span><span class="st-text">1F は標準・高速・重装中心で、2F 以降は定点射撃型（shooter）や徘徊呼び寄せ型（caller）の出現比率が段階上昇する</span></li>
   </ul>
               </div>
         </div>
@@ -409,6 +409,79 @@
                 <h4>覚醒した敵はプレイヤータイル起点のBFS最短距離マップで通路経由追跡を行う</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">敵が覚醒（awake = true）しており、自機と敵を結ぶ回廊幅（半径の0.75倍オフセット含む）に壁が干渉している</span></li><li><span class="kw">もし</span><span class="st-text">stepGame が敵の移動ベクトルを計算する</span></li><li><span class="kw">ならば</span><span class="st-text">computeBfsDistances によるプレイヤータイルからの最短歩数マップを参照し、壁角で斜め抜けせず安全に通れる隣接タイル中心へ誘導して追跡する</span></li><li><span class="kw">かつ</span><span class="st-text">障害物のない直線視界に入れば滑らかな直接追尾へ切り替わる</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-06</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>画面幅に合わせた拡大視野と部屋・通路ごとの暗がりで探索の緊張感を生み出す</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内の部屋または通路を移動している</span></li><li><span class="kw">もし</span><span class="st-text">PCやスマホなど任意の画面幅でプレイする</span></li><li><span class="kw">ならば</span><span class="st-text">画面横幅に合わせて表示範囲が適切な広さに自動拡大され、通路では自機周囲の円形範囲のみ明るく、部屋に入ると部屋内全体が見渡せる視界（Fog of War）になる</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-06</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-06</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                
+                <h4>画面幅基準のズームと部屋全体点灯・通路円形ライトによるFog of Warを描画する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">目標論理表示幅 TARGET_VIEW_WORLD_WIDTH が 640px（16タイル相当）、通路視界半径が 165px に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">renderGame がワールドと暗がりマスクを描画する</span></li><li><span class="kw">ならば</span><span class="st-text">画面幅・高さから computeCameraZoom（1.0x〜3.0x）を算出して全端末で過剰な広域透視を防ぎ、未探索タイルは非表示、既探索の視界外は地形・宝箱・階段のみ暗色表示（敵は非表示）、通路は円形ライト、部屋滞在時は該当部屋領域を明るく照らす</span></li><li><span class="kw">かつ</span><span class="st-text">explored 記録も部屋入室時は部屋全体＋周囲壁1マス、通路では狭範囲（半径約3.6タイル）へ連動する</span></li>
+  </ul>
+              </div>
+        </div>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="true">
+        <div class="biz-card">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-07</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>多様な性質の敵が重複せずに出現し、索敵型の発見やレベルアップ時に通知が出る</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">フロアに通常型・固くて遅い型・柔らかくて早い型・定点射撃型・徘徊呼び寄せ型が重複しない座標へ配置される</span></li><li><span class="kw">もし</span><span class="st-text">徘徊して周囲を探す索敵型の敵に発見される、または経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">索敵型は周囲の敵をおびき寄せつつ発見アラート通知を出し、レベルアップ時にも明確な通知が表示される</span></li>
+  </ul>
+        </div>
+        <div class="app-branch">
+          
+              <div class="app-card" data-status="Inferred" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-07</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-07</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
+                </div>
+                
+                <h4>5種の敵タイプ・非重複ポップ・徘徊アラート・レベルアップ通知を実行する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">populateFloor が部屋内の敵・宝箱・回復オーブを重複タイルなし（occupiedTiles管理）で配置する</span><div class="table-wrap"><table>
+              <thead><tr><th>敵種別</th><th>性質</th><th>移動・攻撃・視認時の振る舞い</th></tr></thead>
+              <tbody><tr><td>normal</td><td>標準追跡型</td><td>標準HP・標準速度で視認後に追跡</td></tr><tr><td>tank</td><td>固くて遅い</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型</td><td>速度 0 の固定砲台・2F以降出現・LOS内で敵弾を周期発射</td></tr><tr><td>caller</td><td>徘徊呼び寄せ型</td><td>未発見時はランダム徘徊・発見時に300px内の仲間を覚醒＆警告通知</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">caller がプレイヤーを発見して覚醒する、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知が追加され、画面上部にトースト表示される</span></li>
   </ul>
               </div>
         </div>
@@ -652,7 +725,7 @@
           <div class="bg-box">
     <div class="bg-title">📋 背景: ハイブリッド成長ルールの決定経緯</div>
     <ul class="bg-steps">
-      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット3枠（5種から選択）」「重複装備の自動レベルアップ」「スキル毎の最大Lv5・Lv3で次解放・段階SPコスト」「初期ノーアイテム開始（自機ショットあり）」「敵からの低確率ドロップ（頻度抑えめ）」「所持装備の中で最低レベル基準のドロップLv変動」を確定</li>
+      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット3枠（5種から選択）」「重複装備の自動レベルアップ」「スキル毎の最大Lv5・Lv3で次解放・Lv1-3=1SP / Lv4=2SP / Lv5=3SP ＆ Lv4以降の大幅成長」「初期ノーアイテム開始（自機ショットあり）」「敵からの低確率ドロップ（頻度抑えめ）」「所持装備の中で最低レベル基準のドロップLv変動」を確定</li>
     </ul>
   </div>
           <h3>探索で拾った装備とレベルアップ成長を組み合わせて強化する</h3>
@@ -672,14 +745,14 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 <div class="bg-box">
-    <div class="bg-title">📋 背景: 3スロット制・重複強化・段階SPコスト・移動速度スキル差し替えのアプリ仕様</div>
+    <div class="bg-title">📋 背景: 3スロット制・重複強化・段階SPコスト・Lv4-5強化カーブのアプリ仕様</div>
     <ul class="bg-steps">
-      <li>決定経緯: ルールの大枠は2026-11-14先輩確定、SPコスト数値（1/2/3）・重複時強化率・新スキル「磁力回収フレーム」の数値パラメータは AI提案（@Inferred）</li>
+      <li>決定経緯: Lv1-3=1SP / Lv4=2SP / Lv5=3SP の枠組みと Lv4以降の伸び率引き上げは2026-11-14先輩確定、各スキルの具体数値カーブは AI提案（@Inferred）</li>
     </ul>
   </div>
                 <h4>経験値ジェム回収でスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 である</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベルが 2 に上がり、スキルポイント（SP）を +1 獲得してツリーボタンが強調表示される</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 である</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベルが 2 に上がり、スキルポイント（SP）を +1 獲得してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
   </ul>
               </div>
         </div>
@@ -712,12 +785,12 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>スキル毎のレベル制（最大Lv5・Lv毎に性能上昇）と前提Lv3による上位解放を行う</h4>
+                <h4>スキル毎のレベル制（最大Lv5・Lv4以降大幅成長）と前提Lv3による上位解放を行う</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">各スキルが最大レベル 5（Lv0〜Lv5）・前提ノード Lv3 以上で次Tier解放として定義されている</span><div class="table-wrap"><table>
-              <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>必要SP/Lv</th><th>前提(Lv3+)</th><th>主なLv毎成長効果（最大Lv5）</th></tr></thead>
-              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>1</td><td>なし</td><td>Lv毎に全自動攻撃ダメージ +10%（最大+50%）</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>2</td><td>2</td><td>arm_base</td><td>Lv1/3/5で展開数+1 &amp; ビット/ドローン威力 +6%/Lv</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>3</td><td>arm_parallel</td><td>Lv毎にCD -7% &amp; 弾速UP（Lv1以上でドローン貫通）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>1</td><td>なし</td><td>Lv毎に迎撃レンジ +10%（索敵上限180px内）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>2</td><td>def_sensor</td><td>Lv1解放・Lv毎にノックバック威力/範囲UP＆CD短縮</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>3</td><td>def_pulse</td><td>Lv1解放・Lv毎にパリィCD短縮＆反射ダメUP</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>1</td><td>なし</td><td>Lv毎に吸引範囲 +25% &amp; 回復オーブ効果 +12%</td></tr><tr><td>mob_dash</td><td>探索</td><td>戦術ステップ</td><td>2</td><td>2</td><td>mob_magnet</td><td>Lv1解放・Lv毎に回避距離＆無敵延長＆CD短縮</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>3</td><td>3</td><td>mob_dash</td><td>Lv毎に回復/宝箱+10%・装備Drop補正・EXP+10%</td></tr></tbody>
-            </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を Lv2 以下の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンはロック表示となり、arm_base を Lv3 まで育成しかつ必要SP（2）を満たした時点で arm_parallel が解放可能になる</span></li>
+              <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>前提(Lv3+)</th><th>Lv1→3 / Lv4 / Lv5 の主な累積成長効果</th></tr></thead>
+              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>なし</td><td>ダメ +8/16/24% → Lv4:+42% → Lv5:+68%</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>2</td><td>arm_base</td><td>展開 +1/1/2 → Lv4:+3(+32%) → Lv5:+4(+52%)</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>arm_parallel</td><td>CD -6/12/18% → Lv4:-28% → Lv5:-40%（Lv1貫通）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>なし</td><td>レンジ +8/16/24% → Lv4:+38% → Lv5:+55%（上限180px）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>def_sensor</td><td>威力 12/16/20 → Lv4:32(CD2.5s) → Lv5:48(CD1.8s)</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>def_pulse</td><td>反撃 24/32/40 → Lv4:64(CD4.0s) → Lv5:96(CD2.8s)</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>なし</td><td>吸引 +22/44/66%・回復 +10/20/30% → Lv4:+50% → Lv5:+75%</td></tr><tr><td>mob_dash</td><td>探索</td><td>戦術ステップ</td><td>2</td><td>mob_magnet</td><td>回避 40/46/52px → Lv4:66px(1.30s無敵) → Lv5:84px(1.65s無敵)</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>3</td><td>mob_dash</td><td>宝/EXP +8/16/24% → Lv4:+40%/42% → Lv5:+60%/68%</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を Lv2 以下の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンはロック表示となり、arm_base を Lv3 まで育成した時点で arm_parallel が解放可能になる</span></li>
   </ul>
               </div>
         </div>
@@ -803,9 +876,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>上位スキルほど多くのスキルポイントを要し横展開か一点突破かを選べる</h3>
+          <h3>Lv1〜3は1SPずつ・Lv4は2SP・Lv5は3SPが必要となり、Lv4以降は性能上昇幅が大きく跳ねる</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">スキルツリーに下位・中位・上位の階層（Tier）が存在する</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがレベルアップで獲得したスキルポイントを配分する</span></li><li><span class="kw">ならば</span><span class="st-text">下位スキルを複数系統で並行育成するか、ポイントを投じてLv3→上位スキルへ一気に育成するかの戦略選択ができる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">スキルツリーの各スキルが Lv1〜5 のレベル段階を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがレベルアップで獲得したスキルポイントを配分する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv3までは1SPずつ手軽に横展開や前提解放を進められ、2SP・3SPを投じるLv4〜Lv5では大幅な性能ジャンプによる一点突破のリターンが得られる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -820,9 +893,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>Tier 1・Tier 2・Tier 3 ごとに必要SP（1 / 2 / 3）を消費して習得制御する</h4>
+                <h4>スキルレベル段階別の必要SP（Lv1〜3=1 / Lv4=2 / Lv5=3）で消費制御する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">スキルツリーの1レベルあたり消費SPが Tier 1 = 1 SP、Tier 2 = 2 SP、Tier 3 = 3 SP に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが arm_base (Lv3) 習得済みで所持 SP が 1 の状態で Tier 2 ノード arm_parallel を判定する</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2）のため強化不可となり、SP を 2 まで温存した時点で強化（2 SP 減算）が可能になる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">getSkillUpgradeCost が現在Lvに応じて 1 / 1 / 1 / 2 / 3 SP を返すように設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが Lv3 のスキルを所持 SP 1 の状態で Lv4 へ強化しようとする</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2）のため強化不可となり、SP 2 消費で Lv4・さらに SP 3 消費で Lv5 へ到達すると上昇幅が大きく伸びる</span></li>
   </ul>
               </div>
         </div>
