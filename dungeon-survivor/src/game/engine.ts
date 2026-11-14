@@ -78,6 +78,26 @@ export function isPointInPlayerVision(
   return dist <= corridorRadius && hasLineOfSight(px, py, wx, wy, map);
 }
 
+export function getStairsLockCount(state: GameState): number {
+  const stairsRoom = findRoomAtTile(state.map, state.map.stairsTile.tx, state.map.stairsTile.ty);
+  let remaining = 0;
+  for (const enemy of state.enemies) {
+    if (enemy.hp <= 0) continue;
+    if (enemy.isStairsGuard) {
+      remaining++;
+      continue;
+    }
+    if (stairsRoom) {
+      const etx = Math.floor(enemy.x / TILE_SIZE);
+      const ety = Math.floor(enemy.y / TILE_SIZE);
+      if (isTileInRoom(stairsRoom, etx, ety)) {
+        remaining++;
+      }
+    }
+  }
+  return remaining;
+}
+
 export function pushNotification(
   state: GameState,
   kind: GameNotification['kind'],
@@ -348,7 +368,7 @@ function populateFloor(
       });
     }
 
-    const count = rng.int(2, 3 + Math.min(3, Math.floor(floor / 2))) + (isStairsRoom ? 1 : 0);
+    const count = rng.int(2, 3 + Math.min(3, Math.floor(floor / 2))) + (isStairsRoom ? 3 : 0);
     for (let k = 0; k < count; k++) {
       let wx: number;
       let wy: number;
@@ -364,8 +384,24 @@ function populateFloor(
         wx = fallback.x + Math.cos(angle) * 26;
         wy = fallback.y + Math.sin(angle) * 26;
       }
-      const kind = pickEnemyKindForFloor(floor, rng.next());
-      enemies.push(createEnemyByKind(nextId++, kind, wx, wy, floor, MAX_TARGET_RANGE));
+
+      if (isStairsRoom && k === 0) {
+        const boss = createEnemyByKind(nextId++, 'tank', wx, wy, floor, MAX_TARGET_RANGE);
+        boss.maxHp = Math.round(boss.maxHp * 1.45);
+        boss.hp = boss.maxHp;
+        boss.radius += 3;
+        boss.damage = Math.round(boss.damage * 1.15);
+        boss.isRoomBoss = true;
+        boss.isStairsGuard = true;
+        enemies.push(boss);
+      } else {
+        const kind = pickEnemyKindForFloor(floor, rng.next());
+        const spawned = createEnemyByKind(nextId++, kind, wx, wy, floor, MAX_TARGET_RANGE);
+        if (isStairsRoom) {
+          spawned.isStairsGuard = true;
+        }
+        enemies.push(spawned);
+      }
     }
   }
 
@@ -445,6 +481,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     notifications: [],
     elapsedFloorTime: 0,
     respawnTimer: INITIAL_RESPAWN_DELAY,
+    stairsNoticeCooldown: 0,
     nextEntityId: populated.nextId,
     floorBannerTimer: 2.2,
     stats: {
@@ -479,6 +516,7 @@ export function advanceToNextFloor(state: GameState): void {
   state.notifications = [];
   state.elapsedFloorTime = 0;
   state.respawnTimer = INITIAL_RESPAWN_DELAY;
+  state.stairsNoticeCooldown = 0;
   state.nextEntityId = populated.nextId;
   state.floorBannerTimer = 2.2;
 }
@@ -874,6 +912,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   if (player.repulsorCooldown > 0) player.repulsorCooldown = Math.max(0, player.repulsorCooldown - clampedDt);
   if (player.aegisCooldown > 0) player.aegisCooldown = Math.max(0, player.aegisCooldown - clampedDt);
   if (player.tacticalStepCooldown > 0) player.tacticalStepCooldown = Math.max(0, player.tacticalStepCooldown - clampedDt);
+  if ((state.stairsNoticeCooldown ?? 0) > 0) {
+    state.stairsNoticeCooldown = Math.max(0, (state.stairsNoticeCooldown ?? 0) - clampedDt);
+  }
 
   // 1. Player movement & smooth wall collision (APP-MAP-02)
   const moveSpeed = player.baseSpeed;
@@ -894,11 +935,24 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     revealAroundPlayer(map, state.explored, player.x, player.y);
   }
 
-  // 2. Stairs check -> next floor (APP-MAP-01)
+  // 2. Stairs check -> unlockable only after defeating all stairs-room guards & mid-boss (APP-MAP-01)
   const stairsPos = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
   if (Math.hypot(player.x - stairsPos.x, player.y - stairsPos.y) <= TILE_SIZE * 0.52) {
-    advanceToNextFloor(state);
-    return;
+    const lockCount = getStairsLockCount(state);
+    if (lockCount <= 0) {
+      advanceToNextFloor(state);
+      return;
+    }
+    if ((state.stairsNoticeCooldown ?? 0) <= 0) {
+      pushNotification(
+        state,
+        'alert',
+        `🔒 階段は封印中！部屋の敵（残り${lockCount}体）を倒せ！`,
+        '#f43f5e',
+        2.4
+      );
+      state.stairsNoticeCooldown = 2.0;
+    }
   }
 
   // 3. Chest check -> acquire/upgrade equipment or trigger slot choice modal (APP-GRW-03/04/07)
@@ -1215,6 +1269,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   const ptx = Math.floor(player.x / TILE_SIZE);
   const pty = Math.floor(player.y / TILE_SIZE);
   const playerRoom = findRoomAtTile(map, ptx, pty);
+  const stairsRoom = findRoomAtTile(map, map.stairsTile.tx, map.stairsTile.ty);
   const alertSpawns: EnemyState[] = [];
 
   for (let i = state.enemies.length - 1; i >= 0; i--) {
@@ -1241,38 +1296,60 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     if (enemy.hp <= 0) {
       state.stats.kills += 1;
-      state.pickups.push({
-        id: state.nextEntityId++,
-        kind: 'exp',
-        x: enemy.x,
-        y: enemy.y,
-        value: 10,
-      });
-      if (rng.next() < 0.22 + mods.lootBonusRate * 0.4) {
+      const deadTx = Math.floor(enemy.x / TILE_SIZE);
+      const deadTy = Math.floor(enemy.y / TILE_SIZE);
+      const wasStairsGuard = Boolean(
+        enemy.isStairsGuard || (stairsRoom && isTileInRoom(stairsRoom, deadTx, deadTy))
+      );
+
+      // Tracer-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
+      if (!enemy.isAmbush) {
         state.pickups.push({
           id: state.nextEntityId++,
-          kind: 'heal',
-          x: enemy.x + 10,
-          y: enemy.y + 6,
-          value: 25,
+          kind: 'exp',
+          x: enemy.x,
+          y: enemy.y,
+          value: enemy.isRoomBoss ? 35 : 10,
         });
-      }
-      // Low-probability enemy equipment drop (1.5% base) scaled to player's lowest equipment level (APP-GRW-07)
-      const equipDropChance = 0.015 + mods.equipDropBonus;
-      if (rng.next() < equipDropChance) {
-        const eqId = rng.pick(ALL_EQUIPMENT_IDS);
-        const itemLevel = rollDropEquipmentLevel(player.equipment, () => rng.next());
-        state.pickups.push({
-          id: state.nextEntityId++,
-          kind: 'equip',
-          x: enemy.x - 10,
-          y: enemy.y + 6,
-          value: 1,
-          equipmentId: eqId,
-          itemLevel,
-        });
+        if (enemy.isRoomBoss || rng.next() < 0.22 + mods.lootBonusRate * 0.4) {
+          state.pickups.push({
+            id: state.nextEntityId++,
+            kind: 'heal',
+            x: enemy.x + 10,
+            y: enemy.y + 6,
+            value: enemy.isRoomBoss ? 35 : 25,
+          });
+        }
+        // Low-probability enemy equipment drop (1.5% base) scaled to player's lowest equipment level (APP-GRW-07)
+        const equipDropChance = 0.015 + mods.equipDropBonus;
+        if (rng.next() < equipDropChance) {
+          const eqId = rng.pick(ALL_EQUIPMENT_IDS);
+          const itemLevel = rollDropEquipmentLevel(player.equipment, () => rng.next());
+          state.pickups.push({
+            id: state.nextEntityId++,
+            kind: 'equip',
+            x: enemy.x - 10,
+            y: enemy.y + 6,
+            value: 1,
+            equipmentId: eqId,
+            itemLevel,
+          });
+        }
       }
       state.enemies.splice(i, 1);
+      if (wasStairsGuard && getStairsLockCount(state) === 0) {
+        const stairsWorld = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
+        pushNotification(state, 'info', '🔓 階段の封印が解けた！次の階層へ進める！', '#22d3ee', 2.8);
+        state.visualFx.push({
+          kind: 'pulse',
+          x: stairsWorld.x,
+          y: stairsWorld.y,
+          radius: 84,
+          color: '#22d3ee',
+          life: 0.65,
+          maxLife: 0.65,
+        });
+      }
       continue;
     }
 
@@ -1351,6 +1428,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             const pos = tileCenterWorld(picked.tx, picked.ty);
             const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
             runner.awake = true;
+            runner.isAmbush = true;
             alertSpawns.push(runner);
             state.visualFx.push({
               kind: 'pulse',

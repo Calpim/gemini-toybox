@@ -36,13 +36,41 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
       return blobs;
     };
 
-    // Verify across multiple seeds/floors that rooms stay large and width-2 corridors do not merge into 3x3+ blobs
+    const countSingleTileDoorways = (m: ReturnType<typeof generateDungeon>) => {
+      let singles = 0;
+      const checkEdge = (len: number, getIsFloor: (i: number) => boolean) => {
+        let run = 0;
+        for (let i = 0; i < len; i++) {
+          if (getIsFloor(i)) {
+            run++;
+          } else {
+            if (run === 1) singles++;
+            run = 0;
+          }
+        }
+        if (run === 1) singles++;
+      };
+      for (const r of m.rooms) {
+        checkEdge(r.w, (i) => !isWallTile(m, r.x + i, r.y - 1));
+        checkEdge(r.w, (i) => !isWallTile(m, r.x + i, r.y + r.h));
+        checkEdge(r.h, (i) => !isWallTile(m, r.x - 1, r.y + i));
+        checkEdge(r.h, (i) => !isWallTile(m, r.x + r.w, r.y + i));
+      }
+      return singles;
+    };
+
+    // Verify across multiple seeds/floors that rooms stay large, corridors do not merge into 3x3+ blobs, and all doorways are >=2 tiles wide
     for (const [f, s] of [
       [1, 12345],
       [2, 42],
       [3, 777],
       [4, 9999],
       [5, 2026],
+      [1, 101],
+      [2, 202],
+      [3, 303],
+      [4, 808],
+      [5, 999],
     ] as const) {
       const m = generateDungeon({ floor: f, seed: s });
       expect(m.rooms.length).toBeGreaterThanOrEqual(2);
@@ -51,9 +79,11 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
         expect(r.h).toBeGreaterThanOrEqual(7);
       }
       expect(hasCorridor3x3Blob(m)).toBe(0);
+      expect(countSingleTileDoorways(m)).toBe(0);
     }
 
     expect(hasCorridor3x3Blob(map)).toBe(0);
+    expect(countSingleTileDoorways(map)).toBe(0);
 
     // BFS reachability from start to stairs
     const visited = new Set<string>();

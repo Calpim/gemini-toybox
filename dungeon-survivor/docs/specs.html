@@ -249,9 +249,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>毎回異なる構造のダンジョンを探索し階段で次の階層へ進む</h3>
+          <h3>毎回異なる構造のダンジョンを探索し階段部屋の敵を殲滅して次の階層へ進む</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョンのある階層にいる</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがフロア内を探索して上り階段に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">次の階層へ進み、新しいランダム構造のダンジョンが生成される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョンのある階層にいる</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが階段部屋の敵（守護中ボス含む）をすべて倒した上で上り階段に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">階段の封印が解除されて次の階層へ進み、新しいランダム構造のダンジョンが生成される</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -266,9 +266,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>シード値に基づき広い部屋・非重複の2タイル幅通路・上り階段を持つフロアを生成する</h4>
+                <h4>シード値に基づき広い部屋・2タイル幅接続の非重複通路・守護中ボス付き封印階段を生成する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の広めの長方形部屋（8〜13 x 7〜11 タイル・部屋間隔 4タイル以上）と互いに重なり・隣接合体しない通路（既定幅 2タイル・80px）が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">スタート部屋から到達可能な最遠方の部屋に「上り階段」タイルが1つ配置される</span></li><li><span class="kw">かつ</span><span class="st-text">プレイヤーが上り階段の当たり判定に触れるとフロア番号 N+1 が生成される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の広めの長方形部屋（8〜13 x 7〜11 タイル・部屋間隔 4タイル以上）と互いに重なり・隣接合体せず、部屋との接続口も必ず 2タイル幅以上が確保された通路（既定幅 2タイル・80px）が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">スタート部屋から到達可能な最遠方の部屋に「上り階段」タイルが1つ配置され、階段部屋には通常より +3体多い敵（うち先頭1体は HP 1.45倍・ダメージ 1.15倍の守護中ボス GUARDIAN）が初期配置される</span></li><li><span class="kw">かつ</span><span class="st-text">getStairsLockCount(state) が 1以上の間は階段が封印（LOCKED 表示・進行不可）され、階段部屋の守護敵を全滅させて封印解除した状態で階段に触れるとフロア番号 N+1 が生成される</span></li>
   </ul>
               </div>
         </div>
@@ -459,9 +459,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>多様な性質の敵が重複せずに出現し、トレーサー発見時には高速の敵が襲来する</h3>
+          <h3>多様な性質の敵が重複せずに出現し、トレーサー発見時は発光する高速敵がノーリワードで襲来する</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">フロアに通常型・固くて遅い型・柔らかくて早い型・部屋入り後に一呼吸置いて撃つ定点射撃型・出現率を抑えた通路巡回トレーサーが重複しない座標へ配置される</span></li><li><span class="kw">もし</span><span class="st-text">トレーサー（偵察型）と通路等で遭遇して発見される、または経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">トレーサーは発見アラート通知を出して足の早い敵を数匹呼び寄せ、レベルアップ時にも明確な通知が表示される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">フロアに通常型・固くて遅い型・柔らかくて早い型・部屋入り後に一呼吸置いて撃つ定点射撃型・出現率を抑えた通路巡回トレーサーが重複しない座標へ配置される</span></li><li><span class="kw">もし</span><span class="st-text">トレーサー（偵察型）と通路等で遭遇して発見される、または経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">トレーサーは発見アラート通知を出して周囲を照らしながら迫るノーリワード（ドロップなし）の高速敵を数匹呼び寄せ、レベルアップ時にも明確な通知が表示される</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -476,12 +476,12 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>5種の敵タイプ・通路巡回トレーサー・発見時の高速敵追撃ポップを実行する</h4>
+                <h4>5種の敵タイプ・通路巡回トレーサー・発光ノーリワードの高速敵追撃ポップを実行する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">populateFloor が部屋内および通路巡回枠（caller 1〜2体）に敵・宝箱・回復オーブを重複タイルなしで配置する</span><div class="table-wrap"><table>
               <thead><tr><th>敵種別</th><th>性質</th><th>移動・攻撃・視認時の振る舞い</th></tr></thead>
-              <tbody><tr><td>normal</td><td>標準追跡型</td><td>標準HP・標準速度で視認・同室入室後に追跡</td></tr><tr><td>tank</td><td>固くて遅い</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型</td><td>速度 0 の固定砲台・2F以降出現・覚醒時 0.95秒（遮蔽後再視認時は 0.75秒）のチャージ予兆後に発射</td></tr><tr><td>caller</td><td>トレーサー（通路巡回型）</td><td>出現率を抑えて通路・部屋を自由巡回・発見時に300px内の仲間を覚醒＋高速敵（runner）を2〜3体ポップ＋警告通知</td></tr></tbody>
-            </table></div></li><li><span class="kw">もし</span><span class="st-text">caller がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">周囲へ覚醒済み runner 2〜3体が出現して突撃し、state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
+              <tbody><tr><td>normal</td><td>標準追跡型</td><td>標準HP・標準速度で視認・同室入室後に追跡</td></tr><tr><td>tank</td><td>固くて遅い</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型</td><td>速度 0 の固定砲台・2F以降出現・覚醒時 0.95秒（遮蔽後再視認時は 0.75秒）のチャージ予兆後に発射</td></tr><tr><td>caller</td><td>トレーサー（通路巡回型）</td><td>出現率を抑えて通路・部屋を自由巡回・発見時に300px内の仲間を覚醒＋発光する高速敵（runner）を2〜3体ポップ＋警告通知</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">caller がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">周囲へ覚醒済み・isAmbush フラグ付きの runner 2〜3体が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない</span></li><li><span class="kw">かつ</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
   </ul>
               </div>
         </div>

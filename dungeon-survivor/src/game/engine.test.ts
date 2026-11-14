@@ -18,6 +18,7 @@ import {
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
   getSeekerDronePositions,
+  getStairsLockCount,
   isPointInPlayerVision,
   pickEnemyKindForFloor,
   resolveEquipChoice,
@@ -70,13 +71,35 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.x - startX).toBeCloseTo(210 * 0.05, 1);
   });
 
-  it('[APP-MAP-01] advances to floor N+1 when player touches upstairs tile', () => {
+  it('[APP-MAP-01] spawns guardian mid-boss in stairs room, locks upstairs until guards are cleared, then advances to floor N+1', () => {
     const state = createGameState({ seed: 2026 });
     expect(state.floor).toBe(1);
+    const guards = state.enemies.filter((e) => e.isStairsGuard);
+    expect(guards.length).toBeGreaterThanOrEqual(5);
+    expect(guards.some((e) => e.isRoomBoss)).toBe(true);
+    expect(getStairsLockCount(state)).toBe(guards.length);
+
     const stairs = tileCenterWorld(state.map.stairsTile.tx, state.map.stairsTile.ty);
     state.player.x = stairs.x;
     state.player.y = stairs.y;
 
+    // Locked while stairs guards are still alive
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.floor).toBe(1);
+    expect(state.notifications.some((n) => n.text.includes('封印'))).toBe(true);
+
+    // Defeat all stairs guards -> unlock notification emitted and stepping onto stairs advances to floor 2
+    for (const guard of guards) {
+      guard.hp = 0;
+    }
+    state.player.x = state.map.rooms[0].cx * TILE_SIZE;
+    state.player.y = state.map.rooms[0].cy * TILE_SIZE;
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(getStairsLockCount(state)).toBe(0);
+    expect(state.notifications.some((n) => n.text.includes('封印が解けた'))).toBe(true);
+
+    state.player.x = stairs.x;
+    state.player.y = stairs.y;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.floor).toBe(2);
     expect(state.stats.floorsCleared).toBe(1);
@@ -772,7 +795,16 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(nearbyAlly.awake).toBe(true);
     const ambushRunners = callState.enemies.filter((e) => e.kind === 'runner' && e.awake);
     expect(ambushRunners.length).toBeGreaterThanOrEqual(2);
+    expect(ambushRunners.every((e) => e.isAmbush === true)).toBe(true);
     expect(callState.notifications.some((n) => n.kind === 'alert')).toBe(true);
+
+    // Defeating a tracer-spawned ambush runner yields zero EXP/heal/equip drops
+    callState.pickups = [];
+    ambushRunners[0].hp = 0;
+    callState.enemies = [ambushRunners[0]];
+    stepGame(callState, { x: 0, y: 0 }, 1 / 60);
+    expect(callState.stats.kills).toBeGreaterThanOrEqual(1);
+    expect(callState.pickups.length).toBe(0);
   });
 });
 

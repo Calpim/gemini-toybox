@@ -215,8 +215,13 @@ function routeNonOverlappingCorridor(
       if (inEndpointRoom) {
         tileCost = 1;
       } else {
-        for (let by = ny - halfBefore; by < ny - halfBefore + corridorWidth; by++) {
-          for (let bx = nx - halfBefore; bx < nx - halfBefore + corridorWidth; bx++) {
+        const bx0 = nx - halfBefore;
+        const by0 = ny - halfBefore;
+        const bx1 = bx0 + corridorWidth - 1;
+        const by1 = by0 + corridorWidth - 1;
+
+        for (let by = by0; by <= by1; by++) {
+          for (let bx = bx0; bx <= bx1; bx++) {
             if (bx < 1 || by < 1 || bx >= width - 1 || by >= height - 1) {
               outOfBounds = true;
               break;
@@ -235,6 +240,25 @@ function routeNonOverlappingCorridor(
             }
           }
           if (outOfBounds) break;
+        }
+
+        // Prevent 1-tile corner doorways: when a brush touches an endpoint room's 1-tile perimeter,
+        // the full corridorWidth span must align within the room's X edge or Y edge.
+        if (!outOfBounds && corridorWidth > 1) {
+          for (const endRoom of [roomA, roomB]) {
+            const touchesRoomMargin =
+              bx1 >= endRoom.x - 1 &&
+              bx0 <= endRoom.x + endRoom.w &&
+              by1 >= endRoom.y - 1 &&
+              by0 <= endRoom.y + endRoom.h;
+            if (touchesRoomMargin) {
+              const alignedTopBottom = bx0 >= endRoom.x && bx1 <= endRoom.x + endRoom.w - 1;
+              const alignedLeftRight = by0 >= endRoom.y && by1 <= endRoom.y + endRoom.h - 1;
+              if (!alignedTopBottom && !alignedLeftRight) {
+                tileCost = Math.max(tileCost, 5000);
+              }
+            }
+          }
         }
       }
       if (outOfBounds) continue;

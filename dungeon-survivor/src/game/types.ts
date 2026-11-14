@@ -56,6 +56,9 @@ export interface EnemyState {
   wanderTarget?: Vec2 | null;
   wanderTimer?: number;
   wanderDir?: Vec2 | null;
+  isAmbush?: boolean;
+  isStairsGuard?: boolean;
+  isRoomBoss?: boolean;
 }
 
 export interface ProjectileState {
@@ -167,6 +170,7 @@ export interface GameState {
   notifications: GameNotification[];
   elapsedFloorTime: number;
   respawnTimer: number;
+  stairsNoticeCooldown?: number;
   nextEntityId: number;
   floorBannerTimer: number;
   stats: GameStats;

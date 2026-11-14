@@ -3,6 +3,7 @@ import {
   CORRIDOR_VISION_RADIUS,
   getOrbitBitPositions,
   getSeekerDronePositions,
+  getStairsLockCount,
   isPointInPlayerVision,
 } from '../game/engine';
 import { EQUIPMENT_CATALOG, MAX_TARGET_RANGE } from '../game/equipment';
@@ -47,11 +48,34 @@ function drawEnemyBody(
   ctx.save();
   ctx.translate(enemy.x, enemy.y);
 
+  if (enemy.isAmbush) {
+    const glow = 0.65 + 0.35 * Math.sin(nowSec * 12);
+    ctx.fillStyle = `rgba(249, 115, 22, ${0.22 * glow})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + 11, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(251, 191, 36, ${0.75 * glow})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + 5 + glow * 3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (enemy.isRoomBoss) {
+    const bossPulse = 0.7 + 0.3 * Math.sin(nowSec * 5);
+    ctx.strokeStyle = `rgba(250, 204, 21, ${0.85 * bossPulse})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   if (kind === 'tank') {
     // Heavy armored hexagon
     ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#7c3aed' : '#4c1d95';
-    ctx.strokeStyle = enemy.awake ? '#ddd6fe' : '#6d28d9';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = enemy.isRoomBoss ? '#fde047' : enemy.awake ? '#ddd6fe' : '#6d28d9';
+    ctx.lineWidth = enemy.isRoomBoss ? 3.5 : 3;
     ctx.beginPath();
     for (let s = 0; s < 6; s++) {
       const a = (s * Math.PI) / 3;
@@ -72,9 +96,9 @@ function drawEnemyBody(
   } else if (kind === 'runner') {
     // Fast agile diamond
     const r = enemy.radius + 1;
-    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#f59e0b' : '#92400e';
-    ctx.strokeStyle = enemy.awake ? '#fef08a' : '#78350f';
-    ctx.lineWidth = 2;
+    ctx.fillStyle = flash ? '#ffffff' : enemy.isAmbush ? '#fb923c' : enemy.awake ? '#f59e0b' : '#92400e';
+    ctx.strokeStyle = enemy.isAmbush ? '#fef3c7' : enemy.awake ? '#fef08a' : '#78350f';
+    ctx.lineWidth = enemy.isAmbush ? 2.5 : 2;
     ctx.beginPath();
     ctx.moveTo(0, -r);
     ctx.lineTo(r, 0);
@@ -140,12 +164,21 @@ function drawEnemyBody(
 
   ctx.restore();
 
+  if (enemy.isRoomBoss) {
+    ctx.save();
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('GUARDIAN', enemy.x, enemy.y - enemy.radius - 14);
+    ctx.restore();
+  }
+
   if (enemy.hp < enemy.maxHp) {
     const bw = Math.max(24, enemy.radius * 2);
     const ratio = Math.max(0, enemy.hp / enemy.maxHp);
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
     ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw, 4);
-    ctx.fillStyle = '#fb7185';
+    ctx.fillStyle = enemy.isRoomBoss ? '#facc15' : '#fb7185';
     ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw * ratio, 4);
   }
 }
@@ -160,6 +193,7 @@ export function renderGame(
 ): void {
   const { map, player, explored } = state;
   const mods = computeSkillModifiers(player.skillLevels);
+  const stairsLockCount = getStairsLockCount(state);
 
   ctx.fillStyle = '#050811';
   ctx.fillRect(0, 0, width, height);
@@ -201,13 +235,16 @@ export function renderGame(
         if (tile === 'stairs') {
           const pulse = 0.7 + 0.3 * Math.sin(nowSec * 4.5);
           const center = tileCenterWorld(tx, ty);
+          const locked = stairsLockCount > 0;
           ctx.save();
-          ctx.fillStyle = `rgba(34, 211, 238, ${0.18 * pulse})`;
+          ctx.fillStyle = locked
+            ? `rgba(244, 63, 94, ${0.2 * pulse})`
+            : `rgba(34, 211, 238, ${0.18 * pulse})`;
           ctx.beginPath();
           ctx.arc(center.x, center.y, TILE_SIZE * 0.48, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.strokeStyle = '#22d3ee';
+          ctx.strokeStyle = locked ? '#fb7185' : '#22d3ee';
           ctx.lineWidth = 2;
           for (let s = -1; s <= 1; s++) {
             const y = center.y + s * 6;
@@ -216,10 +253,16 @@ export function renderGame(
             ctx.lineTo(center.x + 10, y);
             ctx.stroke();
           }
-          ctx.fillStyle = '#a5f3fc';
+          if (locked) {
+            ctx.strokeStyle = 'rgba(251, 113, 133, 0.85)';
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, TILE_SIZE * 0.46, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.fillStyle = locked ? '#fecdd3' : '#a5f3fc';
           ctx.font = 'bold 10px monospace';
           ctx.textAlign = 'center';
-          ctx.fillText('NEXT ▲', center.x, center.y - 16);
+          ctx.fillText(locked ? `LOCKED (${stairsLockCount})` : 'NEXT ▲', center.x, center.y - 16);
           ctx.restore();
         }
       }
@@ -392,9 +435,9 @@ export function renderGame(
     ctx.restore();
   }
 
-  // 7. Enemies (rendered only when inside player's current vision)
+  // 7. Enemies (rendered when inside player's vision, or glowing ambush runners summoned by tracer)
   for (const enemy of state.enemies) {
-    if (!isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y)) {
+    if (!enemy.isAmbush && !isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y)) {
       continue;
     }
     drawEnemyBody(ctx, enemy, player.x, player.y, nowSec);
@@ -593,6 +636,22 @@ function renderFogOverlay(
     fCtx.fill();
   }
 
+  // Illuminate surroundings of tracer-summoned ambush runners so they stand out in dark corridors
+  for (const enemy of state.enemies) {
+    if (!enemy.isAmbush) continue;
+    const esx = (enemy.x - camX) * zoom;
+    const esy = (enemy.y - camY) * zoom;
+    const ambR = 64 * zoom;
+    const ambGrad = fCtx.createRadialGradient(esx, esy, ambR * 0.25, esx, esy, ambR);
+    ambGrad.addColorStop(0, 'rgba(0, 0, 0, 0.96)');
+    ambGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.72)');
+    ambGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    fCtx.fillStyle = ambGrad;
+    fCtx.beginPath();
+    fCtx.arc(esx, esy, ambR, 0, Math.PI * 2);
+    fCtx.fill();
+  }
+
   fCtx.restore();
 
   ctx.save();
@@ -634,6 +693,7 @@ function renderNotifications(
 
 function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state: GameState): void {
   const { map, explored, player } = state;
+  const stairsLocked = getStairsLockCount(state) > 0;
   const isNarrow = canvasWidth < 540;
   const cell = isNarrow ? 2 : 3;
   const mapW = map.width * cell;
@@ -653,7 +713,8 @@ function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state
       if (!explored[idx]) continue;
       const t = map.tiles[idx];
       if (t === 'wall') continue;
-      ctx.fillStyle = t === 'stairs' ? '#22d3ee' : 'rgba(148, 163, 184, 0.45)';
+      ctx.fillStyle =
+        t === 'stairs' ? (stairsLocked ? '#fb7185' : '#22d3ee') : 'rgba(148, 163, 184, 0.45)';
       ctx.fillRect(ox + tx * cell, oy + ty * cell, cell, cell);
     }
   }
