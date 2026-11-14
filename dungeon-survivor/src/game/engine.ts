@@ -47,7 +47,7 @@ import type {
   Vec2,
 } from './types';
 
-export const CORRIDOR_VISION_RADIUS = 165;
+export const CORRIDOR_VISION_RADIUS = 210;
 export const CALLER_ALERT_RADIUS = 300;
 export const INITIAL_RESPAWN_DELAY = 24;
 
@@ -129,9 +129,9 @@ function revealAroundPlayer(
     }
   }
 
-  // Corridor narrow radius (3.6 tiles) also smoothly connects doorways when inside a room
-  const radiusTiles = room ? 3 : 4;
-  const r2 = room ? 9 : 13;
+  // Corridor vision radius (~4.7 tiles) also smoothly connects doorways when inside a room
+  const radiusTiles = room ? 3 : 5;
+  const r2 = room ? 9 : 22;
   const minY = Math.max(0, pty - radiusTiles);
   const maxY = Math.min(map.height - 1, pty + radiusTiles);
   const minX = Math.max(0, ptx - radiusTiles);
@@ -1195,11 +1195,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   for (let i = state.enemies.length - 1; i >= 0; i--) {
     const enemy = state.enemies[i];
+    const wasAwake = enemy.awake;
     if (enemy.hitFlash > 0) enemy.hitFlash = Math.max(0, enemy.hitFlash - clampedDt);
     if (enemy.bitHitCooldown > 0) enemy.bitHitCooldown = Math.max(0, enemy.bitHitCooldown - clampedDt);
-    if ((enemy.attackCooldown ?? 0) > 0) {
-      enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
-    }
     if ((enemy.alertCooldown ?? 0) > 0) {
       enemy.alertCooldown = Math.max(0, (enemy.alertCooldown ?? 0) - clampedDt);
     }
@@ -1259,11 +1257,14 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     const distToPlayer = Math.hypot(dx, dy);
 
     if (!enemy.awake) {
-      if (
-        distToPlayer <= 140 ||
-        (distToPlayer <= enemy.aggroRange && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map))
-      ) {
+      const canProxWake = enemy.kind !== 'shooter' && distToPlayer <= 140;
+      const canSightWake =
+        distToPlayer <= enemy.aggroRange && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+      if (canProxWake || canSightWake) {
         enemy.awake = true;
+        if (enemy.kind === 'shooter') {
+          enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.95);
+        }
       }
     }
 
@@ -1274,6 +1275,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           enemy.alertCooldown = 6.0;
           for (const ally of state.enemies) {
             if (ally.id !== enemy.id && Math.hypot(ally.x - enemy.x, ally.y - enemy.y) <= CALLER_ALERT_RADIUS) {
+              if (!ally.awake && ally.kind === 'shooter') {
+                ally.attackCooldown = Math.max(ally.attackCooldown ?? 0, 0.95);
+              }
               ally.awake = true;
             }
           }
@@ -1347,27 +1351,33 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Shooter archetype: stationary turret firing enemy projectiles within LOS & target range
+    // Shooter archetype: stationary turret with wind-up charge delay after gaining sight/room entry
     if (enemy.kind === 'shooter' && enemy.awake) {
-      if (
-        (enemy.attackCooldown ?? 0) <= 0 &&
+      const inSight =
         distToPlayer > 1e-3 &&
         distToPlayer <= MAX_TARGET_RANGE &&
-        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)
-      ) {
-        const projSpeed = 215 + Math.min(65, (state.floor - 1) * 10);
-        const angle = Math.atan2(dy, dx);
-        state.enemyProjectiles.push({
-          id: state.nextEntityId++,
-          x: enemy.x,
-          y: enemy.y,
-          vx: Math.cos(angle) * projSpeed,
-          vy: Math.sin(angle) * projSpeed,
-          radius: 5,
-          damage: enemy.damage,
-          life: 1.5,
-        });
-        enemy.attackCooldown = Math.max(1.25, 2.0 - (state.floor - 1) * 0.1);
+        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+      if (!inSight) {
+        enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
+      } else if (wasAwake) {
+        if ((enemy.attackCooldown ?? 0) > 0) {
+          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+        }
+        if ((enemy.attackCooldown ?? 0) <= 0) {
+          const projSpeed = 215 + Math.min(65, (state.floor - 1) * 10);
+          const angle = Math.atan2(dy, dx);
+          state.enemyProjectiles.push({
+            id: state.nextEntityId++,
+            x: enemy.x,
+            y: enemy.y,
+            vx: Math.cos(angle) * projSpeed,
+            vy: Math.sin(angle) * projSpeed,
+            radius: 5,
+            damage: enemy.damage,
+            life: 1.5,
+          });
+          enemy.attackCooldown = Math.max(1.25, 2.0 - (state.floor - 1) * 0.1);
+        }
       }
     }
 

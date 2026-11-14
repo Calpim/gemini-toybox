@@ -28,7 +28,7 @@ export interface DungeonMap {
 export interface GenerateDungeonOptions {
   floor: number;
   seed: number;
-  corridorWidth?: 2 | 3;
+  corridorWidth?: 1 | 2 | 3;
 }
 
 export function tileIndex(map: Pick<DungeonMap, 'width'>, tx: number, ty: number): number {
@@ -89,50 +89,180 @@ function carveRect(tiles: TileType[], width: number, height: number, rx: number,
   }
 }
 
-function carveWideCorridor(
-  tiles: TileType[],
-  width: number,
-  height: number,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  corridorWidth: number,
-  horizontalFirst: boolean
-): void {
-  const halfBefore = Math.floor((corridorWidth - 1) / 2);
-  const paintBrush = (cx: number, cy: number) => {
-    carveRect(tiles, width, height, cx - halfBefore, cy - halfBefore, corridorWidth, corridorWidth);
-  };
-
-  if (horizontalFirst) {
-    const stepX = x1 <= x2 ? 1 : -1;
-    for (let x = x1; x !== x2 + stepX; x += stepX) {
-      paintBrush(x, y1);
-    }
-    const stepY = y1 <= y2 ? 1 : -1;
-    for (let y = y1; y !== y2 + stepY; y += stepY) {
-      paintBrush(x2, y);
-    }
-  } else {
-    const stepY = y1 <= y2 ? 1 : -1;
-    for (let y = y1; y !== y2 + stepY; y += stepY) {
-      paintBrush(x1, y);
-    }
-    const stepX = x1 <= x2 ? 1 : -1;
-    for (let x = x1; x !== x2 + stepX; x += stepX) {
-      paintBrush(x, y2);
-    }
-  }
-}
-
-function roomsOverlap(a: Omit<Room, 'id' | 'cx' | 'cy'>, b: Room, padding = 2): boolean {
+function roomsOverlap(a: Omit<Room, 'id' | 'cx' | 'cy'>, b: Room, padding = 4): boolean {
   return !(
     a.x + a.w + padding <= b.x ||
     b.x + b.w + padding <= a.x ||
     a.y + a.h + padding <= b.y ||
     b.y + b.h + padding <= a.y
   );
+}
+
+const CARDINAL_DIRS: readonly [number, number][] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
+function hasCorridorWithin(
+  corridorMask: Uint8Array,
+  width: number,
+  height: number,
+  tx: number,
+  ty: number,
+  radius: number
+): boolean {
+  const minX = Math.max(1, tx - radius);
+  const maxX = Math.min(width - 2, tx + radius);
+  const minY = Math.max(1, ty - radius);
+  const maxY = Math.min(height - 2, ty + radius);
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      if (corridorMask[y * width + x] === 1) return true;
+    }
+  }
+  return false;
+}
+
+function routeNonOverlappingCorridor(
+  tiles: TileType[],
+  width: number,
+  height: number,
+  roomMask: Int16Array,
+  nearRoomMask: Int16Array,
+  corridorMask: Uint8Array,
+  roomA: Room,
+  roomB: Room,
+  corridorWidth: number
+): void {
+  const totalStates = width * height * 5;
+  const bestCost = new Float64Array(totalStates).fill(Infinity);
+  const prevState = new Int32Array(totalStates).fill(-1);
+
+  const heapState: number[] = [];
+  const heapCost: number[] = [];
+  const pushHeap = (state: number, cost: number) => {
+    heapState.push(state);
+    heapCost.push(cost);
+    let idx = heapState.length - 1;
+    while (idx > 0) {
+      const parent = (idx - 1) >> 1;
+      if (heapCost[parent] <= heapCost[idx]) break;
+      [heapState[parent], heapState[idx]] = [heapState[idx], heapState[parent]];
+      [heapCost[parent], heapCost[idx]] = [heapCost[idx], heapCost[parent]];
+      idx = parent;
+    }
+  };
+  const popHeap = (): [number, number] => {
+    const topS = heapState[0];
+    const topC = heapCost[0];
+    const lastS = heapState.pop()!;
+    const lastC = heapCost.pop()!;
+    if (heapState.length > 0) {
+      heapState[0] = lastS;
+      heapCost[0] = lastC;
+      let idx = 0;
+      const len = heapState.length;
+      while (true) {
+        let smallest = idx;
+        const left = idx * 2 + 1;
+        const right = left + 1;
+        if (left < len && heapCost[left] < heapCost[smallest]) smallest = left;
+        if (right < len && heapCost[right] < heapCost[smallest]) smallest = right;
+        if (smallest === idx) break;
+        [heapState[idx], heapState[smallest]] = [heapState[smallest], heapState[idx]];
+        [heapCost[idx], heapCost[smallest]] = [heapCost[smallest], heapCost[idx]];
+        idx = smallest;
+      }
+    }
+    return [topS, topC];
+  };
+
+  const startIdx = roomA.cy * width + roomA.cx;
+  const targetIdx = roomB.cy * width + roomB.cx;
+  const startState = startIdx * 5 + 4;
+  bestCost[startState] = 0;
+  pushHeap(startState, 0);
+
+  let reachedState = -1;
+  while (heapState.length > 0) {
+    const [curState, curCost] = popHeap();
+    if (curCost > bestCost[curState]) continue;
+
+    const curIdx = Math.floor(curState / 5);
+    const curDir = curState % 5;
+    if (curIdx === targetIdx) {
+      reachedState = curState;
+      break;
+    }
+
+    const cx = curIdx % width;
+    const cy = Math.floor(curIdx / width);
+
+    for (let d = 0; d < 4; d++) {
+      const nx = cx + CARDINAL_DIRS[d][0];
+      const ny = cy + CARDINAL_DIRS[d][1];
+      if (nx < 1 || ny < 1 || nx >= width - 1 || ny >= height - 1) continue;
+
+      const nIdx = ny * width + nx;
+      const inEndpointRoom = roomMask[nIdx] === roomA.id || roomMask[nIdx] === roomB.id;
+      const nearRoom = nearRoomMask[nIdx];
+
+      let tileCost: number;
+      if (inEndpointRoom) {
+        tileCost = 1;
+      } else if (nearRoom !== -1 && nearRoom !== roomA.id && nearRoom !== roomB.id) {
+        tileCost = 5000;
+      } else if (corridorMask[nIdx] === 1) {
+        tileCost = 400;
+      } else if (hasCorridorWithin(corridorMask, width, height, nx, ny, 1)) {
+        tileCost = 220;
+      } else if (hasCorridorWithin(corridorMask, width, height, nx, ny, 2)) {
+        tileCost = 24;
+      } else {
+        tileCost = 4;
+      }
+
+      const turnCost = curDir !== 4 && curDir !== d ? 6 : 0;
+      const nextCost = curCost + tileCost + turnCost;
+      const nextState = nIdx * 5 + d;
+      if (nextCost < bestCost[nextState]) {
+        bestCost[nextState] = nextCost;
+        prevState[nextState] = curState;
+        pushHeap(nextState, nextCost);
+      }
+    }
+  }
+
+  if (reachedState === -1) return;
+
+  const pathTiles: number[] = [];
+  let trace = reachedState;
+  while (trace !== -1) {
+    pathTiles.push(Math.floor(trace / 5));
+    trace = prevState[trace];
+  }
+
+  const halfBefore = Math.floor((corridorWidth - 1) / 2);
+  for (const idx of pathTiles) {
+    if (roomMask[idx] === roomA.id || roomMask[idx] === roomB.id) continue;
+    const tx = idx % width;
+    const ty = Math.floor(idx / width);
+    carveRect(tiles, width, height, tx - halfBefore, ty - halfBefore, corridorWidth, corridorWidth);
+    const x0 = Math.max(1, tx - halfBefore);
+    const y0 = Math.max(1, ty - halfBefore);
+    const x1 = Math.min(width - 2, x0 + corridorWidth - 1);
+    const y1 = Math.min(height - 2, y0 + corridorWidth - 1);
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const cIdx = y * width + x;
+        if (roomMask[cIdx] === -1) {
+          corridorMask[cIdx] = 1;
+        }
+      }
+    }
+  }
 }
 
 export function computeBfsDistances(width: number, height: number, tiles: TileType[], startTx: number, startTy: number): Int32Array {
@@ -143,12 +273,6 @@ export function computeBfsDistances(width: number, height: number, tiles: TileTy
   const queue: number[] = [startIdx];
   dist[startIdx] = 0;
   let head = 0;
-  const dirs = [
-    [1, 0],
-    [-1, 0],
-    [0, 1],
-    [0, -1],
-  ];
 
   while (head < queue.length) {
     const idx = queue[head++];
@@ -156,7 +280,7 @@ export function computeBfsDistances(width: number, height: number, tiles: TileTy
     const cy = Math.floor(idx / width);
     const d = dist[idx];
 
-    for (const [dx, dy] of dirs) {
+    for (const [dx, dy] of CARDINAL_DIRS) {
       const nx = cx + dx;
       const ny = cy + dy;
       if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
@@ -172,29 +296,30 @@ export function computeBfsDistances(width: number, height: number, tiles: TileTy
 }
 
 /**
- * Generates a connected dungeon floor with rectangular rooms, wide (2-3 tile) corridors,
+ * Generates a connected dungeon floor with wide rectangular rooms (8-13 x 7-11),
+ * narrow non-overlapping corridors (default width 1 tile) routed via Prim MST + Dijkstra,
  * a safe start room, and an upstairs tile in the farthest reachable room (APP-MAP-01).
  */
 export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   const { floor, seed } = options;
   const rng: Rng = createRng(seed ^ (floor * 0x9e3779b1));
-  const corridorWidth: 2 | 3 = options.corridorWidth ?? (rng.next() < 0.5 ? 2 : 3);
+  const corridorWidth: 1 | 2 | 3 = options.corridorWidth ?? 1;
 
-  const width = Math.min(60, 38 + floor * 3);
-  const height = Math.min(48, 30 + floor * 2);
-  const targetRooms = Math.min(12, 6 + floor);
+  const width = Math.min(76, 48 + floor * 3);
+  const height = Math.min(58, 38 + floor * 2);
+  const targetRooms = Math.min(11, 6 + floor);
 
   const tiles: TileType[] = new Array(width * height).fill('wall');
   const rooms: Room[] = [];
 
-  for (let attempt = 0; attempt < 160 && rooms.length < targetRooms; attempt++) {
-    const rw = rng.int(6, 10);
-    const rh = rng.int(5, 9);
+  for (let attempt = 0; attempt < 240 && rooms.length < targetRooms; attempt++) {
+    const rw = rng.int(8, 13);
+    const rh = rng.int(7, 11);
     const rx = rng.int(2, width - rw - 3);
     const ry = rng.int(2, height - rh - 3);
     const candidate = { x: rx, y: ry, w: rw, h: rh };
 
-    if (rooms.some((r) => roomsOverlap(candidate, r, 2))) {
+    if (rooms.some((r) => roomsOverlap(candidate, r, 4))) {
       continue;
     }
 
@@ -208,16 +333,16 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
     carveRect(tiles, width, height, room.x, room.y, room.w, room.h);
   }
 
-  // Fallback guarantee: at least 2 rooms even on pathological seeds
+  // Fallback guarantee: at least 2 wide rooms even on pathological seeds
   if (rooms.length < 2) {
-    const fallbackA: Room = { id: 0, x: 3, y: 3, w: 7, h: 7, cx: 6, cy: 6 };
+    const fallbackA: Room = { id: 0, x: 3, y: 3, w: 9, h: 8, cx: 7, cy: 7 };
     const fallbackB: Room = {
       id: 1,
-      x: width - 11,
-      y: height - 11,
-      w: 7,
-      h: 7,
-      cx: width - 8,
+      x: width - 13,
+      y: height - 12,
+      w: 9,
+      h: 8,
+      cx: width - 9,
       cy: height - 8,
     };
     rooms.length = 0;
@@ -226,29 +351,56 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
     carveRect(tiles, width, height, fallbackB.x, fallbackB.y, fallbackB.w, fallbackB.h);
   }
 
-  // Connect rooms in sequence to their nearest previously connected neighbor (Prim-like MST)
-  for (let i = 1; i < rooms.length; i++) {
-    const current = rooms[i];
-    let bestPrev = rooms[0];
-    let bestDist = Infinity;
-    for (let j = 0; j < i; j++) {
-      const prev = rooms[j];
-      const d = Math.hypot(current.cx - prev.cx, current.cy - prev.cy);
-      if (d < bestDist) {
-        bestDist = d;
-        bestPrev = prev;
+  const roomMask = new Int16Array(width * height).fill(-1);
+  const nearRoomMask = new Int16Array(width * height).fill(-1);
+  for (const room of rooms) {
+    for (let y = Math.max(1, room.y - 1); y <= Math.min(height - 2, room.y + room.h); y++) {
+      for (let x = Math.max(1, room.x - 1); x <= Math.min(width - 2, room.x + room.w); x++) {
+        const idx = y * width + x;
+        nearRoomMask[idx] = room.id;
+        if (x >= room.x && x < room.x + room.w && y >= room.y && y < room.y + room.h) {
+          roomMask[idx] = room.id;
+        }
       }
     }
-    carveWideCorridor(
+  }
+
+  // True Prim's MST so rooms connect cleanly without long criss-crossing edges,
+  // routed via weighted Dijkstra to prevent overlapping/adjacent corridor blobs.
+  const corridorMask = new Uint8Array(width * height);
+  const connectedIds = new Set<number>([rooms[0].id]);
+  const remaining = rooms.slice(1);
+
+  while (remaining.length > 0) {
+    let bestRemIdx = 0;
+    let bestFromRoom = rooms[0];
+    let bestDist = Infinity;
+
+    for (let rIdx = 0; rIdx < remaining.length; rIdx++) {
+      const cand = remaining[rIdx];
+      for (const connId of connectedIds) {
+        const from = rooms[connId];
+        const d = Math.hypot(cand.cx - from.cx, cand.cy - from.cy);
+        if (d < bestDist) {
+          bestDist = d;
+          bestRemIdx = rIdx;
+          bestFromRoom = from;
+        }
+      }
+    }
+
+    const nextRoom = remaining.splice(bestRemIdx, 1)[0];
+    connectedIds.add(nextRoom.id);
+    routeNonOverlappingCorridor(
       tiles,
       width,
       height,
-      bestPrev.cx,
-      bestPrev.cy,
-      current.cx,
-      current.cy,
-      corridorWidth,
-      rng.next() < 0.5
+      roomMask,
+      nearRoomMask,
+      corridorMask,
+      bestFromRoom,
+      nextRoom,
+      corridorWidth
     );
   }
 

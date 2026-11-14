@@ -10,12 +10,12 @@ import { computeSkillModifiers } from '../game/skillTree';
 import type { EnemyState, GameState } from '../game/types';
 import type { VirtualStickState } from '../input/controller';
 
-export const TARGET_VIEW_WORLD_WIDTH = 640; // ~16 tiles across on desktop/web
+export const TARGET_VIEW_WORLD_WIDTH = 840; // ~21 tiles across on desktop/web
 
 export function computeCameraZoom(viewportWidth: number, viewportHeight: number): number {
-  const widthZoom = Math.max(1.0, viewportWidth / TARGET_VIEW_WORLD_WIDTH);
-  const heightMaxZoom = Math.max(1.0, viewportHeight / 340);
-  return Math.min(3.0, widthZoom, heightMaxZoom);
+  const widthZoom = Math.max(0.72, viewportWidth / TARGET_VIEW_WORLD_WIDTH);
+  const heightMaxZoom = Math.max(0.72, viewportHeight / 480);
+  return Math.min(2.4, widthZoom, heightMaxZoom);
 }
 
 let fogCanvas: HTMLCanvasElement | null = null;
@@ -84,8 +84,18 @@ function drawEnemyBody(
     ctx.fill();
     ctx.stroke();
   } else if (kind === 'shooter') {
-    // Stationary ranged turret
+    // Stationary ranged turret with charge-up telegraph ring before firing
     const s = enemy.radius;
+    const cd = enemy.attackCooldown ?? 1;
+    if (enemy.awake && cd <= 0.7) {
+      const charge = Math.max(0, Math.min(1, (0.7 - cd) / 0.7));
+      ctx.strokeStyle = `rgba(244, 114, 182, ${0.35 + charge * 0.6})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, s + 9 - charge * 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
     ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#db2777' : '#831843';
     ctx.strokeStyle = enemy.awake ? '#fbcfe8' : '#500724';
     ctx.lineWidth = 2;
@@ -544,7 +554,7 @@ function renderFogOverlay(
   fCtx.save();
   fCtx.globalCompositeOperation = 'source-over';
   fCtx.clearRect(0, 0, cw, ch);
-  fCtx.fillStyle = 'rgba(5, 8, 17, 0.82)';
+  fCtx.fillStyle = 'rgba(5, 8, 17, 0.78)';
   fCtx.fillRect(0, 0, cw, ch);
 
   // Carve out current active vision
@@ -554,9 +564,9 @@ function renderFogOverlay(
   const psy = (player.y - camY) * zoom;
   const circleRadius = CORRIDOR_VISION_RADIUS * zoom;
 
-  const grad = fCtx.createRadialGradient(psx, psy, circleRadius * 0.45, psx, psy, circleRadius);
+  const grad = fCtx.createRadialGradient(psx, psy, circleRadius * 0.55, psx, psy, circleRadius);
   grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
-  grad.addColorStop(0.75, 'rgba(0, 0, 0, 0.85)');
+  grad.addColorStop(0.8, 'rgba(0, 0, 0, 0.88)');
   grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
   fCtx.fillStyle = grad;
   fCtx.beginPath();

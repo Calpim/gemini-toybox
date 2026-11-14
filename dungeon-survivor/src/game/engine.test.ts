@@ -638,11 +638,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.notifications.some((n) => n.kind === 'info')).toBe(true);
   });
 
-  it('[APP-MAP-06] scales camera zoom by viewport width and switches between room illumination and corridor circular vision', () => {
-    // Smartphone keeps ~1.0x view; PC zooms up so whole map is not visible at once
-    expect(computeCameraZoom(390, 844)).toBe(1);
-    expect(computeCameraZoom(1280, 720)).toBe(2);
-    expect(computeCameraZoom(1440, 900)).toBe(2.25);
+  it('[APP-MAP-06] scales camera zoom by viewport width (including zoomed-out mobile) and switches between room illumination and corridor circular vision', () => {
+    // Smartphone zooms out to 0.72x so surrounding area stays readable; PC scales cleanly around 840px target
+    expect(computeCameraZoom(390, 844)).toBeCloseTo(0.72, 2);
+    expect(computeCameraZoom(1280, 720)).toBeCloseTo(1.5, 2);
+    expect(computeCameraZoom(1440, 900)).toBeCloseTo(1440 / 840, 3);
 
     const state = createGameState({ seed: 920 });
     const room0 = state.map.rooms[0];
@@ -650,7 +650,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const roomCorner = tileCenterWorld(room0.x, room0.y);
     expect(isPointInPlayerVision(state.map, state.player.x, state.player.y, roomCorner.x, roomCorner.y)).toBe(true);
 
-    // When in a corridor (isolated non-room floor), vision is limited to CORRIDOR_VISION_RADIUS (165px)
+    // When in a corridor (isolated non-room floor), vision is limited to CORRIDOR_VISION_RADIUS (210px)
     const testMap = {
       ...state.map,
       rooms: [],
@@ -664,7 +664,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ).toBe(false);
   });
 
-  it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter/caller archetypes with alert notifications', () => {
+  it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter (with wind-up delay)/caller archetypes with alert notifications', () => {
     // Verify no duplicate exact spawn positions across multiple seeds
     for (const seed of [101, 202, 303]) {
       const s = createGameState({ seed, startFloor: 3 });
@@ -681,20 +681,36 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(runner.hp).toBeLessThan(normal.hp);
     expect(runner.speed).toBeGreaterThan(normal.speed);
 
-    // Shooter stays stationary (speed 0) and fires enemyProjectiles in LOS
+    // Shooter stays stationary (speed 0), never pre-arms while unawakened, delays first shot after spotting player, and fires after wind-up
     const shootState = createGameState({ seed: 930, startFloor: 2 });
     shootState.chests = [];
     shootState.pickups = [];
     shootState.player.baseAttackCooldown = 999;
     shootState.map.tiles.fill('floor');
-    const turret = createEnemyByKind(9001, 'shooter', shootState.player.x + 120, shootState.player.y, 2);
-    turret.awake = true;
-    turret.attackCooldown = 0;
-    shootState.enemies = [turret];
-    const turretStartX = turret.x;
+
+    // Place an unawakened shooter beyond aggroRange and advance 2 seconds: cooldown must stay armed (not drop to 0)
+    const dormantTurret = createEnemyByKind(9000, 'shooter', shootState.player.x + 260, shootState.player.y, 2);
+    shootState.enemies = [dormantTurret];
+    for (let f = 0; f < 120; f++) {
+      stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(dormantTurret.awake).toBe(false);
+    expect(dormantTurret.attackCooldown).toBeCloseTo(1.1, 2);
+
+    // Move turret into sight: it awakens but does NOT fire on contact frame (wind-up delay >= 0.95s)
+    dormantTurret.x = shootState.player.x + 120;
     stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
-    expect(turret.x).toBe(turretStartX);
-    expect(shootState.enemyProjectiles.length).toBe(1);
+    expect(dormantTurret.awake).toBe(true);
+    expect(shootState.enemyProjectiles.length).toBe(0);
+    expect(dormantTurret.attackCooldown).toBeGreaterThanOrEqual(0.95);
+
+    // Once wind-up finishes (~1.2s), it fires a projectile while staying stationary
+    const turretStartX = dormantTurret.x;
+    for (let f = 0; f < 75; f++) {
+      stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(dormantTurret.x).toBe(turretStartX);
+    expect(shootState.enemyProjectiles.length).toBeGreaterThanOrEqual(1);
 
     // Caller wanders while unawakened, and on spotting player wakes nearby allies + raises alert notification
     const callState = createGameState({ seed: 931, startFloor: 2 });
