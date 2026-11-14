@@ -255,10 +255,10 @@ export function pickEnemyKindForFloor(floor: number, roll: number): EnemyKind {
     return 'tank';
   }
   const extra = Math.min(0.18, (floor - 2) * 0.045);
-  const shooterWeight = 0.13 + extra * 0.55;
-  const callerWeight = 0.11 + extra * 0.45;
-  const tankWeight = 0.16 + Math.min(0.05, (floor - 2) * 0.015);
-  const runnerWeight = 0.22;
+  const shooterWeight = 0.14 + extra * 0.65;
+  const callerWeight = 0.04 + Math.min(0.05, (floor - 2) * 0.012);
+  const tankWeight = 0.17 + Math.min(0.05, (floor - 2) * 0.015);
+  const runnerWeight = 0.24;
 
   if (roll < shooterWeight) return 'shooter';
   if (roll < shooterWeight + callerWeight) return 'caller';
@@ -367,6 +367,28 @@ function populateFloor(
       const kind = pickEnemyKindForFloor(floor, rng.next());
       enemies.push(createEnemyByKind(nextId++, kind, wx, wy, floor, MAX_TARGET_RANGE));
     }
+  }
+
+  // 3. Place 1-2 free-roaming patrol tracers (caller) inside corridors so corridor encounters occur naturally
+  const startCenter = tileCenterWorld(map.startTile.tx, map.startTile.ty);
+  const corridorTiles: { tx: number; ty: number }[] = [];
+  for (let ty = 1; ty < map.height - 1; ty++) {
+    for (let tx = 1; tx < map.width - 1; tx++) {
+      if (isWallTile(map, tx, ty) || findRoomAtTile(map, tx, ty) !== null) continue;
+      if (occupiedTiles.has(tileIndex(map, tx, ty))) continue;
+      const pos = tileCenterWorld(tx, ty);
+      if (Math.hypot(pos.x - startCenter.x, pos.y - startCenter.y) >= 260) {
+        corridorTiles.push({ tx, ty });
+      }
+    }
+  }
+  const targetPatrols = Math.min(corridorTiles.length, floor >= 3 ? 2 : 1);
+  for (let p = 0; p < targetPatrols; p++) {
+    const pickIdx = rng.int(0, corridorTiles.length - 1);
+    const picked = corridorTiles.splice(pickIdx, 1)[0];
+    occupiedTiles.add(tileIndex(map, picked.tx, picked.ty));
+    const pos = tileCenterWorld(picked.tx, picked.ty);
+    enemies.push(createEnemyByKind(nextId++, 'caller', pos.x, pos.y, floor, MAX_TARGET_RANGE));
   }
 
   return { enemies, pickups, chests, nextId };
@@ -1192,6 +1214,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   let bfsDist: Int32Array | null = null;
   const ptx = Math.floor(player.x / TILE_SIZE);
   const pty = Math.floor(player.y / TILE_SIZE);
+  const playerRoom = findRoomAtTile(map, ptx, pty);
+  const alertSpawns: EnemyState[] = [];
 
   for (let i = state.enemies.length - 1; i >= 0; i--) {
     const enemy = state.enemies[i];
@@ -1255,12 +1279,15 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     const dx = player.x - enemy.x;
     const dy = player.y - enemy.y;
     const distToPlayer = Math.hypot(dx, dy);
+    const etx = Math.floor(enemy.x / TILE_SIZE);
+    const ety = Math.floor(enemy.y / TILE_SIZE);
+    const inSameRoomAsPlayer = playerRoom !== null && isTileInRoom(playerRoom, etx, ety);
 
     if (!enemy.awake) {
       const canProxWake = enemy.kind !== 'shooter' && distToPlayer <= 140;
       const canSightWake =
         distToPlayer <= enemy.aggroRange && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
-      if (canProxWake || canSightWake) {
+      if (inSameRoomAsPlayer || canProxWake || canSightWake) {
         enemy.awake = true;
         if (enemy.kind === 'shooter') {
           enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.95);
@@ -1268,11 +1295,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Caller archetype: alert nearby enemies & notify player on sight, or wander while unalerted
+    // Caller (tracer) archetype: patrol corridors/rooms freely while unalerted; on alert wake allies & ambush with fast runners
     if (enemy.kind === 'caller') {
       if (enemy.awake) {
         if ((enemy.alertCooldown ?? 0) <= 0) {
-          enemy.alertCooldown = 6.0;
+          enemy.alertCooldown = 7.5;
           for (const ally of state.enemies) {
             if (ally.id !== enemy.id && Math.hypot(ally.x - enemy.x, ally.y - enemy.y) <= CALLER_ALERT_RADIUS) {
               if (!ally.awake && ally.kind === 'shooter') {
@@ -1281,6 +1308,62 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
               ally.awake = true;
             }
           }
+
+          // Spawn 2-3 fast awake runners nearby (130-320px away) to rush the player
+          const spawnCandidates: { tx: number; ty: number }[] = [];
+          const occupied = new Set<number>();
+          for (const existing of state.enemies) {
+            occupied.add(tileIndex(map, Math.floor(existing.x / TILE_SIZE), Math.floor(existing.y / TILE_SIZE)));
+          }
+          for (const spawned of alertSpawns) {
+            occupied.add(tileIndex(map, Math.floor(spawned.x / TILE_SIZE), Math.floor(spawned.y / TILE_SIZE)));
+          }
+          const minSy = Math.max(1, pty - 9);
+          const maxSy = Math.min(map.height - 2, pty + 9);
+          const minSx = Math.max(1, ptx - 9);
+          const maxSx = Math.min(map.width - 2, ptx + 9);
+          for (let ty = minSy; ty <= maxSy; ty++) {
+            for (let tx = minSx; tx <= maxSx; tx++) {
+              if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+              const c = tileCenterWorld(tx, ty);
+              const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
+              if (dPlayer >= 130 && dPlayer <= 320) {
+                spawnCandidates.push({ tx, ty });
+              }
+            }
+          }
+          if (spawnCandidates.length === 0) {
+            for (let ty = 1; ty < map.height - 1; ty++) {
+              for (let tx = 1; tx < map.width - 1; tx++) {
+                if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+                const c = tileCenterWorld(tx, ty);
+                const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
+                if (dPlayer >= 90 && dPlayer <= 380) {
+                  spawnCandidates.push({ tx, ty });
+                }
+              }
+            }
+          }
+          const ambushCount = Math.min(spawnCandidates.length, state.floor >= 3 ? 3 : 2);
+          for (let s = 0; s < ambushCount; s++) {
+            const pickIdx = rng.int(0, spawnCandidates.length - 1);
+            const picked = spawnCandidates.splice(pickIdx, 1)[0];
+            const pos = tileCenterWorld(picked.tx, picked.ty);
+            const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
+            runner.awake = true;
+            alertSpawns.push(runner);
+            state.visualFx.push({
+              kind: 'pulse',
+              x: pos.x,
+              y: pos.y,
+              radius: 36,
+              color: '#f59e0b',
+              life: 0.35,
+              maxLife: 0.35,
+            });
+          }
+
+          const inCorridorEncounter = playerRoom === null;
           state.visualFx.push({
             kind: 'pulse',
             x: enemy.x,
@@ -1293,7 +1376,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           state.floatingTexts.push({
             x: enemy.x,
             y: enemy.y - enemy.radius - 10,
-            text: 'ALERT!!',
+            text: inCorridorEncounter ? 'ENCOUNTER!!' : 'ALERT!!',
             color: '#fb923c',
             life: 1.0,
             maxLife: 1.0,
@@ -1301,7 +1384,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           pushNotification(
             state,
             'alert',
-            '⚠️ 偵察型に発見された！周囲の敵が集結中！',
+            inCorridorEncounter
+              ? '⚠️ 通路でトレーサーと遭遇！高速の敵が迫る！'
+              : '⚠️ トレーサーに発見された！高速の敵が迫る！',
             '#f97316',
             2.8
           );
@@ -1309,35 +1394,47 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       } else if (enemy.speed > 0) {
         enemy.wanderTimer = (enemy.wanderTimer ?? 0) - clampedDt;
         const arrived = enemy.wanderTarget
-          ? Math.hypot(enemy.wanderTarget.x - enemy.x, enemy.wanderTarget.y - enemy.y) <= 10
+          ? Math.hypot(enemy.wanderTarget.x - enemy.x, enemy.wanderTarget.y - enemy.y) <= 8
           : true;
         if (!enemy.wanderTarget || arrived || (enemy.wanderTimer ?? 0) <= 0) {
-          const etx = Math.floor(enemy.x / TILE_SIZE);
-          const ety = Math.floor(enemy.y / TILE_SIZE);
-          const wanderCandidates: Vec2[] = [];
-          for (let oy = -3; oy <= 3; oy++) {
-            for (let ox = -3; ox <= 3; ox++) {
-              if (ox === 0 && oy === 0) continue;
-              const ntx = etx + ox;
-              const nty = ety + oy;
-              if (ntx <= 0 || nty <= 0 || ntx >= map.width - 1 || nty >= map.height - 1) continue;
-              if (isWallTile(map, ntx, nty)) continue;
-              const c = tileCenterWorld(ntx, nty);
-              if (hasClearCorridorPath(enemy.x, enemy.y, c.x, c.y, enemy.radius, map)) {
-                wanderCandidates.push(c);
-              }
+          const dirs: readonly [number, number][] = [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ];
+          const prevDx = enemy.wanderDir?.x ?? 0;
+          const prevDy = enemy.wanderDir?.y ?? 0;
+          const validDirs: { dx: number; dy: number; tx: number; ty: number }[] = [];
+          for (const [ox, oy] of dirs) {
+            const ntx = etx + ox;
+            const nty = ety + oy;
+            if (ntx <= 0 || nty <= 0 || ntx >= map.width - 1 || nty >= map.height - 1) continue;
+            if (!isWallTile(map, ntx, nty)) {
+              validDirs.push({ dx: ox, dy: oy, tx: ntx, ty: nty });
             }
           }
-          enemy.wanderTarget =
-            wanderCandidates.length > 0 ? wanderCandidates[rng.int(0, wanderCandidates.length - 1)] : null;
-          enemy.wanderTimer = 1.6;
+          if (validDirs.length > 0) {
+            const forward = validDirs.find((d) => d.dx === prevDx && d.dy === prevDy);
+            const nonReverse = validDirs.filter((d) => !(d.dx === -prevDx && d.dy === -prevDy));
+            const pool = nonReverse.length > 0 ? nonReverse : validDirs;
+            const chosen =
+              forward && rng.next() < 0.72
+                ? forward
+                : pool[rng.int(0, pool.length - 1)];
+            enemy.wanderTarget = tileCenterWorld(chosen.tx, chosen.ty);
+            enemy.wanderDir = { x: chosen.dx, y: chosen.dy };
+          } else {
+            enemy.wanderTarget = null;
+          }
+          enemy.wanderTimer = 1.1;
         }
         if (enemy.wanderTarget) {
           const wdx = enemy.wanderTarget.x - enemy.x;
           const wdy = enemy.wanderTarget.y - enemy.y;
           const wDist = Math.hypot(wdx, wdy);
           if (wDist > 1e-3) {
-            const wanderSpeed = enemy.speed * 0.72;
+            const wanderSpeed = enemy.speed * 0.78;
             const resolved = resolveCircleGridCollision(
               enemy.x + (wdx / wDist) * wanderSpeed * clampedDt,
               enemy.y + (wdy / wDist) * wanderSpeed * clampedDt,
@@ -1501,6 +1598,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         return;
       }
     }
+  }
+
+  if (alertSpawns.length > 0) {
+    state.enemies.push(...alertSpawns);
   }
 
   // 9b. Enemy projectiles hitting player

@@ -55,6 +55,7 @@ export interface EnemyState {
   alertCooldown?: number;
   wanderTarget?: Vec2 | null;
   wanderTimer?: number;
+  wanderDir?: Vec2 | null;
 }
 
 export interface ProjectileState {

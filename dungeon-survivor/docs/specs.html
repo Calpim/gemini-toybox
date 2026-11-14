@@ -286,7 +286,7 @@
           
           <h3>部屋と通路をシームレスに探索中に敵と遭遇する</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが部屋または通路を移動している</span></li><li><span class="kw">もし</span><span class="st-text">敵が待機または徘徊しているエリアに近づく</span></li><li><span class="kw">ならば</span><span class="st-text">部屋が封鎖されることなくシームレスに戦闘が始まる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが部屋または通路を移動している</span></li><li><span class="kw">もし</span><span class="st-text">部屋に入る、または通路を自由移動する敵と出会う</span></li><li><span class="kw">ならば</span><span class="st-text">部屋に入ると部屋内の敵が全員迎撃状態になり、通路でも移動中の敵とシームレスに戦闘や遭遇イベントが始まる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -301,9 +301,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>PCキーボードとスマホ片手ジョイスティックでシームレスに移動し壁で止まる</h4>
+                <h4>PCキーボードとスマホ片手ジョイスティックでシームレスに移動し入室時に同室の敵を全員覚醒させる</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、またはタッチ画面で任意の場所をドラッグする</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが連続座標上で指定ベクトルへ移動し、壁タイルとのAABB/円衝突で滑らかに押し戻される</span></li><li><span class="kw">かつ</span><span class="st-text">通路の途中でも部屋の封鎖は発生せず、視界または感知半径内の敵が追尾状態へ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、またはタッチ画面で任意の場所をドラッグして部屋へ入る</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが連続座標上で指定ベクトルへ移動し、壁タイルとのAABB/円衝突で滑らかに押し戻される</span></li><li><span class="kw">かつ</span><span class="st-text">部屋に入室した瞬間、その部屋内にいる敵は全員迎撃状態（awake = true）へ遷移し（砲台は 0.95秒チャージ予兆を維持）、通路でも巡回中の敵とシームレスに交戦する</span></li>
   </ul>
               </div>
         </div>
@@ -373,7 +373,7 @@
                 
                 <h4>長期滞在による視界外リポップと階層に応じた敵テーブル変化を行う</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">フロア滞在時間 elapsedFloorTime が記録されている</span></li><li><span class="kw">もし</span><span class="st-text">滞在時間が初回 24秒（以降 9〜14秒間隔）に達し、生存敵数が上限未満である</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーから 260px 以上離れた未重複の床タイルに敵が 1〜2体リポップする</span></li><li><span class="kw">かつ</span><span class="st-text">1F は標準・高速・重装中心で、2F 以降は定点射撃型（shooter）や徘徊呼び寄せ型（caller）の出現比率が段階上昇する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">フロア滞在時間 elapsedFloorTime が記録されている</span></li><li><span class="kw">もし</span><span class="st-text">滞在時間が初回 24秒（以降 9〜14秒間隔）に達し、生存敵数が上限未満である</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーから 260px 以上離れた未重複の床タイルに敵が 1〜2体リポップする</span></li><li><span class="kw">かつ</span><span class="st-text">1F は標準・高速・重装中心で、2F 以降は定点射撃型（shooter）が増え、トレーサー（caller）は通常抽選確率を抑えつつ（4〜9%）通路巡回枠として 1〜2体配置される</span></li>
   </ul>
               </div>
         </div>
@@ -459,9 +459,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>多様な性質の敵が重複せずに出現し、索敵型の発見やレベルアップ時に通知が出る</h3>
+          <h3>多様な性質の敵が重複せずに出現し、トレーサー発見時には高速の敵が襲来する</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">フロアに通常型・固くて遅い型・柔らかくて早い型・部屋入り後に一呼吸置いて撃つ定点射撃型・徘徊呼び寄せ型が重複しない座標へ配置される</span></li><li><span class="kw">もし</span><span class="st-text">徘徊して周囲を探す索敵型の敵に発見される、または経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">索敵型は周囲の敵をおびき寄せつつ発見アラート通知を出し、レベルアップ時にも明確な通知が表示される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">フロアに通常型・固くて遅い型・柔らかくて早い型・部屋入り後に一呼吸置いて撃つ定点射撃型・出現率を抑えた通路巡回トレーサーが重複しない座標へ配置される</span></li><li><span class="kw">もし</span><span class="st-text">トレーサー（偵察型）と通路等で遭遇して発見される、または経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">トレーサーは発見アラート通知を出して足の早い敵を数匹呼び寄せ、レベルアップ時にも明確な通知が表示される</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -476,12 +476,12 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>5種の敵タイプ・非重複ポップ・砲台の一呼吸ディレイ・徘徊アラート・レベルアップ通知を実行する</h4>
+                <h4>5種の敵タイプ・通路巡回トレーサー・発見時の高速敵追撃ポップを実行する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">populateFloor が部屋内の敵・宝箱・回復オーブを重複タイルなし（occupiedTiles管理）で配置する</span><div class="table-wrap"><table>
+    <li><span class="kw">前提</span><span class="st-text">populateFloor が部屋内および通路巡回枠（caller 1〜2体）に敵・宝箱・回復オーブを重複タイルなしで配置する</span><div class="table-wrap"><table>
               <thead><tr><th>敵種別</th><th>性質</th><th>移動・攻撃・視認時の振る舞い</th></tr></thead>
-              <tbody><tr><td>normal</td><td>標準追跡型</td><td>標準HP・標準速度で視認後に追跡</td></tr><tr><td>tank</td><td>固くて遅い</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型</td><td>速度 0 の固定砲台・2F以降出現・覚醒時 0.95秒（遮蔽後再視認時は 0.75秒）のチャージ予兆後に発射</td></tr><tr><td>caller</td><td>徘徊呼び寄せ型</td><td>未発見時はランダム徘徊・発見時に300px内の仲間を覚醒＆警告通知</td></tr></tbody>
-            </table></div></li><li><span class="kw">もし</span><span class="st-text">caller がプレイヤーを発見して覚醒する、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知が追加され、画面上部にトースト表示される</span></li>
+              <tbody><tr><td>normal</td><td>標準追跡型</td><td>標準HP・標準速度で視認・同室入室後に追跡</td></tr><tr><td>tank</td><td>固くて遅い</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型</td><td>速度 0 の固定砲台・2F以降出現・覚醒時 0.95秒（遮蔽後再視認時は 0.75秒）のチャージ予兆後に発射</td></tr><tr><td>caller</td><td>トレーサー（通路巡回型）</td><td>出現率を抑えて通路・部屋を自由巡回・発見時に300px内の仲間を覚醒＋高速敵（runner）を2〜3体ポップ＋警告通知</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">caller がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">周囲へ覚醒済み runner 2〜3体が出現して突撃し、state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
   </ul>
               </div>
         </div>

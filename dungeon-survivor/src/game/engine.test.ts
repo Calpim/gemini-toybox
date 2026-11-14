@@ -688,8 +688,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     shootState.player.baseAttackCooldown = 999;
     shootState.map.tiles.fill('floor');
 
-    // Place an unawakened shooter beyond aggroRange and advance 2 seconds: cooldown must stay armed (not drop to 0)
-    const dormantTurret = createEnemyByKind(9000, 'shooter', shootState.player.x + 260, shootState.player.y, 2);
+    // Place an unawakened shooter beyond aggroRange and outside rooms[0] for 2 seconds: cooldown must stay armed
+    const dormantTurret = createEnemyByKind(9000, 'shooter', shootState.player.x + 320, shootState.player.y, 2);
     shootState.enemies = [dormantTurret];
     for (let f = 0; f < 120; f++) {
       stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
@@ -712,7 +712,37 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(dormantTurret.x).toBe(turretStartX);
     expect(shootState.enemyProjectiles.length).toBeGreaterThanOrEqual(1);
 
-    // Caller wanders while unawakened, and on spotting player wakes nearby allies + raises alert notification
+    // Entering a room wakes ALL enemies inside that room (while shooters still wait for wind-up)
+    const roomWakeState = createGameState({ seed: 932, startFloor: 2 });
+    roomWakeState.chests = [];
+    roomWakeState.pickups = [];
+    roomWakeState.player.baseAttackCooldown = 999;
+    const room0 = roomWakeState.map.rooms[0];
+    const farCorner = tileCenterWorld(room0.x, room0.y);
+    const farNormal = createEnemyByKind(9020, 'normal', farCorner.x, farCorner.y, 2, 0);
+    const farTurret = createEnemyByKind(9021, 'shooter', farCorner.x + 40, farCorner.y, 2, 0);
+    roomWakeState.enemies = [farNormal, farTurret];
+    stepGame(roomWakeState, { x: 0, y: 0 }, 1 / 60);
+    expect(farNormal.awake).toBe(true);
+    expect(farTurret.awake).toBe(true);
+    expect(roomWakeState.enemyProjectiles.length).toBe(0);
+
+    // Floor spawns a free-roaming patrol tracer in corridors while keeping random room caller rate low (<= 10%)
+    const patrolFloor = createGameState({ seed: 933, startFloor: 2 });
+    const corridorCallers = patrolFloor.enemies.filter(
+      (e) =>
+        e.kind === 'caller' &&
+        !patrolFloor.map.rooms.some(
+          (r) =>
+            Math.floor(e.x / 40) >= r.x &&
+            Math.floor(e.x / 40) < r.x + r.w &&
+            Math.floor(e.y / 40) >= r.y &&
+            Math.floor(e.y / 40) < r.y + r.h
+        )
+    );
+    expect(corridorCallers.length).toBeGreaterThanOrEqual(1);
+
+    // Caller wanders while unawakened, and on spotting player wakes nearby allies, spawns awake runners, and alerts
     const callState = createGameState({ seed: 931, startFloor: 2 });
     callState.chests = [];
     callState.pickups = [];
@@ -727,7 +757,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     expect(Math.hypot(wanderCaller.x - wanderStart.x, wanderCaller.y - wanderStart.y)).toBeGreaterThan(5);
 
-    // Spot player -> alert nearby ally within CALLER_ALERT_RADIUS
+    // Spot player -> alert nearby ally, spawn 2+ fast awake runners, and emit alert notification
     const spotCaller = createEnemyByKind(9011, 'caller', callState.player.x + 100, callState.player.y, 2);
     const nearbyAlly = createEnemyByKind(
       9012,
@@ -740,6 +770,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(callState, { x: 0, y: 0 }, 1 / 60);
     expect(spotCaller.awake).toBe(true);
     expect(nearbyAlly.awake).toBe(true);
+    const ambushRunners = callState.enemies.filter((e) => e.kind === 'runner' && e.awake);
+    expect(ambushRunners.length).toBeGreaterThanOrEqual(2);
     expect(callState.notifications.some((n) => n.kind === 'alert')).toBe(true);
   });
 });
