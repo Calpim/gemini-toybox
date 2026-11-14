@@ -1,5 +1,5 @@
 import type { DungeonMap } from '../core/dungeon';
-import type { EquippedItem } from './equipment';
+import type { EquipmentId, EquippedItem } from './equipment';
 import type { SkillNodeId } from './skillTree';
 
 export type GameStatus = 'playing' | 'skill_tree' | 'equip_choice' | 'gameover';
@@ -50,6 +50,7 @@ export interface EnemyState {
 
 export interface ProjectileState {
   id: number;
+  kind?: 'drone' | 'disc';
   x: number;
   y: number;
   vx: number;
@@ -58,6 +59,9 @@ export interface ProjectileState {
   damage: number;
   life: number;
   pierce: boolean;
+  bouncesLeft?: number;
+  speed?: number;
+  spinAngle?: number;
   hitEnemyIds: number[];
   color: string;
 }
@@ -90,13 +94,15 @@ export interface VisualFx {
   y: number;
   radius?: number;
   angle?: number;
+  halfArcRad?: number;
+  fullCircle?: boolean;
   points?: Vec2[];
   color: string;
   life: number;
   maxLife: number;
 }
 
-export type PickupKind = 'exp' | 'heal';
+export type PickupKind = 'exp' | 'heal' | 'equip';
 
 export interface PickupState {
   id: number;
@@ -104,6 +110,8 @@ export interface PickupState {
   x: number;
   y: number;
   value: number;
+  equipmentId?: EquipmentId;
+  itemLevel?: number;
 }
 
 export interface FloatingText {

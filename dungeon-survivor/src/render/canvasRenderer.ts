@@ -114,6 +114,29 @@ export function renderGame(
       ctx.fillStyle = '#ecfdf5';
       ctx.fillRect(p.x - 4, p.y - 1.5, 8, 3);
       ctx.fillRect(p.x - 1.5, p.y - 4, 3, 8);
+    } else if (p.kind === 'equip' && p.equipmentId) {
+      const def = EQUIPMENT_CATALOG[p.equipmentId];
+      const pulse = 0.7 + 0.3 * Math.sin(nowSec * 6);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.fillStyle = `rgba(251, 191, 36, ${0.24 * pulse})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = def.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fef3c7';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fef3c7';
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Lv${p.itemLevel ?? 1}`, 0, -12);
+      ctx.restore();
     } else {
       ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
@@ -177,9 +200,14 @@ export function renderGame(
     ctx.globalAlpha = alpha;
     if (fx.kind === 'slash' && fx.radius !== undefined && fx.angle !== undefined) {
       ctx.strokeStyle = fx.color;
-      ctx.lineWidth = 5;
+      ctx.lineWidth = fx.fullCircle ? 6 : 5;
       ctx.beginPath();
-      ctx.arc(fx.x, fx.y, fx.radius * 0.8, fx.angle - 1.05, fx.angle + 1.05);
+      if (fx.fullCircle) {
+        ctx.arc(fx.x, fx.y, fx.radius * 0.85, 0, Math.PI * 2);
+      } else {
+        const half = fx.halfArcRad ?? 1.15;
+        ctx.arc(fx.x, fx.y, fx.radius * 0.8, fx.angle - half, fx.angle + half);
+      }
       ctx.stroke();
     } else if (fx.kind === 'pulse' && fx.radius !== undefined) {
       ctx.strokeStyle = fx.color;
@@ -222,10 +250,28 @@ export function renderGame(
 
   // 8. Projectiles
   for (const proj of state.projectiles) {
-    ctx.fillStyle = proj.color;
-    ctx.beginPath();
-    ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
-    ctx.fill();
+    if (proj.kind === 'disc') {
+      ctx.save();
+      ctx.translate(proj.x, proj.y);
+      ctx.rotate(proj.spinAngle ?? nowSec * 14);
+      ctx.strokeStyle = proj.color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, proj.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-proj.radius - 2, 0);
+      ctx.lineTo(proj.radius + 2, 0);
+      ctx.moveTo(0, -proj.radius - 2);
+      ctx.lineTo(0, proj.radius + 2);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.fillStyle = proj.color;
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   for (const ep of state.enemyProjectiles) {

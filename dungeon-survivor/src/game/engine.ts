@@ -8,6 +8,11 @@ import {
   createEquippedItem,
   getEquipmentCooldownMultiplier,
   getEquipmentDamage,
+  getOrbitBitCount,
+  getPulseBladeStats,
+  getReactiveCoilStats,
+  getRicochetDiscStats,
+  getSeekerDroneCount,
   type EquipmentId,
   type EquippedItem,
 } from './equipment';
@@ -56,6 +61,19 @@ function populateFloor(
   const pickups: PickupState[] = [];
   const chests: ChestState[] = [];
   let nextId = startId;
+
+  // Guarantee 1 starter chest inside 1F start room so zero-item starts always have an accessible first weapon
+  if (floor === 1 && map.rooms.length > 0) {
+    const startRoom = map.rooms[0];
+    const chestTx = Math.min(startRoom.x + startRoom.w - 2, map.startTile.tx + 1);
+    const chestPos = tileCenterWorld(chestTx, map.startTile.ty);
+    chests.push({
+      id: nextId++,
+      x: chestPos.x,
+      y: chestPos.y,
+      opened: false,
+    });
+  }
 
   const chestCandidates: number[] = [];
 
@@ -151,7 +169,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       expToNext: 25,
       skillPoints: 0,
       unlockedSkills: [],
-      equipment: [createEquippedItem('seeker_drone', 1), createEquippedItem('orbit_shield', 1)],
+      equipment: [],
       invulnTimer: 0,
       facingAngle: 0,
       orbitAngle: 0,
@@ -238,7 +256,7 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
   const { equipment } = state.player;
   const existing = equipment.find((eq) => eq.id === droppedItem.id);
   if (existing) {
-    existing.level += Math.max(1, droppedItem.level);
+    existing.level = Math.max(existing.level + 1, droppedItem.level);
     const def = EQUIPMENT_CATALOG[existing.id];
     state.floatingTexts.push({
       x: state.player.x,
@@ -257,7 +275,7 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
     state.floatingTexts.push({
       x: state.player.x,
       y: state.player.y - 26,
-      text: `+GEAR: ${def.name}`,
+      text: `+GEAR: ${def.name} Lv${droppedItem.level}`,
       color: def.color,
       life: 1.2,
       maxLife: 1.2,
@@ -287,7 +305,7 @@ export function resolveEquipChoice(
     state.floatingTexts.push({
       x: state.player.x,
       y: state.player.y - 26,
-      text: `EQUIPPED: ${def.name}`,
+      text: `EQUIPPED: ${def.name} Lv${dropped.level}`,
       color: def.color,
       life: 1.1,
       maxLife: 1.1,
@@ -313,12 +331,11 @@ export function resolveEquipChoice(
 
 export function getOrbitBitPositions(state: GameState): Vec2[] {
   const { player } = state;
-  const orbitItems = player.equipment.filter((e) => e.id === 'orbit_shield');
-  if (orbitItems.length === 0) return [];
+  const orbitItem = player.equipment.find((e) => e.id === 'orbit_shield');
+  if (!orbitItem) return [];
 
   const mods = computeSkillModifiers(new Set(player.unlockedSkills));
-  const totalLevelBonus = orbitItems.reduce((acc, item) => acc + Math.floor((item.level - 1) / 2), 0);
-  const count = orbitItems.length + mods.extraBits + totalLevelBonus;
+  const count = getOrbitBitCount(orbitItem.level, mods.extraBits);
 
   const positions: Vec2[] = [];
   for (let i = 0; i < count; i++) {
@@ -333,11 +350,11 @@ export function getOrbitBitPositions(state: GameState): Vec2[] {
 
 export function getSeekerDronePositions(state: GameState): Vec2[] {
   const { player } = state;
-  const drones = player.equipment.filter((e) => e.id === 'seeker_drone');
-  if (drones.length === 0) return [];
+  const droneItem = player.equipment.find((e) => e.id === 'seeker_drone');
+  if (!droneItem) return [];
 
   const mods = computeSkillModifiers(new Set(player.unlockedSkills));
-  const count = drones.length + mods.extraBits;
+  const count = getSeekerDroneCount(droneItem.level, mods.extraBits);
   const positions: Vec2[] = [];
   for (let i = 0; i < count; i++) {
     const a = -player.orbitAngle * 1.4 + (i * Math.PI * 2) / count;
@@ -349,9 +366,26 @@ export function getSeekerDronePositions(state: GameState): Vec2[] {
   return positions;
 }
 
-function pickChestEquipmentId(state: GameState, chestId: number): EquipmentId {
+export function rollDropEquipmentLevel(
+  equipment: readonly EquippedItem[],
+  rngNext: () => number
+): number {
+  if (equipment.length === 0) return 1;
+  const avg = Math.round(
+    equipment.reduce((acc, item) => acc + item.level, 0) / equipment.length
+  );
+  const r = rngNext();
+  if (r < 0.2) return Math.max(1, avg - 1);
+  if (r < 0.65) return avg;
+  if (r < 0.9) return avg + 1;
+  return avg + 2;
+}
+
+function pickChestDrop(state: GameState, chestId: number): { id: EquipmentId; level: number } {
   const rng = createRng((state.seed ^ (state.floor * 4999) ^ (chestId * 3571)) >>> 0);
-  return rng.pick(ALL_EQUIPMENT_IDS);
+  const id = rng.pick(ALL_EQUIPMENT_IDS);
+  const level = rollDropEquipmentLevel(state.player.equipment, () => rng.next());
+  return { id, level };
 }
 
 function damageEnemy(state: GameState, enemy: EnemyState, amount: number): void {
@@ -372,11 +406,13 @@ function findNearestVisibleEnemy(
   originX: number,
   originY: number,
   range: number,
-  state: GameState
+  state: GameState,
+  excludeIds: readonly number[] = []
 ): EnemyState | null {
   let bestEnemy: EnemyState | null = null;
   let bestDist = range;
   for (const enemy of state.enemies) {
+    if (enemy.hp <= 0 || excludeIds.includes(enemy.id)) continue;
     const d = Math.hypot(enemy.x - originX, enemy.y - originY);
     if (d <= bestDist && hasLineOfSight(originX, originY, enemy.x, enemy.y, state.map)) {
       bestDist = d;
@@ -391,7 +427,8 @@ function triggerChainLightning(
   sourceX: number,
   sourceY: number,
   range: number,
-  damage: number
+  damage: number,
+  maxTargets = 3
 ): boolean {
   const first = findNearestVisibleEnemy(sourceX, sourceY, range, state);
   if (!first) return false;
@@ -404,13 +441,14 @@ function triggerChainLightning(
   damageEnemy(state, first, damage);
 
   let curr = first;
-  for (let hop = 0; hop < 2; hop++) {
+  const maxHops = Math.max(0, maxTargets - 1);
+  for (let hop = 0; hop < maxHops; hop++) {
     let nextTarget: EnemyState | null = null;
-    let nextDist = 115;
+    let nextDist = Math.max(115, range * 1.15);
     for (const candidate of state.enemies) {
       if (hitIds.has(candidate.id) || candidate.hp <= 0) continue;
       const d = Math.hypot(candidate.x - curr.x, candidate.y - curr.y);
-      if (d <= nextDist && hasLineOfSight(curr.x, curr.y, candidate.x, candidate.y, state.map)) {
+      if (d <= nextDist && hasLineOfSight(curr.x, curr.y, candidate.x, curr.y, state.map)) {
         nextDist = d;
         nextTarget = candidate;
       }
@@ -485,13 +523,13 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     return;
   }
 
-  // 3. Chest check -> acquire/upgrade equipment or trigger 4th-item slot choice modal (APP-GRW-03/04)
+  // 3. Chest check -> acquire/upgrade equipment or trigger slot choice modal (APP-GRW-03/04/07)
   for (const chest of state.chests) {
     if (!chest.opened && Math.hypot(player.x - chest.x, player.y - chest.y) <= player.radius + 16) {
       chest.opened = true;
       state.stats.chestsOpened += 1;
-      const eqId = pickChestEquipmentId(state, chest.id);
-      acquireEquipment(state, createEquippedItem(eqId, 1));
+      const drop = pickChestDrop(state, chest.id);
+      acquireEquipment(state, createEquippedItem(drop.id, drop.level));
       if (state.status !== 'playing') return;
     }
   }
@@ -532,8 +570,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 5. Equipment parallel execution (APP-CMB-01, APP-CMB-02)
-  player.orbitAngle = (player.orbitAngle + 2.4 * clampedDt) % (Math.PI * 2);
+  // 5. Equipment parallel execution & per-level evolutions (APP-CMB-01, APP-CMB-02, APP-CMB-05)
+  const orbitItem = player.equipment.find((e) => e.id === 'orbit_shield');
+  const orbitAngularSpeed = 2.4 + (orbitItem ? (orbitItem.level - 1) * 0.18 : 0);
+  player.orbitAngle = (player.orbitAngle + orbitAngularSpeed * clampedDt) % (Math.PI * 2);
   const seekerDrones = getSeekerDronePositions(state);
   let droneCursor = 0;
 
@@ -548,18 +588,22 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if (item.cooldown > 0) continue;
 
     const dmg = getEquipmentDamage(item, mods.damageMult);
-    const range = def.baseRange * mods.rangeMult;
     const cdMult = mods.cooldownMult * getEquipmentCooldownMultiplier(item.level);
 
     if (item.id === 'pulse_blade') {
-      const targets = state.enemies.filter(
-        (e) =>
-          Math.hypot(e.x - player.x, e.y - player.y) <= range &&
-          hasLineOfSight(player.x, player.y, e.x, e.y, map)
-      );
-      if (targets.length > 0) {
-        const lead = targets[0];
+      const blade = getPulseBladeStats(item.level, def.baseRange, mods.rangeMult);
+      const lead = findNearestVisibleEnemy(player.x, player.y, blade.range, state);
+      if (lead) {
         const slashAngle = Math.atan2(lead.y - player.y, lead.x - player.x);
+        const targets = state.enemies.filter((e) => {
+          if (Math.hypot(e.x - player.x, e.y - player.y) > blade.range) return false;
+          if (!hasLineOfSight(player.x, player.y, e.x, e.y, map)) return false;
+          if (blade.fullCircle) return true;
+          const ea = Math.atan2(e.y - player.y, e.x - player.x);
+          let diff = Math.abs(ea - slashAngle);
+          if (diff > Math.PI) diff = Math.PI * 2 - diff;
+          return diff <= blade.halfArcRad;
+        });
         for (const t of targets) {
           damageEnemy(state, t, dmg);
         }
@@ -567,8 +611,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           kind: 'slash',
           x: player.x,
           y: player.y,
-          radius: range,
+          radius: blade.range,
           angle: slashAngle,
+          halfArcRad: blade.halfArcRad,
+          fullCircle: blade.fullCircle,
           color: def.color,
           life: 0.22,
           maxLife: 0.22,
@@ -576,15 +622,17 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         item.cooldown = def.baseCooldown * cdMult;
       }
     } else if (item.id === 'seeker_drone') {
+      const range = def.baseRange * mods.rangeMult;
       const target = findNearestVisibleEnemy(player.x, player.y, range, state);
       if (target) {
-        const dronesToFire = Math.max(1, Math.min(seekerDrones.length, 1 + mods.extraBits));
+        const dronesToFire = Math.max(1, seekerDrones.length);
         for (let dIdx = 0; dIdx < dronesToFire; dIdx++) {
           const origin = seekerDrones[(droneCursor + dIdx) % Math.max(1, seekerDrones.length)] ?? player;
           const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
-          const speed = mods.piercingDrones ? 520 : 430;
+          const speed = (mods.piercingDrones ? 520 : 430) + (item.level - 1) * 18;
           state.projectiles.push({
             id: state.nextEntityId++,
+            kind: 'drone',
             x: origin.x,
             y: origin.y,
             vx: Math.cos(angle) * speed,
@@ -601,7 +649,37 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         item.cooldown = def.baseCooldown * cdMult;
       }
     } else if (item.id === 'reactive_coil') {
-      if (triggerChainLightning(state, player.x, player.y, range, dmg)) {
+      const coilStats = getReactiveCoilStats(item.level, def.baseRange, mods.rangeMult);
+      if (triggerChainLightning(state, player.x, player.y, coilStats.range, dmg, coilStats.maxTargets)) {
+        item.cooldown = def.baseCooldown * cdMult;
+      }
+    } else if (item.id === 'ricochet_disc') {
+      const range = def.baseRange * mods.rangeMult;
+      const target = findNearestVisibleEnemy(player.x, player.y, range, state);
+      if (target) {
+        const discStats = getRicochetDiscStats(item.level);
+        const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
+        for (let d = 0; d < discStats.count; d++) {
+          const spread = discStats.count > 1 ? (d === 0 ? -0.18 : 0.18) : 0;
+          const angle = baseAngle + spread;
+          state.projectiles.push({
+            id: state.nextEntityId++,
+            kind: 'disc',
+            x: player.x,
+            y: player.y,
+            vx: Math.cos(angle) * discStats.speed,
+            vy: Math.sin(angle) * discStats.speed,
+            radius: 7,
+            damage: dmg,
+            life: 1.3,
+            pierce: false,
+            bouncesLeft: discStats.maxBounces,
+            speed: discStats.speed,
+            spinAngle: 0,
+            hitEnemyIds: [],
+            color: def.color,
+          });
+        }
         item.cooldown = def.baseCooldown * cdMult;
       }
     }
@@ -609,7 +687,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   // 7. Orbit Shield Bits & projectile destruction
   const bits = getOrbitBitPositions(state);
-  const orbitItem = player.equipment.find((e) => e.id === 'orbit_shield');
   const orbitDmg = orbitItem ? getEquipmentDamage(orbitItem, mods.damageMult) : 0;
 
   for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
@@ -627,12 +704,15 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 8. Player projectiles & wall/enemy collision (APP-CMB-03)
+  // 8. Player projectiles & wall/enemy collision + ricochet bounce (APP-CMB-03, APP-CMB-05)
   for (let i = state.projectiles.length - 1; i >= 0; i--) {
     const proj = state.projectiles[i];
     proj.x += proj.vx * clampedDt;
     proj.y += proj.vy * clampedDt;
     proj.life -= clampedDt;
+    if (proj.kind === 'disc') {
+      proj.spinAngle = (proj.spinAngle ?? 0) + 16 * clampedDt;
+    }
 
     if (proj.life <= 0 || isWallAtWorld(map, proj.x, proj.y)) {
       state.projectiles.splice(i, 1);
@@ -645,6 +725,20 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       if (Math.hypot(enemy.x - proj.x, enemy.y - proj.y) <= enemy.radius + proj.radius) {
         damageEnemy(state, enemy, proj.damage);
         proj.hitEnemyIds.push(enemy.id);
+
+        if (proj.kind === 'disc' && (proj.bouncesLeft ?? 0) > 0) {
+          const nextTarget = findNearestVisibleEnemy(enemy.x, enemy.y, 220, state, proj.hitEnemyIds);
+          if (nextTarget) {
+            const spd = proj.speed ?? 390;
+            const bounceAngle = Math.atan2(nextTarget.y - proj.y, nextTarget.x - proj.x);
+            proj.vx = Math.cos(bounceAngle) * spd;
+            proj.vy = Math.sin(bounceAngle) * spd;
+            proj.bouncesLeft = (proj.bouncesLeft ?? 0) - 1;
+            proj.life = Math.max(proj.life, 0.75);
+            break;
+          }
+        }
+
         if (!proj.pierce) {
           consumed = true;
           break;
@@ -692,6 +786,21 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           x: enemy.x + 10,
           y: enemy.y + 6,
           value: 25,
+        });
+      }
+      // Low-probability enemy equipment drop scaled to player's average equipment level (APP-GRW-07)
+      const equipDropChance = 0.05 + (mods.lootBonusRate > 0 ? 0.025 : 0);
+      if (rng.next() < equipDropChance) {
+        const eqId = rng.pick(ALL_EQUIPMENT_IDS);
+        const itemLevel = rollDropEquipmentLevel(player.equipment, () => rng.next());
+        state.pickups.push({
+          id: state.nextEntityId++,
+          kind: 'equip',
+          x: enemy.x - 10,
+          y: enemy.y + 6,
+          value: 1,
+          equipmentId: eqId,
+          itemLevel,
         });
       }
       state.enemies.splice(i, 1);
@@ -788,12 +897,18 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       // Trigger reactive coil counter immediately on hit if equipped
       const coil = player.equipment.find((e) => e.id === 'reactive_coil');
       if (coil) {
+        const coilStats = getReactiveCoilStats(
+          coil.level,
+          EQUIPMENT_CATALOG.reactive_coil.baseRange,
+          mods.rangeMult
+        );
         triggerChainLightning(
           state,
           player.x,
           player.y,
-          EQUIPMENT_CATALOG.reactive_coil.baseRange * mods.rangeMult,
-          getEquipmentDamage(coil, mods.damageMult)
+          coilStats.range,
+          getEquipmentDamage(coil, mods.damageMult),
+          coilStats.maxTargets
         );
       }
 
@@ -813,7 +928,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 10. Pickups (magnet & heal bonus scaled by mob_magnet, EXP by mob_loot)
+  // 10. Pickups (magnet & heal bonus scaled by mob_magnet, EXP by mob_loot; equip drops require direct pickup)
   const magnetRange = 95 * mods.pickupMagnetMult;
   for (let i = state.pickups.length - 1; i >= 0; i--) {
     const p = state.pickups[i];
@@ -821,14 +936,19 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     const dy = player.y - p.y;
     const dist = Math.hypot(dx, dy);
 
-    if (dist < magnetRange && dist > 1e-3) {
+    if (p.kind !== 'equip' && dist < magnetRange && dist > 1e-3) {
       const pull = 300 * clampedDt;
       p.x += (dx / dist) * Math.min(pull, dist);
       p.y += (dy / dist) * Math.min(pull, dist);
     }
 
-    if (Math.hypot(player.x - p.x, player.y - p.y) <= player.radius + 12) {
-      if (p.kind === 'heal') {
+    const pickupRadius = p.kind === 'equip' ? player.radius + 14 : player.radius + 12;
+    if (Math.hypot(player.x - p.x, player.y - p.y) <= pickupRadius) {
+      state.pickups.splice(i, 1);
+      if (p.kind === 'equip' && p.equipmentId) {
+        acquireEquipment(state, createEquippedItem(p.equipmentId, p.itemLevel ?? 1));
+        if (state.status !== 'playing') return;
+      } else if (p.kind === 'heal') {
         const before = player.hp;
         const healAmount = Math.round(p.value * mods.healBonusMult);
         player.hp = Math.min(player.maxHp, player.hp + healAmount);
@@ -860,7 +980,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           });
         }
       }
-      state.pickups.splice(i, 1);
     }
   }
 

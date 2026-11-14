@@ -1,4 +1,8 @@
-import { EQUIPMENT_CATALOG, MAX_EQUIP_SLOTS } from '../game/equipment';
+import {
+  EQUIPMENT_CATALOG,
+  MAX_EQUIP_SLOTS,
+  getEquipmentEvolutionSummary,
+} from '../game/equipment';
 import {
   SKILL_TREE_NODES,
   canUnlockSkill,
@@ -102,34 +106,41 @@ export function renderModals(
       els.skillColumns.appendChild(col);
     }
 
-    els.skillGearSummary.innerHTML = state.player.equipment
-      .map((eq) => {
-        const def = EQUIPMENT_CATALOG[eq.id];
-        return `<span class="gear-pill" style="border-color:${def.color}55;color:${def.color}">${def.name} Lv${eq.level}</span>`;
-      })
-      .join('');
+    els.skillGearSummary.innerHTML =
+      state.player.equipment.length === 0
+        ? '<span style="font-size:12px;color:#94a3b8;">未装備（スタート部屋やダンジョン内の宝箱・敵ドロップから獲得）</span>'
+        : state.player.equipment
+            .map((eq) => {
+              const def = EQUIPMENT_CATALOG[eq.id];
+              const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
+              return `<span class="gear-pill" style="border-color:${def.color}55;color:${def.color}">${def.name} Lv${eq.level} (${evo})</span>`;
+            })
+            .join('');
   } else {
     els.skillModal.classList.add('hidden');
   }
 
-  // 2. Equipment Choice Modal (when slots === 5)
+  // 2. Equipment Choice Modal (when slots === 3)
   if (state.status === 'equip_choice' && state.pendingEquipDrop) {
     els.equipModal.classList.remove('hidden');
-    const dropDef = EQUIPMENT_CATALOG[state.pendingEquipDrop.item.id];
+    const dropItem = state.pendingEquipDrop.item;
+    const dropDef = EQUIPMENT_CATALOG[dropItem.id];
+    const dropEvo = getEquipmentEvolutionSummary(dropItem.id, dropItem.level);
     els.equipDropCard.innerHTML = `
       <div class="drop-badge" style="color:${dropDef.color}">${dropDef.category}</div>
-      <div class="drop-name">${dropDef.name} Lv${state.pendingEquipDrop.item.level}</div>
+      <div class="drop-name">${dropDef.name} Lv${dropItem.level} <span style="font-size:12px;color:#fbbf24;">[${dropEvo}]</span></div>
       <div class="drop-desc">${dropDef.description}</div>
     `;
 
     els.equipSlotList.innerHTML = '';
     state.player.equipment.forEach((eq, idx) => {
       const def = EQUIPMENT_CATALOG[eq.id];
+      const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'slot-btn';
       btn.innerHTML = `
-        <span><strong>枠${idx + 1}/${MAX_EQUIP_SLOTS}</strong> ${def.name} (Lv${eq.level})</span>
+        <span><strong>枠${idx + 1}/${MAX_EQUIP_SLOTS}</strong> ${def.name} Lv${eq.level} <small style="color:#94a3b8">(${evo})</small></span>
         <span class="slot-action">入れ替える</span>
       `;
       btn.addEventListener('click', () => handlers.onResolveEquip({ type: 'replace', slotIndex: idx }));
