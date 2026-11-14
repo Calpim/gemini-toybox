@@ -185,6 +185,8 @@ function routeNonOverlappingCorridor(
   bestCost[startState] = 0;
   pushHeap(startState, 0);
 
+  const halfBefore = Math.floor((corridorWidth - 1) / 2);
+
   let reachedState = -1;
   while (heapState.length > 0) {
     const [curState, curCost] = popHeap();
@@ -207,22 +209,35 @@ function routeNonOverlappingCorridor(
 
       const nIdx = ny * width + nx;
       const inEndpointRoom = roomMask[nIdx] === roomA.id || roomMask[nIdx] === roomB.id;
-      const nearRoom = nearRoomMask[nIdx];
 
-      let tileCost: number;
+      let tileCost = 4;
+      let outOfBounds = false;
       if (inEndpointRoom) {
         tileCost = 1;
-      } else if (nearRoom !== -1 && nearRoom !== roomA.id && nearRoom !== roomB.id) {
-        tileCost = 5000;
-      } else if (corridorMask[nIdx] === 1) {
-        tileCost = 400;
-      } else if (hasCorridorWithin(corridorMask, width, height, nx, ny, 1)) {
-        tileCost = 220;
-      } else if (hasCorridorWithin(corridorMask, width, height, nx, ny, 2)) {
-        tileCost = 24;
       } else {
-        tileCost = 4;
+        for (let by = ny - halfBefore; by < ny - halfBefore + corridorWidth; by++) {
+          for (let bx = nx - halfBefore; bx < nx - halfBefore + corridorWidth; bx++) {
+            if (bx < 1 || by < 1 || bx >= width - 1 || by >= height - 1) {
+              outOfBounds = true;
+              break;
+            }
+            const bIdx = by * width + bx;
+            if (roomMask[bIdx] === roomA.id || roomMask[bIdx] === roomB.id) continue;
+            const nearRoom = nearRoomMask[bIdx];
+            if (nearRoom !== -1 && nearRoom !== roomA.id && nearRoom !== roomB.id) {
+              tileCost = Math.max(tileCost, 5000);
+            } else if (corridorMask[bIdx] === 1) {
+              tileCost = Math.max(tileCost, 400);
+            } else if (hasCorridorWithin(corridorMask, width, height, bx, by, 1)) {
+              tileCost = Math.max(tileCost, 220);
+            } else if (hasCorridorWithin(corridorMask, width, height, bx, by, 2)) {
+              tileCost = Math.max(tileCost, 24);
+            }
+          }
+          if (outOfBounds) break;
+        }
       }
+      if (outOfBounds) continue;
 
       const turnCost = curDir !== 4 && curDir !== d ? 6 : 0;
       const nextCost = curCost + tileCost + turnCost;
@@ -244,7 +259,6 @@ function routeNonOverlappingCorridor(
     trace = prevState[trace];
   }
 
-  const halfBefore = Math.floor((corridorWidth - 1) / 2);
   for (const idx of pathTiles) {
     if (roomMask[idx] === roomA.id || roomMask[idx] === roomB.id) continue;
     const tx = idx % width;
@@ -297,13 +311,13 @@ export function computeBfsDistances(width: number, height: number, tiles: TileTy
 
 /**
  * Generates a connected dungeon floor with wide rectangular rooms (8-13 x 7-11),
- * narrow non-overlapping corridors (default width 1 tile) routed via Prim MST + Dijkstra,
+ * clean 2-tile non-overlapping corridors routed via Prim MST + Dijkstra,
  * a safe start room, and an upstairs tile in the farthest reachable room (APP-MAP-01).
  */
 export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   const { floor, seed } = options;
   const rng: Rng = createRng(seed ^ (floor * 0x9e3779b1));
-  const corridorWidth: 1 | 2 | 3 = options.corridorWidth ?? 1;
+  const corridorWidth: 1 | 2 | 3 = options.corridorWidth ?? 2;
 
   const width = Math.min(76, 48 + floor * 3);
   const height = Math.min(58, 38 + floor * 2);

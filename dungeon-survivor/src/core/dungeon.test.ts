@@ -3,7 +3,7 @@ import { generateDungeon, getTile, isWallTile, tileCenterWorld } from './dungeon
 import { hasLineOfSight, resolveCircleGridCollision } from './collision';
 
 describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)', () => {
-  it('[APP-MAP-01] generates wider rooms, narrow non-overlapping corridors by default, and reachable stairs in a distant room', () => {
+  it('[APP-MAP-01] generates wider rooms, clean 2-tile non-overlapping corridors by default, and reachable stairs in a distant room', () => {
     const map = generateDungeon({ floor: 1, seed: 12345 });
 
     expect(map.rooms.length).toBeGreaterThanOrEqual(2);
@@ -15,7 +15,28 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
     expect(getTile(map, map.stairsTile.tx, map.stairsTile.ty)).toBe('stairs');
     expect(map.stairsTile).not.toEqual(map.startTile);
 
-    // Verify across multiple seeds/floors that rooms stay large, corridors never merge into 2x2 blobs, and stairs remain reachable
+    const hasCorridor3x3Blob = (m: ReturnType<typeof generateDungeon>) => {
+      const inRoom = (tx: number, ty: number) =>
+        m.rooms.some((r) => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h);
+      let blobs = 0;
+      for (let y = 1; y < m.height - 3; y++) {
+        for (let x = 1; x < m.width - 3; x++) {
+          let allNonRoomFloor = true;
+          for (let oy = 0; oy < 3 && allNonRoomFloor; oy++) {
+            for (let ox = 0; ox < 3; ox++) {
+              if (inRoom(x + ox, y + oy) || isWallTile(m, x + ox, y + oy)) {
+                allNonRoomFloor = false;
+                break;
+              }
+            }
+          }
+          if (allNonRoomFloor) blobs++;
+        }
+      }
+      return blobs;
+    };
+
+    // Verify across multiple seeds/floors that rooms stay large and width-2 corridors do not merge into 3x3+ blobs
     for (const [f, s] of [
       [1, 12345],
       [2, 42],
@@ -29,49 +50,10 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
         expect(r.w).toBeGreaterThanOrEqual(8);
         expect(r.h).toBeGreaterThanOrEqual(7);
       }
-      const inRoom = (tx: number, ty: number) =>
-        m.rooms.some((r) => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h);
-      let blobs = 0;
-      for (let y = 1; y < m.height - 2; y++) {
-        for (let x = 1; x < m.width - 2; x++) {
-          const coords = [
-            [x, y],
-            [x + 1, y],
-            [x, y + 1],
-            [x + 1, y + 1],
-          ] as const;
-          if (
-            coords.every(([cx, cy]) => !inRoom(cx, cy)) &&
-            coords.every(([cx, cy]) => !isWallTile(m, cx, cy))
-          ) {
-            blobs++;
-          }
-        }
-      }
-      expect(blobs).toBe(0);
+      expect(hasCorridor3x3Blob(m)).toBe(0);
     }
 
-    // Ensure corridors do not form 2x2 solid floor blobs outside rooms
-    const inAnyRoom = (tx: number, ty: number) =>
-      map.rooms.some((r) => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h);
-    let corridor2x2Count = 0;
-    for (let y = 1; y < map.height - 2; y++) {
-      for (let x = 1; x < map.width - 2; x++) {
-        const coords = [
-          [x, y],
-          [x + 1, y],
-          [x, y + 1],
-          [x + 1, y + 1],
-        ] as const;
-        if (
-          coords.every(([cx, cy]) => !inAnyRoom(cx, cy)) &&
-          coords.every(([cx, cy]) => !isWallTile(map, cx, cy))
-        ) {
-          corridor2x2Count++;
-        }
-      }
-    }
-    expect(corridor2x2Count).toBe(0);
+    expect(hasCorridor3x3Blob(map)).toBe(0);
 
     // BFS reachability from start to stairs
     const visited = new Set<string>();

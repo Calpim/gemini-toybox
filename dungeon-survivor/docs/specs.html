@@ -266,9 +266,9 @@
                   <span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span>
                 </div>
                 
-                <h4>シード値に基づき広い部屋・非重複の狭め通路・上り階段を持つフロアを生成する</h4>
+                <h4>シード値に基づき広い部屋・非重複の2タイル幅通路・上り階段を持つフロアを生成する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の広めの長方形部屋（8〜13 x 7〜11 タイル・部屋間隔 4タイル以上）と互いに重なり・隣接合体しない狭めの通路（既定幅 1タイル）が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">スタート部屋から到達可能な最遠方の部屋に「上り階段」タイルが1つ配置される</span></li><li><span class="kw">かつ</span><span class="st-text">プレイヤーが上り階段の当たり判定に触れるとフロア番号 N+1 が生成される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の広めの長方形部屋（8〜13 x 7〜11 タイル・部屋間隔 4タイル以上）と互いに重なり・隣接合体しない通路（既定幅 2タイル・80px）が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">スタート部屋から到達可能な最遠方の部屋に「上り階段」タイルが1つ配置される</span></li><li><span class="kw">かつ</span><span class="st-text">プレイヤーが上り階段の当たり判定に触れるとフロア番号 N+1 が生成される</span></li>
   </ul>
               </div>
         </div>
