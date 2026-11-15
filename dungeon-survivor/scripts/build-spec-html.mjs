@@ -550,15 +550,16 @@ export function extractFormulaParamValues(parameters) {
   const coreRangeMatch = prm17.match(/射程\s*(\d+(?:\.\d+)?)/);
   const coreThreshMatch = prm17.match(/閾値\s*([\d,\s]+)\s*SP/);
   const coreMaxShotsMatch = prm17.match(/最大\s*(\d+)発/);
-  const coreBaseDmg = coreDmgMatch ? Number(coreDmgMatch[1]) : 12;
-  const coreBaseCd = coreCdMatch ? Number(coreCdMatch[1]) : 0.62;
-  const coreBaseRange = coreRangeMatch ? Number(coreRangeMatch[1]) : 140;
+  const coreBaseDmg = coreDmgMatch ? Number(coreDmgMatch[1]) : 14;
+  const coreBaseCd = coreCdMatch ? Number(coreCdMatch[1]) : 0.58;
+  const coreBaseRange = coreRangeMatch ? Number(coreRangeMatch[1]) : 180;
+  const hasLegacySpScaling = Boolean(coreThreshMatch);
   const coreShotThresholds = coreThreshMatch
     ? coreThreshMatch[1]
         .split(',')
         .map((x) => Number(x.trim()))
         .filter((n) => Number.isFinite(n))
-    : [3, 7, 12];
+    : [];
   const coreMaxShots = coreMaxShotsMatch ? Number(coreMaxShotsMatch[1]) : 4;
 
   const prm18 = getVal('PRM-18');
@@ -566,12 +567,32 @@ export function extractFormulaParamValues(parameters) {
   const coreSpCdStepMatch = prm18.match(/CD短縮(\d+(?:\.\d+)?)/);
   const coreSpCdCapMatch = prm18.match(/上限(\d+(?:\.\d+)?)/);
   const coreMinCdMatch = prm18.match(/最小CD\s*(\d+(?:\.\d+)?)/);
+  const coreMinCdMultMatch = prm18.match(/最小CD倍率\s*(\d+(?:\.\d+)?)/);
   const coreSpRangeMatch = prm18.match(/射程\+(\d+(?:\.\d+)?)/);
-  const coreSpDmg = coreSpDmgMatch ? Number(coreSpDmgMatch[1]) : 1.8;
-  const coreSpCdStep = coreSpCdStepMatch ? Number(coreSpCdStepMatch[1]) : 0.015;
+  const coreSpDmg = coreSpDmgMatch ? Number(coreSpDmgMatch[1]) : hasLegacySpScaling ? 1.8 : 0;
+  const coreSpCdStep = coreSpCdStepMatch
+    ? Number(coreSpCdStepMatch[1])
+    : hasLegacySpScaling
+      ? 0.015
+      : 0;
   const coreSpCdCap = coreSpCdCapMatch ? Number(coreSpCdCapMatch[1]) : 0.24;
   const coreMinCd = coreMinCdMatch ? Number(coreMinCdMatch[1]) : 0.24;
-  const coreSpRange = coreSpRangeMatch ? Number(coreSpRangeMatch[1]) : 3;
+  const coreMinCdMult = coreMinCdMultMatch ? Number(coreMinCdMultMatch[1]) : 0.6;
+  const coreSpRange = coreSpRangeMatch ? Number(coreSpRangeMatch[1]) : hasLegacySpScaling ? 3 : 0;
+
+  const parsePlusCurve = (str, fallback) => {
+    const nums = str?.match(/[+-]?\d+(?:\.\d+)?/g);
+    if (!nums || nums.length < 5) return fallback;
+    return [0, ...nums.slice(0, 5).map((n) => Math.abs(Number(n)))];
+  };
+  const armParallelExtraShots = parsePlusCurve(
+    prm18.match(/arm_parallel追加弾数\(([^)]+)\)/)?.[1],
+    [0, 1, 1, 2, 2, 3]
+  );
+  const armParallelDmgPct = parsePlusCurve(
+    prm18.match(/威力補正\(([^)]+)\)/)?.[1],
+    [0, 0, 6, 6, 14, 20]
+  );
 
   const prm23 = getVal('PRM-23');
   const parsePctCurve = (label, fallback) => {
@@ -581,8 +602,8 @@ export function extractFormulaParamValues(parameters) {
     if (!nums || nums.length < 5) return fallback;
     return [0, ...nums.slice(0, 5).map((n) => Math.abs(Number(n)))];
   };
-  const armBasePct = parsePctCurve('arm_base', [0, 8, 16, 24, 42, 68]);
-  const armOverclockPct = parsePctCurve('arm_overclock', [0, 6, 12, 18, 28, 40]);
+  const armBasePct = parsePctCurve('arm_base', [0, 10, 20, 30, 45, 65]);
+  const armOverclockPct = parsePctCurve('arm_overclock', [0, 6, 12, 18, 26, 35]);
   const defSensorPct = parsePctCurve('def_sensor', [0, 8, 16, 24, 38, 55]);
   const mobLootBlock = prm23.match(/mob_loot\(([^)]+)\)/)?.[1] || '';
   const expPart = mobLootBlock.match(/EXP([+\-\d/]+)/)?.[1] || '';
@@ -598,6 +619,7 @@ export function extractFormulaParamValues(parameters) {
     spCostLv4,
     spCostLv5,
     maxSkillLv,
+    hasLegacySpScaling,
     coreBaseDmg,
     coreBaseCd,
     coreBaseRange,
@@ -607,7 +629,10 @@ export function extractFormulaParamValues(parameters) {
     coreSpCdStep,
     coreSpCdCap,
     coreMinCd,
+    coreMinCdMult,
     coreSpRange,
+    armParallelExtraShots,
+    armParallelDmgPct,
     armBasePct,
     armOverclockPct,
     defSensorPct,
@@ -632,18 +657,77 @@ export function buildFormulaChartsData(parameters) {
     nextExp = Math.round(nextExp * p.expMult);
   }
 
-  // 2. Core Shot SP-linked growth (spentSp 0..16, skill modifiers baseline 0)
+  // 2. Main Weapon (Core Shot) growth
   const coreShotRows = [];
-  for (const sp of [0, 1, 2, 3, 5, 7, 9, 12, 14, 16]) {
-    const damage = Math.round(p.coreBaseDmg + sp * p.coreSpDmg);
-    const cooldown = Number(
-      Math.max(p.coreMinCd, p.coreBaseCd - Math.min(p.coreSpCdCap, sp * p.coreSpCdStep)).toFixed(3)
-    );
-    const range = Math.min(p.maxTargetRange, Math.round(p.coreBaseRange + sp * p.coreSpRange));
-    const bonusShots = p.coreShotThresholds.filter((t) => sp >= t).length;
-    const shotCount = Math.min(p.coreMaxShots, 1 + bonusShots);
-    const dps = Number(((damage * shotCount) / cooldown).toFixed(1));
-    coreShotRows.push({ sp, damage, cooldown, range, shotCount, dps });
+  let coreShotChart;
+  if (p.hasLegacySpScaling) {
+    for (const sp of [0, 1, 2, 3, 5, 7, 9, 12, 14, 16]) {
+      const damage = Math.round(p.coreBaseDmg + sp * p.coreSpDmg);
+      const cooldown = Number(
+        Math.max(p.coreMinCd, p.coreBaseCd - Math.min(p.coreSpCdCap, sp * p.coreSpCdStep)).toFixed(3)
+      );
+      const range = Math.min(p.maxTargetRange, Math.round(p.coreBaseRange + sp * p.coreSpRange));
+      const bonusShots = p.coreShotThresholds.filter((t) => sp >= t).length;
+      const shotCount = Math.min(p.coreMaxShots, 1 + bonusShots);
+      const dps = Number(((damage * shotCount) / cooldown).toFixed(1));
+      coreShotRows.push({ sp, damage, cooldown, range, shotCount, dps });
+    }
+    coreShotChart = {
+      id: 'chart-core-shot',
+      formulaIds: ['FML-03', 'FML-04', 'FML-05'],
+      paramRefs: ['PRM-06', 'PRM-17', 'PRM-18'],
+      title: '基本攻撃（コアショット）SP連動成長（FML-03〜05・スキル補正なし基礎値）',
+      formulaExpr: `威力=round(PRM-17[${p.coreBaseDmg}] + SP×PRM-18[${p.coreSpDmg}]), CD=max(PRM-18[${p.coreMinCd}], PRM-17[${p.coreBaseCd}] - min(PRM-18[${p.coreSpCdCap}], SP×PRM-18[${p.coreSpCdStep}])), 射程=min(PRM-06[${p.maxTargetRange}], PRM-17[${p.coreBaseRange}] + SP×PRM-18[${p.coreSpRange}]), 発射数=閾値[${p.coreShotThresholds.join(',')}]`,
+      xLabel: 'sp',
+      series: [
+        { key: 'dps', label: '理論総DPS (DMG/s)', color: '#34d399', unit: 'DMG/s' },
+        { key: 'range', label: '射程 (px)', color: '#fbbf24', unit: 'px' },
+      ],
+      columns: [
+        { key: 'sp', label: '使用SP' },
+        { key: 'damage', label: '1発威力' },
+        { key: 'shotCount', label: '発射数' },
+        { key: 'cooldown', label: 'CD(秒)' },
+        { key: 'range', label: '射程(px)' },
+        { key: 'dps', label: '理論DPS' },
+      ],
+      rows: coreShotRows,
+    };
+  } else {
+    for (let lv = 0; lv <= p.maxSkillLv; lv++) {
+      const baseMult = 1 + (p.armBasePct[lv] ?? 0) / 100;
+      const parallelMult = 1 + (p.armParallelDmgPct[lv] ?? 0) / 100;
+      const ocReduction = (p.armOverclockPct[lv] ?? 0) / 100;
+      const damage = Math.round(p.coreBaseDmg * baseMult * parallelMult);
+      const cooldown = Number(
+        Math.max(p.coreMinCd, p.coreBaseCd * Math.max(p.coreMinCdMult, 1 - ocReduction)).toFixed(3)
+      );
+      const range = Math.min(p.maxTargetRange, p.coreBaseRange);
+      const shotCount = 1 + (p.armParallelExtraShots[lv] ?? 0);
+      const dps = Number(((damage * shotCount) / cooldown).toFixed(1));
+      coreShotRows.push({ lv, damage, cooldown, range, shotCount, dps });
+    }
+    coreShotChart = {
+      id: 'chart-core-shot',
+      formulaIds: ['FML-03', 'FML-04', 'FML-05'],
+      paramRefs: ['PRM-06', 'PRM-17', 'PRM-18', 'PRM-23'],
+      title: 'メイン武器（コアショット）兵装スキル連動成長（FML-03〜05・総SP連動廃止）',
+      formulaExpr: `威力=round(PRM-17[${p.coreBaseDmg}]×(1+PRM-23[arm_base])×(1+PRM-18[parallel])), CD=max(PRM-18[${p.coreMinCd}], PRM-17[${p.coreBaseCd}]×max(${p.coreMinCdMult}, 1-PRM-23[arm_overclock])), 射程=min(PRM-06[${p.maxTargetRange}], PRM-17[${p.coreBaseRange}]×(1+PRM-23[def_sensor]))`,
+      xLabel: 'lv',
+      series: [
+        { key: 'dps', label: '理論総DPS (DMG/s)', color: '#34d399', unit: 'DMG/s' },
+        { key: 'damage', label: '1発威力 (DMG)', color: '#fbbf24', unit: 'DMG' },
+      ],
+      columns: [
+        { key: 'lv', label: '兵装Lv' },
+        { key: 'damage', label: '1発威力' },
+        { key: 'shotCount', label: '発射数' },
+        { key: 'cooldown', label: 'CD(秒)' },
+        { key: 'range', label: '射程(px)' },
+        { key: 'dps', label: '理論DPS' },
+      ],
+      rows: coreShotRows,
+    };
   }
 
   // 3. Skill Lv0..Lv5 growth curve & cumulative SP cost
@@ -671,7 +755,7 @@ export function buildFormulaChartsData(parameters) {
       paramRefs: ['PRM-04'],
       title: '必要経験値カーブ（FML-01）',
       formulaExpr: `expToNext(1) = PRM-04[初期=${p.expInit}], expToNext(Lv) = round(expToNext(Lv-1) × PRM-04[倍率=${p.expMult}])`,
-      xLabel: 'Lv',
+      xLabel: 'lv',
       series: [
         { key: 'expToNext', label: '次Lv必要EXP', color: '#38bdf8', unit: 'EXP' },
         { key: 'cumExp', label: '累積EXP', color: '#a78bfa', unit: 'EXP' },
@@ -683,27 +767,7 @@ export function buildFormulaChartsData(parameters) {
       ],
       rows: expRows,
     },
-    {
-      id: 'chart-core-shot',
-      formulaIds: ['FML-03', 'FML-04', 'FML-05'],
-      paramRefs: ['PRM-06', 'PRM-17', 'PRM-18'],
-      title: '基本攻撃（コアショット）SP連動成長（FML-03〜05・スキル補正なし基礎値）',
-      formulaExpr: `威力=round(PRM-17[${p.coreBaseDmg}] + SP×PRM-18[${p.coreSpDmg}]), CD=max(PRM-18[${p.coreMinCd}], PRM-17[${p.coreBaseCd}] - min(PRM-18[${p.coreSpCdCap}], SP×PRM-18[${p.coreSpCdStep}])), 射程=min(PRM-06[${p.maxTargetRange}], PRM-17[${p.coreBaseRange}] + SP×PRM-18[${p.coreSpRange}]), 発射数=閾値[${p.coreShotThresholds.join(',')}]`,
-      xLabel: 'spentSp',
-      series: [
-        { key: 'dps', label: '理論総DPS (DMG/s)', color: '#34d399', unit: 'DMG/s' },
-        { key: 'range', label: '射程 (px)', color: '#fbbf24', unit: 'px' },
-      ],
-      columns: [
-        { key: 'sp', label: '使用SP' },
-        { key: 'damage', label: '1発威力' },
-        { key: 'shotCount', label: '発射数' },
-        { key: 'cooldown', label: 'CD(秒)' },
-        { key: 'range', label: '射程(px)' },
-        { key: 'dps', label: '理論DPS' },
-      ],
-      rows: coreShotRows,
-    },
+    coreShotChart,
     {
       id: 'chart-skill-curve',
       formulaIds: ['FML-02', 'FML-12'],

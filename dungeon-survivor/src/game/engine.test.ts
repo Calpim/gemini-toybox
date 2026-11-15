@@ -483,34 +483,59 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(reflected!.vx).toBeGreaterThan(0);
   });
 
-  it('[APP-CMB-06] scales player intrinsic Core Shot by spent SP and skills, NOT by player.level alone', () => {
+  it('[APP-CMB-06] scales player Main Weapon (Core Shot) via arms skills only, NOT by player.level or non-arms SP, and keeps sub-equipment free from arms multipliers', () => {
     const state = createGameState({ seed: 460 });
     state.chests = [];
     state.pickups = [];
     expect(state.player.equipment).toEqual([]);
 
     const initialStats = getPlayerBaseAttackStats(state.player);
-    expect(initialStats).toMatchObject({ damage: 12, shotCount: 1, range: MAX_TARGET_RANGE, spentSp: 0 });
+    expect(initialStats).toMatchObject({
+      weaponId: 'core_shot',
+      damage: 14,
+      shotCount: 1,
+      range: MAX_TARGET_RANGE,
+      pierce: false,
+      spentSp: 0,
+    });
 
     // Raising player.level alone without spending SP does NOT alter Core Shot
     state.player.level = 5;
     expect(getPlayerBaseAttackStats(state.player)).toEqual(initialStats);
 
-    // Spending 3 SP (arm_base Lv3) strengthens damage, cooldown, and unlocks 2-way shot while keeping range capped at MAX_TARGET_RANGE
-    state.player.skillPoints = 3;
+    // Spending SP in defense/mobility (e.g. mob_magnet Lv2) does NOT inflate Core Shot damage/shots
+    state.player.skillPoints = 2;
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true);
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true);
+    expect(state.player.spentSkillPoints).toBe(2);
+    expect(getPlayerBaseAttackStats(state.player)).toMatchObject({
+      damage: 14,
+      shotCount: 1,
+      cooldown: initialStats.cooldown,
+      pierce: false,
+    });
+
+    // Investing in arms branch (arm_base Lv3 + arm_parallel Lv1) strengthens Main Weapon damage & shotCount
+    state.player.skillPoints = 4;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
-    expect(state.player.spentSkillPoints).toBe(3);
+    expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true);
 
     const skilledStats = getPlayerBaseAttackStats(state.player);
-    expect(skilledStats.spentSp).toBe(3);
     expect(skilledStats.damage).toBeGreaterThan(initialStats.damage);
     expect(skilledStats.range).toBe(MAX_TARGET_RANGE);
-    expect(skilledStats.cooldown).toBeLessThan(initialStats.cooldown);
     expect(skilledStats.shotCount).toBe(2);
 
-    // Fires 2 base shots simultaneously at a visible enemy with 0 equipment
+    // Sub-equipment counts/damage/cooldown stay purely determined by equipment level (not arms skills)
+    state.player.equipment = [
+      createEquippedItem('orbit_shield', 1),
+      createEquippedItem('seeker_drone', 1),
+    ];
+    expect(getOrbitBitPositions(state).length).toBe(1);
+    expect(getSeekerDronePositions(state).length).toBe(1);
+
+    // Fires 2 base shots simultaneously at a visible enemy
     state.enemies = [
       {
         id: 910,
@@ -531,7 +556,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(2);
   });
 
-  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Lv1-3=1SP / Lv4=2SP / Lv5=3SP, Lv4-5 breakthroughs, Lv3+ prereqs, and level-up notifications', () => {
+  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Lv1-3=1SP / Lv4=2SP / Lv5=3SP, Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
     expect(MAX_SKILL_LEVEL).toBe(5);
     expect(SKILL_PREREQ_LEVEL).toBe(3);
     expect([0, 1, 2, 3, 4].map((lv) => getSkillUpgradeCost(lv))).toEqual([1, 1, 1, 2, 3]);
@@ -570,44 +595,55 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 2 SP for Lv4
     state.player.skillPoints = 2;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4 (cost 2)
-    expect(computeSkillModifiers(state.player.skillLevels).damageMult).toBeCloseTo(1.42, 4);
+    expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(1.45, 4);
 
     state.player.skillPoints = 2;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 3 SP for Lv5
     state.player.skillPoints = 3;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv5 (cost 3)
-    expect(computeSkillModifiers(state.player.skillLevels).damageMult).toBeCloseTo(1.68, 4);
+    expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(1.65, 4);
     expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // capped at Lv5
 
-    // Tier 2 also costs 1 SP up to Lv3, and immediately deploys extra bits/drones at Lv1
+    // Tier 2 also costs 1 SP up to Lv3, increases Main Weapon shots (not sub-gear bits/drones)
     state.player.skillPoints = 3;
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv1 (cost 1)
     expect(state.player.skillPoints).toBe(2);
-    expect(getOrbitBitPositions(state).length).toBe(2);
-    expect(getSeekerDronePositions(state).length).toBe(2);
+    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(2);
+    expect(getOrbitBitPositions(state).length).toBe(1);
+    expect(getSeekerDronePositions(state).length).toBe(1);
 
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv2 (cost 1)
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv3 (cost 1)
     expect(state.player.skillPoints).toBe(0);
 
-    // Tier 3 unlocks at Tier 2 Lv3 and costs 1 SP for Lv1
+    // Tier 3 unlocks at Tier 2 Lv3 and enables Main Weapon cooldown reduction & pierce
     state.player.skillPoints = 1;
     expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true); // Lv1 (cost 1)
     expect(state.player.skillPoints).toBe(0);
+    expect(getPlayerBaseAttackStats(state.player).pierce).toBe(true);
 
-    // mob_magnet scales heal orb effectiveness (+10% Lv1, +20% Lv2)
-    state.player.skillPoints = 2;
-    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv1 (+10%)
+    // Mobility branch order: mob_magnet (Tier 1) -> mob_loot (Tier 2) -> mob_dash (Tier 3)
+    state.player.skillPoints = 10;
+    expect(upgradeSkillNode(state, 'mob_loot')).toBe(false);
+    expect(upgradeSkillNode(state, 'mob_dash')).toBe(false);
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv1 (+10% heal)
     state.player.hp = 50;
     state.pickups = [{ id: 701, kind: 'heal', x: state.player.x, y: state.player.y, value: 20 }];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(72);
 
-    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv2 (+20%)
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv2 (+20% heal)
     state.player.hp = 50;
     state.pickups = [{ id: 702, kind: 'heal', x: state.player.x, y: state.player.y, value: 20 }];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(74);
+
+    expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true); // Lv3 -> unlocks mob_loot
+    expect(upgradeSkillNode(state, 'mob_dash')).toBe(false);
+    expect(upgradeSkillNode(state, 'mob_loot')).toBe(true); // Lv1
+    expect(upgradeSkillNode(state, 'mob_loot')).toBe(true); // Lv2
+    expect(upgradeSkillNode(state, 'mob_loot')).toBe(true); // Lv3 -> unlocks mob_dash
+    expect(upgradeSkillNode(state, 'mob_dash')).toBe(true); // Lv1
   });
 
   it('[APP-GRW-03 & APP-GRW-04] enforces initial 2-slot limit, auto-levels owned duplicates (including higher-Lv drops), prompts on 3rd unowned gear, and expands via Scrap & Build', () => {
@@ -1163,6 +1199,62 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(normState, { x: 0, y: 0 }, 0.02);
     expect(normState.enemyProjectiles.length).toBe(2);
   });
+
+  it('[APP-GRW-07 & APP-GRW-02] improves drop quality with mob_loot and triggers tactical step + temporary speed boost on projectile hit', () => {
+    const minLv2 = [
+      createEquippedItem('pulse_blade', 2),
+      createEquippedItem('orbit_shield', 6),
+    ];
+    // At dropQualityTier 0, r=0.1 rolls M-1 (1). At tier 5, M-1 is eliminated (0%) so r=0.1 rolls M (2)
+    expect(rollDropEquipmentLevel(minLv2, () => 0.1, 0)).toBe(1);
+    expect(rollDropEquipmentLevel(minLv2, () => 0.1, 5)).toBe(2);
+    // At tier 5, r=0.85 enters the top 20% bracket (M+2 = 4)
+    expect(rollDropEquipmentLevel(minLv2, () => 0.85, 5)).toBe(4);
+
+    // mob_dash triggers tactical step + speed boost on enemy projectile hit
+    const dashState = createGameState({ seed: 970 });
+    dashState.chests = [];
+    dashState.pickups = [];
+    dashState.enemies = [];
+    dashState.map.tiles.fill('floor');
+    dashState.player.skillLevels = { mob_magnet: 3, mob_loot: 3, mob_dash: 5 };
+    const startX = dashState.player.x;
+    dashState.enemyProjectiles = [
+      {
+        id: 8801,
+        x: dashState.player.x + 6,
+        y: dashState.player.y,
+        vx: -100,
+        vy: 0,
+        radius: 6,
+        damage: 10,
+        life: 1.0,
+      },
+    ];
+    stepGame(dashState, { x: 0, y: 0 }, 0.02);
+    expect(dashState.player.hp).toBe(90);
+    expect(dashState.player.x).toBeLessThan(startX - 50); // stepped left away from projectile
+    expect(dashState.player.tacticalSpeedTimer).toBeGreaterThan(2.0);
+    expect(dashState.player.tacticalSpeedBonus).toBeCloseTo(0.38, 4);
+
+    // Next movement step moves faster than baseSpeed (210 * 1.38)
+    const boostedStartX = dashState.player.x;
+    stepGame(dashState, { x: -1, y: 0 }, 0.05);
+    const movedDist = boostedStartX - dashState.player.x;
+    expect(movedDist).toBeGreaterThan(210 * 0.05 * 1.3);
+
+    // def_aegis parry damage does not scale with arms skills and uses restrained cooldown (>= 4.5s)
+    const aegisMods = computeSkillModifiers({
+      arm_base: 5,
+      def_sensor: 3,
+      def_pulse: 3,
+      def_aegis: 5,
+    });
+    expect(aegisMods.aegisCooldown).toBeGreaterThanOrEqual(4.5);
+    expect(aegisMods.aegisDamage).toBe(46);
+    expect(aegisMods.repulsorDamage).toBe(10);
+  });
 });
+
 
 

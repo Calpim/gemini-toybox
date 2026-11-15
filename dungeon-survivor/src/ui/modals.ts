@@ -45,9 +45,8 @@ const BRANCH_META: { id: SkillBranch; label: string; accent: string }[] = [
 function formatGearDetail(eq: EquippedItem, state: GameState): string {
   const def = EQUIPMENT_CATALOG[eq.id];
   const mods = computeSkillModifiers(state.player.skillLevels);
-  const rawDmg = getEquipmentDamage(eq, mods.damageMult);
-  const dmg = Math.round(eq.id === 'seeker_drone' ? rawDmg * mods.bitDroneDamageMult : rawDmg);
-  const cdMult = mods.cooldownMult * getEquipmentCooldownMultiplier(eq.level);
+  const dmg = Math.round(getEquipmentDamage(eq, 1));
+  const cdMult = getEquipmentCooldownMultiplier(eq.level);
   const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
   const lvTag =
     eq.level >= MAX_EQUIPMENT_LEVEL
@@ -176,11 +175,12 @@ export function renderModals(
         ? '枠拡張最大'
         : `拡張蓄積 ${state.player.scrapExpandProgress}/${expandCost}`;
     const baseStats = getPlayerBaseAttackStats(state.player);
-    const slotPill = `<span class="gear-pill" style="border-color:#94a3b855;color:#cbd5e1">装備枠 ${state.player.equipment.length}/${state.player.maxEquipSlots} (上限${MAX_EQUIP_SLOTS_CAP} / ${expandProgressLabel})</span>`;
-    const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">自機コアショット (使用SP ${baseStats.spentSp}): 威力${baseStats.damage} / ${baseStats.shotCount}発 / ${baseStats.cooldown.toFixed(2)}s / 射程${baseStats.range}px</span>`;
+    const slotPill = `<span class="gear-pill" style="border-color:#94a3b855;color:#cbd5e1">サブ装備枠 ${state.player.equipment.length}/${state.player.maxEquipSlots} (上限${MAX_EQUIP_SLOTS_CAP} / ${expandProgressLabel})</span>`;
+    const pierceTag = baseStats.pierce ? ' / 貫通' : '';
+    const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">メイン武器 (コアショット): 威力${baseStats.damage} / ${baseStats.shotCount}発 / ${baseStats.cooldown.toFixed(2)}s / 射程${baseStats.range}px${pierceTag}</span>`;
     const gearPills =
       state.player.equipment.length === 0
-        ? `<span style="font-size:12px;color:#94a3b8;">（宝箱や敵ドロップで装備を追加可能）</span>`
+        ? `<span style="font-size:12px;color:#94a3b8;">（宝箱や敵ドロップでサブ装備を追加可能）</span>`
         : state.player.equipment
             .map((eq) => {
               const def = EQUIPMENT_CATALOG[eq.id];

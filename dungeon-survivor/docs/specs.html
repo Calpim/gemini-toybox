@@ -496,7 +496,7 @@
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (7)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (11)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (12)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -511,13 +511,13 @@
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">22</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
         <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">119</div></div>
-        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">29</div></div>
+        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">30</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">6</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">1</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 22 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 111 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 112 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -1030,9 +1030,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>自機からの基本攻撃はレベルアップ単体では変わらず使用したSP量に応じて強化される</h3>
+          <h3>自機のメイン武器はレベルアップや他系統SPでは変わらず兵装スキル投資で強化される</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で自機固有の基本攻撃を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベルが上がっただけの場合、またはスキルレベル上昇のためにSPを使用した場合</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーレベルの数値だけでは自機攻撃は変化せず、スキルへ投資（使用）したSP総量と習得スキル効果に応じて段階的に強化される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがサブ装備とは別枠で自機固有のメイン武器（コアショット）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベルが上がっただけの場合、防御・探索スキルを取得した場合、または兵装（arms）スキルを強化した場合</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーレベル単体や他系統へのSP投資ではメイン武器は変わらず、兵装スキルへの投資に応じて威力・発射数・連射性能が強化される（サブ装備へは乗算しない）</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1047,9 +1047,9 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 
-                <h4>自機固有のコアショットはレベルアップ単体では据え置き、使用済みSP量に応じて強化される</h4>
+                <h4>自機メイン武器のコアショットは兵装スキル投資でのみ強化され、サブ装備へは乗算しない</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備アイテムとは別枠で基本攻撃「コアショット」（初期射程 180px=MAX_TARGET_RANGE / 威力 12 / CD 0.62s / 1発）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーのレベルだけが上昇した場合、またはスキルレベル上げに SP を消費（spentSkillPoints 増加）した場合</span></li><li><span class="kw">ならば</span><span class="st-text">player.level のみの上昇ではコアショット性能は変わらず、使用済みSP総量に応じて威力・CD・射程（最大180px）・発射数（3/7/12 SPで最大4発）が強化される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがサブ装備とは別枠でメイン武器「コアショット」（初期射程 180px=MAX_TARGET_RANGE / 威力 14 / CD 0.58s / 1発 / 弾速 460px/s）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベル上昇や他系統へのSP消費のみ行った場合、または兵装（arms）スキルを強化した場合</span></li><li><span class="kw">ならば</span><span class="st-text">player.level 単体や防御・探索系SP消費ではコアショット・サブ装備ともに変化せず、兵装スキル投資時のみコアショットの威力・同時発射数（最大4発）・CD・弾速・貫通が強化される</span></li>
   </ul>
               </div>
         </div>
@@ -1131,7 +1131,7 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">各スキルが最大レベル 5（Lv0〜Lv5）・前提ノード Lv3 以上で次Tier解放として定義されている</span><div class="table-wrap"><table>
               <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>前提(Lv3+)</th><th>Lv1→3 / Lv4 / Lv5 の主な累積成長効果</th></tr></thead>
-              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>なし</td><td>ダメ +8/16/24% → Lv4:+42% → Lv5:+68%</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>ビット並列制御</td><td>2</td><td>arm_base</td><td>展開 +1/1/2 → Lv4:+3(+32%) → Lv5:+4(+52%)</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>arm_parallel</td><td>CD -6/12/18% → Lv4:-28% → Lv5:-40%（Lv1貫通）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>なし</td><td>レンジ +8/16/24% → Lv4:+38% → Lv5:+55%（上限180px）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>def_sensor</td><td>威力 12/16/20 → Lv4:32(CD2.5s) → Lv5:48(CD1.8s)</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>def_pulse</td><td>反撃 24/32/40 → Lv4:64(CD4.0s) → Lv5:96(CD2.8s)</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>なし</td><td>吸引 +22/44/66%・回復 +10/20/30% → Lv4:+50% → Lv5:+75%</td></tr><tr><td>mob_dash</td><td>探索</td><td>戦術ステップ</td><td>2</td><td>mob_magnet</td><td>回避 40/46/52px → Lv4:66px(1.30s無敵) → Lv5:84px(1.65s無敵)</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>3</td><td>mob_dash</td><td>宝/EXP +8/16/24% → Lv4:+40%/42% → Lv5:+60%/68%</td></tr></tbody>
+              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>なし</td><td>メイン武器ダメ +10/20/30% → Lv4:+45% → Lv5:+65%</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>並列射出</td><td>2</td><td>arm_base</td><td>メイン同時 +1/1/2発(+0/6/6%) → Lv4:+2発(+14%) → Lv5:+3発(+20%)</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>arm_parallel</td><td>メインCD -6/12/18% → Lv4:-26% → Lv5:-35%（Lv1+貫通・弾速+25..155）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>なし</td><td>レンジ +8/16/24% → Lv4:+38% → Lv5:+55%（上限180px・サブ装備含む）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>def_sensor</td><td>緊急ノックバック 威力 6/8/10(CD4.2/3.9/3.6s) → Lv4:14(3.2s) → Lv5:18(2.8s)</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>def_pulse</td><td>反撃 16/20/24(CD8.0/7.2/6.5s) → Lv4:34(5.5s) → Lv5:46(4.5s)</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>なし</td><td>吸引 +22/44/66%・回復 +10/20/30% → Lv4:+50% → Lv5:+75%</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>2</td><td>mob_magnet</td><td>品質Tier+1..5・装備率+0.5..3.5%・宝+10..65%・EXP+8/16/24% → Lv4:+42% → Lv5:+68%</td></tr><tr><td>mob_dash</td><td>探索</td><td>戦術ステップ</td><td>3</td><td>mob_loot</td><td>全被弾時回避 44/52/60px(無敵0.85..1.05s) → Lv4:74px(1.25s) → Lv5:90px(1.50s) &amp; 2.5s加速+16..38%</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を Lv2 以下の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンはロック表示となり、arm_base を Lv3 まで育成した時点で arm_parallel が解放可能になる</span></li>
   </ul>
               </div>
@@ -1288,9 +1288,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>敵からの希少ドロップや所持最低レベル連動のレベル抽選で高レベル装備も狙える</h3>
+          <h3>敵からの希少ドロップや所持最低レベル連動・品質上昇スキルで高レベル装備も狙える</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">宝箱または敵の低確率ドロップから装備アイテムが出現する</span></li><li><span class="kw">ならば</span><span class="st-text">敵からは希少な確率で装備がドロップし、出現アイテムのレベルは現在の所持装備の中で一番低いレベルを基準に上下ランダム（高レベルの上振れあり）で決まる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">宝箱または敵の低確率ドロップから装備アイテムが出現する、またはトレジャー解析スキルを育成する</span></li><li><span class="kw">ならば</span><span class="st-text">敵からは希少な確率（スキルで加算可）で装備がドロップし、出現アイテムのレベルは現在の所持装備の中で一番低いレベルを基準にランダム（トレジャー解析の品質上昇で高Lv寄り）に決まる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1305,9 +1305,9 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 
-                <h4>敵撃破時の希少装備ドロップ・守護中ボス/大ボスの確定高Lvドロップ・所持最低Lv連動抽選を行う</h4>
+                <h4>敵撃破時の希少装備ドロップ・守護中ボス/大ボスの確定高Lvドロップ・所持最低Lv連動＆品質補正抽選を行う</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの所持装備の中で一番低いレベルが M である（0個所持時は 1）</span></li><li><span class="kw">もし</span><span class="st-text">宝箱を開封する、雑魚敵の低確率ドロップ（基礎 1.5%・トレジャー解析で +0.2/0.4/0.6/1.1/1.8%）が成立する、または守護中ボス／大ボスを撃破する</span></li><li><span class="kw">ならば</span><span class="st-text">通常抽選は M を基準に確率配分（20%で max(1, M-1) / 50%で M / 22%で M+1 / 8%で M+2）で決定され、3/6/9F守護中ボスは M+1（35%でM+2）、10F毎大ボスは M+2（35%でM+3）の装備を確定ドロップする（上限Lv10）</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの所持装備の中で一番低いレベルが M である（0個所持時は 1）</span></li><li><span class="kw">もし</span><span class="st-text">宝箱を開封する、雑魚敵の低確率ドロップ（基礎 1.5%・トレジャー解析で +0.5/1.0/1.5/2.3/3.5%）が成立する、または守護中ボス／大ボスを撃破する</span></li><li><span class="kw">ならば</span><span class="st-text">通常抽選は M とトレジャー解析の品質Tier(0〜5)を基準に確率配分（Tier0: 20%で max(1, M-1) / 50%で M / 22%で M+1 / 8%で M+2、Tier5: 0% / 40% / 40% / 20%）で決定され、3/6/9F守護中ボスは M+1（35%でM+2）、10F毎大ボスは M+2（35%でM+3）の装備を確定ドロップする（上限Lv10）</span></li>
   </ul>
               </div>
         </div>
@@ -1406,10 +1406,10 @@
         <tbody>
       <tr id="GLS-01" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-01" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-01">GLS-01</a></td>
-        <td><strong>基本攻撃（Core Shot）</strong><div class="sub-code"><code class="inline-code">baseAttack</code></div></td>
-        <td>装備ゼロ時でも自機から自動発射される固有の遠距離ショット。プレイヤーLv単体では強化されず、スキルへ投資した使用SP総量に連動して強化される。</td>
+        <td><strong>メイン武器（コアショット）</strong><div class="sub-code"><code class="inline-code">mainWeaponId</code> / <code class="inline-code">baseAttack</code></div></td>
+        <td>装備ゼロ時でも自機から自動発射される固有のメイン武器（現行 <code class="inline-code">&#39;core_shot&#39;</code>、将来的に射撃/斬撃差し替えを想定）。プレイヤーLv単体や他系統SPでは強化されず、兵装（<code class="inline-code">arms</code>）スキルへの投資に応じて強化される。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-01">BIZ-CMB-01</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-01">APP-CMB-01</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-01">BIZ-CMB-01</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-01">APP-CMB-01</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-01" data-source-file="specs/glossary.md" data-item-id="GLS-01" title="元仕様ファイル specs/glossary.md (GLS-01)">specs/glossary.md#GLS-01</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -1417,10 +1417,10 @@
       </tr>
       <tr id="GLS-02" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-02" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-02">GLS-02</a></td>
-        <td><strong>迎撃装備（Gear）</strong><div class="sub-code"><code class="inline-code">EquippedItem</code> / <code class="inline-code">EquipmentId</code></div></td>
-        <td>初期2スロット（スクラップ＆ビルドで最大5スロット）に装着し、敵の接近に応じて自動で攻撃・防御を行う5系統（<code class="inline-code">pulse_blade</code>・<code class="inline-code">orbit_shield</code>・<code class="inline-code">seeker_drone</code>・<code class="inline-code">reactive_coil</code>・<code class="inline-code">ricochet_disc</code>）の武装。</td>
+        <td><strong>サブ迎撃装備（Gear）</strong><div class="sub-code"><code class="inline-code">EquippedItem</code> / <code class="inline-code">EquipmentId</code></div></td>
+        <td>初期2スロット（スクラップ＆ビルドで最大5スロット）に装着する5系統（<code class="inline-code">pulse_blade</code>・<code class="inline-code">orbit_shield</code>・<code class="inline-code">seeker_drone</code>・<code class="inline-code">reactive_coil</code>・<code class="inline-code">ricochet_disc</code>）のサブ武装。火力・CD・展開数は自身の装備Lvのみで決まり、スキル側は広域索敵のレンジ拡大のみ適用される。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/equipment.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-02" data-source-file="specs/glossary.md" data-item-id="GLS-02" title="元仕様ファイル specs/glossary.md (GLS-02)">specs/glossary.md#GLS-02</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -1440,9 +1440,9 @@
       <tr id="GLS-04" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-04" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-04">GLS-04</a></td>
         <td><strong>ハイブリッドスキルツリー</strong><div class="sub-code"><code class="inline-code">SkillNodeId</code> / <code class="inline-code">skillPoints</code></div></td>
-        <td>攻撃（arms）・防御（defense）・機動（mobility）の3系統×3段階（計9ノード、各Lv0〜5）の成長システム。下位Lv3で上位を解放。</td>
+        <td>兵装（<code class="inline-code">arms</code>: メイン武器専用）・防衛（<code class="inline-code">defense</code>: 索敵レンジ＆緊急防衛）・探索機動（<code class="inline-code">mobility</code>: 回収→ドロップ品質/率→戦術ステップ）の3系統×3段階（計9ノード、各Lv0〜5）の成長システム。下位Lv3で上位を解放。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/skillTree.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-04" data-source-file="specs/glossary.md" data-item-id="GLS-04" title="元仕様ファイル specs/glossary.md (GLS-04)">specs/glossary.md#GLS-04</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -1818,13 +1818,13 @@
       <tr id="PRM-17" class="spec-row" data-section="parameters" data-status="Confirmed" data-item-id="PRM-17" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-17">PRM-17</a></td>
         <td><span class="cat-pill">戦闘</span></td>
-        <td><strong>コアショット初期性能 (<code class="inline-code">APP-CMB-06</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">威力 12 / CD 0.62s / 射程 180px (MAX_TARGET_RANGE) / 発射数閾値 3, 7, 12 SP (最大 4発)</code></span></td>
-        <td><code class="inline-code">DMG・秒・px・SP・発</code></td>
-        <td><div class="note-text">初期装備ゼロから戦え、見えている索敵範囲内の敵にそのまま攻撃でき、SP投資で段階強化される基盤にするため（DEC-03, DEC-08）</div></td>
+        <td><strong>メイン武器（コアショット）初期性能 (<code class="inline-code">APP-CMB-06</code>)</strong></td>
+        <td><span class="param-val"><code class="inline-code">威力 14 / CD 0.58s / 射程 180px (MAX_TARGET_RANGE) / 初期 1発 / 基礎弾速 460px/s</code></span></td>
+        <td><code class="inline-code">DMG・秒・px・発・px/s</code></td>
+        <td><div class="note-text">初期装備ゼロから戦え、見えている索敵範囲内の敵にそのまま攻撃でき、兵装（<code class="inline-code">arms</code>）スキル投資でのみ伸びるメイン武器基盤にするため（DEC-03, DEC-12）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#NG-06">NG-06</a><a class="ref-pill ref-link" href="#NG-07">NG-07</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1050-L1068</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#NG-06">NG-06</a><a class="ref-pill ref-link" href="#NG-07">NG-07</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1097-L1122</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-17" data-source-file="specs/parameters.md" data-item-id="PRM-17" title="元仕様ファイル specs/parameters.md (PRM-17)">specs/parameters.md#PRM-17</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1832,13 +1832,13 @@
       <tr id="PRM-18" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-18" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-18">PRM-18</a></td>
         <td><span class="cat-pill">戦闘</span></td>
-        <td><strong>コアショットSP成長係数・弾速（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">威力+1.8/SP / CD短縮0.015s/SP (上限0.24s, 最小CD 0.24s) / 射程+3px/SP / 弾速 460+min(180, 8×SP)</code></span></td>
-        <td><code class="inline-code">係数・秒・px・px/s</code></td>
-        <td><div class="note-text">SP投資総量に応じたスケーリングのバランス調整用係数（プレイテスト後にConfirmed昇格検討）</div></td>
+        <td><strong>メイン武器 <code class="inline-code">arms</code> 専用スケーリング・最小CD（AI仮数値）</strong></td>
+        <td><span class="param-val"><code class="inline-code">総SP連動廃止（0） / 最小CD 0.24s / arm_parallel追加弾数(+1/+1/+2/+2/+3発)・威力補正(+0/+6/+6/+14/+20%) / arm_overclock最小CD倍率 0.60・弾速+25..155・Lv1+貫通</code></span></td>
+        <td><code class="inline-code">秒・発・%・px/s</code></td>
+        <td><div class="note-text">総SPとの二重乗算インフレを排し、兵装スキル特化時のみメイン武器が伸びるバランス用係数（プレイテスト後にConfirmed昇格検討）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1053-L1067</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L136-L141</code>, <code class="inline-code">src/game/engine.ts#L1097-L1122</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-18" data-source-file="specs/parameters.md" data-item-id="PRM-18" title="元仕様ファイル specs/parameters.md (PRM-18)">specs/parameters.md#PRM-18</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1899,16 +1899,16 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="PRM-23" class="spec-row" data-section="parameters" data-status="Confirmed" data-item-id="PRM-23" data-source-file="specs/parameters.md">
+      <tr id="PRM-23" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-23" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-23">PRM-23</a></td>
         <td><span class="cat-pill">スキル</span></td>
         <td><strong>各スキルノードLv1〜5効果量 (<code class="inline-code">APP-GRW-02</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">arm_base(+8/16/24/42/68%) / arm_parallel(+1/1/2/3/4機, +32/52%@4-5) / arm_overclock(-6/12/18/28/40%) / def_sensor(+8/16/24/38/55%) / def_pulse(12/16/20/32/48, CD2.5/1.8s@4-5) / def_aegis(24/32/40/64/96, CD4.0/2.8s@4-5) / mob_magnet(吸引+22/44/66/160%@5, 回復+10/20/30/50/75%) / mob_dash(40/46/52/66/84px, 無敵1.30/1.65s@4-5) / mob_loot(宝+8/16/24/40/60%, EXP+8/16/24/42/68%)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">arm_base(+10/20/30/45/65%) / arm_parallel(+1/1/2/2/3発, +0/6/6/14/20%) / arm_overclock(-6/12/18/26/35%) / def_sensor(+8/16/24/38/55%) / def_pulse(6/8/10/14/18, CD4.2/3.9/3.6/3.2/2.8s) / def_aegis(16/20/24/34/46, CD8.0/7.2/6.5/5.5/4.5s) / mob_magnet(吸引+22/44/66/105/160%, 回復+10/20/30/50/75%) / mob_loot(宝+10/20/30/45/65%, 品質+1..5, EXP+8/16/24/42/68%) / mob_dash(44/52/60/74/90px, 無敵0.85/0.95/1.05/1.25/1.50s, 2.5s加速+16/20/24/30/38%)</code></span></td>
         <td><code class="inline-code">%・px・秒・DMG</code></td>
-        <td><div class="note-text">Lv4〜5の大幅な性能ジャンプにより、高SP投資による一点突破のリターンを体感させるため（BIZ-GRW-05, DEC-03）</div></td>
-        <td><span class="badge badge-confirmed-ai">確定 (AI提案)</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L143-L163</code></div><div class="source-cell">
+        <td><div class="note-text">兵装をメイン武器特化・防衛を緊急防衛寄り・探索機動を「回収→トレジャー解析→戦術ステップ」順に再編し、スキル無双を抑えつつビルド特色を出すため（数値はAI仮提案）</div></td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L135-L162</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-23" data-source-file="specs/parameters.md" data-item-id="PRM-23" title="元仕様ファイル specs/parameters.md (PRM-23)">specs/parameters.md#PRM-23</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1916,13 +1916,13 @@
       <tr id="PRM-24" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-24" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-24">PRM-24</a></td>
         <td><span class="cat-pill">スキル</span></td>
-        <td><strong>スキル補助テーブル・希少ドロップ加算</strong></td>
-        <td><span class="param-val"><code class="inline-code">arm_overclock最小倍率 0.55 / 弾速+20..150 / arm_parallel Lv1-3威力+6/12/18% / mob_lootドロップ加算 0.2/0.4/0.6/1.1/1.8%</code></span></td>
-        <td><code class="inline-code">倍率・%・px/s</code></td>
-        <td><div class="note-text"><code class="inline-code">skillTree.ts</code> 実値に仕様書（<code class="inline-code">APP-GRW-07</code>）を同期し、Lv4〜5の希少ドロップ加算を急上昇させるため（数値はAI仮提案）</div></td>
+        <td><strong>トレジャー解析（<code class="inline-code">mob_loot</code>）ドロップ率・品質補正テーブル</strong></td>
+        <td><span class="param-val"><code class="inline-code">ドロップ率加算 +0.5/1.0/1.5/2.3/3.5% / 品質Tier +1/+2/+3/+4/+5（Tier毎にM-1確率 -4%・M+1確率 +3.6%・M+2確率 +2.4%） / 戦術ステップ加速持続 2.5s</code></span></td>
+        <td><code class="inline-code">%・Tier・秒</code></td>
+        <td><div class="note-text">Tier 2へ繰り上げた <code class="inline-code">mob_loot</code> でサブ装備収集の率と質を押し上げ、Tier 3 <code class="inline-code">mob_dash</code> の全被弾対応＋一時加速で締められるようにするため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-07">OQ-07</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L145-L162,L219</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L151-L162</code>, <code class="inline-code">src/game/engine.ts#L897-L920</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-24" data-source-file="specs/parameters.md" data-item-id="PRM-24" title="元仕様ファイル specs/parameters.md (PRM-24)">specs/parameters.md#PRM-24</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1931,12 +1931,12 @@
         <td><a class="id-pill id-doc" href="#PRM-25">PRM-25</a></td>
         <td><span class="cat-pill">戦闘</span></td>
         <td><strong>ドロップ装備レベル抽選確率 (<code class="inline-code">APP-GRW-07</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">20%: max(1, M-1) / 50%: M / 22%: M+1 / 8%: M+2</code></span></td>
+        <td><span class="param-val"><code class="inline-code">基礎(Tier0): 20%: max(1, M-1) / 50%: M / 22%: M+1 / 8%: M+2（mob_loot Lv5時: 0% / 40% / 40% / 20%）</code></span></td>
         <td><code class="inline-code">確率</code></td>
-        <td><div class="note-text">所持最低Lvに合わせつつ高レベル装備の上振れも狙えるようにするため（BIZ-GRW-07, DEC-04）</div></td>
+        <td><div class="note-text">所持最低Lvを基準としつつ、<code class="inline-code">mob_loot</code>（ドロップ品質上昇）への投資で低Lv引きを減らし高Lv上振れを狙えるようにするため（BIZ-GRW-07, DEC-04, DEC-12）</div></td>
         <td><span class="badge badge-confirmed-ai">確定 (AI提案)</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L856-L870</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L897-L920</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-25" data-source-file="specs/parameters.md" data-item-id="PRM-25" title="元仕様ファイル specs/parameters.md (PRM-25)">specs/parameters.md#PRM-25</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2057,7 +2057,7 @@
     </div>
     <div class="formula-charts-grid" id="formulaChartsGrid">
       
-      <div class="formula-chart-card" data-chart-id="chart-exp-curve" data-chart-payload="{&quot;id&quot;:&quot;chart-exp-curve&quot;,&quot;formulaIds&quot;:[&quot;FML-01&quot;],&quot;paramRefs&quot;:[&quot;PRM-04&quot;],&quot;title&quot;:&quot;必要経験値カーブ（FML-01）&quot;,&quot;formulaExpr&quot;:&quot;expToNext(1) = PRM-04[初期=25], expToNext(Lv) = round(expToNext(Lv-1) × PRM-04[倍率=1.22])&quot;,&quot;xLabel&quot;:&quot;Lv&quot;,&quot;series&quot;:[{&quot;key&quot;:&quot;expToNext&quot;,&quot;label&quot;:&quot;次Lv必要EXP&quot;,&quot;color&quot;:&quot;#38bdf8&quot;,&quot;unit&quot;:&quot;EXP&quot;},{&quot;key&quot;:&quot;cumExp&quot;,&quot;label&quot;:&quot;累積EXP&quot;,&quot;color&quot;:&quot;#a78bfa&quot;,&quot;unit&quot;:&quot;EXP&quot;}],&quot;columns&quot;:[{&quot;key&quot;:&quot;lv&quot;,&quot;label&quot;:&quot;Lv&quot;},{&quot;key&quot;:&quot;expToNext&quot;,&quot;label&quot;:&quot;次Lv必要EXP&quot;},{&quot;key&quot;:&quot;cumExp&quot;,&quot;label&quot;:&quot;累積EXP&quot;}],&quot;rows&quot;:[{&quot;lv&quot;:1,&quot;expToNext&quot;:25,&quot;cumExp&quot;:0},{&quot;lv&quot;:2,&quot;expToNext&quot;:31,&quot;cumExp&quot;:25},{&quot;lv&quot;:3,&quot;expToNext&quot;:38,&quot;cumExp&quot;:56},{&quot;lv&quot;:4,&quot;expToNext&quot;:46,&quot;cumExp&quot;:94},{&quot;lv&quot;:5,&quot;expToNext&quot;:56,&quot;cumExp&quot;:140},{&quot;lv&quot;:6,&quot;expToNext&quot;:68,&quot;cumExp&quot;:196},{&quot;lv&quot;:7,&quot;expToNext&quot;:83,&quot;cumExp&quot;:264},{&quot;lv&quot;:8,&quot;expToNext&quot;:101,&quot;cumExp&quot;:347},{&quot;lv&quot;:9,&quot;expToNext&quot;:123,&quot;cumExp&quot;:448},{&quot;lv&quot;:10,&quot;expToNext&quot;:150,&quot;cumExp&quot;:571},{&quot;lv&quot;:11,&quot;expToNext&quot;:183,&quot;cumExp&quot;:721},{&quot;lv&quot;:12,&quot;expToNext&quot;:223,&quot;cumExp&quot;:904},{&quot;lv&quot;:13,&quot;expToNext&quot;:272,&quot;cumExp&quot;:1127},{&quot;lv&quot;:14,&quot;expToNext&quot;:332,&quot;cumExp&quot;:1399},{&quot;lv&quot;:15,&quot;expToNext&quot;:405,&quot;cumExp&quot;:1731}]}">
+      <div class="formula-chart-card" data-chart-id="chart-exp-curve" data-chart-payload="{&quot;id&quot;:&quot;chart-exp-curve&quot;,&quot;formulaIds&quot;:[&quot;FML-01&quot;],&quot;paramRefs&quot;:[&quot;PRM-04&quot;],&quot;title&quot;:&quot;必要経験値カーブ（FML-01）&quot;,&quot;formulaExpr&quot;:&quot;expToNext(1) = PRM-04[初期=25], expToNext(Lv) = round(expToNext(Lv-1) × PRM-04[倍率=1.22])&quot;,&quot;xLabel&quot;:&quot;lv&quot;,&quot;series&quot;:[{&quot;key&quot;:&quot;expToNext&quot;,&quot;label&quot;:&quot;次Lv必要EXP&quot;,&quot;color&quot;:&quot;#38bdf8&quot;,&quot;unit&quot;:&quot;EXP&quot;},{&quot;key&quot;:&quot;cumExp&quot;,&quot;label&quot;:&quot;累積EXP&quot;,&quot;color&quot;:&quot;#a78bfa&quot;,&quot;unit&quot;:&quot;EXP&quot;}],&quot;columns&quot;:[{&quot;key&quot;:&quot;lv&quot;,&quot;label&quot;:&quot;Lv&quot;},{&quot;key&quot;:&quot;expToNext&quot;,&quot;label&quot;:&quot;次Lv必要EXP&quot;},{&quot;key&quot;:&quot;cumExp&quot;,&quot;label&quot;:&quot;累積EXP&quot;}],&quot;rows&quot;:[{&quot;lv&quot;:1,&quot;expToNext&quot;:25,&quot;cumExp&quot;:0},{&quot;lv&quot;:2,&quot;expToNext&quot;:31,&quot;cumExp&quot;:25},{&quot;lv&quot;:3,&quot;expToNext&quot;:38,&quot;cumExp&quot;:56},{&quot;lv&quot;:4,&quot;expToNext&quot;:46,&quot;cumExp&quot;:94},{&quot;lv&quot;:5,&quot;expToNext&quot;:56,&quot;cumExp&quot;:140},{&quot;lv&quot;:6,&quot;expToNext&quot;:68,&quot;cumExp&quot;:196},{&quot;lv&quot;:7,&quot;expToNext&quot;:83,&quot;cumExp&quot;:264},{&quot;lv&quot;:8,&quot;expToNext&quot;:101,&quot;cumExp&quot;:347},{&quot;lv&quot;:9,&quot;expToNext&quot;:123,&quot;cumExp&quot;:448},{&quot;lv&quot;:10,&quot;expToNext&quot;:150,&quot;cumExp&quot;:571},{&quot;lv&quot;:11,&quot;expToNext&quot;:183,&quot;cumExp&quot;:721},{&quot;lv&quot;:12,&quot;expToNext&quot;:223,&quot;cumExp&quot;:904},{&quot;lv&quot;:13,&quot;expToNext&quot;:272,&quot;cumExp&quot;:1127},{&quot;lv&quot;:14,&quot;expToNext&quot;:332,&quot;cumExp&quot;:1399},{&quot;lv&quot;:15,&quot;expToNext&quot;:405,&quot;cumExp&quot;:1731}]}">
         <div class="formula-chart-head">
           <div>
             <h3>📈 必要経験値カーブ（FML-01）</h3>
@@ -2078,14 +2078,14 @@
           </table>
         </div>
       </div>
-      <div class="formula-chart-card" data-chart-id="chart-core-shot" data-chart-payload="{&quot;id&quot;:&quot;chart-core-shot&quot;,&quot;formulaIds&quot;:[&quot;FML-03&quot;,&quot;FML-04&quot;,&quot;FML-05&quot;],&quot;paramRefs&quot;:[&quot;PRM-06&quot;,&quot;PRM-17&quot;,&quot;PRM-18&quot;],&quot;title&quot;:&quot;基本攻撃（コアショット）SP連動成長（FML-03〜05・スキル補正なし基礎値）&quot;,&quot;formulaExpr&quot;:&quot;威力=round(PRM-17[12] + SP×PRM-18[1.8]), CD=max(PRM-18[0.24], PRM-17[0.62] - min(PRM-18[0.24], SP×PRM-18[0.015])), 射程=min(PRM-06[180], PRM-17[180] + SP×PRM-18[3]), 発射数=閾値[3,7,12]&quot;,&quot;xLabel&quot;:&quot;spentSp&quot;,&quot;series&quot;:[{&quot;key&quot;:&quot;dps&quot;,&quot;label&quot;:&quot;理論総DPS (DMG/s)&quot;,&quot;color&quot;:&quot;#34d399&quot;,&quot;unit&quot;:&quot;DMG/s&quot;},{&quot;key&quot;:&quot;range&quot;,&quot;label&quot;:&quot;射程 (px)&quot;,&quot;color&quot;:&quot;#fbbf24&quot;,&quot;unit&quot;:&quot;px&quot;}],&quot;columns&quot;:[{&quot;key&quot;:&quot;sp&quot;,&quot;label&quot;:&quot;使用SP&quot;},{&quot;key&quot;:&quot;damage&quot;,&quot;label&quot;:&quot;1発威力&quot;},{&quot;key&quot;:&quot;shotCount&quot;,&quot;label&quot;:&quot;発射数&quot;},{&quot;key&quot;:&quot;cooldown&quot;,&quot;label&quot;:&quot;CD(秒)&quot;},{&quot;key&quot;:&quot;range&quot;,&quot;label&quot;:&quot;射程(px)&quot;},{&quot;key&quot;:&quot;dps&quot;,&quot;label&quot;:&quot;理論DPS&quot;}],&quot;rows&quot;:[{&quot;sp&quot;:0,&quot;damage&quot;:12,&quot;cooldown&quot;:0.62,&quot;range&quot;:180,&quot;shotCount&quot;:1,&quot;dps&quot;:19.4},{&quot;sp&quot;:1,&quot;damage&quot;:14,&quot;cooldown&quot;:0.605,&quot;range&quot;:180,&quot;shotCount&quot;:1,&quot;dps&quot;:23.1},{&quot;sp&quot;:2,&quot;damage&quot;:16,&quot;cooldown&quot;:0.59,&quot;range&quot;:180,&quot;shotCount&quot;:1,&quot;dps&quot;:27.1},{&quot;sp&quot;:3,&quot;damage&quot;:17,&quot;cooldown&quot;:0.575,&quot;range&quot;:180,&quot;shotCount&quot;:2,&quot;dps&quot;:59.1},{&quot;sp&quot;:5,&quot;damage&quot;:21,&quot;cooldown&quot;:0.545,&quot;range&quot;:180,&quot;shotCount&quot;:2,&quot;dps&quot;:77.1},{&quot;sp&quot;:7,&quot;damage&quot;:25,&quot;cooldown&quot;:0.515,&quot;range&quot;:180,&quot;shotCount&quot;:3,&quot;dps&quot;:145.6},{&quot;sp&quot;:9,&quot;damage&quot;:28,&quot;cooldown&quot;:0.485,&quot;range&quot;:180,&quot;shotCount&quot;:3,&quot;dps&quot;:173.2},{&quot;sp&quot;:12,&quot;damage&quot;:34,&quot;cooldown&quot;:0.44,&quot;range&quot;:180,&quot;shotCount&quot;:4,&quot;dps&quot;:309.1},{&quot;sp&quot;:14,&quot;damage&quot;:37,&quot;cooldown&quot;:0.41,&quot;range&quot;:180,&quot;shotCount&quot;:4,&quot;dps&quot;:361},{&quot;sp&quot;:16,&quot;damage&quot;:41,&quot;cooldown&quot;:0.38,&quot;range&quot;:180,&quot;shotCount&quot;:4,&quot;dps&quot;:431.6}]}">
+      <div class="formula-chart-card" data-chart-id="chart-core-shot" data-chart-payload="{&quot;id&quot;:&quot;chart-core-shot&quot;,&quot;formulaIds&quot;:[&quot;FML-03&quot;,&quot;FML-04&quot;,&quot;FML-05&quot;],&quot;paramRefs&quot;:[&quot;PRM-06&quot;,&quot;PRM-17&quot;,&quot;PRM-18&quot;,&quot;PRM-23&quot;],&quot;title&quot;:&quot;メイン武器（コアショット）兵装スキル連動成長（FML-03〜05・総SP連動廃止）&quot;,&quot;formulaExpr&quot;:&quot;威力=round(PRM-17[14]×(1+PRM-23[arm_base])×(1+PRM-18[parallel])), CD=max(PRM-18[0.24], PRM-17[0.58]×max(0.6, 1-PRM-23[arm_overclock])), 射程=min(PRM-06[180], PRM-17[180]×(1+PRM-23[def_sensor]))&quot;,&quot;xLabel&quot;:&quot;lv&quot;,&quot;series&quot;:[{&quot;key&quot;:&quot;dps&quot;,&quot;label&quot;:&quot;理論総DPS (DMG/s)&quot;,&quot;color&quot;:&quot;#34d399&quot;,&quot;unit&quot;:&quot;DMG/s&quot;},{&quot;key&quot;:&quot;damage&quot;,&quot;label&quot;:&quot;1発威力 (DMG)&quot;,&quot;color&quot;:&quot;#fbbf24&quot;,&quot;unit&quot;:&quot;DMG&quot;}],&quot;columns&quot;:[{&quot;key&quot;:&quot;lv&quot;,&quot;label&quot;:&quot;兵装Lv&quot;},{&quot;key&quot;:&quot;damage&quot;,&quot;label&quot;:&quot;1発威力&quot;},{&quot;key&quot;:&quot;shotCount&quot;,&quot;label&quot;:&quot;発射数&quot;},{&quot;key&quot;:&quot;cooldown&quot;,&quot;label&quot;:&quot;CD(秒)&quot;},{&quot;key&quot;:&quot;range&quot;,&quot;label&quot;:&quot;射程(px)&quot;},{&quot;key&quot;:&quot;dps&quot;,&quot;label&quot;:&quot;理論DPS&quot;}],&quot;rows&quot;:[{&quot;lv&quot;:0,&quot;damage&quot;:14,&quot;cooldown&quot;:0.58,&quot;range&quot;:180,&quot;shotCount&quot;:1,&quot;dps&quot;:24.1},{&quot;lv&quot;:1,&quot;damage&quot;:15,&quot;cooldown&quot;:0.545,&quot;range&quot;:180,&quot;shotCount&quot;:2,&quot;dps&quot;:55},{&quot;lv&quot;:2,&quot;damage&quot;:18,&quot;cooldown&quot;:0.51,&quot;range&quot;:180,&quot;shotCount&quot;:2,&quot;dps&quot;:70.6},{&quot;lv&quot;:3,&quot;damage&quot;:19,&quot;cooldown&quot;:0.476,&quot;range&quot;:180,&quot;shotCount&quot;:3,&quot;dps&quot;:119.7},{&quot;lv&quot;:4,&quot;damage&quot;:23,&quot;cooldown&quot;:0.429,&quot;range&quot;:180,&quot;shotCount&quot;:3,&quot;dps&quot;:160.8},{&quot;lv&quot;:5,&quot;damage&quot;:28,&quot;cooldown&quot;:0.377,&quot;range&quot;:180,&quot;shotCount&quot;:4,&quot;dps&quot;:297.1}]}">
         <div class="formula-chart-head">
           <div>
-            <h3>📈 基本攻撃（コアショット）SP連動成長（FML-03〜05・スキル補正なし基礎値）</h3>
-            <div class="sub-code">威力=round(PRM-17[12] + SP×PRM-18[1.8]), CD=max(PRM-18[0.24], PRM-17[0.62] - min(PRM-18[0.24], SP×PRM-18[0.015])), 射程=min(PRM-06[180], PRM-17[180] + SP×PRM-18[3]), 発射数=閾値[3,7,12]</div>
+            <h3>📈 メイン武器（コアショット）兵装スキル連動成長（FML-03〜05・総SP連動廃止）</h3>
+            <div class="sub-code">威力=round(PRM-17[14]×(1+PRM-23[arm_base])×(1+PRM-18[parallel])), CD=max(PRM-18[0.24], PRM-17[0.58]×max(0.6, 1-PRM-23[arm_overclock])), 射程=min(PRM-06[180], PRM-17[180]×(1+PRM-23[def_sensor]))</div>
             <div class="ref-list" style="margin-top:6px;">
               <a class="id-pill id-doc" href="#FML-03">FML-03</a><a class="id-pill id-doc" href="#FML-04">FML-04</a><a class="id-pill id-doc" href="#FML-05">FML-05</a>
-              <a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a>
+              <a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a>
             </div>
           </div>
           <button type="button" class="mini-btn toggle-formula-table-btn" data-target-chart="chart-core-shot">式・数表表示切替</button>
@@ -2094,12 +2094,12 @@
         <div class="formula-chart-canvas hidden" data-chart-canvas-for="chart-core-shot"></div>
         <div class="formula-fallback-wrap" data-chart-fallback-for="chart-core-shot">
           <table class="doc-table formula-fallback-table">
-            <thead><tr><th>使用SP</th><th>1発威力</th><th>発射数</th><th>CD(秒)</th><th>射程(px)</th><th>理論DPS</th></tr></thead>
-            <tbody><tr><td><code>0</code></td><td><code>12</code></td><td><code>1</code></td><td><code>0.62</code></td><td><code>180</code></td><td><code>19.4</code></td></tr><tr><td><code>1</code></td><td><code>14</code></td><td><code>1</code></td><td><code>0.605</code></td><td><code>180</code></td><td><code>23.1</code></td></tr><tr><td><code>2</code></td><td><code>16</code></td><td><code>1</code></td><td><code>0.59</code></td><td><code>180</code></td><td><code>27.1</code></td></tr><tr><td><code>3</code></td><td><code>17</code></td><td><code>2</code></td><td><code>0.575</code></td><td><code>180</code></td><td><code>59.1</code></td></tr><tr><td><code>5</code></td><td><code>21</code></td><td><code>2</code></td><td><code>0.545</code></td><td><code>180</code></td><td><code>77.1</code></td></tr><tr><td><code>7</code></td><td><code>25</code></td><td><code>3</code></td><td><code>0.515</code></td><td><code>180</code></td><td><code>145.6</code></td></tr><tr><td><code>9</code></td><td><code>28</code></td><td><code>3</code></td><td><code>0.485</code></td><td><code>180</code></td><td><code>173.2</code></td></tr><tr><td><code>12</code></td><td><code>34</code></td><td><code>4</code></td><td><code>0.44</code></td><td><code>180</code></td><td><code>309.1</code></td></tr><tr><td><code>14</code></td><td><code>37</code></td><td><code>4</code></td><td><code>0.41</code></td><td><code>180</code></td><td><code>361</code></td></tr><tr><td><code>16</code></td><td><code>41</code></td><td><code>4</code></td><td><code>0.38</code></td><td><code>180</code></td><td><code>431.6</code></td></tr></tbody>
+            <thead><tr><th>兵装Lv</th><th>1発威力</th><th>発射数</th><th>CD(秒)</th><th>射程(px)</th><th>理論DPS</th></tr></thead>
+            <tbody><tr><td><code>0</code></td><td><code>14</code></td><td><code>1</code></td><td><code>0.58</code></td><td><code>180</code></td><td><code>24.1</code></td></tr><tr><td><code>1</code></td><td><code>15</code></td><td><code>2</code></td><td><code>0.545</code></td><td><code>180</code></td><td><code>55</code></td></tr><tr><td><code>2</code></td><td><code>18</code></td><td><code>2</code></td><td><code>0.51</code></td><td><code>180</code></td><td><code>70.6</code></td></tr><tr><td><code>3</code></td><td><code>19</code></td><td><code>3</code></td><td><code>0.476</code></td><td><code>180</code></td><td><code>119.7</code></td></tr><tr><td><code>4</code></td><td><code>23</code></td><td><code>3</code></td><td><code>0.429</code></td><td><code>180</code></td><td><code>160.8</code></td></tr><tr><td><code>5</code></td><td><code>28</code></td><td><code>4</code></td><td><code>0.377</code></td><td><code>180</code></td><td><code>297.1</code></td></tr></tbody>
           </table>
         </div>
       </div>
-      <div class="formula-chart-card" data-chart-id="chart-skill-curve" data-chart-payload="{&quot;id&quot;:&quot;chart-skill-curve&quot;,&quot;formulaIds&quot;:[&quot;FML-02&quot;,&quot;FML-12&quot;],&quot;paramRefs&quot;:[&quot;PRM-09&quot;,&quot;PRM-10&quot;,&quot;PRM-23&quot;],&quot;title&quot;:&quot;スキルLv4〜5急上昇カーブと累積SP（FML-02 / FML-12）&quot;,&quot;formulaExpr&quot;:&quot;必要SP=PRM-09[Lv1-3:1 / Lv4:2 / Lv5:3], 最大Lv=PRM-10[5], 成長率=PRM-23&quot;,&quot;xLabel&quot;:&quot;lv&quot;,&quot;series&quot;:[{&quot;key&quot;:&quot;armBasePct&quot;,&quot;label&quot;:&quot;出力強化 威力+%&quot;,&quot;color&quot;:&quot;#f87171&quot;,&quot;unit&quot;:&quot;%&quot;},{&quot;key&quot;:&quot;defSensorPct&quot;,&quot;label&quot;:&quot;広域索敵 射程+%&quot;,&quot;color&quot;:&quot;#38bdf8&quot;,&quot;unit&quot;:&quot;%&quot;},{&quot;key&quot;:&quot;armOverclockPct&quot;,&quot;label&quot;:&quot;OC CD短縮%&quot;,&quot;color&quot;:&quot;#fbbf24&quot;,&quot;unit&quot;:&quot;%&quot;}],&quot;columns&quot;:[{&quot;key&quot;:&quot;lv&quot;,&quot;label&quot;:&quot;Lv&quot;},{&quot;key&quot;:&quot;stepCost&quot;,&quot;label&quot;:&quot;必要SP&quot;},{&quot;key&quot;:&quot;cumSp&quot;,&quot;label&quot;:&quot;累積SP&quot;},{&quot;key&quot;:&quot;armBasePct&quot;,&quot;label&quot;:&quot;威力+%&quot;},{&quot;key&quot;:&quot;defSensorPct&quot;,&quot;label&quot;:&quot;射程+%&quot;},{&quot;key&quot;:&quot;armOverclockPct&quot;,&quot;label&quot;:&quot;CD短縮%&quot;},{&quot;key&quot;:&quot;mobLootExpPct&quot;,&quot;label&quot;:&quot;EXP+%&quot;}],&quot;rows&quot;:[{&quot;lv&quot;:0,&quot;stepCost&quot;:0,&quot;cumSp&quot;:0,&quot;armBasePct&quot;:0,&quot;armOverclockPct&quot;:0,&quot;defSensorPct&quot;:0,&quot;mobLootExpPct&quot;:0},{&quot;lv&quot;:1,&quot;stepCost&quot;:1,&quot;cumSp&quot;:1,&quot;armBasePct&quot;:8,&quot;armOverclockPct&quot;:6,&quot;defSensorPct&quot;:8,&quot;mobLootExpPct&quot;:8},{&quot;lv&quot;:2,&quot;stepCost&quot;:1,&quot;cumSp&quot;:2,&quot;armBasePct&quot;:16,&quot;armOverclockPct&quot;:12,&quot;defSensorPct&quot;:16,&quot;mobLootExpPct&quot;:16},{&quot;lv&quot;:3,&quot;stepCost&quot;:1,&quot;cumSp&quot;:3,&quot;armBasePct&quot;:24,&quot;armOverclockPct&quot;:18,&quot;defSensorPct&quot;:24,&quot;mobLootExpPct&quot;:24},{&quot;lv&quot;:4,&quot;stepCost&quot;:2,&quot;cumSp&quot;:5,&quot;armBasePct&quot;:42,&quot;armOverclockPct&quot;:28,&quot;defSensorPct&quot;:38,&quot;mobLootExpPct&quot;:42},{&quot;lv&quot;:5,&quot;stepCost&quot;:3,&quot;cumSp&quot;:8,&quot;armBasePct&quot;:68,&quot;armOverclockPct&quot;:40,&quot;defSensorPct&quot;:55,&quot;mobLootExpPct&quot;:68}]}">
+      <div class="formula-chart-card" data-chart-id="chart-skill-curve" data-chart-payload="{&quot;id&quot;:&quot;chart-skill-curve&quot;,&quot;formulaIds&quot;:[&quot;FML-02&quot;,&quot;FML-12&quot;],&quot;paramRefs&quot;:[&quot;PRM-09&quot;,&quot;PRM-10&quot;,&quot;PRM-23&quot;],&quot;title&quot;:&quot;スキルLv4〜5急上昇カーブと累積SP（FML-02 / FML-12）&quot;,&quot;formulaExpr&quot;:&quot;必要SP=PRM-09[Lv1-3:1 / Lv4:2 / Lv5:3], 最大Lv=PRM-10[5], 成長率=PRM-23&quot;,&quot;xLabel&quot;:&quot;lv&quot;,&quot;series&quot;:[{&quot;key&quot;:&quot;armBasePct&quot;,&quot;label&quot;:&quot;出力強化 威力+%&quot;,&quot;color&quot;:&quot;#f87171&quot;,&quot;unit&quot;:&quot;%&quot;},{&quot;key&quot;:&quot;defSensorPct&quot;,&quot;label&quot;:&quot;広域索敵 射程+%&quot;,&quot;color&quot;:&quot;#38bdf8&quot;,&quot;unit&quot;:&quot;%&quot;},{&quot;key&quot;:&quot;armOverclockPct&quot;,&quot;label&quot;:&quot;OC CD短縮%&quot;,&quot;color&quot;:&quot;#fbbf24&quot;,&quot;unit&quot;:&quot;%&quot;}],&quot;columns&quot;:[{&quot;key&quot;:&quot;lv&quot;,&quot;label&quot;:&quot;Lv&quot;},{&quot;key&quot;:&quot;stepCost&quot;,&quot;label&quot;:&quot;必要SP&quot;},{&quot;key&quot;:&quot;cumSp&quot;,&quot;label&quot;:&quot;累積SP&quot;},{&quot;key&quot;:&quot;armBasePct&quot;,&quot;label&quot;:&quot;威力+%&quot;},{&quot;key&quot;:&quot;defSensorPct&quot;,&quot;label&quot;:&quot;射程+%&quot;},{&quot;key&quot;:&quot;armOverclockPct&quot;,&quot;label&quot;:&quot;CD短縮%&quot;},{&quot;key&quot;:&quot;mobLootExpPct&quot;,&quot;label&quot;:&quot;EXP+%&quot;}],&quot;rows&quot;:[{&quot;lv&quot;:0,&quot;stepCost&quot;:0,&quot;cumSp&quot;:0,&quot;armBasePct&quot;:0,&quot;armOverclockPct&quot;:0,&quot;defSensorPct&quot;:0,&quot;mobLootExpPct&quot;:0},{&quot;lv&quot;:1,&quot;stepCost&quot;:1,&quot;cumSp&quot;:1,&quot;armBasePct&quot;:10,&quot;armOverclockPct&quot;:6,&quot;defSensorPct&quot;:8,&quot;mobLootExpPct&quot;:8},{&quot;lv&quot;:2,&quot;stepCost&quot;:1,&quot;cumSp&quot;:2,&quot;armBasePct&quot;:20,&quot;armOverclockPct&quot;:12,&quot;defSensorPct&quot;:16,&quot;mobLootExpPct&quot;:16},{&quot;lv&quot;:3,&quot;stepCost&quot;:1,&quot;cumSp&quot;:3,&quot;armBasePct&quot;:30,&quot;armOverclockPct&quot;:18,&quot;defSensorPct&quot;:24,&quot;mobLootExpPct&quot;:24},{&quot;lv&quot;:4,&quot;stepCost&quot;:2,&quot;cumSp&quot;:5,&quot;armBasePct&quot;:45,&quot;armOverclockPct&quot;:26,&quot;defSensorPct&quot;:38,&quot;mobLootExpPct&quot;:42},{&quot;lv&quot;:5,&quot;stepCost&quot;:3,&quot;cumSp&quot;:8,&quot;armBasePct&quot;:65,&quot;armOverclockPct&quot;:35,&quot;defSensorPct&quot;:55,&quot;mobLootExpPct&quot;:68}]}">
         <div class="formula-chart-head">
           <div>
             <h3>📈 スキルLv4〜5急上昇カーブと累積SP（FML-02 / FML-12）</h3>
@@ -2116,7 +2116,7 @@
         <div class="formula-fallback-wrap" data-chart-fallback-for="chart-skill-curve">
           <table class="doc-table formula-fallback-table">
             <thead><tr><th>Lv</th><th>必要SP</th><th>累積SP</th><th>威力+%</th><th>射程+%</th><th>CD短縮%</th><th>EXP+%</th></tr></thead>
-            <tbody><tr><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td></tr><tr><td><code>1</code></td><td><code>1</code></td><td><code>1</code></td><td><code>8</code></td><td><code>8</code></td><td><code>6</code></td><td><code>8</code></td></tr><tr><td><code>2</code></td><td><code>1</code></td><td><code>2</code></td><td><code>16</code></td><td><code>16</code></td><td><code>12</code></td><td><code>16</code></td></tr><tr><td><code>3</code></td><td><code>1</code></td><td><code>3</code></td><td><code>24</code></td><td><code>24</code></td><td><code>18</code></td><td><code>24</code></td></tr><tr><td><code>4</code></td><td><code>2</code></td><td><code>5</code></td><td><code>42</code></td><td><code>38</code></td><td><code>28</code></td><td><code>42</code></td></tr><tr><td><code>5</code></td><td><code>3</code></td><td><code>8</code></td><td><code>68</code></td><td><code>55</code></td><td><code>40</code></td><td><code>68</code></td></tr></tbody>
+            <tbody><tr><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td><td><code>0</code></td></tr><tr><td><code>1</code></td><td><code>1</code></td><td><code>1</code></td><td><code>10</code></td><td><code>8</code></td><td><code>6</code></td><td><code>8</code></td></tr><tr><td><code>2</code></td><td><code>1</code></td><td><code>2</code></td><td><code>20</code></td><td><code>16</code></td><td><code>12</code></td><td><code>16</code></td></tr><tr><td><code>3</code></td><td><code>1</code></td><td><code>3</code></td><td><code>30</code></td><td><code>24</code></td><td><code>18</code></td><td><code>24</code></td></tr><tr><td><code>4</code></td><td><code>2</code></td><td><code>5</code></td><td><code>45</code></td><td><code>38</code></td><td><code>26</code></td><td><code>42</code></td></tr><tr><td><code>5</code></td><td><code>3</code></td><td><code>8</code></td><td><code>65</code></td><td><code>55</code></td><td><code>35</code></td><td><code>68</code></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2155,78 +2155,78 @@
       </tr>
       <tr id="FML-03" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-03" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-03">FML-03</a></td>
-        <td><strong>基本攻撃（コアショット）威力</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">round((PRM-17[基礎威力] + spentSp * PRM-18[SP威力係数]) * (1 + PRM-23[arm_base(Lv)]))</code></div></td>
-        <td><code class="inline-code">spentSp</code>（使用済みSP総量）, <code class="inline-code">arm_base Lv</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
+        <td><strong>メイン武器（コアショット）威力</strong></td>
+        <td><div class="formula-expr"><code class="inline-code">round(PRM-17[基礎威力] * (1 + PRM-23[arm_base(Lv)]) * (1 + PRM-18[arm_parallel威力補正(Lv)]))</code></div></td>
+        <td><code class="inline-code">arm_base Lv</code>, <code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">1発ダメージ (DMG)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L871</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1097-L1122</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-03" data-source-file="specs/formulas.md" data-item-id="FML-03" title="元仕様ファイル specs/formulas.md (FML-03)">specs/formulas.md#FML-03</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
       <tr id="FML-04" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-04" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-04">FML-04</a></td>
-        <td><strong>基本攻撃（コアショット）攻撃間隔 (<code class="inline-code">cooldown</code>)</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">max(PRM-18[最小CD], (PRM-17[基礎CD] - min(PRM-18[SP短縮上限], spentSp * PRM-18[SP短縮/SP])) * max(PRM-24[CD倍率下限], 1 - PRM-23[arm_overclock(Lv)]))</code></div></td>
-        <td><code class="inline-code">spentSp</code>, <code class="inline-code">arm_overclock Lv</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code>, <code class="inline-code">PRM-24</code></td>
+        <td><strong>メイン武器（コアショット）攻撃間隔 (<code class="inline-code">cooldown</code>)</strong></td>
+        <td><div class="formula-expr"><code class="inline-code">max(PRM-18[最小CD], PRM-17[基礎CD] * max(PRM-18[CD倍率下限=0.60], 1 - PRM-23[arm_overclock(Lv)]))</code></div></td>
+        <td><code class="inline-code">arm_overclock Lv</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">攻撃間隔 (秒)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L872-L875, src/game/skillTree.ts#L219</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1104</code>, <code class="inline-code">src/game/skillTree.ts#L208</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-04" data-source-file="specs/formulas.md" data-item-id="FML-04" title="元仕様ファイル specs/formulas.md (FML-04)">specs/formulas.md#FML-04</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
       <tr id="FML-05" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-05" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-05">FML-05</a></td>
-        <td><strong>基本攻撃（コアショット）射程・発射数・弾速</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">range = min(PRM-06, round((PRM-17[基礎射程] + spentSp * PRM-18[SP射程係数]) * (1 + PRM-23[def_sensor(Lv)])))</code> / <code class="inline-code">shotCount = min(PRM-17[最大発射数], 1 + [spentSp &gt;= PRM-17[閾値1]] + [spentSp &gt;= PRM-17[閾値2]] + [spentSp &gt;= PRM-17[閾値3]])</code> / <code class="inline-code">speed = PRM-18[基礎弾速] + min(PRM-18[弾速加算上限], spentSp * PRM-18[SP弾速係数])</code></div></td>
-        <td><code class="inline-code">spentSp</code>, <code class="inline-code">def_sensor Lv</code>, <code class="inline-code">PRM-06</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
+        <td><strong>メイン武器（コアショット）射程・発射数・弾速</strong></td>
+        <td><div class="formula-expr"><code class="inline-code">range = min(PRM-06, round(PRM-17[基礎射程] * (1 + PRM-23[def_sensor(Lv)])))</code> / <code class="inline-code">shotCount = 1 + PRM-18[arm_parallel追加発射数(Lv)]</code> / <code class="inline-code">speed = PRM-17[基礎弾速] + PRM-18[弾速加算(Lv)]</code></div></td>
+        <td><code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">arm_overclock Lv</code>, <code class="inline-code">def_sensor Lv</code>, <code class="inline-code">PRM-06</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">射程 (px)</code> / <code class="inline-code">発射数 (発)</code> / <code class="inline-code">弾速 (px/s)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L876-L885</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1105-L1108</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-05" data-source-file="specs/formulas.md" data-item-id="FML-05" title="元仕様ファイル specs/formulas.md (FML-05)">specs/formulas.md#FML-05</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
       <tr id="FML-06" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-06" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-06">FML-06</a></td>
-        <td><strong>装備ダメージ・実効クールダウン</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">lv = clamp(1, PRM-13[上限10], itemLv)</code> とし、<code class="inline-code">dmg = PRM-20[基礎威力] * (1 + (lv - 1) * PRM-22[Lv威力倍率]) * (1 + PRM-23[arm_base(Lv)]) * (1 + PRM-24[arm_parallel威力(Lv)])</code> / <code class="inline-code">cd = PRM-20[基礎CD] * max(PRM-22[CD倍率下限=0.55], 1 - (lv - 1) * PRM-22[LvCD短縮]) * max(PRM-24[CD倍率下限], 1 - PRM-23[arm_overclock(Lv)])</code></div></td>
-        <td><code class="inline-code">equipmentId</code>, <code class="inline-code">itemLv</code>, <code class="inline-code">arm_base Lv</code>, <code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">arm_overclock Lv</code>, <code class="inline-code">PRM-13</code>, <code class="inline-code">PRM-20</code>, <code class="inline-code">PRM-22</code>, <code class="inline-code">PRM-23</code>, <code class="inline-code">PRM-24</code></td>
+        <td><strong>サブ装備ダメージ・実効クールダウン</strong></td>
+        <td><div class="formula-expr"><code class="inline-code">lv = clamp(1, PRM-13[上限10], itemLv)</code> とし、<code class="inline-code">dmg = PRM-20[基礎威力] * (1 + (lv - 1) * PRM-22[Lv威力倍率])</code> / <code class="inline-code">cd = PRM-20[基礎CD] * max(PRM-22[CD倍率下限=0.55], 1 - (lv - 1) * PRM-22[LvCD短縮])</code></div></td>
+        <td><code class="inline-code">equipmentId</code>, <code class="inline-code">itemLv</code>, <code class="inline-code">PRM-13</code>, <code class="inline-code">PRM-20</code>, <code class="inline-code">PRM-22</code></td>
         <td><code class="inline-code">装備ダメージ (DMG)</code> / <code class="inline-code">発動間隔 (秒)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L108-L117, src/game/engine.ts#L1267-L1270</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L113-L122</code>, <code class="inline-code">src/game/engine.ts#L1367-L1368</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-06" data-source-file="specs/formulas.md" data-item-id="FML-06" title="元仕様ファイル specs/formulas.md (FML-06)">specs/formulas.md#FML-06</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
       <tr id="FML-07" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-07" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-07">FML-07</a></td>
-        <td><strong>装備別2段階進化式（Lv1-6展開 / Lv7-10能力特化）</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">lv = clamp(1, PRM-13, itemLv)</code>, <code class="inline-code">evo = min(6, lv)</code>: <code class="inline-code">orbit</code>: <code class="inline-code">bits = min(6, evo) + PRM-23[追加展開]</code>, <code class="inline-code">r = min(PRM-06*0.68, (PRM-19[orbit基礎]+(evo-1)*2+max(0,lv-6)*4)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">ω = PRM-22[clamp(1.6,5.2, 5.0/bits^0.55)]</code>, 内側敵速度 <code class="inline-code">×PRM-19[0.86]</code> / <code class="inline-code">blade</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[blade基礎]+(evo-1)*10+max(0,lv-6)*14)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">halfArc = PRM-21[1.00+(evo-1)*0.06]</code>, <code class="inline-code">thickness = PRM-21[34+evo*2]</code> (扇形維持＋敵弾反射) / <code class="inline-code">drone</code>: <code class="inline-code">count = min(4, 1+floor(evo/2))+PRM-23[追加展開]</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[drone基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code> / <code class="inline-code">coil</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[coil基礎]+(evo-1)*12+max(0,lv-6)*16)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">targets = 2+evo</code> / <code class="inline-code">disc</code>: <code class="inline-code">count = 1</code>, <code class="inline-code">bounces = 1+evo</code>, <code class="inline-code">wallBounces = 3</code>, <code class="inline-code">turnRate = 7.5+(lv-1)*0.5</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[disc基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">speed = PRM-22[disc初速]+(lv-1)*PRM-22[disc速度増分]</code> (対象不在時1周<code class="inline-code">2π</code>再ヒット)</div></td>
-        <td><code class="inline-code">equipmentId</code>, <code class="inline-code">itemLv</code>, <code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">def_sensor Lv</code>, <code class="inline-code">PRM-06</code>, <code class="inline-code">PRM-13</code>, <code class="inline-code">PRM-19</code>, <code class="inline-code">PRM-21</code>, <code class="inline-code">PRM-22</code>, <code class="inline-code">PRM-23</code></td>
+        <td><strong>サブ装備2段階進化式（Lv1-6展開 / Lv7-10能力特化）</strong></td>
+        <td><div class="formula-expr"><code class="inline-code">lv = clamp(1, PRM-13, itemLv)</code>, <code class="inline-code">evo = min(6, lv)</code>: <code class="inline-code">orbit</code>: <code class="inline-code">bits = min(6, evo)</code>, <code class="inline-code">r = min(PRM-06*0.68, (PRM-19[orbit基礎]+(evo-1)*2+max(0,lv-6)*4)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">ω = PRM-22[clamp(1.6,5.2, 5.0/bits^0.55)]</code>, 内側敵速度 <code class="inline-code">×PRM-19[0.86]</code> / <code class="inline-code">blade</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[blade基礎]+(evo-1)*10+max(0,lv-6)*14)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">halfArc = PRM-21[1.00+(evo-1)*0.06]</code>, <code class="inline-code">thickness = PRM-21[34+evo*2]</code> (扇形維持＋敵弾反射) / <code class="inline-code">drone</code>: <code class="inline-code">count = min(4, 1+floor(evo/2))</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[drone基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code> / <code class="inline-code">coil</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[coil基礎]+(evo-1)*12+max(0,lv-6)*16)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">targets = 2+evo</code> / <code class="inline-code">disc</code>: <code class="inline-code">count = 1</code>, <code class="inline-code">bounces = 1+evo</code>, <code class="inline-code">wallBounces = 3</code>, <code class="inline-code">turnRate = 7.5+(lv-1)*0.5</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[disc基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">speed = PRM-22[disc初速]+(lv-1)*PRM-22[disc速度増分]</code> (対象不在時1周<code class="inline-code">2π</code>再ヒット)</div></td>
+        <td><code class="inline-code">equipmentId</code>, <code class="inline-code">itemLv</code>, <code class="inline-code">def_sensor Lv</code>, <code class="inline-code">PRM-06</code>, <code class="inline-code">PRM-13</code>, <code class="inline-code">PRM-19</code>, <code class="inline-code">PRM-21</code>, <code class="inline-code">PRM-22</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">展開数 (個/機/枚)</code> / <code class="inline-code">射程・半径 (px)</code> / <code class="inline-code">角速度・連鎖・跳弾</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L125-L210, src/game/engine.ts#L1310-L1660</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L125-L210</code>, <code class="inline-code">src/game/engine.ts#L1350-L1535</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-07" data-source-file="specs/formulas.md" data-item-id="FML-07" title="元仕様ファイル specs/formulas.md (FML-07)">specs/formulas.md#FML-07</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
       <tr id="FML-08" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-08" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-08">FML-08</a></td>
-        <td><strong>ドロップ装備レベル抽選期待値</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">M = min(所持装備Lv) (未所持時 1)</code> とし、<code class="inline-code">E[Lv] = PRM-25[p_-1] * max(1, M - 1) + PRM-25[p_0] * M + PRM-25[p_+1] * (M + 1) + PRM-25[p_+2] * (M + 2)</code></div></td>
-        <td><code class="inline-code">M</code>（所持最低装備Lv）, <code class="inline-code">PRM-07</code>, <code class="inline-code">PRM-25</code></td>
+        <td><strong>ドロップ装備レベル抽選期待値 (<code class="inline-code">mob_loot</code> 品質補正)</strong></td>
+        <td><div class="formula-expr"><code class="inline-code">M = min(所持装備Lv) (未所持時 1)</code>, <code class="inline-code">t = PRM-24[dropQualityTier]</code>, <code class="inline-code">p_-1 = max(0, 0.20 - 0.04*t)</code>, <code class="inline-code">p_+1 = 0.22 + 0.036*t</code>, <code class="inline-code">p_+2 = 0.08 + 0.024*t</code>, <code class="inline-code">p_0 = 1 - p_-1 - p_+1 - p_+2</code> とし、<code class="inline-code">E[Lv] = p_-1 * max(1, M - 1) + p_0 * M + p_+1 * (M + 1) + p_+2 * (M + 2)</code></div></td>
+        <td><code class="inline-code">M</code>（所持最低装備Lv）, <code class="inline-code">t</code>（<code class="inline-code">mob_loot</code> Lv）, <code class="inline-code">PRM-07</code>, <code class="inline-code">PRM-24</code>, <code class="inline-code">PRM-25</code></td>
         <td><code class="inline-code">期待ドロップLv (Lv)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L856-L870</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L897-L920</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-08" data-source-file="specs/formulas.md" data-item-id="FML-08" title="元仕様ファイル specs/formulas.md (FML-08)">specs/formulas.md#FML-08</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2689,10 +2689,10 @@
       </tr>
       <tr id="OQ-07" class="spec-row" data-section="open-questions" data-status="Confirmed" data-item-id="OQ-07" data-source-file="specs/open-questions.md">
         <td><a class="id-pill id-doc" href="#OQ-07">OQ-07</a></td>
-        <td><strong><code class="inline-code">mob_loot</code>（トレジャー解析）の装備ドロップ率加算値の仕様書と実装の同期</strong></td>
+        <td><strong><code class="inline-code">mob_loot</code>（トレジャー解析）の装備ドロップ率・品質補正値の仕様書と実装の同期</strong></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
-        <td><div class="note-text"><code class="inline-code">APP-GRW-07</code> と <code class="inline-code">PRM-24</code> を <code class="inline-code">skillTree.ts</code> の段階値（<code class="inline-code">0.2/0.4/0.6/1.1/1.8%</code>）へ同期し解消済み</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a></div></td>
+        <td><div class="note-text"><code class="inline-code">APP-GRW-07</code> と <code class="inline-code">PRM-24</code> を <code class="inline-code">skillTree.ts</code> の段階値（<code class="inline-code">+0.5/1.0/1.5/2.3/3.5%</code>・品質Tier <code class="inline-code">+1..+5</code>）へ同期し解消済み</div></td>
         <td><div class="note-text">解消済み（数値自体のチューニングは <code class="inline-code">OQ-06</code> に統合）</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-07" data-source-file="specs/open-questions.md" data-item-id="OQ-07" title="元仕様ファイル specs/open-questions.md (OQ-07)">specs/open-questions.md#OQ-07</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/open-questions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2744,8 +2744,8 @@
       </tr>
       <tr id="NG-02" class="spec-row" data-section="non-goals" data-status="Confirmed" data-item-id="NG-02" data-source-file="specs/non-goals.md">
         <td><a class="id-pill id-doc" href="#NG-02">NG-02</a></td>
-        <td><strong>移動速度強化スキルの実装</strong></td>
-        <td><div class="note-text">スキルで移動速度を補う前提をなくし、最初から標準移動速度（<code class="inline-code">baseSpeed</code>）で快適な回避テンポを保証するため（<code class="inline-code">DEC-02</code>）</div></td>
+        <td><strong>常時の移動速度強化スキルの実装</strong></td>
+        <td><div class="note-text">スキルで移動速度を補う前提をなくし、最初から標準移動速度（<code class="inline-code">baseSpeed</code>）で快適な回避テンポを保証するため（<code class="inline-code">DEC-02</code>。被弾時の2.5秒一時加速バフは除く）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-02">DEC-02</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#PRM-01">PRM-01</a></div><div class="source-cell">
     <a class="source-link" href="../specs/non-goals.md#NG-02" data-source-file="specs/non-goals.md" data-item-id="NG-02" title="元仕様ファイル specs/non-goals.md (NG-02)">specs/non-goals.md#NG-02</a>
@@ -2785,9 +2785,9 @@
       <tr id="NG-06" class="spec-row" data-section="non-goals" data-status="Confirmed" data-item-id="NG-06" data-source-file="specs/non-goals.md">
         <td><a class="id-pill id-doc" href="#NG-06">NG-06</a></td>
         <td><strong>プレイヤーレベル数値単体による自機基本攻撃の強化</strong></td>
-        <td><div class="note-text">レベル数値だけの自動強化を避け、スキルへのSP投資総量に応じた強化でビルド選択を際立たせるため（<code class="inline-code">DEC-03</code>, <code class="inline-code">BIZ-CMB-06</code>）</div></td>
+        <td><div class="note-text">レベル数値だけの自動強化を避け、兵装（<code class="inline-code">arms</code>）スキルへのSP投資に応じた強化でビルド選択を際立たせるため（<code class="inline-code">DEC-03</code>, <code class="inline-code">DEC-12</code>, <code class="inline-code">BIZ-CMB-06</code>）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a></div><div class="source-cell">
     <a class="source-link" href="../specs/non-goals.md#NG-06" data-source-file="specs/non-goals.md" data-item-id="NG-06" title="元仕様ファイル specs/non-goals.md (NG-06)">specs/non-goals.md#NG-06</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/non-goals.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2861,7 +2861,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(11件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(12件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -2992,6 +2992,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#ST-11">ST-11</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
         <td><div class="note-text">再プレイテストで新規数値（Inferred）の手触りを検証する時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-11" data-source-file="specs/decisions.md" data-item-id="DEC-11" title="元仕様ファイル specs/decisions.md (DEC-11)">specs/decisions.md#DEC-11</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-12" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-12" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-12">DEC-12</a></td>
+        <td><span class="date-pill">2026-11-15</span><div class="sub-code">先輩</div></td>
+        <td><strong>メイン武器（コアショット）分離とスキルツリー再編（Issue #2 / #3）：(1) 総SP (<code class="inline-code">spentSkillPoints</code>) 連動を廃止し、コアショットを「初期値＋兵装（<code class="inline-code">arms</code>）スキル専用」のメイン武器へ整理 (2) サブ装備5系統から <code class="inline-code">arms</code> スキルによる威力・CD・展開数インフレを外し、装備Lv＋広域索敵（<code class="inline-code">def_sensor</code> 射程）のみでスケール (3) 防衛（<code class="inline-code">def_pulse</code> / <code class="inline-code">def_aegis</code>）の無敵・自動火力過多を抑制 (4) 探索・機動を「磁力回収 → トレジャー解析（品質・ドロップ率UP追加） → 戦術ステップ（全被弾対応＋発動後2.5秒一時加速）」の順へ再配置</strong><div class="note-text">二重乗算インフレと「スキルだけで勝てる」状態を解消し、「メイン武器特化」と「探索で高品質なサブ装備を固める」ビルドの棲み分けを明確にするため（AI決定の調整数値はInferred）</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed → Confirmed (方針再編) / Inferred (AI数値)</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a></div></td>
+        <td><div class="note-text">武器枠レベル制（Issue #8）やメイン武器種差し替え実装・プレイテスト時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-12" data-source-file="specs/decisions.md" data-item-id="DEC-12" title="元仕様ファイル specs/decisions.md (DEC-12)">specs/decisions.md#DEC-12</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>

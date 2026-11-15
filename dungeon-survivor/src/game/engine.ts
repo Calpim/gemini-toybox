@@ -39,11 +39,13 @@ import {
   type EquippedItem,
 } from './equipment';
 import {
+  TACTICAL_SPEED_BOOST_DURATION,
   canUpgradeSkill,
   computeSkillModifiers,
   getSkillLevel,
   getSkillNode,
   getSkillUpgradeCost,
+  type ComputedSkillModifiers,
   type SkillNodeId,
 } from './skillTree';
 import type {
@@ -52,6 +54,7 @@ import type {
   EnemyState,
   GameNotification,
   GameState,
+  MainWeaponId,
   PickupState,
   PlayerState,
   Vec2,
@@ -547,6 +550,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       skillPoints: 0,
       spentSkillPoints: 0,
       skillLevels: {},
+      mainWeaponId: 'core_shot',
       equipment: [],
       maxEquipSlots: MAX_EQUIP_SLOTS,
       scrapExpandProgress: 0,
@@ -558,6 +562,8 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       repulsorCooldown: 0,
       aegisCooldown: 0,
       tacticalStepCooldown: 0,
+      tacticalSpeedTimer: 0,
+      tacticalSpeedBonus: 0,
     },
     enemies: populated.enemies,
     projectiles: [],
@@ -858,7 +864,7 @@ export function getOrbitBitPositions(state: GameState): Vec2[] {
   if (!orbitItem) return [];
 
   const mods = computeSkillModifiers(player.skillLevels);
-  const count = getOrbitBitCount(orbitItem.level, mods.extraBits);
+  const count = getOrbitBitCount(orbitItem.level);
   const radius = getOrbitShieldRadius(orbitItem.level, mods.rangeMult);
 
   const positions: Vec2[] = [];
@@ -877,8 +883,7 @@ export function getSeekerDronePositions(state: GameState): Vec2[] {
   const droneItem = player.equipment.find((e) => e.id === 'seeker_drone');
   if (!droneItem) return [];
 
-  const mods = computeSkillModifiers(player.skillLevels);
-  const count = getSeekerDroneCount(droneItem.level, mods.extraBits);
+  const count = getSeekerDroneCount(droneItem.level);
   const positions: Vec2[] = [];
   for (let i = 0; i < count; i++) {
     const a = -player.orbitAngle * 1.4 + (i * Math.PI * 2) / count;
@@ -892,24 +897,31 @@ export function getSeekerDronePositions(state: GameState): Vec2[] {
 
 export function rollDropEquipmentLevel(
   equipment: readonly EquippedItem[],
-  rngNext: () => number
+  rngNext: () => number,
+  dropQualityTier = 0
 ): number {
   if (equipment.length === 0) return 1;
   let minLevel = Infinity;
   for (const item of equipment) {
     if (item.level < minLevel) minLevel = item.level;
   }
+  const tier = Math.max(0, Math.min(5, dropQualityTier));
+  const pMinus1 = Math.max(0, 0.2 - tier * 0.04);
+  const pPlus1 = 0.22 + tier * 0.036;
+  const pPlus2 = 0.08 + tier * 0.024;
+  const pZero = Math.max(0, 1 - pMinus1 - pPlus1 - pPlus2);
   const r = rngNext();
-  if (r < 0.2) return clampEquipmentLevel(minLevel - 1);
-  if (r < 0.7) return clampEquipmentLevel(minLevel);
-  if (r < 0.92) return clampEquipmentLevel(minLevel + 1);
+  if (r < pMinus1) return clampEquipmentLevel(minLevel - 1);
+  if (r < pMinus1 + pZero) return clampEquipmentLevel(minLevel);
+  if (r < pMinus1 + pZero + pPlus1) return clampEquipmentLevel(minLevel + 1);
   return clampEquipmentLevel(minLevel + 2);
 }
 
 function pickChestDrop(state: GameState, chestId: number): { id: EquipmentId; level: number } {
   const rng = createRng((state.seed ^ (state.floor * 4999) ^ (chestId * 3571)) >>> 0);
   const id = rng.pick(ALL_EQUIPMENT_IDS);
-  const level = rollDropEquipmentLevel(state.player.equipment, () => rng.next());
+  const mods = computeSkillModifiers(state.player.skillLevels);
+  const level = rollDropEquipmentLevel(state.player.equipment, () => rng.next(), mods.dropQualityTier);
   return { id, level };
 }
 
@@ -1076,32 +1088,78 @@ function findBfsSteerTarget(
 }
 
 export interface PlayerBaseAttackStats {
+  weaponId: MainWeaponId;
   damage: number;
   cooldown: number;
   range: number;
   shotCount: number;
   speed: number;
+  pierce: boolean;
   spentSp: number;
 }
 
 export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackStats {
   const mods = computeSkillModifiers(player.skillLevels);
-  const spentSp = player.spentSkillPoints;
-  const damage = Math.round((12 + spentSp * 1.8) * mods.damageMult);
-  const cooldown = Math.max(
-    0.24,
-    (0.62 - Math.min(0.24, spentSp * 0.015)) * mods.cooldownMult
-  );
-  const range = Math.min(
-    MAX_TARGET_RANGE,
-    Math.round((MAX_TARGET_RANGE + spentSp * 3) * mods.rangeMult)
-  );
-  const shotCount = Math.min(
-    4,
-    1 + (spentSp >= 3 ? 1 : 0) + (spentSp >= 7 ? 1 : 0) + (spentSp >= 12 ? 1 : 0)
-  );
-  const speed = 460 + Math.min(180, spentSp * 8);
-  return { damage, cooldown, range, shotCount, speed, spentSp };
+  const weaponId: MainWeaponId = player.mainWeaponId ?? 'core_shot';
+  const baseDamage = 14;
+  const baseCooldown = 0.58;
+  const baseSpeed = 460;
+  const damage = Math.round(baseDamage * mods.mainDamageMult * mods.mainParallelDamageMult);
+  const cooldown = Math.max(0.24, baseCooldown * mods.mainCooldownMult);
+  const range = Math.min(MAX_TARGET_RANGE, Math.round(MAX_TARGET_RANGE * mods.rangeMult));
+  const shotCount = 1 + mods.mainExtraShots;
+  const speed = baseSpeed + mods.mainSpeedBonus;
+  return {
+    weaponId,
+    damage,
+    cooldown,
+    range,
+    shotCount,
+    speed,
+    pierce: mods.piercingMainShot,
+    spentSp: player.spentSkillPoints,
+  };
+}
+
+export const getMainWeaponStats = getPlayerBaseAttackStats;
+
+function applyTacticalStepOnHit(
+  state: GameState,
+  mods: ComputedSkillModifiers,
+  sourceX: number,
+  sourceY: number,
+  defaultInvuln = 0.5
+): void {
+  const { player, map } = state;
+  if (mods.hasTacticalStep && player.tacticalStepCooldown <= 0) {
+    player.tacticalStepCooldown = mods.tacticalStepCooldown;
+    player.invulnTimer = mods.tacticalInvulnDuration;
+    player.tacticalSpeedTimer = TACTICAL_SPEED_BOOST_DURATION;
+    player.tacticalSpeedBonus = mods.tacticalSpeedBonus;
+    const dx = player.x - sourceX;
+    const dy = player.y - sourceY;
+    const awayLen = Math.hypot(dx, dy);
+    const dirX = awayLen > 1e-4 ? dx / awayLen : -Math.cos(player.facingAngle);
+    const dirY = awayLen > 1e-4 ? dy / awayLen : -Math.sin(player.facingAngle);
+    const stepped = resolveCircleGridCollision(
+      player.x + dirX * mods.tacticalStepDist,
+      player.y + dirY * mods.tacticalStepDist,
+      player.radius,
+      map
+    );
+    player.x = stepped.x;
+    player.y = stepped.y;
+    state.floatingTexts.push({
+      x: player.x,
+      y: player.y - 22,
+      text: 'STEP!',
+      color: '#38bdf8',
+      life: 0.65,
+      maxLife: 0.65,
+    });
+  } else {
+    player.invulnTimer = defaultInvuln;
+  }
 }
 
 /**
@@ -1131,12 +1189,20 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   if (player.repulsorCooldown > 0) player.repulsorCooldown = Math.max(0, player.repulsorCooldown - clampedDt);
   if (player.aegisCooldown > 0) player.aegisCooldown = Math.max(0, player.aegisCooldown - clampedDt);
   if (player.tacticalStepCooldown > 0) player.tacticalStepCooldown = Math.max(0, player.tacticalStepCooldown - clampedDt);
+  if ((player.tacticalSpeedTimer ?? 0) > 0) {
+    player.tacticalSpeedTimer = Math.max(0, (player.tacticalSpeedTimer ?? 0) - clampedDt);
+    if (player.tacticalSpeedTimer <= 0) {
+      player.tacticalSpeedBonus = 0;
+    }
+  }
   if ((state.stairsNoticeCooldown ?? 0) > 0) {
     state.stairsNoticeCooldown = Math.max(0, (state.stairsNoticeCooldown ?? 0) - clampedDt);
   }
 
   // 1. Player movement & smooth wall collision (APP-MAP-02)
-  const moveSpeed = player.baseSpeed;
+  const activeSpeedBonus =
+    (player.tacticalSpeedTimer ?? 0) > 0 ? (player.tacticalSpeedBonus ?? 0) : 0;
+  const moveSpeed = player.baseSpeed * (1 + activeSpeedBonus);
   const inputMag = Math.hypot(rawInput.x, rawInput.y);
   if (inputMag > 1e-4) {
     const scale = inputMag > 1 ? 1 / inputMag : 1;
@@ -1237,7 +1303,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           e.x = pushed.x;
           e.y = pushed.y;
         }
-        damageEnemy(state, e, mods.repulsorDamage * mods.damageMult);
+        damageEnemy(state, e, mods.repulsorDamage);
       }
       state.visualFx.push({
         kind: 'pulse',
@@ -1248,11 +1314,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         life: 0.25,
         maxLife: 0.25,
       });
-      player.repulsorCooldown = mods.repulsorCooldown * mods.cooldownMult;
+      player.repulsorCooldown = mods.repulsorCooldown;
     }
   }
 
-  // 4.5. Player intrinsic Core Shot auto-attack (scales with player.level & skillRank; APP-CMB-01, APP-CMB-06)
+  // 4.5. Player intrinsic Main Weapon auto-attack (Core Shot; scales via arms skills, APP-CMB-01, APP-CMB-06)
   if (player.baseAttackCooldown <= 0 && state.enemies.length > 0) {
     const baseStats = getPlayerBaseAttackStats(player);
     const target = findNearestVisibleEnemy(player.x, player.y, baseStats.range, state);
@@ -1269,21 +1335,21 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           y: player.y,
           vx: Math.cos(angle) * baseStats.speed,
           vy: Math.sin(angle) * baseStats.speed,
-          radius: 5,
+          radius: baseStats.pierce ? 6 : 5,
           damage: baseStats.damage,
           life: 0.75,
-          pierce: false,
+          pierce: baseStats.pierce,
           hitEnemyIds: [],
-          color: '#34d399',
+          color: baseStats.pierce ? '#2dd4bf' : '#34d399',
         });
       }
       player.baseAttackCooldown = baseStats.cooldown;
     }
   }
 
-  // 5. Equipment parallel execution & per-level evolutions (APP-CMB-01, APP-CMB-02, APP-CMB-05)
+  // 5. Sub-equipment parallel execution & per-level evolutions (APP-CMB-01, APP-CMB-02, APP-CMB-05)
   const orbitItem = player.equipment.find((e) => e.id === 'orbit_shield');
-  const orbitCount = orbitItem ? getOrbitBitCount(orbitItem.level, mods.extraBits) : 0;
+  const orbitCount = orbitItem ? getOrbitBitCount(orbitItem.level) : 0;
   const orbitAngularSpeed = orbitItem ? getOrbitShieldAngularSpeed(orbitCount) : 2.4;
   if (orbitItem) {
     player.orbitRadius = getOrbitShieldRadius(orbitItem.level, mods.rangeMult);
@@ -1302,10 +1368,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     if (item.cooldown > 0) continue;
 
-    const rawDmg = getEquipmentDamage(item, mods.damageMult);
-    const dmg =
-      item.id === 'seeker_drone' ? rawDmg * mods.bitDroneDamageMult : rawDmg;
-    const cdMult = mods.cooldownMult * getEquipmentCooldownMultiplier(item.level);
+    const dmg = getEquipmentDamage(item, 1);
+    const cdMult = getEquipmentCooldownMultiplier(item.level);
 
     if (item.id === 'pulse_blade') {
       const blade = getPulseBladeStats(item.level, def.baseRange, mods.rangeMult);
@@ -1407,10 +1471,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         for (let dIdx = 0; dIdx < dronesToFire; dIdx++) {
           const origin = seekerDrones[(droneCursor + dIdx) % Math.max(1, seekerDrones.length)] ?? player;
           const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
-          const speed =
-            (mods.piercingDrones ? 480 : 430) +
-            mods.droneSpeedBonus +
-            (item.level - 1) * 18;
+          const speed = 430 + (item.level - 1) * 18;
           state.projectiles.push({
             id: state.nextEntityId++,
             kind: 'drone',
@@ -1418,12 +1479,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             y: origin.y,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
-            radius: mods.piercingDrones ? 6 : 5,
+            radius: 5,
             damage: dmg,
             life: 0.85,
-            pierce: mods.piercingDrones,
+            pierce: false,
             hitEnemyIds: [],
-            color: mods.piercingDrones ? '#22d3ee' : '#7dd3fc',
+            color: '#7dd3fc',
           });
         }
         droneCursor++;
@@ -1467,9 +1528,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   // 7. Orbit Shield Bits & enemy projectile update (including homing steering & wall bounce)
   const bits = getOrbitBitPositions(state);
-  const orbitDmg = orbitItem
-    ? getEquipmentDamage(orbitItem, mods.damageMult) * mods.bitDroneDamageMult
-    : 0;
+  const orbitDmg = orbitItem ? getEquipmentDamage(orbitItem, 1) : 0;
 
   for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
     const ep = state.enemyProjectiles[i];
@@ -1798,11 +1857,15 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             itemLevel,
           });
         } else {
-          // Low-probability enemy equipment drop (1.5% base) scaled to player's lowest equipment level (APP-GRW-07)
+          // Low-probability enemy equipment drop (1.5% base + mob_loot bonus) scaled to player's lowest equipment level & drop quality (APP-GRW-07)
           const equipDropChance = 0.015 + mods.equipDropBonus;
           if (rng.next() < equipDropChance) {
             const eqId = rng.pick(ALL_EQUIPMENT_IDS);
-            const itemLevel = rollDropEquipmentLevel(player.equipment, () => rng.next());
+            const itemLevel = rollDropEquipmentLevel(
+              player.equipment,
+              () => rng.next(),
+              mods.dropQualityTier
+            );
             state.pickups.push({
               id: state.nextEntityId++,
               kind: 'equip',
@@ -2284,7 +2347,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       if (mods.hasAegisParry && player.aegisCooldown <= 0) {
         player.aegisCooldown = mods.aegisCooldown;
         player.invulnTimer = 0.6;
-        damageEnemy(state, enemy, mods.aegisDamage * mods.damageMult);
+        damageEnemy(state, enemy, mods.aegisDamage);
         state.visualFx.push({
           kind: 'pulse',
           x: player.x,
@@ -2306,21 +2369,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
 
       player.hp = Math.max(0, player.hp - enemy.damage);
-      if (mods.hasTacticalStep && player.tacticalStepCooldown <= 0) {
-        player.tacticalStepCooldown = mods.tacticalStepCooldown;
-        player.invulnTimer = mods.tacticalInvulnDuration;
-        const awayLen = Math.max(1, Math.hypot(player.x - enemy.x, player.y - enemy.y));
-        const stepped = resolveCircleGridCollision(
-          player.x + ((player.x - enemy.x) / awayLen) * mods.tacticalStepDist,
-          player.y + ((player.y - enemy.y) / awayLen) * mods.tacticalStepDist,
-          player.radius,
-          map
-        );
-        player.x = stepped.x;
-        player.y = stepped.y;
-      } else {
-        player.invulnTimer = 0.55;
-      }
 
       // Trigger reactive coil counter immediately on hit if equipped
       const coil = player.equipment.find((e) => e.id === 'reactive_coil');
@@ -2335,7 +2383,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           player.x,
           player.y,
           Math.min(MAX_TARGET_RANGE, coilStats.range),
-          getEquipmentDamage(coil, mods.damageMult),
+          getEquipmentDamage(coil, 1),
           coilStats.maxTargets
         );
       }
@@ -2353,6 +2401,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         state.status = 'gameover';
         return;
       }
+      applyTacticalStepOnHit(state, mods, enemy.x, enemy.y, 0.55);
     }
   }
 
@@ -2381,7 +2430,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         });
       } else {
         player.hp = Math.max(0, player.hp - ep.damage);
-        player.invulnTimer = 0.5;
         state.floatingTexts.push({
           x: player.x,
           y: player.y - player.radius - 6,
@@ -2394,6 +2442,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           state.status = 'gameover';
           return;
         }
+        applyTacticalStepOnHit(state, mods, ep.x, ep.y, 0.5);
       }
     }
   }
@@ -2431,7 +2480,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           });
         } else {
           player.hp = Math.max(0, player.hp - zone.damage);
-          player.invulnTimer = 0.5;
           state.floatingTexts.push({
             x: player.x,
             y: player.y - player.radius - 6,
@@ -2444,6 +2492,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             state.status = 'gameover';
             return;
           }
+          applyTacticalStepOnHit(state, mods, zone.targetX, zone.targetY, 0.5);
         }
       }
     }

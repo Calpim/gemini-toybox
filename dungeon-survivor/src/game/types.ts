@@ -9,6 +9,8 @@ export interface Vec2 {
   y: number;
 }
 
+export type MainWeaponId = 'core_shot';
+
 export interface PlayerState {
   x: number;
   y: number;
@@ -24,6 +26,7 @@ export interface PlayerState {
   skillPoints: number;
   spentSkillPoints: number;
   skillLevels: Partial<Record<SkillNodeId, number>>;
+  mainWeaponId?: MainWeaponId;
   equipment: EquippedItem[];
   maxEquipSlots: number;
   scrapExpandProgress: number;
@@ -35,6 +38,8 @@ export interface PlayerState {
   repulsorCooldown: number;
   aegisCooldown: number;
   tacticalStepCooldown: number;
+  tacticalSpeedTimer?: number;
+  tacticalSpeedBonus?: number;
 }
 
 export type EnemyKind = 'normal' | 'tank' | 'runner' | 'shooter' | 'scout';

@@ -43,15 +43,15 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '出力強化',
     requires: null,
-    description: '全攻撃ダメージ強化（Lv1〜3: +8%/Lv → Lv4: +42% / Lv5: +68%）',
+    description: 'メイン武器ダメージ強化（Lv1〜3: +10%/Lv → Lv4: +45% / Lv5: +65%）',
   },
   {
     id: 'arm_parallel',
     branch: 'arms',
     tier: 2,
-    name: 'ビット並列制御',
+    name: '並列射出',
     requires: 'arm_base',
-    description: 'ビット・ドローン展開数増 & 威力UP（Lv4〜5で展開+3/+4 & 威力大幅増）',
+    description: 'メイン武器の同時発射数増 & 威力補正（Lv1:+1発 → Lv3:+2発 → Lv5:+3発 & +20%）',
   },
   {
     id: 'arm_overclock',
@@ -59,7 +59,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    description: 'CD短縮 & 弾速UP + ドローン貫通（Lv4: CD-28% / Lv5: CD-40%）',
+    description: 'メイン武器CD短縮 & 弾速UP + 貫通（Lv4: CD-26% / Lv5: CD-35%）',
   },
   {
     id: 'def_sensor',
@@ -67,7 +67,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '広域索敵',
     requires: null,
-    description: '迎撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px）',
+    description: '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px）',
   },
   {
     id: 'def_pulse',
@@ -75,7 +75,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 2,
     name: '電磁リパルサー',
     requires: 'def_sensor',
-    description: '接近敵を周期ノックバック（Lv4〜5で高威力・高回転＆広範囲）',
+    description: '接近敵を緊急ノックバック（低威力・長めCDで危機回避寄り）',
   },
   {
     id: 'def_aegis',
@@ -83,7 +83,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オートパリィ盾',
     requires: 'def_pulse',
-    description: '被弾無効パリィ＋反射（Lv4〜5で高反射・短CD）',
+    description: '被弾無効パリィ＋小反撃（CD 8.0s→4.5s、保険の緊急防御）',
   },
   {
     id: 'mob_magnet',
@@ -94,20 +94,20 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     description: '吸引範囲＆回復オーブ強化（Lv4: 回復+50% / Lv5: 吸引+160% & 回復+75%）',
   },
   {
-    id: 'mob_dash',
-    branch: 'mobility',
-    tier: 2,
-    name: '戦術ステップ',
-    requires: 'mob_magnet',
-    description: '被弾時の無敵延長＆回避距離（Lv4〜5で大幅延長＆CD半減級）',
-  },
-  {
     id: 'mob_loot',
     branch: 'mobility',
-    tier: 3,
+    tier: 2,
     name: 'トレジャー解析',
-    requires: 'mob_dash',
-    description: '宝箱・装備ドロップ・EXP強化（Lv4: EXP+42% / Lv5: EXP+68% & 希少率UP）',
+    requires: 'mob_magnet',
+    description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（サブ装備固めの要）',
+  },
+  {
+    id: 'mob_dash',
+    branch: 'mobility',
+    tier: 3,
+    name: '戦術ステップ',
+    requires: 'mob_loot',
+    description: '全被弾時の緊急ステップ＆無敵延長 + 発動後2.5秒間の移動加速（最大+38%）',
   },
 ] as const;
 
@@ -139,37 +139,43 @@ export function canUpgradeSkill(
 
 export const canUnlockSkill = canUpgradeSkill;
 
-// Per-level scaling curves [Lv0, Lv1, Lv2, Lv3, Lv4, Lv5] with sharp Lv4 & Lv5 breakthroughs
-const ARM_DAMAGE_PCT = [0, 0.08, 0.16, 0.24, 0.42, 0.68] as const;
-const ARM_EXTRA_BITS = [0, 1, 1, 2, 3, 4] as const;
-const ARM_BIT_DMG_PCT = [0, 0.06, 0.12, 0.18, 0.32, 0.52] as const;
-const ARM_CD_REDUCTION = [0, 0.06, 0.12, 0.18, 0.28, 0.4] as const;
-const ARM_DRONE_SPEED = [0, 20, 40, 60, 100, 150] as const;
+// Per-level scaling curves [Lv0, Lv1, Lv2, Lv3, Lv4, Lv5]
+// Arms: Main Weapon dedicated scaling
+const ARM_MAIN_DAMAGE_PCT = [0, 0.1, 0.2, 0.3, 0.45, 0.65] as const;
+const ARM_MAIN_EXTRA_SHOTS = [0, 1, 1, 2, 2, 3] as const;
+const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.06, 0.06, 0.14, 0.2] as const;
+const ARM_MAIN_CD_REDUCTION = [0, 0.06, 0.12, 0.18, 0.26, 0.35] as const;
+const ARM_MAIN_SPEED_BONUS = [0, 25, 50, 80, 115, 155] as const;
 
+// Defense: Sensor range + controlled emergency defense
 const DEF_RANGE_PCT = [0, 0.08, 0.16, 0.24, 0.38, 0.55] as const;
-const DEF_PULSE_DMG = [0, 12, 16, 20, 32, 48] as const;
-const DEF_PULSE_CD = [0, 3.8, 3.5, 3.2, 2.5, 1.8] as const;
-const DEF_PULSE_RANGE = [0, 105, 112, 120, 138, 160] as const;
-const DEF_AEGIS_DMG = [0, 24, 32, 40, 64, 96] as const;
-const DEF_AEGIS_CD = [0, 6.4, 5.8, 5.2, 4.0, 2.8] as const;
+const DEF_PULSE_DMG = [0, 6, 8, 10, 14, 18] as const;
+const DEF_PULSE_CD = [0, 4.2, 3.9, 3.6, 3.2, 2.8] as const;
+const DEF_PULSE_RANGE = [0, 100, 108, 116, 132, 150] as const;
+const DEF_AEGIS_DMG = [0, 16, 20, 24, 34, 46] as const;
+const DEF_AEGIS_CD = [0, 8.0, 7.2, 6.5, 5.5, 4.5] as const;
 
+// Mobility: Magnet (Tier 1) -> Treasure/Drop Quality & Rate (Tier 2) -> Tactical Mobility (Tier 3)
 const MOB_MAGNET_PCT = [0, 0.22, 0.44, 0.66, 1.05, 1.6] as const;
 const MOB_HEAL_PCT = [0, 0.1, 0.2, 0.3, 0.5, 0.75] as const;
-const MOB_DASH_INVULN = [0.55, 0.85, 0.95, 1.05, 1.3, 1.65] as const;
-const MOB_DASH_DIST = [0, 40, 46, 52, 66, 84] as const;
-const MOB_DASH_CD = [0, 6.4, 5.8, 5.2, 4.0, 2.8] as const;
-const MOB_LOOT_PCT = [0, 0.08, 0.16, 0.24, 0.4, 0.6] as const;
-const MOB_DROP_BONUS = [0, 0.002, 0.004, 0.006, 0.011, 0.018] as const;
+const MOB_LOOT_PCT = [0, 0.1, 0.2, 0.3, 0.45, 0.65] as const;
+const MOB_DROP_BONUS = [0, 0.005, 0.01, 0.015, 0.023, 0.035] as const;
+const MOB_DROP_QUALITY = [0, 1, 2, 3, 4, 5] as const;
 const MOB_EXP_PCT = [0, 0.08, 0.16, 0.24, 0.42, 0.68] as const;
+const MOB_DASH_INVULN = [0.55, 0.85, 0.95, 1.05, 1.25, 1.5] as const;
+const MOB_DASH_DIST = [0, 44, 52, 60, 74, 90] as const;
+const MOB_DASH_CD = [0, 6.0, 5.4, 4.8, 3.8, 3.0] as const;
+const MOB_DASH_SPEED_BOOST = [0, 0.16, 0.2, 0.24, 0.3, 0.38] as const;
+export const TACTICAL_SPEED_BOOST_DURATION = 2.5;
 
 export interface ComputedSkillModifiers {
   totalSkillLevels: number;
-  damageMult: number;
-  extraBits: number;
-  bitDroneDamageMult: number;
-  cooldownMult: number;
-  piercingDrones: boolean;
-  droneSpeedBonus: number;
+  mainDamageMult: number;
+  mainExtraShots: number;
+  mainParallelDamageMult: number;
+  mainCooldownMult: number;
+  piercingMainShot: boolean;
+  mainSpeedBonus: number;
   rangeMult: number;
   hasRepulsor: boolean;
   repulsorDamage: number;
@@ -180,13 +186,15 @@ export interface ComputedSkillModifiers {
   aegisDamage: number;
   pickupMagnetMult: number;
   healBonusMult: number;
+  lootBonusRate: number;
+  equipDropBonus: number;
+  dropQualityTier: number;
+  expMult: number;
   hasTacticalStep: boolean;
   tacticalInvulnDuration: number;
   tacticalStepDist: number;
   tacticalStepCooldown: number;
-  lootBonusRate: number;
-  equipDropBonus: number;
-  expMult: number;
+  tacticalSpeedBonus: number;
 }
 
 export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModifiers {
@@ -197,8 +205,8 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
   const defPulseLv = getSkillLevel(levels, 'def_pulse');
   const defAegisLv = getSkillLevel(levels, 'def_aegis');
   const mobMagnetLv = getSkillLevel(levels, 'mob_magnet');
-  const mobDashLv = getSkillLevel(levels, 'mob_dash');
   const mobLootLv = getSkillLevel(levels, 'mob_loot');
+  const mobDashLv = getSkillLevel(levels, 'mob_dash');
 
   const totalSkillLevels =
     armBaseLv +
@@ -208,17 +216,17 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     defPulseLv +
     defAegisLv +
     mobMagnetLv +
-    mobDashLv +
-    mobLootLv;
+    mobLootLv +
+    mobDashLv;
 
   return {
     totalSkillLevels,
-    damageMult: 1 + ARM_DAMAGE_PCT[armBaseLv],
-    extraBits: ARM_EXTRA_BITS[armParallelLv],
-    bitDroneDamageMult: 1 + ARM_BIT_DMG_PCT[armParallelLv],
-    cooldownMult: Math.max(0.55, 1 - ARM_CD_REDUCTION[armOverclockLv]),
-    piercingDrones: armOverclockLv >= 1,
-    droneSpeedBonus: ARM_DRONE_SPEED[armOverclockLv],
+    mainDamageMult: 1 + ARM_MAIN_DAMAGE_PCT[armBaseLv],
+    mainExtraShots: ARM_MAIN_EXTRA_SHOTS[armParallelLv],
+    mainParallelDamageMult: 1 + ARM_MAIN_PARALLEL_DMG_PCT[armParallelLv],
+    mainCooldownMult: Math.max(0.6, 1 - ARM_MAIN_CD_REDUCTION[armOverclockLv]),
+    piercingMainShot: armOverclockLv >= 1,
+    mainSpeedBonus: ARM_MAIN_SPEED_BONUS[armOverclockLv],
     rangeMult: 1 + DEF_RANGE_PCT[defSensorLv],
     hasRepulsor: defPulseLv >= 1,
     repulsorDamage: DEF_PULSE_DMG[defPulseLv],
@@ -229,13 +237,15 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     aegisDamage: DEF_AEGIS_DMG[defAegisLv],
     pickupMagnetMult: 1 + MOB_MAGNET_PCT[mobMagnetLv],
     healBonusMult: 1 + MOB_HEAL_PCT[mobMagnetLv],
+    lootBonusRate: MOB_LOOT_PCT[mobLootLv],
+    equipDropBonus: MOB_DROP_BONUS[mobLootLv],
+    dropQualityTier: MOB_DROP_QUALITY[mobLootLv],
+    expMult: 1 + MOB_EXP_PCT[mobLootLv],
     hasTacticalStep: mobDashLv >= 1,
     tacticalInvulnDuration: MOB_DASH_INVULN[mobDashLv],
     tacticalStepDist: MOB_DASH_DIST[mobDashLv],
     tacticalStepCooldown: MOB_DASH_CD[mobDashLv],
-    lootBonusRate: MOB_LOOT_PCT[mobLootLv],
-    equipDropBonus: MOB_DROP_BONUS[mobLootLv],
-    expMult: 1 + MOB_EXP_PCT[mobLootLv],
+    tacticalSpeedBonus: MOB_DASH_SPEED_BOOST[mobDashLv],
   };
 }
 
@@ -244,11 +254,15 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
   if (lv <= 0) return '未習得';
   switch (nodeId) {
     case 'arm_base':
-      return `全攻撃 +${Math.round(ARM_DAMAGE_PCT[lv] * 100)}%`;
-    case 'arm_parallel':
-      return `展開 +${ARM_EXTRA_BITS[lv]} / 威力 +${Math.round(ARM_BIT_DMG_PCT[lv] * 100)}%`;
+      return `メイン威力 +${Math.round(ARM_MAIN_DAMAGE_PCT[lv] * 100)}%`;
+    case 'arm_parallel': {
+      const dmgPct = Math.round(ARM_MAIN_PARALLEL_DMG_PCT[lv] * 100);
+      return dmgPct > 0
+        ? `同時 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 威力 +${dmgPct}%`
+        : `同時 +${ARM_MAIN_EXTRA_SHOTS[lv]}発`;
+    }
     case 'arm_overclock':
-      return `CD -${Math.round(ARM_CD_REDUCTION[lv] * 100)}% / 貫通`;
+      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / 貫通`;
     case 'def_sensor':
       return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
     case 'def_pulse':
@@ -257,9 +271,9 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
       return `反撃${DEF_AEGIS_DMG[lv]} / CD ${DEF_AEGIS_CD[lv].toFixed(1)}s`;
     case 'mob_magnet':
       return `吸引 +${Math.round(MOB_MAGNET_PCT[lv] * 100)}% / 回復 +${Math.round(MOB_HEAL_PCT[lv] * 100)}%`;
-    case 'mob_dash':
-      return `無敵 ${MOB_DASH_INVULN[lv].toFixed(2)}s / 回避${MOB_DASH_DIST[lv]}px`;
     case 'mob_loot':
-      return `宝 +${Math.round(MOB_LOOT_PCT[lv] * 100)}% / EXP +${Math.round(MOB_EXP_PCT[lv] * 100)}%`;
+      return `品質+${MOB_DROP_QUALITY[lv]} / 装備率+${(MOB_DROP_BONUS[lv] * 100).toFixed(1)}% / EXP+${Math.round(MOB_EXP_PCT[lv] * 100)}%`;
+    case 'mob_dash':
+      return `無敵${MOB_DASH_INVULN[lv].toFixed(2)}s / 回避${MOB_DASH_DIST[lv]}px / 加速+${Math.round(MOB_DASH_SPEED_BOOST[lv] * 100)}%`;
   }
 }

@@ -354,6 +354,19 @@ stateDiagram-v2
     }
 
     // 5. Formula charts + numeric fallback tables exist ONLY inside #sec-formulas
+    const chartsActual = buildFormulaChartsData(extended.parameters);
+    const coreChart = chartsActual.find((c) => c.id === 'chart-core-shot');
+    const skillChart = chartsActual.find((c) => c.id === 'chart-skill-curve');
+    assert.ok(coreChart && skillChart);
+    assert.equal(coreChart.rows[0].damage, 14);
+    assert.equal(coreChart.rows[0].cooldown, 0.58);
+    assert.equal(coreChart.rows[0].shotCount, 1);
+    assert.equal(coreChart.rows[5].damage, 28);
+    assert.equal(coreChart.rows[5].shotCount, 4);
+    assert.equal(coreChart.rows[5].cooldown, 0.377);
+    assert.equal(skillChart.rows[5].armBasePct, 65);
+    assert.equal(skillChart.rows[5].armOverclockPct, 35);
+
     const formulasStart = html.indexOf('<section id="sec-formulas"');
     const transitionsStart = html.indexOf('<section id="sec-state-transitions"');
     assert.ok(formulasStart !== -1 && transitionsStart > formulasStart);

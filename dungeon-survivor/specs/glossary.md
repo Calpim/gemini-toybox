@@ -4,10 +4,10 @@ Dungeon Survivor のドメイン用語・コード表記・仕様ステータス
 
 | ID | 用語 | 別名・コード表記 | 定義 | 状態 | 関連ID | 出典・備考 |
 | --- | --- | --- | --- | --- | --- | --- |
-| GLS-01 | 基本攻撃（Core Shot） | `baseAttack` | 装備ゼロ時でも自機から自動発射される固有の遠距離ショット。プレイヤーLv単体では強化されず、スキルへ投資した使用SP総量に連動して強化される。 | Confirmed | BIZ-CMB-01, BIZ-CMB-06, APP-CMB-01 | `src/game/engine.ts` |
-| GLS-02 | 迎撃装備（Gear） | `EquippedItem` / `EquipmentId` | 初期2スロット（スクラップ＆ビルドで最大5スロット）に装着し、敵の接近に応じて自動で攻撃・防御を行う5系統（`pulse_blade`・`orbit_shield`・`seeker_drone`・`reactive_coil`・`ricochet_disc`）の武装。 | Confirmed | BIZ-CMB-02, BIZ-GRW-03, APP-CMB-02 | `src/game/equipment.ts` |
+| GLS-01 | メイン武器（コアショット） | `mainWeaponId` / `baseAttack` | 装備ゼロ時でも自機から自動発射される固有のメイン武器（現行 `'core_shot'`、将来的に射撃/斬撃差し替えを想定）。プレイヤーLv単体や他系統SPでは強化されず、兵装（`arms`）スキルへの投資に応じて強化される。 | Confirmed | BIZ-CMB-01, BIZ-CMB-06, APP-CMB-01, DEC-12 | `src/game/engine.ts` |
+| GLS-02 | サブ迎撃装備（Gear） | `EquippedItem` / `EquipmentId` | 初期2スロット（スクラップ＆ビルドで最大5スロット）に装着する5系統（`pulse_blade`・`orbit_shield`・`seeker_drone`・`reactive_coil`・`ricochet_disc`）のサブ武装。火力・CD・展開数は自身の装備Lvのみで決まり、スキル側は広域索敵のレンジ拡大のみ適用される。 | Confirmed | BIZ-CMB-02, BIZ-GRW-03, APP-CMB-02, DEC-12 | `src/game/equipment.ts` |
 | GLS-03 | 設置型オートタレット（不採用） | `auto_turret` | プレイヤー足元に固定タレットを設置する旧案。敵殲滅後に置かれてしまい探索主体のゲーム性と合わないため正式に不採用。 | Confirmed | BIZ-CMB-04, APP-CMB-04, DEC-01 | `specs/business/02-combat-and-loadout.feature` |
-| GLS-04 | ハイブリッドスキルツリー | `SkillNodeId` / `skillPoints` | 攻撃（arms）・防御（defense）・機動（mobility）の3系統×3段階（計9ノード、各Lv0〜5）の成長システム。下位Lv3で上位を解放。 | Confirmed | BIZ-GRW-02, BIZ-GRW-05, APP-GRW-02 | `src/game/skillTree.ts` |
+| GLS-04 | ハイブリッドスキルツリー | `SkillNodeId` / `skillPoints` | 兵装（`arms`: メイン武器専用）・防衛（`defense`: 索敵レンジ＆緊急防衛）・探索機動（`mobility`: 回収→ドロップ品質/率→戦術ステップ）の3系統×3段階（計9ノード、各Lv0〜5）の成長システム。下位Lv3で上位を解放。 | Confirmed | BIZ-GRW-02, BIZ-GRW-05, APP-GRW-02, DEC-12 | `src/game/skillTree.ts` |
 | GLS-05 | スカウト（偵察型） | `scout` | 通路や部屋を自由巡回し、プレイヤー発見時に警告アラート通知・周辺敵（300px内）の覚醒・追撃ランナー召喚を行う敵種別（旧名 `caller` / トレーサーから改名）。 | Confirmed | BIZ-EXP-07, APP-MAP-07, DEC-05, DEC-10 | `src/game/engine.ts` |
 | GLS-06 | 追撃発光ランナー | `isAmbush` (`runner`) | スカウト発見時に2〜3体ポップする高速敵（プレイヤー標準速度 210px/s を上回る 228〜265px/s、`spawnDelay` 0.45秒猶予付き）。暗い通路でも視認できるよう周囲を照らす光輪（64px）を持つが、稼ぎ防止のためドロップは一切なし。 | Confirmed | BIZ-EXP-07, APP-MAP-07, INV-05, DEC-10 | `src/game/engine.ts`, `src/render/canvasRenderer.ts` |
 | GLS-07 | 階段守護中ボス（GUARDIAN） | `isRoomBoss` / `isStairsGuard` | `3/6/9F`（`floor % 10 ∈ {3,6,9}`）の広めの階段部屋（`11×9`以上）に初期配置される強化中ボス。プレイヤーLv連動HP（2.9倍ベース）・ノックバック無効・4種行動（3種弾幕＋予兆付き高速突進）を持ち、撃破で階段封印を解除して高Lv装備を確定ドロップする（通常階は守護中ボスなし）。 | Confirmed | BIZ-EXP-01, APP-MAP-01, INV-04, INV-10, DEC-08, DEC-10, DEC-11 | `src/game/engine.ts`, `src/core/dungeon.ts` |
