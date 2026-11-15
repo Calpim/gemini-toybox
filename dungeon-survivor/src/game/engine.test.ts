@@ -15,6 +15,7 @@ import {
   getPulseBladeStats,
   getReactiveCoilStats,
   getRicochetDiscStats,
+  getScrapExpandCost,
 } from './equipment';
 import {
   CORRIDOR_VISION_RADIUS,
@@ -23,6 +24,7 @@ import {
   acquireEquipment,
   createEnemyByKind,
   createGameState,
+  getNormalEnemyShotStats,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
   getSeekerDronePositions,
@@ -350,7 +352,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(bladeState.enemies[1].hp).toBe(300); // Still directional fan, never 360° behind
     expect(bladeState.visualFx.some((fx) => fx.kind === 'slash' && !fx.fullCircle)).toBe(true);
 
-    // 3. Orbit shield slows enemies inside its ring
+    // 3. Orbit shield slows enemies inside its ring (nerfed to 0.86x)
     const slowState = createGameState({ seed: 453 });
     slowState.chests = [];
     slowState.pickups = [];
@@ -365,16 +367,16 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const movedDist = startEx - insideEnemy.x;
     expect(movedDist).toBeCloseTo(baseSpd * ORBIT_SHIELD_INNER_SLOW * 0.05, 1);
 
-    // 4. Reactive coil & ricochet disc cap count/bounces at Lv6
+    // 4. Reactive coil & single homing ricochet disc cap bounces at Lv6
     expect(getReactiveCoilStats(1, 78, 1).maxTargets).toBe(3);
     expect(getReactiveCoilStats(6, 78, 1).maxTargets).toBe(8);
     expect(getReactiveCoilStats(10, 78, 1).maxTargets).toBe(8);
     expect(getRicochetDiscStats(1)).toMatchObject({ count: 1, maxBounces: 2 });
-    expect(getRicochetDiscStats(3)).toMatchObject({ count: 2, maxBounces: 4 });
-    expect(getRicochetDiscStats(6)).toMatchObject({ count: 3, maxBounces: 7 });
-    expect(getRicochetDiscStats(10)).toMatchObject({ count: 3, maxBounces: 7 });
+    expect(getRicochetDiscStats(3)).toMatchObject({ count: 1, maxBounces: 4 });
+    expect(getRicochetDiscStats(6)).toMatchObject({ count: 1, maxBounces: 7 });
+    expect(getRicochetDiscStats(10)).toMatchObject({ count: 1, maxBounces: 7 });
 
-    // 5. Ricochet disc actually bounces to a second enemy off-axis
+    // 5. Ricochet disc bounces between two enemies, and against a solo enemy circles 1 loop before re-hitting
     const discState = createGameState({ seed: 452 });
     discState.chests = [];
     discState.pickups = [];
@@ -415,6 +417,70 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     expect(discState.enemies[0].hp).toBeLessThan(100);
     expect(discState.enemies[1].hp).toBeLessThan(100);
+
+    // Solo enemy: hits once, orbits 1 full loop (~0.6s) without instant burst, then re-hits
+    const soloDiscState = createGameState({ seed: 454 });
+    soloDiscState.chests = [];
+    soloDiscState.pickups = [];
+    soloDiscState.player.baseAttackCooldown = 999;
+    soloDiscState.map.tiles.fill('floor');
+    soloDiscState.player.equipment = [createEquippedItem('ricochet_disc', 1)];
+    soloDiscState.enemies = [
+      {
+        id: 903,
+        x: soloDiscState.player.x + 55,
+        y: soloDiscState.player.y,
+        radius: 13,
+        speed: 0,
+        hp: 200,
+        maxHp: 200,
+        damage: 0,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    for (let f = 0; f < 15; f++) {
+      stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
+    }
+    const hpAfterFirstHit = soloDiscState.enemies[0].hp;
+    expect(hpAfterFirstHit).toBe(182); // 1 hit only (baseDamage 18), entering circular orbit
+    expect(soloDiscState.projectiles.some((p) => p.kind === 'disc' && p.orbitTargetId === 903)).toBe(
+      true
+    );
+
+    // Keep item on cooldown so only the orbiting disc can re-hit after completing 1 revolution
+    soloDiscState.player.equipment[0].cooldown = 5;
+    for (let f = 0; f < 45; f++) {
+      stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(soloDiscState.enemies[0].hp).toBeLessThan(hpAfterFirstHit);
+
+    // 6. Pulse blade triggers on incoming enemy projectiles even with no enemy in range and reflects them
+    const reflectState = createGameState({ seed: 455 });
+    reflectState.chests = [];
+    reflectState.pickups = [];
+    reflectState.enemies = [];
+    reflectState.map.tiles.fill('floor');
+    reflectState.player.equipment = [createEquippedItem('pulse_blade', 1)];
+    reflectState.enemyProjectiles = [
+      {
+        id: 951,
+        x: reflectState.player.x + 48,
+        y: reflectState.player.y,
+        vx: -140,
+        vy: 0,
+        radius: 5,
+        damage: 10,
+        life: 2.0,
+      },
+    ];
+    stepGame(reflectState, { x: 0, y: 0 }, 1 / 60);
+    expect(reflectState.enemyProjectiles.length).toBe(0);
+    const reflected = reflectState.projectiles.find((p) => p.kind === 'reflected');
+    expect(reflected).toBeDefined();
+    expect(reflected!.vx).toBeGreaterThan(0);
   });
 
   it('[APP-CMB-06] scales player intrinsic Core Shot by spent SP and skills, NOT by player.level alone', () => {
@@ -581,15 +647,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.equipment[0].id).toBe('ricochet_disc');
     expect(state.player.equipment[0].level).toBe(4);
 
-    // Scrap & Build: 3 accumulations expand maxEquipSlots from 2 to 3
-    for (let i = 1; i <= 2; i++) {
-      acquireEquipment(state, createEquippedItem('pulse_blade', 1));
-      expect(state.status).toBe('equip_choice');
-      expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
-      expect(state.player.scrapExpandProgress).toBe(i);
-      expect(state.player.maxEquipSlots).toBe(2);
-    }
+    // Scrap & Build: progressive 1 / 2 / 3 cost unlocks slots 2->3 (1), 3->4 (2), 4->5 (3)
+    expect(getScrapExpandCost(2)).toBe(1);
+    expect(getScrapExpandCost(3)).toBe(2);
+    expect(getScrapExpandCost(4)).toBe(3);
+
     acquireEquipment(state, createEquippedItem('pulse_blade', 1));
+    expect(state.status).toBe('equip_choice');
     expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
     expect(state.player.scrapExpandProgress).toBe(0);
     expect(state.player.maxEquipSlots).toBe(3);
@@ -598,6 +662,16 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     acquireEquipment(state, createEquippedItem('pulse_blade', 2));
     expect(state.status).toBe('playing');
     expect(state.player.equipment.length).toBe(3);
+
+    // 3->4 requires 2 scraps
+    acquireEquipment(state, createEquippedItem('orbit_shield', 1));
+    expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
+    expect(state.player.scrapExpandProgress).toBe(1);
+    expect(state.player.maxEquipSlots).toBe(3);
+    acquireEquipment(state, createEquippedItem('orbit_shield', 1));
+    expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
+    expect(state.player.scrapExpandProgress).toBe(0);
+    expect(state.player.maxEquipSlots).toBe(4);
   });
 
   it('[APP-GRW-06] starts run with 0 items without Room 0 chest and fights using intrinsic base attack', () => {
@@ -893,13 +967,28 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(scoutState.pickups.length).toBe(0);
   });
 
-  it('[APP-GRW-08] enforces MAX_EQUIPMENT_LEVEL=10 cap, disables scrap_upgrade at Lv10, and converts excess drops into overflow bonus', () => {
+  it('[APP-GRW-08] enforces MAX_EQUIPMENT_LEVEL=10 cap, auto-expands slots on Lv10 duplicates when maxEquipSlots < 5, and grants overflow bonus at cap', () => {
     expect(MAX_EQUIPMENT_LEVEL).toBe(10);
     const state = createGameState({ seed: 940 });
+
+    // Lv10 duplicate pickup auto-allocates into slot expansion when maxEquipSlots < MAX_EQUIP_SLOTS_CAP
+    state.player.maxEquipSlots = 2;
+    state.player.scrapExpandProgress = 0;
+    state.player.equipment = [
+      createEquippedItem('pulse_blade', 10),
+      createEquippedItem('orbit_shield', 5),
+    ];
+    acquireEquipment(state, createEquippedItem('pulse_blade', 10));
+    expect(state.player.maxEquipSlots).toBe(3); // cost 2->3 is 1 scrap
+    expect(state.player.scrapExpandProgress).toBe(0);
+    // Next Lv10 duplicate advances 3->4 progress (cost 2)
+    acquireEquipment(state, createEquippedItem('pulse_blade', 10));
+    expect(state.player.maxEquipSlots).toBe(3);
+    expect(state.player.scrapExpandProgress).toBe(1);
+
+    // Once maxEquipSlots reaches 5, Lv10 duplicate grants +20HP / +25EXP overflow bonus
     state.player.maxEquipSlots = MAX_EQUIP_SLOTS_CAP;
     state.player.equipment = ALL_EQUIPMENT_IDS.map((id) => createEquippedItem(id, 10));
-
-    // Duplicate item already at Lv10 stays at Lv10 and grants HP/EXP overflow bonus
     state.player.hp = 50;
     const expBefore = state.stats.totalExp;
     acquireEquipment(state, createEquippedItem('pulse_blade', 10));
@@ -925,7 +1014,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.equipment[1].level).toBe(6);
   });
 
-  it('[APP-MAP-09 & APP-UI-01] heals 100% once at 10F Fountain, fights Grand Boss with 3 barrage patterns, continues endlessly to 11F, and pauses cleanly via toggleSkillTree', () => {
+  it('[APP-MAP-09 & APP-UI-01] heals 100% once at 10F Fountain, fights Grand Boss with 4 barrage/dash patterns, continues endlessly to 11F, and pauses cleanly via toggleSkillTree', () => {
     const state = createGameState({ seed: 950, startFloor: 10 });
     expect(state.map.floorType).toBe('boss');
     expect(state.map.fountainTile).not.toBeNull();
@@ -953,9 +1042,10 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(40);
 
-    // Grand Boss exists, locks stairs, and cycles through Ring / Homing / Wall-Bounce patterns
+    // Grand Boss exists with buffed HP (6.8x tank base), locks stairs, and cycles 4 patterns incl. windup->dashing
     const grandBoss = state.enemies.find((e) => e.isGrandBoss);
     expect(grandBoss).toBeDefined();
+    expect(grandBoss!.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 10).maxHp * 6.8));
     expect(getStairsLockCount(state)).toBe(1);
 
     state.enemies = [grandBoss!];
@@ -977,6 +1067,17 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 2: wall-bouncing shots
     expect(state.enemyProjectiles.some((p) => (p.bouncesLeft ?? 0) >= 2)).toBe(true);
 
+    // pattern 3: high-speed dash (windup -> dashing movement toward locked target vector)
+    grandBoss!.attackCooldown = 0.01;
+    state.player.invulnTimer = 3.0;
+    stepGame(state, { x: 0, y: 0 }, 0.02);
+    expect(grandBoss!.dashState).toBe('windup');
+    const preDashX = grandBoss!.x;
+    for (let f = 0; f < 50; f++) {
+      stepGame(state, { x: 0, y: 0 }, 0.02);
+    }
+    expect(Math.abs(grandBoss!.x - preDashX)).toBeGreaterThan(30);
+
     // Defeating Grand Boss unlocks stairs, drops high-level gear, and advances endlessly to 11F
     state.player.equipment = [createEquippedItem('orbit_shield', 4)];
     grandBoss!.hp = 0;
@@ -993,5 +1094,75 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.floor).toBe(11);
     expect(state.map.floorType).toBe('normal');
   });
+
+  it('[APP-MAP-07 & APP-CMB-02] grants Guardian knockback immunity, tank parabolic mortar zones bypassing orbit shield, and player-level-scaled normal enemy shots', () => {
+    // Normal enemy shot scaling by player level
+    const s1 = getNormalEnemyShotStats(1);
+    const s6 = getNormalEnemyShotStats(6);
+    const s9 = getNormalEnemyShotStats(9);
+    expect(s1.shotCount).toBe(1);
+    expect(s6.shotCount).toBe(2);
+    expect(s9.shotCount).toBe(3);
+    expect(s9.cooldown).toBeLessThan(s1.cooldown);
+
+    // Guardian on 3F has buffed HP (2.9x) and ignores def_pulse knockback
+    const floor3 = createGameState({ seed: 960, startFloor: 3 });
+    const guardian = floor3.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss);
+    expect(guardian).toBeDefined();
+    expect(guardian!.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.9));
+
+    const kbState = createGameState({ seed: 961 });
+    kbState.chests = [];
+    kbState.pickups = [];
+    kbState.map.tiles.fill('floor');
+    kbState.player.baseAttackCooldown = 999;
+    kbState.player.skillLevels.def_pulse = 3;
+    kbState.player.repulsorCooldown = 0.01;
+    const bossStub = createEnemyByKind(7701, 'tank', kbState.player.x + 40, kbState.player.y, 3);
+    bossStub.isRoomBoss = true;
+    bossStub.speed = 0; // isolate knockback check from chasing
+    bossStub.awake = true;
+    const bossStartX = bossStub.x;
+    kbState.enemies = [bossStub];
+    kbState.player.hp = 10;
+    stepGame(kbState, { x: 0, y: 0 }, 0.02);
+    expect(bossStub.x).toBe(bossStartX); // knockback immune
+
+    // Non-boss tank lobs parabolic mortar zone; orbit_shield does NOT clear mortarZones; mortar deals AoE on landing
+    const mortarState = createGameState({ seed: 962 });
+    mortarState.chests = [];
+    mortarState.pickups = [];
+    mortarState.map.tiles.fill('floor');
+    mortarState.player.baseAttackCooldown = 999;
+    mortarState.player.equipment = [createEquippedItem('orbit_shield', 4)];
+    const tank = createEnemyByKind(7702, 'tank', mortarState.player.x + 120, mortarState.player.y, 2);
+    tank.awake = true;
+    tank.attackCooldown = 0.01;
+    mortarState.enemies = [tank];
+    stepGame(mortarState, { x: 0, y: 0 }, 0.02);
+    expect(mortarState.mortarZones.length).toBe(1);
+    const hpBeforeImpact = mortarState.player.hp;
+    // Stand still inside landing zone until duration expires
+    for (let f = 0; f < 40; f++) {
+      stepGame(mortarState, { x: 0, y: 0 }, 0.04);
+    }
+    expect(mortarState.mortarZones.length).toBe(0);
+    expect(mortarState.player.hp).toBeLessThan(hpBeforeImpact);
+
+    // Normal enemy fires level-scaled spread shots when awake & in sight
+    const normState = createGameState({ seed: 963 });
+    normState.chests = [];
+    normState.pickups = [];
+    normState.map.tiles.fill('floor');
+    normState.player.baseAttackCooldown = 999;
+    normState.player.level = 6; // 2-way spread
+    const normalEnemy = createEnemyByKind(7703, 'normal', normState.player.x + 100, normState.player.y, 1);
+    normalEnemy.awake = true;
+    normalEnemy.attackCooldown = 0.01;
+    normState.enemies = [normalEnemy];
+    stepGame(normState, { x: 0, y: 0 }, 0.02);
+    expect(normState.enemyProjectiles.length).toBe(2);
+  });
 });
+
 

@@ -55,6 +55,16 @@
       font-size: 12px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
+    .hud-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hud-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .hp-bar {
       width: 84px;
       height: 9px;
@@ -65,6 +75,18 @@
     .hp-fill {
       height: 100%;
       background: linear-gradient(90deg, #ef4444, #10b981);
+      transition: width 0.1s linear;
+    }
+    .exp-bar {
+      width: 84px;
+      height: 5px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .exp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0284c7, #38bdf8);
       transition: width 0.1s linear;
     }
     .skill-btn {
@@ -288,8 +310,16 @@
   <div class="hud">
     <div class="hud-group">
       <strong id="floorText" style="color:#22d3ee">1F</strong>
-      <div class="hp-bar"><div id="hpFill" class="hp-fill" style="width:100%"></div></div>
-      <span id="hpText">100 / 100</span>
+      <div class="hud-bars">
+        <div class="hud-row">
+          <div class="hp-bar"><div id="hpFill" class="hp-fill" style="width:100%"></div></div>
+          <span id="hpText">100 / 100</span>
+        </div>
+        <div class="hud-row">
+          <div class="exp-bar"><div id="expFill" class="exp-fill" style="width:0%"></div></div>
+          <span id="expText" style="font-size:10px;color:#7dd3fc">EXP 0/25</span>
+        </div>
+      </div>
     </div>
     <div class="hud-group">
       <button id="pauseBtn" type="button" class="skill-btn" title="ポーズ / ステータス確認 (ESC)">⏸</button>
@@ -322,7 +352,7 @@
         <h2 id="equipModalTitle">📦 装備スロット満杯（2/2）</h2>
       </div>
       <div id="equipDropCard" class="drop-card"></div>
-      <button id="scrapEquipBtn" type="button" class="btn btn-scrap">🔧 スクラップ＆ビルド：枠拡張へ蓄積（0/3）</button>
+      <button id="scrapEquipBtn" type="button" class="btn btn-scrap">🔧 スクラップ＆ビルド：枠拡張へ蓄積（0/1）</button>
       <div style="font-size:12px;color:#94a3b8;margin:10px 0 6px;">または既存スロットと入れ替え／スクラップで1個強化：</div>
       <div id="equipSlotList" class="slot-list"></div>
     </div>

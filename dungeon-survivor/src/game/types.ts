@@ -64,11 +64,15 @@ export interface EnemyState {
   isRoomBoss?: boolean;
   isGrandBoss?: boolean;
   bossPatternIndex?: number;
+  dashState?: 'none' | 'windup' | 'dashing';
+  dashTimer?: number;
+  dashDir?: Vec2;
+  dashSpeed?: number;
 }
 
 export interface ProjectileState {
   id: number;
-  kind?: 'base' | 'drone' | 'disc';
+  kind?: 'base' | 'drone' | 'disc' | 'reflected';
   x: number;
   y: number;
   vx: number;
@@ -78,8 +82,13 @@ export interface ProjectileState {
   life: number;
   pierce: boolean;
   bouncesLeft?: number;
+  wallBouncesLeft?: number;
   speed?: number;
   spinAngle?: number;
+  homingTurnRate?: number;
+  orbitTargetId?: number;
+  orbitAngle?: number;
+  orbitProgress?: number;
   hitEnemyIds: number[];
   color: string;
 }
@@ -96,6 +105,18 @@ export interface EnemyProjectileState {
   bouncesLeft?: number;
   homingRate?: number;
   color?: string;
+}
+
+export interface MortarZoneState {
+  id: number;
+  startX: number;
+  startY: number;
+  targetX: number;
+  targetY: number;
+  radius: number;
+  damage: number;
+  elapsed: number;
+  duration: number;
 }
 
 export interface ChestState {
@@ -117,6 +138,7 @@ export interface VisualFx {
   angle?: number;
   halfArcRad?: number;
   fullCircle?: boolean;
+  thickness?: number;
   points?: Vec2[];
   color: string;
   life: number;
@@ -170,6 +192,7 @@ export interface GameState {
   enemies: EnemyState[];
   projectiles: ProjectileState[];
   enemyProjectiles: EnemyProjectileState[];
+  mortarZones: MortarZoneState[];
   chests: ChestState[];
   pendingEquipDrop: PendingEquipDrop | null;
   pickups: PickupState[];

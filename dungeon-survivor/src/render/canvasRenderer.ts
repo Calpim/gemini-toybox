@@ -77,6 +77,37 @@ function drawEnemyBody(
   }
 
   if (enemy.isRoomBoss) {
+    if (enemy.dashState === 'windup' && enemy.dashDir) {
+      const dashPreviewLen = (enemy.dashSpeed ?? 320) * (enemy.isGrandBoss ? 0.48 : 0.42);
+      const tx = enemy.dashDir.x * dashPreviewLen;
+      const ty = enemy.dashDir.y * dashPreviewLen;
+      const blink = 0.55 + 0.45 * Math.sin(nowSec * 28);
+      ctx.save();
+      ctx.strokeStyle = `rgba(244, 63, 94, ${0.42 * blink})`;
+      ctx.lineWidth = enemy.radius * 1.85;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+
+      ctx.strokeStyle = `rgba(254, 205, 211, ${0.85 * blink})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    } else if (enemy.dashState === 'dashing') {
+      ctx.strokeStyle = 'rgba(251, 113, 133, 0.95)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, enemy.radius + 11, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
     const bossPulse = 0.7 + 0.3 * Math.sin(nowSec * 5);
     ctx.strokeStyle = enemy.isGrandBoss
       ? `rgba(244, 63, 94, ${0.9 * bossPulse})`
@@ -484,17 +515,89 @@ export function renderGame(
     ctx.stroke();
   }
 
-  // 6. Visual FX (Slash / Lightning / Pulse)
+  // 5.5. Tank parabolic mortar landing telegraphs & airborne shells
+  for (const zone of state.mortarZones) {
+    const progress = Math.max(0, Math.min(1, zone.elapsed / Math.max(0.01, zone.duration)));
+    ctx.save();
+    // Target danger zone fill & outer border
+    ctx.fillStyle = `rgba(168, 85, 247, ${0.14 + progress * 0.14})`;
+    ctx.beginPath();
+    ctx.arc(zone.targetX, zone.targetY, zone.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(216, 180, 254, 0.88)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.arc(zone.targetX, zone.targetY, zone.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Expanding inner timing circle (reaches outer ring right on impact)
+    ctx.fillStyle = `rgba(244, 63, 94, ${0.18 + progress * 0.28})`;
+    ctx.beginPath();
+    ctx.arc(zone.targetX, zone.targetY, zone.radius * progress, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(251, 113, 133, 0.9)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(zone.targetX, zone.targetY, zone.radius * progress, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Airborne lobbed shell flying along a parabolic arc
+    const shellGroundX = zone.startX + (zone.targetX - zone.startX) * progress;
+    const shellGroundY = zone.startY + (zone.targetY - zone.startY) * progress;
+    const arcHeight = Math.sin(progress * Math.PI) * 52;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(shellGroundX, shellGroundY, 6, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#c084fc';
+    ctx.beginPath();
+    ctx.arc(shellGroundX, shellGroundY - arcHeight, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fae8ff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 6. Visual FX (Thick crescent Slash / Lightning / Pulse)
   for (const fx of state.visualFx) {
     const alpha = Math.max(0, fx.life / fx.maxLife);
     ctx.save();
     ctx.globalAlpha = alpha;
     if (fx.kind === 'slash' && fx.radius !== undefined && fx.angle !== undefined) {
-      ctx.strokeStyle = fx.color;
-      ctx.lineWidth = 5;
+      const half = fx.halfArcRad ?? 1.0;
+      const startA = fx.angle - half;
+      const endA = fx.angle + half;
+      const outerR = fx.radius * 0.94;
+      const thickness = fx.thickness ?? 26;
+      const innerR = Math.max(14, outerR - thickness);
+      const midA = fx.angle;
+
+      // Thick crescent blade body
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.28)';
       ctx.beginPath();
-      const half = fx.halfArcRad ?? 1.15;
-      ctx.arc(fx.x, fx.y, fx.radius * 0.8, fx.angle - half, fx.angle + half);
+      ctx.arc(fx.x, fx.y, outerR, startA, endA);
+      ctx.arc(fx.x, fx.y, innerR, endA, startA, true);
+      ctx.closePath();
+      ctx.fill();
+
+      // Bright cutting edge & trailing energy arc
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, outerR, startA, endA);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ecfeff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, outerR - 3, midA - half * 0.72, midA + half * 0.72);
       ctx.stroke();
     } else if (fx.kind === 'pulse' && fx.radius !== undefined) {
       ctx.strokeStyle = fx.color;
@@ -541,14 +644,14 @@ export function renderGame(
       ctx.lineTo(0, proj.radius + 2);
       ctx.stroke();
       ctx.restore();
-    } else if (proj.kind === 'base') {
+    } else if (proj.kind === 'base' || proj.kind === 'reflected') {
       ctx.save();
       ctx.fillStyle = proj.color;
       ctx.beginPath();
       ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#ecfdf5';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = proj.kind === 'reflected' ? '#ecfeff' : '#ecfdf5';
+      ctx.lineWidth = proj.kind === 'reflected' ? 2 : 1.5;
       ctx.stroke();
       ctx.restore();
     } else {

@@ -4,7 +4,6 @@ import {
   MAX_EQUIPMENT_LEVEL,
   MAX_EQUIP_SLOTS_CAP,
   MAX_TARGET_RANGE,
-  SCRAP_EXPAND_COST,
   getEquipmentCooldownMultiplier,
   getEquipmentDamage,
   getEquipmentEvolutionSummary,
@@ -12,6 +11,7 @@ import {
   getPulseBladeStats,
   getReactiveCoilStats,
   getRicochetDiscStats,
+  getScrapExpandCost,
   getSeekerDroneRange,
   type EquippedItem,
 } from '../game/equipment';
@@ -170,8 +170,13 @@ export function renderModals(
       els.skillColumns.appendChild(col);
     }
 
+    const expandCost = getScrapExpandCost(state.player.maxEquipSlots);
+    const expandProgressLabel =
+      state.player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP
+        ? '枠拡張最大'
+        : `拡張蓄積 ${state.player.scrapExpandProgress}/${expandCost}`;
     const baseStats = getPlayerBaseAttackStats(state.player);
-    const slotPill = `<span class="gear-pill" style="border-color:#94a3b855;color:#cbd5e1">装備枠 ${state.player.equipment.length}/${state.player.maxEquipSlots} (上限${MAX_EQUIP_SLOTS_CAP} / 拡張蓄積 ${state.player.scrapExpandProgress}/${SCRAP_EXPAND_COST})</span>`;
+    const slotPill = `<span class="gear-pill" style="border-color:#94a3b855;color:#cbd5e1">装備枠 ${state.player.equipment.length}/${state.player.maxEquipSlots} (上限${MAX_EQUIP_SLOTS_CAP} / ${expandProgressLabel})</span>`;
     const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">自機コアショット (使用SP ${baseStats.spentSp}): 威力${baseStats.damage} / ${baseStats.shotCount}発 / ${baseStats.cooldown.toFixed(2)}s / 射程${baseStats.range}px</span>`;
     const gearPills =
       state.player.equipment.length === 0
@@ -197,9 +202,10 @@ export function renderModals(
     const scrapExpandBtn = document.getElementById('scrapEquipBtn') as HTMLButtonElement | null;
     if (scrapExpandBtn) {
       const canExpand = state.player.maxEquipSlots < MAX_EQUIP_SLOTS_CAP;
+      const expandCost = getScrapExpandCost(state.player.maxEquipSlots);
       scrapExpandBtn.disabled = !canExpand;
       scrapExpandBtn.textContent = canExpand
-        ? `🔧 スクラップ＆ビルド：枠拡張へ蓄積（${state.player.scrapExpandProgress}/${SCRAP_EXPAND_COST}）→ ${SCRAP_EXPAND_COST}回で枠+1`
+        ? `🔧 スクラップ＆ビルド：枠拡張へ蓄積（${state.player.scrapExpandProgress}/${expandCost}）→ ${expandCost}回で枠+1`
         : `🔧 装備枠は最大（${MAX_EQUIP_SLOTS_CAP}/${MAX_EQUIP_SLOTS_CAP}）`;
     }
 

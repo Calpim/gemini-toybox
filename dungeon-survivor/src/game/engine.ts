@@ -22,7 +22,6 @@ import {
   MAX_EQUIP_SLOTS_CAP,
   MAX_TARGET_RANGE,
   ORBIT_SHIELD_INNER_SLOW,
-  SCRAP_EXPAND_COST,
   clampEquipmentLevel,
   createEquippedItem,
   getEquipmentCooldownMultiplier,
@@ -33,6 +32,7 @@ import {
   getPulseBladeStats,
   getReactiveCoilStats,
   getRicochetDiscStats,
+  getScrapExpandCost,
   getSeekerDroneCount,
   getSeekerDroneRange,
   type EquipmentId,
@@ -61,6 +61,27 @@ export const CORRIDOR_VISION_RADIUS = 210;
 export const SCOUT_ALERT_RADIUS = 300;
 export const SHOOTER_AGGRO_RANGE = 250;
 export const INITIAL_RESPAWN_DELAY = 24;
+
+export interface NormalEnemyShotStats {
+  shotCount: number;
+  cooldown: number;
+  speed: number;
+  damageMult: number;
+}
+
+export function getNormalEnemyShotStats(playerLevel: number): NormalEnemyShotStats {
+  const lv = Math.max(1, Math.floor(playerLevel));
+  if (lv >= 9) {
+    return { shotCount: 3, cooldown: 2.1, speed: 148, damageMult: 0.62 };
+  }
+  if (lv >= 6) {
+    return { shotCount: 2, cooldown: 2.4, speed: 138, damageMult: 0.6 };
+  }
+  if (lv >= 3) {
+    return { shotCount: 1, cooldown: 2.6, speed: 128, damageMult: 0.58 };
+  }
+  return { shotCount: 1, cooldown: 3.2, speed: 115, damageMult: 0.55 };
+}
 
 export interface CreateGameOptions {
   seed?: number;
@@ -198,6 +219,7 @@ export function createEnemyByKind(
         awake: false,
         hitFlash: 0,
         bitHitCooldown: 0,
+        attackCooldown: 1.4,
       };
     case 'runner':
       return {
@@ -266,6 +288,7 @@ export function createEnemyByKind(
         awake: false,
         hitFlash: 0,
         bitHitCooldown: 0,
+        attackCooldown: 1.0 + ((id * 37) % 10) * 0.1,
       };
   }
 }
@@ -318,7 +341,7 @@ function populateFloor(
 
     const grandBoss = createEnemyByKind(nextId++, 'tank', bossPos.x, bossPos.y, floor, 360);
     const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.16;
-    grandBoss.maxHp = Math.round(grandBoss.maxHp * 4.5 * lvScale);
+    grandBoss.maxHp = Math.round(grandBoss.maxHp * 6.8 * lvScale);
     grandBoss.hp = grandBoss.maxHp;
     grandBoss.radius += 8;
     grandBoss.speed = Math.max(58, Math.round(grandBoss.speed * 1.15));
@@ -328,6 +351,7 @@ function populateFloor(
     grandBoss.isStairsGuard = true;
     grandBoss.attackCooldown = 1.3;
     grandBoss.bossPatternIndex = 0;
+    grandBoss.dashState = 'none';
     enemies.push(grandBoss);
 
     const freeTiles: { tx: number; ty: number }[] = [];
@@ -447,7 +471,7 @@ function populateFloor(
       if (guardianFloor && isStairsRoom && k === 0) {
         const boss = createEnemyByKind(nextId++, 'tank', wx, wy, floor, 260);
         const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.14;
-        boss.maxHp = Math.round(boss.maxHp * 1.9 * lvScale);
+        boss.maxHp = Math.round(boss.maxHp * 2.9 * lvScale);
         boss.hp = boss.maxHp;
         boss.radius += 5;
         boss.damage = Math.round(boss.damage * 1.25);
@@ -455,6 +479,7 @@ function populateFloor(
         boss.isStairsGuard = true;
         boss.attackCooldown = 1.35;
         boss.bossPatternIndex = 0;
+        boss.dashState = 'none';
         enemies.push(boss);
       } else {
         const kind = pickEnemyKindForFloor(floor, rng.next());
@@ -537,6 +562,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     enemies: populated.enemies,
     projectiles: [],
     enemyProjectiles: [],
+    mortarZones: [],
     chests: populated.chests,
     pendingEquipDrop: null,
     pickups: populated.pickups,
@@ -583,6 +609,7 @@ export function advanceToNextFloor(state: GameState): void {
   state.chests = populated.chests;
   state.projectiles = [];
   state.enemyProjectiles = [];
+  state.mortarZones = [];
   state.floatingTexts = [];
   state.visualFx = [];
   state.notifications = [];
@@ -665,6 +692,33 @@ function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
   }
 }
 
+function applyScrapExpandStep(state: GameState, sourceLabel: string): void {
+  const { player } = state;
+  const cost = getScrapExpandCost(player.maxEquipSlots);
+  player.scrapExpandProgress += 1;
+  if (player.scrapExpandProgress >= cost) {
+    player.scrapExpandProgress -= cost;
+    player.maxEquipSlots = Math.min(MAX_EQUIP_SLOTS_CAP, player.maxEquipSlots + 1);
+    state.floatingTexts.push({
+      x: player.x,
+      y: player.y - 26,
+      text: `${sourceLabel} → SLOT EXPANDED! (${player.maxEquipSlots}/${MAX_EQUIP_SLOTS_CAP})`,
+      color: '#34d399',
+      life: 1.4,
+      maxLife: 1.4,
+    });
+  } else {
+    state.floatingTexts.push({
+      x: player.x,
+      y: player.y - 26,
+      text: `${sourceLabel} (${player.scrapExpandProgress}/${cost})`,
+      color: '#fbbf24',
+      life: 1.25,
+      maxLife: 1.25,
+    });
+  }
+}
+
 export function acquireEquipment(state: GameState, droppedItem: EquippedItem): void {
   const { player } = state;
   const { equipment } = player;
@@ -673,6 +727,10 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
   const existing = equipment.find((eq) => eq.id === normalizedItem.id);
   if (existing) {
     if (existing.level >= MAX_EQUIPMENT_LEVEL) {
+      if (player.maxEquipSlots < MAX_EQUIP_SLOTS_CAP) {
+        applyScrapExpandStep(state, 'MAX LV → EXPAND');
+        return;
+      }
       player.hp = Math.min(player.maxHp, player.hp + 20);
       grantExpAndCheckLevelUp(state, 25);
       state.floatingTexts.push({
@@ -786,28 +844,7 @@ export function resolveEquipChoice(
     if (state.player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP) {
       return false;
     }
-    state.player.scrapExpandProgress += 1;
-    if (state.player.scrapExpandProgress >= SCRAP_EXPAND_COST) {
-      state.player.scrapExpandProgress -= SCRAP_EXPAND_COST;
-      state.player.maxEquipSlots = Math.min(MAX_EQUIP_SLOTS_CAP, state.player.maxEquipSlots + 1);
-      state.floatingTexts.push({
-        x: state.player.x,
-        y: state.player.y - 26,
-        text: `SLOT EXPANDED! (${state.player.maxEquipSlots}/${MAX_EQUIP_SLOTS_CAP})`,
-        color: '#34d399',
-        life: 1.4,
-        maxLife: 1.4,
-      });
-    } else {
-      state.floatingTexts.push({
-        x: state.player.x,
-        y: state.player.y - 26,
-        text: `SCRAP BUILD (${state.player.scrapExpandProgress}/${SCRAP_EXPAND_COST})`,
-        color: '#fbbf24',
-        life: 1.2,
-        maxLife: 1.2,
-      });
-    }
+    applyScrapExpandStep(state, 'SCRAP BUILD');
   }
 
   state.pendingEquipDrop = null;
@@ -1185,7 +1222,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     );
     if (nearby.length > 0) {
       for (const e of nearby) {
-        const knockbackImmune = e.kind === 'shooter' || Boolean(e.isGrandBoss);
+        const knockbackImmune =
+          e.kind === 'shooter' || Boolean(e.isRoomBoss) || Boolean(e.isGrandBoss);
         if (!knockbackImmune) {
           const dx = e.x - player.x;
           const dy = e.y - player.y;
@@ -1272,9 +1310,21 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if (item.id === 'pulse_blade') {
       const blade = getPulseBladeStats(item.level, def.baseRange, mods.rangeMult);
       const cappedRange = Math.min(MAX_TARGET_RANGE, blade.range);
-      const lead = findNearestVisibleEnemy(player.x, player.y, cappedRange, state);
-      if (lead) {
-        const slashAngle = Math.atan2(lead.y - player.y, lead.x - player.x);
+      const leadEnemy = findNearestVisibleEnemy(player.x, player.y, cappedRange, state);
+      let leadBullet: { x: number; y: number } | null = null;
+      if (!leadEnemy) {
+        let bestBulletDist = cappedRange;
+        for (const ep of state.enemyProjectiles) {
+          const d = Math.hypot(ep.x - player.x, ep.y - player.y);
+          if (d <= bestBulletDist && hasLineOfSight(player.x, player.y, ep.x, ep.y, map)) {
+            bestBulletDist = d;
+            leadBullet = ep;
+          }
+        }
+      }
+      const aimTarget = leadEnemy ?? leadBullet;
+      if (aimTarget) {
+        const slashAngle = Math.atan2(aimTarget.y - player.y, aimTarget.x - player.x);
         const targets = state.enemies.filter((e) => {
           if (Math.hypot(e.x - player.x, e.y - player.y) > cappedRange) return false;
           if (!hasLineOfSight(player.x, player.y, e.x, e.y, map)) return false;
@@ -1286,6 +1336,51 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         for (const t of targets) {
           damageEnemy(state, t, dmg);
         }
+
+        let reflectedCount = 0;
+        for (let bIdx = state.enemyProjectiles.length - 1; bIdx >= 0; bIdx--) {
+          const ep = state.enemyProjectiles[bIdx];
+          if (Math.hypot(ep.x - player.x, ep.y - player.y) > cappedRange + ep.radius) continue;
+          if (!hasLineOfSight(player.x, player.y, ep.x, ep.y, map)) continue;
+          const ba = Math.atan2(ep.y - player.y, ep.x - player.x);
+          let diff = Math.abs(ba - slashAngle);
+          if (diff > Math.PI) diff = Math.PI * 2 - diff;
+          if (diff <= blade.halfArcRad) {
+            state.enemyProjectiles.splice(bIdx, 1);
+            const inSpeed = Math.hypot(ep.vx, ep.vy);
+            const refAngle =
+              inSpeed > 1e-3
+                ? Math.atan2(-ep.vy, -ep.vx)
+                : Math.atan2(ep.y - player.y, ep.x - player.x);
+            const refSpeed = Math.max(360, inSpeed * 1.6);
+            state.projectiles.push({
+              id: state.nextEntityId++,
+              kind: 'reflected',
+              x: ep.x,
+              y: ep.y,
+              vx: Math.cos(refAngle) * refSpeed,
+              vy: Math.sin(refAngle) * refSpeed,
+              radius: Math.max(5, ep.radius),
+              damage: Math.max(ep.damage, Math.round(dmg * 0.65)),
+              life: 1.0,
+              pierce: false,
+              hitEnemyIds: [],
+              color: '#67e8f9',
+            });
+            reflectedCount++;
+          }
+        }
+        if (reflectedCount > 0) {
+          state.floatingTexts.push({
+            x: player.x,
+            y: player.y - 22,
+            text: reflectedCount > 1 ? `REFLECT x${reflectedCount}!` : 'REFLECT!',
+            color: '#67e8f9',
+            life: 0.55,
+            maxLife: 0.55,
+          });
+        }
+
         state.visualFx.push({
           kind: 'slash',
           x: player.x,
@@ -1294,9 +1389,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           angle: slashAngle,
           halfArcRad: blade.halfArcRad,
           fullCircle: false,
+          thickness: blade.thickness,
           color: def.color,
-          life: 0.22,
-          maxLife: 0.22,
+          life: 0.24,
+          maxLife: 0.24,
         });
         item.cooldown = def.baseCooldown * cdMult;
       }
@@ -1344,31 +1440,26 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const range = Math.min(MAX_TARGET_RANGE, discStats.range);
       const target = findNearestVisibleEnemy(player.x, player.y, range, state);
       if (target) {
-        const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
-        for (let d = 0; d < discStats.count; d++) {
-          const spread =
-            discStats.count === 1
-              ? 0
-              : (d - (discStats.count - 1) / 2) * 0.18;
-          const angle = baseAngle + spread;
-          state.projectiles.push({
-            id: state.nextEntityId++,
-            kind: 'disc',
-            x: player.x,
-            y: player.y,
-            vx: Math.cos(angle) * discStats.speed,
-            vy: Math.sin(angle) * discStats.speed,
-            radius: 7,
-            damage: dmg,
-            life: 1.15,
-            pierce: false,
-            bouncesLeft: discStats.maxBounces,
-            speed: discStats.speed,
-            spinAngle: 0,
-            hitEnemyIds: [],
-            color: def.color,
-          });
-        }
+        const angle = Math.atan2(target.y - player.y, target.x - player.x);
+        state.projectiles.push({
+          id: state.nextEntityId++,
+          kind: 'disc',
+          x: player.x,
+          y: player.y,
+          vx: Math.cos(angle) * discStats.speed,
+          vy: Math.sin(angle) * discStats.speed,
+          radius: 7,
+          damage: dmg,
+          life: 1.85,
+          pierce: false,
+          bouncesLeft: discStats.maxBounces,
+          wallBouncesLeft: 3,
+          speed: discStats.speed,
+          homingTurnRate: discStats.homingTurnRate,
+          spinAngle: 0,
+          hitEnemyIds: [],
+          color: def.color,
+        });
         item.cooldown = def.baseCooldown * cdMult;
       }
     }
@@ -1436,14 +1527,99 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 8. Player projectiles & wall/enemy collision + ricochet bounce (APP-CMB-03, APP-CMB-05)
+  // 8. Player projectiles & wall/enemy collision + homing/orbiting ricochet disc (APP-CMB-03, APP-CMB-05)
   for (let i = state.projectiles.length - 1; i >= 0; i--) {
     const proj = state.projectiles[i];
-    proj.x += proj.vx * clampedDt;
-    proj.y += proj.vy * clampedDt;
     proj.life -= clampedDt;
+
     if (proj.kind === 'disc') {
-      proj.spinAngle = (proj.spinAngle ?? 0) + 16 * clampedDt;
+      proj.spinAngle = (proj.spinAngle ?? 0) + 18 * clampedDt;
+      const spd = proj.speed ?? 360;
+
+      if (proj.orbitTargetId !== undefined) {
+        const orbitTarget = state.enemies.find((e) => e.id === proj.orbitTargetId && e.hp > 0);
+        if (!orbitTarget) {
+          proj.orbitTargetId = undefined;
+          proj.orbitProgress = 0;
+        } else {
+          const orbitRadius = orbitTarget.radius + 22;
+          const angularStep = Math.max(11.5, spd / orbitRadius) * clampedDt;
+          const nextOrbitAngle = (proj.orbitAngle ?? 0) + angularStep;
+          const nextProgress = (proj.orbitProgress ?? 0) + angularStep;
+          const ox = orbitTarget.x + Math.cos(nextOrbitAngle) * orbitRadius;
+          const oy = orbitTarget.y + Math.sin(nextOrbitAngle) * orbitRadius;
+
+          if (!isWallAtWorld(map, ox, oy)) {
+            proj.vx = (ox - proj.x) / Math.max(1e-4, clampedDt);
+            proj.vy = (oy - proj.y) / Math.max(1e-4, clampedDt);
+            proj.x = ox;
+            proj.y = oy;
+          }
+          proj.orbitAngle = nextOrbitAngle;
+          proj.orbitProgress = nextProgress;
+
+          if (nextProgress >= Math.PI * 2) {
+            proj.hitEnemyIds = proj.hitEnemyIds.filter((id) => id !== orbitTarget.id);
+            proj.orbitTargetId = undefined;
+            proj.orbitProgress = 0;
+            const strikeAngle = Math.atan2(orbitTarget.y - proj.y, orbitTarget.x - proj.x);
+            proj.vx = Math.cos(strikeAngle) * spd;
+            proj.vy = Math.sin(strikeAngle) * spd;
+          }
+        }
+      }
+
+      if (proj.orbitTargetId === undefined) {
+        const homingTarget = findNearestVisibleEnemy(
+          proj.x,
+          proj.y,
+          170,
+          state,
+          proj.hitEnemyIds
+        );
+        if (homingTarget) {
+          const currAngle = Math.atan2(proj.vy, proj.vx);
+          const desiredAngle = Math.atan2(homingTarget.y - proj.y, homingTarget.x - proj.x);
+          let diff = desiredAngle - currAngle;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          const maxTurn = (proj.homingTurnRate ?? 8) * clampedDt;
+          const nextAngle = currAngle + Math.max(-maxTurn, Math.min(maxTurn, diff));
+          proj.vx = Math.cos(nextAngle) * spd;
+          proj.vy = Math.sin(nextAngle) * spd;
+        }
+
+        let nx = proj.x + proj.vx * clampedDt;
+        let ny = proj.y + proj.vy * clampedDt;
+        if ((proj.wallBouncesLeft ?? 0) > 0) {
+          let wallBounced = false;
+          if (isWallAtWorld(map, nx, proj.y)) {
+            proj.vx = -proj.vx;
+            nx = proj.x + proj.vx * clampedDt;
+            wallBounced = true;
+          }
+          if (isWallAtWorld(map, proj.x, ny)) {
+            proj.vy = -proj.vy;
+            ny = proj.y + proj.vy * clampedDt;
+            wallBounced = true;
+          }
+          if (!wallBounced && isWallAtWorld(map, nx, ny)) {
+            proj.vx = -proj.vx;
+            proj.vy = -proj.vy;
+            nx = proj.x + proj.vx * clampedDt;
+            ny = proj.y + proj.vy * clampedDt;
+            wallBounced = true;
+          }
+          if (wallBounced) {
+            proj.wallBouncesLeft = (proj.wallBouncesLeft ?? 0) - 1;
+          }
+        }
+        proj.x = nx;
+        proj.y = ny;
+      }
+    } else {
+      proj.x += proj.vx * clampedDt;
+      proj.y += proj.vy * clampedDt;
     }
 
     if (proj.life <= 0 || isWallAtWorld(map, proj.x, proj.y)) {
@@ -1453,22 +1629,28 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     let consumed = false;
     for (const enemy of state.enemies) {
-      if (proj.hitEnemyIds.includes(enemy.id)) continue;
+      if (proj.orbitTargetId === enemy.id || proj.hitEnemyIds.includes(enemy.id)) continue;
       if (Math.hypot(enemy.x - proj.x, enemy.y - proj.y) <= enemy.radius + proj.radius) {
         damageEnemy(state, enemy, proj.damage);
         proj.hitEnemyIds.push(enemy.id);
 
         if (proj.kind === 'disc' && (proj.bouncesLeft ?? 0) > 0) {
-          const nextTarget = findNearestVisibleEnemy(enemy.x, enemy.y, 150, state, proj.hitEnemyIds);
+          proj.bouncesLeft = (proj.bouncesLeft ?? 0) - 1;
+          const nextTarget = findNearestVisibleEnemy(enemy.x, enemy.y, 165, state, proj.hitEnemyIds);
           if (nextTarget) {
-            const spd = proj.speed ?? 390;
+            const spd = proj.speed ?? 360;
             const bounceAngle = Math.atan2(nextTarget.y - proj.y, nextTarget.x - proj.x);
             proj.vx = Math.cos(bounceAngle) * spd;
             proj.vy = Math.sin(bounceAngle) * spd;
-            proj.bouncesLeft = (proj.bouncesLeft ?? 0) - 1;
-            proj.life = Math.max(proj.life, 0.75);
-            break;
+            proj.life = Math.max(proj.life, 0.9);
+          } else {
+            // No unhit enemy in sight: orbit around this enemy for 1 full revolution, then re-hit
+            proj.orbitTargetId = enemy.id;
+            proj.orbitAngle = Math.atan2(proj.y - enemy.y, proj.x - enemy.x);
+            proj.orbitProgress = 0;
+            proj.life = Math.max(proj.life, 1.0);
           }
+          break;
         }
 
         if (!proj.pierce) {
@@ -1838,6 +2020,71 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
+    // Normal enemy archetype: player-level-scaled weak ranged shot (prevents 1F bullet-hell while escalating later)
+    if ((!enemy.kind || enemy.kind === 'normal') && enemy.awake) {
+      const inSight =
+        distToPlayer > 1e-3 &&
+        distToPlayer <= 190 &&
+        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+      if (!inSight) {
+        enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.55);
+      } else if (wasAwake) {
+        if ((enemy.attackCooldown ?? 0) > 0) {
+          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+        }
+        if ((enemy.attackCooldown ?? 0) <= 0) {
+          const shotStats = getNormalEnemyShotStats(player.level);
+          const baseAngle = Math.atan2(dy, dx);
+          const dmgVal = Math.max(1, Math.round(enemy.damage * shotStats.damageMult));
+          for (let s = 0; s < shotStats.shotCount; s++) {
+            const offset = (s - (shotStats.shotCount - 1) / 2) * 0.16;
+            const a = baseAngle + offset;
+            state.enemyProjectiles.push({
+              id: state.nextEntityId++,
+              x: enemy.x,
+              y: enemy.y,
+              vx: Math.cos(a) * shotStats.speed,
+              vy: Math.sin(a) * shotStats.speed,
+              radius: 4.5,
+              damage: dmgVal,
+              life: 1.3,
+              color: '#fb7185',
+            });
+          }
+          enemy.attackCooldown = shotStats.cooldown;
+        }
+      }
+    }
+
+    // Tank archetype: parabolic mortar lobbing ground AoE zones with clear impact timing
+    if (enemy.kind === 'tank' && !enemy.isRoomBoss && enemy.awake) {
+      const inSight =
+        distToPlayer > 1e-3 &&
+        distToPlayer <= 215 &&
+        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+      if (!inSight) {
+        enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
+      } else if (wasAwake) {
+        if ((enemy.attackCooldown ?? 0) > 0) {
+          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+        }
+        if ((enemy.attackCooldown ?? 0) <= 0) {
+          state.mortarZones.push({
+            id: state.nextEntityId++,
+            startX: enemy.x,
+            startY: enemy.y,
+            targetX: player.x,
+            targetY: player.y,
+            radius: 34,
+            damage: Math.round(enemy.damage * 1.15),
+            elapsed: 0,
+            duration: 1.15,
+          });
+          enemy.attackCooldown = 3.2;
+        }
+      }
+    }
+
     // Shooter archetype: stationary knockback-immune turret firing 8-way periodic barrage within expanded aggroRange
     if (enemy.kind === 'shooter' && enemy.awake) {
       const inSight =
@@ -1873,84 +2120,116 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Guardian / Grand Boss rotating barrage patterns (ring, homing orbs, wall-bouncing shots)
+    // Guardian / Grand Boss rotating patterns (ring, homing orbs, wall-bouncing shots, high-speed dash)
     if (enemy.isRoomBoss && enemy.awake) {
-      const inSight =
-        distToPlayer > 1e-3 &&
-        distToPlayer <= (enemy.isGrandBoss ? 380 : 280) &&
-        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
-      if (inSight && wasAwake) {
-        if ((enemy.attackCooldown ?? 0) > 0) {
-          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+      if (enemy.dashState === 'windup') {
+        enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+        if ((enemy.dashTimer ?? 0) <= 0) {
+          enemy.dashState = 'dashing';
+          enemy.dashTimer = enemy.isGrandBoss ? 0.48 : 0.42;
         }
-        if ((enemy.attackCooldown ?? 0) <= 0) {
-          const pattern = enemy.bossPatternIndex ?? 0;
-          const aimAngle = Math.atan2(dy, dx);
-          const isGrand = Boolean(enemy.isGrandBoss);
-          const dmgVal = Math.round(enemy.damage * 0.8);
-
-          if (pattern === 0) {
-            const count = isGrand ? 12 : 8;
-            const spd = isGrand ? 190 : 168;
-            for (let k = 0; k < count; k++) {
-              const a = aimAngle + (k * Math.PI * 2) / count;
-              state.enemyProjectiles.push({
-                id: state.nextEntityId++,
-                x: enemy.x,
-                y: enemy.y,
-                vx: Math.cos(a) * spd,
-                vy: Math.sin(a) * spd,
-                radius: 6,
-                damage: dmgVal,
-                life: 2.1,
-                color: isGrand ? '#f43f5e' : '#fb7185',
-              });
-            }
-          } else if (pattern === 1) {
-            const count = isGrand ? 3 : 2;
-            const spd = isGrand ? 148 : 132;
-            for (let k = 0; k < count; k++) {
-              const offset = (k - (count - 1) / 2) * 0.42;
-              const a = aimAngle + offset;
-              state.enemyProjectiles.push({
-                id: state.nextEntityId++,
-                x: enemy.x,
-                y: enemy.y,
-                vx: Math.cos(a) * spd,
-                vy: Math.sin(a) * spd,
-                radius: 7,
-                damage: dmgVal,
-                life: 2.5,
-                homingRate: isGrand ? 2.1 : 1.75,
-                color: '#c084fc',
-              });
-            }
-          } else {
-            const count = isGrand ? 6 : 4;
-            const spd = isGrand ? 185 : 165;
-            for (let k = 0; k < count; k++) {
-              const a = aimAngle + (k - (count - 1) / 2) * 0.34;
-              state.enemyProjectiles.push({
-                id: state.nextEntityId++,
-                x: enemy.x,
-                y: enemy.y,
-                vx: Math.cos(a) * spd,
-                vy: Math.sin(a) * spd,
-                radius: 6,
-                damage: dmgVal,
-                life: 2.8,
-                bouncesLeft: isGrand ? 2 : 1,
-                color: '#fbbf24',
-              });
-            }
+      } else if (enemy.dashState === 'dashing' && enemy.dashDir) {
+        const dashSpd = enemy.dashSpeed ?? (enemy.isGrandBoss ? 345 : 315);
+        const stepDist = dashSpd * clampedDt;
+        const resolvedDash = resolveCircleGridCollision(
+          enemy.x + enemy.dashDir.x * stepDist,
+          enemy.y + enemy.dashDir.y * stepDist,
+          enemy.radius,
+          map
+        );
+        const moved = Math.hypot(resolvedDash.x - enemy.x, resolvedDash.y - enemy.y);
+        enemy.x = resolvedDash.x;
+        enemy.y = resolvedDash.y;
+        enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+        if ((enemy.dashTimer ?? 0) <= 0 || moved < stepDist * 0.45) {
+          enemy.dashState = 'none';
+        }
+      } else {
+        const inSight =
+          distToPlayer > 1e-3 &&
+          distToPlayer <= (enemy.isGrandBoss ? 380 : 280) &&
+          hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+        if (inSight && wasAwake) {
+          if ((enemy.attackCooldown ?? 0) > 0) {
+            enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
           }
-          enemy.bossPatternIndex = (pattern + 1) % 3;
-          enemy.attackCooldown = isGrand ? 1.55 : 2.15;
+          if ((enemy.attackCooldown ?? 0) <= 0) {
+            const pattern = enemy.bossPatternIndex ?? 0;
+            const aimAngle = Math.atan2(dy, dx);
+            const isGrand = Boolean(enemy.isGrandBoss);
+            const dmgVal = Math.round(enemy.damage * 0.8);
+
+            if (pattern === 0) {
+              const count = isGrand ? 12 : 8;
+              const spd = isGrand ? 190 : 168;
+              for (let k = 0; k < count; k++) {
+                const a = aimAngle + (k * Math.PI * 2) / count;
+                state.enemyProjectiles.push({
+                  id: state.nextEntityId++,
+                  x: enemy.x,
+                  y: enemy.y,
+                  vx: Math.cos(a) * spd,
+                  vy: Math.sin(a) * spd,
+                  radius: 6,
+                  damage: dmgVal,
+                  life: 2.1,
+                  color: isGrand ? '#f43f5e' : '#fb7185',
+                });
+              }
+            } else if (pattern === 1) {
+              const count = isGrand ? 3 : 2;
+              const spd = isGrand ? 148 : 132;
+              for (let k = 0; k < count; k++) {
+                const offset = (k - (count - 1) / 2) * 0.42;
+                const a = aimAngle + offset;
+                state.enemyProjectiles.push({
+                  id: state.nextEntityId++,
+                  x: enemy.x,
+                  y: enemy.y,
+                  vx: Math.cos(a) * spd,
+                  vy: Math.sin(a) * spd,
+                  radius: 7,
+                  damage: dmgVal,
+                  life: 2.5,
+                  homingRate: isGrand ? 2.1 : 1.75,
+                  color: '#c084fc',
+                });
+              }
+            } else if (pattern === 2) {
+              const count = isGrand ? 6 : 4;
+              const spd = isGrand ? 185 : 165;
+              for (let k = 0; k < count; k++) {
+                const a = aimAngle + (k - (count - 1) / 2) * 0.34;
+                state.enemyProjectiles.push({
+                  id: state.nextEntityId++,
+                  x: enemy.x,
+                  y: enemy.y,
+                  vx: Math.cos(a) * spd,
+                  vy: Math.sin(a) * spd,
+                  radius: 6,
+                  damage: dmgVal,
+                  life: 2.8,
+                  bouncesLeft: isGrand ? 2 : 1,
+                  color: '#fbbf24',
+                });
+              }
+            } else {
+              enemy.dashState = 'windup';
+              enemy.dashTimer = isGrand ? 0.65 : 0.72;
+              enemy.dashDir = { x: Math.cos(aimAngle), y: Math.sin(aimAngle) };
+              enemy.dashSpeed = isGrand ? 345 : 315;
+            }
+            enemy.bossPatternIndex = (pattern + 1) % 4;
+            enemy.attackCooldown = isGrand ? 1.55 : 2.15;
+          }
         }
       }
     }
 
-    if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0) {
+    const isBossDashingOrWindup =
+      enemy.isRoomBoss && (enemy.dashState === 'windup' || enemy.dashState === 'dashing');
+
+    if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isBossDashingOrWindup) {
       let steerX = player.x;
       let steerY = player.y;
       if (!hasClearCorridorPath(enemy.x, enemy.y, player.x, player.y, enemy.radius, map)) {
@@ -2114,6 +2393,57 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         if (player.hp <= 0) {
           state.status = 'gameover';
           return;
+        }
+      }
+    }
+  }
+
+  // 9c. Tank parabolic mortar ground impact zones (overhead, bypasses shield/blade)
+  for (let i = state.mortarZones.length - 1; i >= 0; i--) {
+    const zone = state.mortarZones[i];
+    zone.elapsed += clampedDt;
+    if (zone.elapsed >= zone.duration) {
+      state.mortarZones.splice(i, 1);
+      state.visualFx.push({
+        kind: 'pulse',
+        x: zone.targetX,
+        y: zone.targetY,
+        radius: zone.radius,
+        color: '#c084fc',
+        life: 0.28,
+        maxLife: 0.28,
+      });
+      if (
+        player.invulnTimer <= 0 &&
+        Math.hypot(player.x - zone.targetX, player.y - zone.targetY) <=
+          zone.radius + player.radius * 0.5
+      ) {
+        if (mods.hasAegisParry && player.aegisCooldown <= 0) {
+          player.aegisCooldown = mods.aegisCooldown;
+          player.invulnTimer = 0.6;
+          state.floatingTexts.push({
+            x: player.x,
+            y: player.y - 20,
+            text: 'PARRY!',
+            color: '#34d399',
+            life: 0.7,
+            maxLife: 0.7,
+          });
+        } else {
+          player.hp = Math.max(0, player.hp - zone.damage);
+          player.invulnTimer = 0.5;
+          state.floatingTexts.push({
+            x: player.x,
+            y: player.y - player.radius - 6,
+            text: `-${zone.damage}`,
+            color: '#f87171',
+            life: 0.7,
+            maxLife: 0.7,
+          });
+          if (player.hp <= 0) {
+            state.status = 'gameover';
+            return;
+          }
         }
       }
     }

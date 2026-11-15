@@ -496,7 +496,7 @@
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (7)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (10)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (11)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -511,13 +511,13 @@
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">22</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
         <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">119</div></div>
-        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">28</div></div>
+        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">29</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">6</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">1</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 22 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 110 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 111 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -610,7 +610,7 @@
                 
                 <h4>シード値に基づき広い部屋・2タイル幅接続の非重複通路・3/6/9F守護中ボス＆10F大ボスを生成する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の広めの長方形部屋（8〜13 x 7〜11 タイル・部屋間隔 4タイル以上）と互いに重なり・隣接合体せず、部屋との接続口も必ず 2タイル幅以上が確保された通路（既定幅 2タイル・80px）が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">通常階（1,2,4,5,7,8F...）の階段はロックなし（getStairsLockCount === 0）、3/6/9F（floor % 10 ∈ {3,6,9}）は広めの階段部屋（11×9以上）に守護中ボス GUARDIAN（プレイヤーLv連動HP・3種弾幕・確定高Lv装備ドロップ）、10F毎（10F, 20F...）は泉前室＋大部屋大ボスが配置される</span></li><li><span class="kw">かつ</span><span class="st-text">getStairsLockCount(state) が 1以上の間は階段が封印（LOCKED 表示・進行不可）され、守護中ボス／大ボス（isRoomBoss）を倒して封印解除した状態で階段に触れるとフロア番号 N+1 が生成される（増援・リポップ雑魚ではロックされない）</span></li>
+    <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の広めの長方形部屋（8〜13 x 7〜11 タイル・部屋間隔 4タイル以上）と互いに重なり・隣接合体せず、部屋との接続口も必ず 2タイル幅以上が確保された通路（既定幅 2タイル・80px）が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">通常階（1,2,4,5,7,8F...）の階段はロックなし（getStairsLockCount === 0）、3/6/9F（floor % 10 ∈ {3,6,9}）は広めの階段部屋（11×9以上）に守護中ボス GUARDIAN（プレイヤーLv連動HP 2.9倍ベース・ノックバック無効・3種弾幕＋予兆付き高速突進・確定高Lv装備ドロップ）、10F毎（10F, 20F...）は泉前室＋大部屋大ボスが配置される</span></li><li><span class="kw">かつ</span><span class="st-text">getStairsLockCount(state) が 1以上の間は階段が封印（LOCKED 表示・進行不可）され、守護中ボス／大ボス（isRoomBoss）を倒して封印解除した状態で階段に触れるとフロア番号 N+1 が生成される（増援・リポップ雑魚ではロックされない）</span></li>
   </ul>
               </div>
         </div>
@@ -822,7 +822,7 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">populateFloor が部屋内および通路巡回枠（scout 1〜2体）に敵・宝箱・回復オーブを重複タイルなしで配置する</span><div class="table-wrap"><table>
               <thead><tr><th>敵種別</th><th>性質</th><th>移動・攻撃・視認時の振る舞い</th></tr></thead>
-              <tbody><tr><td>normal</td><td>標準追跡型</td><td>標準HP・標準速度で視認・同室入室後に追跡</td></tr><tr><td>tank</td><td>固くて遅い</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）の近接重装型</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型（固定砲台）</td><td>速度 0・ノックバック無効・2F以降出現・索敵250px・0.95秒予兆後に8方向交互弾幕を発射</td></tr><tr><td>scout</td><td>スカウト（通路巡回型）</td><td>出現率を抑えて通路・部屋を自由巡回・発見時に300px内の仲間を覚醒＋発光する高速敵（runner）を2〜3体ポップ＋警告通知</td></tr></tbody>
+              <tbody><tr><td>normal</td><td>標準追跡＋Lv連動弱砲撃</td><td>標準HP・標準速度で追跡し、射程190px・視線内からプレイヤーLvに応じた弱砲撃（Lv1-2:1発/3.2s〜Lv9+:3発/2.1s）を行う</td></tr><tr><td>tank</td><td>放物線迫撃砲＋重装</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）で、射程215px内から着弾範囲とタイミング円を予告する放物線迫撃砲（防壁貫通）を撃つ</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型（固定砲台）</td><td>速度 0・ノックバック無効・2F以降出現・索敵250px・0.95秒予兆後に8方向交互弾幕を発射</td></tr><tr><td>scout</td><td>スカウト（通路巡回型）</td><td>出現率を抑えて通路・部屋を自由巡回・発見時に300px内の仲間を覚醒＋発光する高速敵（runner）を2〜3体ポップ＋警告通知</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">scout がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">周囲へ覚醒済み・isAmbush フラグ付きの高速 runner（228〜265 px/s、出現猶予 spawnDelay 0.45秒）2〜3体が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない</span></li><li><span class="kw">かつ</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
   </ul>
               </div>
@@ -886,7 +886,7 @@
           
           <h3>武器や盾だけでなくビットや迎撃系装備を組み合わせて戦う</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが探索中に様々な系統の装備を入手している</span></li><li><span class="kw">もし</span><span class="st-text">敵方向扇形のパルスブレード・範囲スロー付き公転シールド・自律ドローン・跳弾チャクラム・カウンター迎撃装置などを装備する</span></li><li><span class="kw">ならば</span><span class="st-text">それぞれの役割に応じた自動攻撃や防御・減速支援が同時に機能する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが探索中に様々な系統の装備を入手している</span></li><li><span class="kw">もし</span><span class="st-text">敵弾も跳ね返す厚み付き扇形のパルスブレード・範囲スロー付き公転シールド・自律ドローン・単発追尾し同敵周回でも再ヒットするチャクラム・カウンター迎撃装置などを装備する</span></li><li><span class="kw">ならば</span><span class="st-text">それぞれの役割に応じた自動攻撃や防御・反射・減速支援が同時に機能する</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -905,7 +905,7 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが以下の装備を組み合わせてスロットに装着している</span><div class="table-wrap"><table>
               <thead><tr><th>装備ID</th><th>カテゴリ</th><th>挙動パラメータ</th></tr></thead>
-              <tbody><tr><td>pulse_blade</td><td>近接迎撃</td><td>半径 84px・敵方向扇形（威力25 / CD 0.88s）の自動高火力斬撃</td></tr><tr><td>orbit_shield</td><td>公転ビット</td><td>半径 78px〜を少ビット高速・多ビット等速補正（1.6〜5.2 rad/s）で周回し、接触ダメ＋敵弾消去＋内側敵速度0.72倍スロー</td></tr><tr><td>seeker_drone</td><td>自律ドローン</td><td>半径 155px（上限180px）内の敵へ誘導弾を自動発射</td></tr><tr><td>reactive_coil</td><td>カウンター</td><td>敵が 78px 以内に接近、または被弾時に周囲へ連鎖放電</td></tr><tr><td>ricochet_disc</td><td>跳弾投擲</td><td>半径 145px（上限180px）内の敵へ跳弾するディスクを発射（AI仮提案の第5装備）</td></tr></tbody>
+              <tbody><tr><td>pulse_blade</td><td>近接迎撃</td><td>半径 84px・敵または敵弾方向への厚み付き三日月扇形斬撃（威力25 / CD 0.88s・範囲内の敵弾を水色味方弾として反射）</td></tr><tr><td>orbit_shield</td><td>公転ビット</td><td>半径 78px〜を少ビット高速・多ビット等速補正（1.6〜5.2 rad/s）で周回し、接触ダメ（10）＋敵弾消去＋内側敵速度0.86倍スロー</td></tr><tr><td>seeker_drone</td><td>自律ドローン</td><td>半径 155px（上限180px）内の敵へ誘導弾を自動発射</td></tr><tr><td>reactive_coil</td><td>カウンター</td><td>敵が 78px 以内に接近、または被弾時に周囲へ連鎖放電</td></tr><tr><td>ricochet_disc</td><td>追尾跳弾投擲</td><td>半径 145px（上限180px）内の敵へ単発追尾（壁最大3回反射）し、未ヒット敵へ跳弾・対象不在時は同一敵を1周（2π）してから再ヒットするディスクを発射</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">戦闘ループ（60fps固定タイムステップまたはdeltaTime更新）が進行する</span></li><li><span class="kw">ならば</span><span class="st-text">全装備のタイマーおよびビット座標が独立して更新され、同時に迎撃を実行する</span></li>
   </ul>
               </div>
@@ -994,7 +994,7 @@
           
           <h3>装備のレベルはLv6まで展開挙動が進化し、Lv7〜10で威力・CD・射程が伸びる</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに上限Lv10の装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">同種装備の獲得やスクラップ強化によって装備レベルが上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv6まではビット数・ドローン数・連鎖数・跳弾数・扇角などの挙動が段階進化し、Lv7〜10ではダメージ・CD短縮・射程が強化され、Lv10到達後の余剰獲得は回復・経験値ボーナスへ還元される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに上限Lv10の装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">同種装備の獲得やスクラップ強化によって装備レベルが上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv6まではビット数・ドローン数・連鎖数・跳弾回数・扇角などの挙動が段階進化し、Lv7〜10ではダメージ・CD短縮・射程が強化され、Lv10到達後の余剰獲得は枠5未満なら枠拡張へ自動充当・枠5到達後は回復・経験値ボーナスへ還元される</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1013,8 +1013,8 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">装備ごとにレベルに応じた2段階能力変化ルールが定義されている（上限 MAX_EQUIPMENT_LEVEL = 10、具体数値はAI仮提案）</span><div class="table-wrap"><table>
               <thead><tr><th>装備ID</th><th>Lv上昇による能力・挙動変化（Lv1-6展開最大 / Lv7-10威力・CD・射程特化）</th></tr></thead>
-              <tbody><tr><td>orbit_shield</td><td>Lv1〜6で公転ビット数増加（最大6個）＆少ビット時ほど高速回転＋半径拡大＋内側敵速度0.72倍スロー、Lv7〜10は半径・威力強化</td></tr><tr><td>pulse_blade</td><td>360度全方位化せず敵方向への扇形を維持（Lv1〜6で扇角・射程拡大）、Lv7〜10は威力・射程・CD短縮強化</td></tr><tr><td>seeker_drone</td><td>Lv2/4/6で展開ドローン数増加（最大4機）＋弾速強化、Lv7〜10は射程（+8px/Lv）・威力・CD短縮強化</td></tr><tr><td>reactive_coil</td><td>Lv1〜6で最大連鎖数増加（最大8連鎖）＆放電レンジ拡大、Lv7〜10は放電レンジ・威力・CD短縮強化</td></tr><tr><td>ricochet_disc</td><td>Lv1〜6で跳弾回数増加（最大7回）・Lv3で2枚・Lv6で3枚同時投擲、Lv7〜10は威力・射程（+8px/Lv）・CD短縮強化</td></tr></tbody>
-            </table></div></li><li><span class="kw">もし</span><span class="st-text">装備のレベルが Lv1 から Lv6・Lv10 へと上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv6まではビット数・跳弾数・同時発射数・扇角が進化し、Lv7〜10では威力・CD短縮（倍率下限0.55）・射程が伸び、Lv10重複時はオーバーフローボーナスが付与される</span></li>
+              <tbody><tr><td>orbit_shield</td><td>Lv1〜6で公転ビット数増加（最大6個）＆少ビット時ほど高速回転＋半径拡大＋内側敵速度0.86倍スロー、Lv7〜10は半径・威力強化</td></tr><tr><td>pulse_blade</td><td>360度全方位化せず厚み付き三日月扇形を維持（Lv1〜6で扇角・厚み・射程拡大＋敵弾反射）、Lv7〜10は威力・射程・CD短縮強化</td></tr><tr><td>seeker_drone</td><td>Lv2/4/6で展開ドローン数増加（最大4機）＋弾速強化、Lv7〜10は射程（+8px/Lv）・威力・CD短縮強化</td></tr><tr><td>reactive_coil</td><td>Lv1〜6で最大連鎖数増加（最大8連鎖）＆放電レンジ拡大、Lv7〜10は放電レンジ・威力・CD短縮強化</td></tr><tr><td>ricochet_disc</td><td>数は常に1枚の強追尾＆壁反射（最大3回）・Lv1〜6で最大ヒット/跳弾回数増加（最大7回・単体相手時は1周2π軌道後に再ヒット）、Lv7〜10は威力・追尾・射程（+8px/Lv）・CD短縮強化</td></tr></tbody>
+            </table></div></li><li><span class="kw">もし</span><span class="st-text">装備のレベルが Lv1 から Lv6・Lv10 へと上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv6まではビット数・跳弾数・扇角・厚みが進化し、Lv7〜10では威力・CD短縮（倍率下限0.55）・射程が伸び、Lv10重複時は枠5未満なら自動枠拡張・枠5到達後はオーバーフローボーナスが付与される</span></li>
   </ul>
               </div>
         </div>
@@ -1092,9 +1092,9 @@
       <li>決定経緯: Lv1-3=1SP / Lv4=2SP / Lv5=3SP の枠組みと Lv4以降の伸び率引き上げは2026-11-14先輩確定、各スキルの具体数値カーブは AI提案（@Inferred）</li>
     </ul>
   </div>
-                <h4>経験値ジェム回収でスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
+                <h4>経験値ジェム回収でHUD経験値バーが進みスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 である</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベルが 2 に上がり、スキルポイント（SP）を +1 獲得してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、スキルポイント（SP）を +1 獲得してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
   </ul>
               </div>
         </div>
@@ -1150,7 +1150,7 @@
           
           <h3>初期装備枠2枠を上限とし、余剰装備は入れ替えまたはスクラップ＆ビルドで強化・枠拡張できる</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの初期装備スロット上限（2枠）がすべて埋まっている（装備種類数に応じた実質上限は最大5枠・各装備Lv上限10）</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、「スクラップ＆ビルド」（未カンスト所持装備1個の強化、または枠拡張への蓄積：3回蓄積で装備枠+1・最大5枠）を選択でき、全5枠がLv10に達している場合は即時ボーナスへ還元される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの初期装備スロット上限（2枠）がすべて埋まっている（装備種類数に応じた実質上限は最大5枠・各装備Lv上限10）</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、「スクラップ＆ビルド」（未カンスト所持装備1個の強化、または枠拡張への蓄積：1回 / 2回 / 3回の段階蓄積で装備枠+1・最大5枠）を選択でき、全5枠がLv10に達している場合は即時ボーナスへ還元される</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1165,9 +1165,9 @@
                   <span class="badge badge-confirmed">Confirmed（決定済み）</span>
                 </div>
                 
-                <h4>装備スロット満杯時の未所持装備獲得時は入れ替えまたはスクラップ＆ビルド（装備1個強化／枠拡張蓄積）を選べる</h4>
+                <h4>装備スロット満杯時の未所持装備獲得時は入れ替えまたはスクラップ＆ビルド（段階コスト1/2/3で枠拡張）を選べる</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在装備スロット上限（初期 2枠・拡張により最大 5枠）がすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">未所持の新しい装備を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">全5枠がすでに Lv10 に達している場合は即時ボーナス（+30HP / +40EXP）へ変換され、それ以外はゲームを一時停止して「入れ替えるスロット選択」または「スクラップ＆ビルド（Lv10未満の所持装備1個強化、または枠拡張蓄積：3回で枠+1）」モーダルを表示する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在装備スロット上限（初期 2枠・拡張により最大 5枠）がすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">未所持の新しい装備を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">全5枠がすでに Lv10 に達している場合は即時ボーナス（+30HP / +40EXP）へ変換され、それ以外はゲームを一時停止して「入れ替えるスロット選択」または「スクラップ＆ビルド（Lv10未満の所持装備1個強化、または枠拡張蓄積：2→3枠は1回・3→4枠は2回・4→5枠は3回で枠+1）」モーダルを表示する</span></li>
   </ul>
               </div>
         </div>
@@ -1185,7 +1185,7 @@
           
           <h3>すでに所持している装備と同じアイテムを拾うと自動でレベルアップする</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに特定の装備を装着している</span></li><li><span class="kw">もし</span><span class="st-text">宝箱などからすでに所持している装備と同じ種類のアイテムを獲得する</span></li><li><span class="kw">ならば</span><span class="st-text">入れ替えモーダルや追加スロット消費を行わず、所持中の該当装備が上限Lv10まで自動でレベルアップし、すでにLv10の場合は回復＆経験値ボーナスを獲得する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに特定の装備を装着している</span></li><li><span class="kw">もし</span><span class="st-text">宝箱などからすでに所持している装備と同じ種類のアイテムを獲得する</span></li><li><span class="kw">ならば</span><span class="st-text">入れ替えモーダルや追加スロット消費を行わず、所持中の該当装備が上限Lv10まで自動でレベルアップし、すでにLv10の場合は枠5未満なら枠拡張へ自動充当・枠5到達後は回復＆経験値ボーナスを獲得する</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1200,9 +1200,9 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 
-                <h4>所持済み装備と同種のドロップ時は対象装備のレベルを上限Lv10まで自動引き上げする</h4>
+                <h4>所持済み装備と同種のドロップ時は対象装備のレベルを上限Lv10まで自動引き上げし、Lv10重複は枠拡張へ自動充当する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロットに seeker_drone (Lv1) が装着されている</span></li><li><span class="kw">もし</span><span class="st-text">acquireEquipment により同種の seeker_drone（Lv1 または高レベル品）を追加取得する</span></li><li><span class="kw">ならば</span><span class="st-text">スロット数は増加せず equip_choice モーダルも開かずに、既存のレベルが Math.min(10, Math.max(既存Lv + 1, 拾得Lv)) へ自動更新される（すでにLv10なら +20HP / +25EXP ボーナス）</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロットに seeker_drone (Lv1 または Lv10) が装着されている</span></li><li><span class="kw">もし</span><span class="st-text">acquireEquipment により同種の seeker_drone（Lv1 または高レベル品）を追加取得する</span></li><li><span class="kw">ならば</span><span class="st-text">未カンスト時は既存レベルが Math.min(10, Math.max(既存Lv + 1, 拾得Lv)) へ自動更新され、すでに Lv10 の場合は maxEquipSlots &lt; 5 なら枠拡張進捗へ自動加算（コスト到達で枠+1）・maxEquipSlots === 5 到達後は +20HP / +25EXP ボーナスへ変換される</span></li>
   </ul>
               </div>
         </div>
@@ -1377,7 +1377,7 @@
                 
                 <h4>節目大ボス（10F毎・暫定版実装）の戦闘・増援・11F以降継続を処理し正式クリア演出を継続検討する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが 10F毎（10F, 20F...）の回復の泉前室を抜けて 22×22 ボスアリーナへ足を踏み入れる</span></li><li><span class="kw">もし</span><span class="st-text">大ボス（isGrandBoss）と交戦する</span></li><li><span class="kw">ならば</span><span class="st-text">大ボスはプレイヤーLv連動HP（4.5倍 × (1+0.16×(playerLv-1))）で12方向環状・追尾3弾・壁2回反射6弾の3種弾幕をローテーションしつつ、覚醒中は 7.5秒間隔でアリーナ内のみへ雑魚増援を呼び出す</span></li><li><span class="kw">かつ</span><span class="st-text">撃破で階段封印解除＋高Lv装備確定ドロップとなり暫定版として 11F 以降へエンドレス進行する（正式なクリア達成モーダル・続行選択 UI は Disputed / OQ-02）</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが 10F毎（10F, 20F...）の回復の泉前室を抜けて 22×22 ボスアリーナへ足を踏み入れる</span></li><li><span class="kw">もし</span><span class="st-text">大ボス（isGrandBoss）と交戦する</span></li><li><span class="kw">ならば</span><span class="st-text">大ボスはプレイヤーLv連動HP（6.8倍 × (1+0.16×(playerLv-1))）＆ノックバック無効で4種行動（12方向環状・追尾3弾・壁2回反射6弾・予兆0.65s付き高速突進345px/s）をローテーションしつつ、覚醒中は 7.5秒間隔でアリーナ内のみへ雑魚増援を呼び出す</span></li><li><span class="kw">かつ</span><span class="st-text">撃破で階段封印解除＋高Lv装備確定ドロップとなり暫定版として 11F 以降へエンドレス進行する（正式なクリア達成モーダル・続行選択 UI は Disputed / OQ-02）</span></li>
   </ul>
               </div>
         </div>
@@ -1473,9 +1473,9 @@
       <tr id="GLS-07" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-07" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-07">GLS-07</a></td>
         <td><strong>階段守護中ボス（GUARDIAN）</strong><div class="sub-code"><code class="inline-code">isRoomBoss</code> / <code class="inline-code">isStairsGuard</code></div></td>
-        <td><code class="inline-code">3/6/9F</code>（<code class="inline-code">floor % 10 ∈ {3,6,9}</code>）の広めの階段部屋（<code class="inline-code">11×9</code>以上）に初期配置される強化中ボス。プレイヤーLv連動HPと3種弾幕を持ち、撃破で階段封印を解除して高Lv装備を確定ドロップする（通常階は守護中ボスなし）。</td>
+        <td><code class="inline-code">3/6/9F</code>（<code class="inline-code">floor % 10 ∈ {3,6,9}</code>）の広めの階段部屋（<code class="inline-code">11×9</code>以上）に初期配置される強化中ボス。プレイヤーLv連動HP（2.9倍ベース）・ノックバック無効・4種行動（3種弾幕＋予兆付き高速突進）を持ち、撃破で階段封印を解除して高Lv装備を確定ドロップする（通常階は守護中ボスなし）。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/core/dungeon.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-07" data-source-file="specs/glossary.md" data-item-id="GLS-07" title="元仕様ファイル specs/glossary.md (GLS-07)">specs/glossary.md#GLS-07</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -1495,9 +1495,9 @@
       <tr id="GLS-09" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-09" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-09">GLS-09</a></td>
         <td><strong>スクラップ＆ビルド</strong><div class="sub-code"><code class="inline-code">resolveEquipChoice</code> (<code class="inline-code">scrap_upgrade</code> / <code class="inline-code">scrap_expand</code>)</div></td>
-        <td>装備枠満杯時に未所持装備を入手した際の処理。所持装備1個の強化（Lv10到達済み装備は選択不可）、または枠拡張への蓄積（3回で枠+1・最大5枠、装備追加時再検討）を選択する。</td>
+        <td>装備枠満杯時に未所持装備を入手した際の処理。所持装備1個の強化（Lv10到達済み装備は選択不可）、または枠拡張への蓄積（段階コスト <code class="inline-code">1 / 2 / 3</code> 回で枠+1・最大5枠、Lv10同種拾得時も自動充当）を選択する。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-09" data-source-file="specs/glossary.md" data-item-id="GLS-09" title="元仕様ファイル specs/glossary.md (GLS-09)">specs/glossary.md#GLS-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -1528,9 +1528,9 @@
       <tr id="GLS-12" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-12" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-12">GLS-12</a></td>
         <td><strong>装備強化レベル上限</strong><div class="sub-code"><code class="inline-code">MAX_EQUIPMENT_LEVEL</code> (<code class="inline-code">10</code>)</div></td>
-        <td>同種装備取得やスクラップ強化による装備レベル上限（暫定 <code class="inline-code">Lv10</code>）。<code class="inline-code">Lv1〜6</code> でビット数・連鎖数・跳弾数・扇角等の展開進化が最大化され、<code class="inline-code">Lv7〜10</code> は威力・CD短縮・射程延長へ特化。Lv10重複取得は HP/EXP ボーナスへ変換される。</td>
+        <td>同種装備取得やスクラップ強化による装備レベル上限（暫定 <code class="inline-code">Lv10</code>）。<code class="inline-code">Lv1〜6</code> でビット数・連鎖数・跳弾数・扇角等の展開進化が最大化され、<code class="inline-code">Lv7〜10</code> は威力・CD短縮・射程延長へ特化。Lv10重複取得は枠5未満なら自動枠拡張に充当され、枠5到達後は HP/EXP ボーナスへ変換される。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/equipment.ts</code>, <code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-12" data-source-file="specs/glossary.md" data-item-id="GLS-12" title="元仕様ファイル specs/glossary.md (GLS-12)">specs/glossary.md#GLS-12</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -1561,9 +1561,9 @@
       <tr id="GLS-15" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-15" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-15">GLS-15</a></td>
         <td><strong>節目大ボス（GRAND BOSS）</strong><div class="sub-code"><code class="inline-code">isGrandBoss</code></div></td>
-        <td>10F毎（10F, 20F...）の <code class="inline-code">22×22</code> ボスアリーナに出現する節目ボス。プレイヤーLv連動HPと3種弾幕（12方向環状・追尾3弾・壁2回反射6弾）を切り替え、覚醒中はアリーナ内へ雑魚を増援し、撃破で階段解放＋高Lv装備確定＋11F以降へ続く。</td>
+        <td>10F毎（10F, 20F...）の <code class="inline-code">22×22</code> ボスアリーナに出現する節目ボス。プレイヤーLv連動HP（6.8倍ベース）・ノックバック無効・4種行動（12方向環状・追尾3弾・壁2回反射6弾・予兆付き高速突進）を切り替え、覚醒中はアリーナ内へ雑魚を増援し、撃破で階段解放＋高Lv装備確定＋11F以降へ続く。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/core/dungeon.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-15" data-source-file="specs/glossary.md" data-item-id="GLS-15" title="元仕様ファイル specs/glossary.md (GLS-15)">specs/glossary.md#GLS-15</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -1650,13 +1650,13 @@
       <tr id="PRM-05" class="spec-row" data-section="parameters" data-status="Confirmed" data-item-id="PRM-05" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-05">PRM-05</a></td>
         <td><span class="cat-pill">装備</span></td>
-        <td><strong>装備スロット数 (<code class="inline-code">MAX_EQUIP_SLOTS</code> / 拡張上限)</strong></td>
-        <td><span class="param-val"><code class="inline-code">初期 2 / スクラップ3回で+1（実質上限 5）</code></span></td>
+        <td><strong>装備スロット数 (<code class="inline-code">MAX_EQUIP_SLOTS</code> / 段階拡張コスト)</strong></td>
+        <td><span class="param-val"><code class="inline-code">初期 2 / スクラップ 1・2・3 回で+1（2→3:1, 3→4:2, 4→5:3 / 上限 5）</code></span></td>
         <td><code class="inline-code">スロット</code></td>
-        <td><div class="note-text">初期は2枠でビルドの取捨選択を生みつつ、スクラップ＆ビルドで最大5枠まで拡張可能にするため（装備増加時再検討／DEC-07）</div></td>
+        <td><div class="note-text">初期は2枠でビルドの取捨選択を生みつつ、序盤は1〜2回で枠を広げやすくし上限5枠へ段階到達させるため（DEC-07, DEC-11）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L27-L29</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L28-L35</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-05" data-source-file="specs/parameters.md" data-item-id="PRM-05" title="元仕様ファイル specs/parameters.md (PRM-05)">specs/parameters.md#PRM-05</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1777,12 +1777,12 @@
         <td><a class="id-pill id-doc" href="#PRM-14">PRM-14</a></td>
         <td><span class="cat-pill">敵・階段</span></td>
         <td><strong>守護中ボス補正・出現階層 (<code class="inline-code">GUARDIAN</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体) / HP×1.9×(1+0.14×(playerLv-1)) / 攻撃×1.25 / CD 2.15s (8方向・追尾2・壁反射4) / 最低Lv+1(+1確率35%)確定ドロップ</code></span></td>
+        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体) / HP×2.9×(1+0.14×(playerLv-1)) / 攻撃×1.25 / ノックバック無効 / CD 2.15s (8方向・追尾2・壁反射4・予兆0.72s高速突進315px/s×0.42s) / 最低Lv+1(+1確率35%)確定ドロップ</code></span></td>
         <td><code class="inline-code">階層・倍率・秒</code></td>
-        <td><div class="note-text">3階毎の中ボス化・Lv依存耐久・3種弾幕・確定報酬により節目前の腕試しを作るため（数値係数はAI仮提案）</div></td>
+        <td><div class="note-text">中ボス耐久強化＋ノックバック無効＋高速突進追加により緊迫感のある節目前の腕試しを作るため（数値係数はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L447-L459,L1601-L1617,L1877-L1951</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L390-L435,L2123-L2227</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-14" data-source-file="specs/parameters.md" data-item-id="PRM-14" title="元仕様ファイル specs/parameters.md (PRM-14)">specs/parameters.md#PRM-14</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1846,13 +1846,13 @@
       <tr id="PRM-19" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-19" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-19">PRM-19</a></td>
         <td><span class="cat-pill">装備</span></td>
-        <td><strong>5系統装備基礎レンジ・軌道・シールド減速</strong></td>
-        <td><span class="param-val"><code class="inline-code">blade 84 (扇半角1.15rad) / orbit 78 (角速度 clamp(1.6,5.2, 5.0/bits^0.55), 内側敵速度 ×0.72) / drone 155 / coil 78 / disc 145</code></span></td>
+        <td><strong>5系統装備基礎レンジ・軌道・シールド減速・ブレード反射</strong></td>
+        <td><span class="param-val"><code class="inline-code">blade 84 (扇半角1.00rad, 厚み34px〜, 敵弾反射400px/s) / orbit 78 (角速度 clamp(1.6,5.2, 5.0/bits^0.55), 内側敵速度 ×0.86) / drone 155 / coil 78 / disc 145</code></span></td>
         <td><code class="inline-code">px・rad/s・倍率</code></td>
-        <td><div class="note-text">シールド低Lv帯の回転速度・面積・減速旨味とブレードの近接レンジを底上げするため（具体数値はAI仮提案）</div></td>
+        <td><div class="note-text">シールド減速の過強抑制（0.72→0.86）と、ブレードの厚み付き三日月斬撃＋敵弾反射による攻防差別化のため（具体数値はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L33-L193</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L34-L202</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-19" data-source-file="specs/parameters.md" data-item-id="PRM-19" title="元仕様ファイル specs/parameters.md (PRM-19)">specs/parameters.md#PRM-19</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1861,12 +1861,12 @@
         <td><a class="id-pill id-doc" href="#PRM-20">PRM-20</a></td>
         <td><span class="cat-pill">装備</span></td>
         <td><strong>5系統装備基礎威力・基礎CD（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">blade(25, 0.88s) / orbit(15, 0s) / drone(15, 0.48s) / coil(18, 1.45s) / disc(17, 1.12s)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">blade(25, 0.88s) / orbit(10, 0s) / drone(15, 0.48s) / coil(18, 1.45s) / disc(17, 1.12s)</code></span></td>
         <td><code class="inline-code">DMG・秒</code></td>
-        <td><div class="note-text">ブレードとシールドの基礎火力・回転率を強化し、5系統の初動バランスを整えるため（AI仮提案）</div></td>
+        <td><div class="note-text">弾幕防御と鈍足を併せ持つシールドの接触火力（15→10）を抑え、5系統の攻防役割を整えるため（AI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L39-L90</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L45-L96</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-20" data-source-file="specs/parameters.md" data-item-id="PRM-20" title="元仕様ファイル specs/parameters.md (PRM-20)">specs/parameters.md#PRM-20</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1875,12 +1875,12 @@
         <td><a class="id-pill id-doc" href="#PRM-21">PRM-21</a></td>
         <td><span class="cat-pill">装備</span></td>
         <td><strong>装備Lv進化定数（Lv1-6展開 / Lv7-10能力特化）</strong></td>
-        <td><span class="param-val"><code class="inline-code">blade(扇半角1.15+(min(6,Lv)-1)×0.10・全周化なし, +10px/Lv1-6 &amp; +14px/Lv7-10) / orbit(bits=min(6,Lv), 半径+2/Lv1-6 &amp; +4/Lv7-10) / drone(1+floor(min(6,Lv)/2)機, Lv7-10射程+8/Lv) / coil(連鎖2+min(6,Lv), 射程+12/Lv1-6 &amp; +16/Lv7-10) / disc(Lv3:2枚・Lv6:3枚, 跳弾1+min(6,Lv), Lv7-10射程+8/Lv)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">blade(扇半角1.00+(min(6,Lv)-1)×0.06・厚み34+min(6,Lv)×2px・全周化なし, +10px/Lv1-6 &amp; +14px/Lv7-10) / orbit(bits=min(6,Lv), 半径+2/Lv1-6 &amp; +4/Lv7-10) / drone(1+floor(min(6,Lv)/2)機, Lv7-10射程+8/Lv) / coil(連鎖2+min(6,Lv), 射程+12/Lv1-6 &amp; +16/Lv7-10) / disc(1枚追尾・跳弾1+min(6,Lv)・壁反射3・追尾角速度7.5+(Lv-1)×0.5 rad/s・対象不在時1周2π再ヒット, Lv7-10射程+8/Lv)</code></span></td>
         <td><code class="inline-code">px・rad・機・枚・回</code></td>
-        <td><div class="note-text">Lv6で数・跳弾・扇角進化を最大化し、Lv7〜10を火力・CD・射程強化へ割り振る2段階設計（数値はAI仮提案）</div></td>
+        <td><div class="note-text">Lv6で数・跳弾・扇角進化を最大化し、チャクラムは単発追尾＋1周再ヒットで差別化し、Lv7〜10を火力・CD・射程へ割り振る設計（AI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#NG-10">NG-10</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L119-L193</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#NG-10">NG-10</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L125-L210</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-21" data-source-file="specs/parameters.md" data-item-id="PRM-21" title="元仕様ファイル specs/parameters.md (PRM-21)">specs/parameters.md#PRM-21</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1889,12 +1889,12 @@
         <td><a class="id-pill id-doc" href="#PRM-22">PRM-22</a></td>
         <td><span class="cat-pill">装備</span></td>
         <td><strong>装備共通Lv倍率・軌道定数（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">威力+25%/Lv / CD-5%/Lv (下限0.55) / orbit角速度 clamp(1.6, 5.2, 5.0/bits^0.55) / drone上限4機 / coil連鎖減衰×0.8 / disc初速 390(+20/Lv)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">威力+25%/Lv / CD-5%/Lv (下限0.55) / orbit角速度 clamp(1.6, 5.2, 5.0/bits^0.55) / drone上限4機 / coil連鎖減衰×0.8 / disc初速 360(+20/Lv)</code></span></td>
         <td><code class="inline-code">倍率・rad/s・機・px/s</code></td>
-        <td><div class="note-text">Lv10までの火力・CDスケーリングとビット数連動角速度調整を安定させるため（AI仮提案）</div></td>
+        <td><div class="note-text">Lv10までの火力・CDスケーリングとビット数連動角速度・単発追尾チャクラム初速を安定させるため（AI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L108-L193</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L114-L210</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-22" data-source-file="specs/parameters.md" data-item-id="PRM-22" title="元仕様ファイル specs/parameters.md (PRM-22)">specs/parameters.md#PRM-22</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1944,27 +1944,27 @@
       <tr id="PRM-26" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-26" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-26">PRM-26</a></td>
         <td><span class="cat-pill">敵</span></td>
-        <td><strong>階層別敵基礎ステータス・種別係数（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">HP: 26+(F-1)×9 / 速度: 78+min(48,(F-1)×6) / 攻撃: 10+(F-1)×2 / runner攻撃×0.80 / shooter(HP×1.15, 速度0, 攻撃×0.90, 索敵250px, ノックバック無効, 8方向弾 CD max(0.85, 1.45-(F-1)×0.08) 弾速152+min(55,(F-1)×7)) / scout(HP×0.95, 速度×1.05, 攻撃×0.85)</code></span></td>
+        <td><strong>階層別敵基礎ステータス・通常敵Lv連動砲撃・種別係数（AI仮数値）</strong></td>
+        <td><span class="param-val"><code class="inline-code">HP: 26+(F-1)×9 / 速度: 78+min(48,(F-1)×6) / 攻撃: 10+(F-1)×2 / normal射撃(Lv1-2:1発CD3.2s・Lv3-5:1発2.6s・Lv6-8:2発2.4s・Lv9+:3発2.1s, 射程190px, 弾速130〜162px/s, 威力×0.65〜0.78) / runner攻撃×0.80 / shooter(HP×1.15, 速度0, 攻撃×0.90, 索敵250px, ノックバック無効, 8方向弾 CD max(0.85, 1.45-(F-1)×0.08) 弾速152+min(55,(F-1)×7)) / scout(HP×0.95, 速度×1.05, 攻撃×0.85)</code></span></td>
         <td><code class="inline-code">HP・px/s・DMG・px・秒</code></td>
-        <td><div class="note-text">シューターを8方向弾幕＋ノックバック無効の固定砲台へ強化し、偵察型をスカウトへ統一するため（AI仮数値）</div></td>
+        <td><div class="note-text">プレイヤー成長に合わせて通常敵にも段階的な弱砲撃を持たせ弾幕密度を高めるため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-04">BIZ-EXP-04</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L60-L62,L173-L271,L1841-L1874</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-04">BIZ-EXP-04</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L60-L95,L190-L295,L2023-L2120</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-26" data-source-file="specs/parameters.md" data-item-id="PRM-26" title="元仕様ファイル specs/parameters.md (PRM-26)">specs/parameters.md#PRM-26</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="PRM-27" class="spec-row" data-section="parameters" data-status="Confirmed" data-item-id="PRM-27" data-source-file="specs/parameters.md">
+      <tr id="PRM-27" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-27" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-27">PRM-27</a></td>
         <td><span class="cat-pill">敵</span></td>
-        <td><strong><code class="inline-code">tank</code> / <code class="inline-code">runner</code> 主要種別倍率 (<code class="inline-code">APP-MAP-07</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45) / runner(HP×0.55, 速度×1.55, 上限195)</code></span></td>
-        <td><code class="inline-code">倍率</code></td>
-        <td><div class="note-text">近接重装型と高速小型型の役割を明確に分けるため（DEC-08）</div></td>
-        <td><span class="badge badge-confirmed-ai">確定 (AI提案)</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L186-L217</code></div><div class="source-cell">
+        <td><strong><code class="inline-code">tank</code>（放物線迫撃砲）/ <code class="inline-code">runner</code> 主要種別倍率 (<code class="inline-code">APP-MAP-07</code>)</strong></td>
+        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45, 放物線迫撃砲:射程215px・着弾半径34px・予兆1.15s・CD3.2s・DMG×1.15・防壁貫通) / runner(HP×0.55, 速度×1.55, 上限195)</code></span></td>
+        <td><code class="inline-code">倍率・px・秒</code></td>
+        <td><div class="note-text">重戦車タンクに地面予兆付きの放物線迫撃砲を与え回避しながら倒す駆け引きを作るため（迫撃砲係数はAI仮提案）</div></td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L195-L240,L2059-L2086,L2401-L2458</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-27" data-source-file="specs/parameters.md" data-item-id="PRM-27" title="元仕様ファイル specs/parameters.md (PRM-27)">specs/parameters.md#PRM-27</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2000,13 +2000,13 @@
       <tr id="PRM-30" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-30" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-30">PRM-30</a></td>
         <td><span class="cat-pill">階層・ボス</span></td>
-        <td><strong>節目大ボス（<code class="inline-code">GRAND BOSS</code>）補正・3種弾幕・報酬（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">HP×4.5×(1+0.16×(playerLv-1)) / 速度×1.15(下限58) / 攻撃×1.35 / 索敵380px / CD 1.55s (12方向環状・追尾3・壁2回反射6) / 最低Lv+2(+1確率35%)装備確定・120EXP・60HP</code></span></td>
+        <td><strong>節目大ボス（<code class="inline-code">GRAND BOSS</code>）補正・4種行動・報酬（AI仮数値）</strong></td>
+        <td><span class="param-val"><code class="inline-code">HP×6.8×(1+0.16×(playerLv-1)) / 速度×1.15(下限58) / 攻撃×1.35 / 索敵380px / ノックバック無効 / CD 1.55s (12方向環状・追尾3・壁2回反射6・予兆0.65s高速突進345px/s×0.48s) / 最低Lv+2(+1確率35%)装備確定・120EXP・60HP</code></span></td>
         <td><code class="inline-code">倍率・px・秒・Lv</code></td>
-        <td><div class="note-text">10F節目の大ボスとして多段弾幕＋アリーナ増援で緊張感と高Lv報酬を与えるため（AI仮数値）</div></td>
+        <td><div class="note-text">大ボス耐久引き上げ＋高速突進追加により、弾幕回避とボス本体の接近回避を両立させるため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L314-L361,L1601-L1617,L1877-L1951</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L336-L360,L2123-L2227</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-30" data-source-file="specs/parameters.md" data-item-id="PRM-30" title="元仕様ファイル specs/parameters.md (PRM-30)">specs/parameters.md#PRM-30</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2028,13 +2028,13 @@
       <tr id="PRM-32" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-32" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-32">PRM-32</a></td>
         <td><span class="cat-pill">装備・報酬</span></td>
-        <td><strong>Lv10到達・全枠カンスト時オーバーフローボーナス（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">所持同種Lv10拾得: +20HP / +25EXP / 全5枠Lv10到達時未所持拾得: +30HP / +40EXP</code></span></td>
-        <td><code class="inline-code">HP・EXP</code></td>
-        <td><div class="note-text">装備上限Lv10到達後の宝箱・ドロップが無駄にならず即時リソースへ還元されるようにするため（AI仮数値）</div></td>
+        <td><strong>Lv10到達・全枠カンスト時自動拡張＆オーバーフローボーナス（AI仮数値）</strong></td>
+        <td><span class="param-val"><code class="inline-code">枠5未満のLv10同種拾得: 自動枠拡張(+1進行) / 枠5到達後の同種Lv10拾得: +20HP / +25EXP / 全5枠Lv10到達時未所持拾得: +30HP / +40EXP</code></span></td>
+        <td><code class="inline-code">進行・HP・EXP</code></td>
+        <td><div class="note-text">装備上限Lv10到達後の余剰装備をまず枠拡張へ自動活用し、最大5枠到達後にHP/EXPへ還元するため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L675-L731</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L722-L792</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-32" data-source-file="specs/parameters.md" data-item-id="PRM-32" title="元仕様ファイル specs/parameters.md (PRM-32)">specs/parameters.md#PRM-32</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2208,12 +2208,12 @@
       <tr id="FML-07" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-07" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-07">FML-07</a></td>
         <td><strong>装備別2段階進化式（Lv1-6展開 / Lv7-10能力特化）</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">lv = clamp(1, PRM-13, itemLv)</code>, <code class="inline-code">evo = min(6, lv)</code>: <code class="inline-code">orbit</code>: <code class="inline-code">bits = min(6, evo) + PRM-23[追加展開]</code>, <code class="inline-code">r = min(PRM-06*0.68, (PRM-19[orbit基礎]+(evo-1)*2+max(0,lv-6)*4)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">ω = PRM-22[clamp(1.6,5.2, 5.0/bits^0.55)]</code>, 内側敵速度 <code class="inline-code">×PRM-19[0.72]</code> / <code class="inline-code">blade</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[blade基礎]+(evo-1)*10+max(0,lv-6)*14)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">halfArc = PRM-21[1.15+(evo-1)*0.10]</code> (扇形維持) / <code class="inline-code">drone</code>: <code class="inline-code">count = min(4, 1+floor(evo/2))+PRM-23[追加展開]</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[drone基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code> / <code class="inline-code">coil</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[coil基礎]+(evo-1)*12+max(0,lv-6)*16)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">targets = 2+evo</code> / <code class="inline-code">disc</code>: <code class="inline-code">count = evo&gt;=6?3:(evo&gt;=3?2:1)</code>, <code class="inline-code">bounces = 1+evo</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[disc基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">speed = PRM-22[disc初速]+(lv-1)*PRM-22[disc速度増分]</code></div></td>
+        <td><div class="formula-expr"><code class="inline-code">lv = clamp(1, PRM-13, itemLv)</code>, <code class="inline-code">evo = min(6, lv)</code>: <code class="inline-code">orbit</code>: <code class="inline-code">bits = min(6, evo) + PRM-23[追加展開]</code>, <code class="inline-code">r = min(PRM-06*0.68, (PRM-19[orbit基礎]+(evo-1)*2+max(0,lv-6)*4)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">ω = PRM-22[clamp(1.6,5.2, 5.0/bits^0.55)]</code>, 内側敵速度 <code class="inline-code">×PRM-19[0.86]</code> / <code class="inline-code">blade</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[blade基礎]+(evo-1)*10+max(0,lv-6)*14)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">halfArc = PRM-21[1.00+(evo-1)*0.06]</code>, <code class="inline-code">thickness = PRM-21[34+evo*2]</code> (扇形維持＋敵弾反射) / <code class="inline-code">drone</code>: <code class="inline-code">count = min(4, 1+floor(evo/2))+PRM-23[追加展開]</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[drone基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code> / <code class="inline-code">coil</code>: <code class="inline-code">r = min(PRM-06, (PRM-19[coil基礎]+(evo-1)*12+max(0,lv-6)*16)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">targets = 2+evo</code> / <code class="inline-code">disc</code>: <code class="inline-code">count = 1</code>, <code class="inline-code">bounces = 1+evo</code>, <code class="inline-code">wallBounces = 3</code>, <code class="inline-code">turnRate = 7.5+(lv-1)*0.5</code>, <code class="inline-code">r = min(PRM-06, (PRM-19[disc基礎]+max(0,lv-6)*8)*(1+PRM-23[def_sensor]))</code>, <code class="inline-code">speed = PRM-22[disc初速]+(lv-1)*PRM-22[disc速度増分]</code> (対象不在時1周<code class="inline-code">2π</code>再ヒット)</div></td>
         <td><code class="inline-code">equipmentId</code>, <code class="inline-code">itemLv</code>, <code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">def_sensor Lv</code>, <code class="inline-code">PRM-06</code>, <code class="inline-code">PRM-13</code>, <code class="inline-code">PRM-19</code>, <code class="inline-code">PRM-21</code>, <code class="inline-code">PRM-22</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">展開数 (個/機/枚)</code> / <code class="inline-code">射程・半径 (px)</code> / <code class="inline-code">角速度・連鎖・跳弾</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L119-L193, src/game/engine.ts#L1247-L1375</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L125-L210, src/game/engine.ts#L1310-L1660</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-07" data-source-file="specs/formulas.md" data-item-id="FML-07" title="元仕様ファイル specs/formulas.md (FML-07)">specs/formulas.md#FML-07</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2234,12 +2234,12 @@
       <tr id="FML-09" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-09" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-09">FML-09</a></td>
         <td><strong>敵基礎ステータス・種別・守護中ボス／大ボス補正</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">baseHp = PRM-26[基礎HP]+(F-1)*PRM-26[階層HP]</code>, <code class="inline-code">baseSpd = PRM-26[基礎速度]+min(PRM-26[速度上限],(F-1)*PRM-26[階層速度])</code>, <code class="inline-code">baseDmg = PRM-26[基礎攻撃]+(F-1)*PRM-26[階層攻撃]</code> に種別倍率（<code class="inline-code">PRM-27</code> / <code class="inline-code">PRM-26</code> / <code class="inline-code">PRM-31[scout追撃速度]</code>）を乗算。<code class="inline-code">3/6/9F</code>守護中ボスは <code class="inline-code">PRM-14</code> (<code class="inline-code">1+0.14*(playerLv-1)</code> 連動)、<code class="inline-code">10F毎</code>大ボスは <code class="inline-code">PRM-30</code> (<code class="inline-code">1+0.16*(playerLv-1)</code> 連動) を乗算</div></td>
+        <td><div class="formula-expr"><code class="inline-code">baseHp = PRM-26[基礎HP]+(F-1)*PRM-26[階層HP]</code>, <code class="inline-code">baseSpd = PRM-26[基礎速度]+min(PRM-26[速度上限],(F-1)*PRM-26[階層速度])</code>, <code class="inline-code">baseDmg = PRM-26[基礎攻撃]+(F-1)*PRM-26[階層攻撃]</code> に種別倍率（<code class="inline-code">PRM-27</code> / <code class="inline-code">PRM-26</code> / <code class="inline-code">PRM-31[scout追撃速度]</code>）を乗算。<code class="inline-code">normal</code> 射撃は <code class="inline-code">playerLv</code> 連動（<code class="inline-code">PRM-26</code>）、<code class="inline-code">tank</code> は放物線迫撃砲（<code class="inline-code">PRM-27</code>）。<code class="inline-code">3/6/9F</code>守護中ボスは <code class="inline-code">PRM-14</code> (<code class="inline-code">2.9×(1+0.14*(playerLv-1))</code>)、<code class="inline-code">10F毎</code>大ボスは <code class="inline-code">PRM-30</code> (<code class="inline-code">6.8×(1+0.16*(playerLv-1))</code>) を乗算</div></td>
         <td><code class="inline-code">F</code>（階層）, <code class="inline-code">playerLv</code>, <code class="inline-code">enemyKind</code>, <code class="inline-code">isRoomBoss</code>, <code class="inline-code">isGrandBoss</code>, <code class="inline-code">PRM-14</code>, <code class="inline-code">PRM-26</code>, <code class="inline-code">PRM-27</code>, <code class="inline-code">PRM-30</code>, <code class="inline-code">PRM-31</code></td>
         <td><code class="inline-code">敵HP (HP)</code> / <code class="inline-code">移動速度 (px/s)</code> / <code class="inline-code">攻撃力 (DMG)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-04">BIZ-EXP-04</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-31">PRM-31</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L173-L459</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-04">BIZ-EXP-04</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-31">PRM-31</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L60-L435,L2023-L2227</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-09" data-source-file="specs/formulas.md" data-item-id="FML-09" title="元仕様ファイル specs/formulas.md (FML-09)">specs/formulas.md#FML-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2458,12 +2458,12 @@
       </tr>
       <tr id="ST-11" class="spec-row " data-section="transitions" data-status="Confirmed" data-undefined="false" data-item-id="ST-11" data-source-file="specs/state-transitions.md">
         <td><a class="id-pill id-doc" href="#ST-11">ST-11</a></td>
-        <td><code class="inline-code">equip_choice</code></td>
-        <td>スクラップ＆ビルドで枠拡張蓄積が3回に到達（現在枠 &lt; 5）</td>
+        <td><code class="inline-code">equip_choice</code> / <code class="inline-code">playing</code></td>
+        <td>スクラップ＆ビルドまたはLv10同種拾得による枠拡張蓄積が段階コスト（2→3:1回, 3→4:2回, 4→5:3回）に到達（現在枠 &lt; 5）</td>
         <td><code class="inline-code">playing（装備枠 +1・上限5）</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
-        <td><div class="note-text">初期2枠→最大5枠。装備種類追加時に再検討</div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
+        <td><div class="note-text">初期2枠→最大5枠。5枠到達後のLv10重複はHP/EXPボーナスへ還元</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-11" data-source-file="specs/state-transitions.md" data-item-id="ST-11" title="元仕様ファイル specs/state-transitions.md (ST-11)">specs/state-transitions.md#ST-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2517,10 +2517,10 @@
       <tr id="INV-03" class="spec-row" data-section="invariants" data-status="Confirmed" data-item-id="INV-03" data-source-file="specs/invariants.md">
         <td><a class="id-pill id-doc" href="#INV-03">INV-03</a></td>
         <td><span class="cat-pill">装備枠・採用方針</span></td>
-        <td><code class="inline-code">player.equipment.length &lt;= 5</code>（初期2枠、スクラップ＆ビルドで最大5枠）を満たし、<code class="inline-code">auto_turret</code> は装備候補に含まれない</td>
+        <td><code class="inline-code">player.equipment.length &lt;= 5</code>（初期2枠、スクラップ＆ビルドで <code class="inline-code">1/2/3</code> 回蓄積により最大5枠）を満たし、<code class="inline-code">auto_turret</code> は装備候補に含まれない</td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-02]</code>, <code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-04">BIZ-CMB-04</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-03">GLS-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-04">BIZ-CMB-04</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-03">GLS-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
         <td><div class="note-text">初期 <code class="inline-code">MAX_EQUIP_SLOTS = 2</code>、<code class="inline-code">MAX_EQUIP_SLOTS_CAP = 5</code></div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-03" data-source-file="specs/invariants.md" data-item-id="INV-03" title="元仕様ファイル specs/invariants.md (INV-03)">specs/invariants.md#INV-03</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2589,10 +2589,10 @@
       <tr id="INV-09" class="spec-row" data-section="invariants" data-status="Confirmed" data-item-id="INV-09" data-source-file="specs/invariants.md">
         <td><a class="id-pill id-doc" href="#INV-09">INV-09</a></td>
         <td><span class="cat-pill">装備上限・経済</span></td>
-        <td>所持装備レベルは常に <code class="inline-code">1 &lt;= level &lt;= MAX_EQUIPMENT_LEVEL (10)</code> を満たし、Lv10装備への <code class="inline-code">scrap_upgrade</code> は拒否され、Lv10重複拾得はオーバーフローボーナスへ変換される</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>, <code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>)</div></td>
+        <td>所持装備レベルは常に <code class="inline-code">1 &lt;= level &lt;= MAX_EQUIPMENT_LEVEL (10)</code> を満たし、Lv10装備への <code class="inline-code">scrap_upgrade</code> は拒否され、Lv10重複拾得は枠5未満なら自動枠拡張蓄積・枠5到達後はオーバーフローボーナスへ変換される</td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>, <code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>, <code class="inline-code">[APP-GRW-08]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
         <td><div class="note-text">Lv10到達後の無意味な強化やリソース損失を防止</div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-09" data-source-file="specs/invariants.md" data-item-id="INV-09" title="元仕様ファイル specs/invariants.md (INV-09)">specs/invariants.md#INV-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2601,11 +2601,11 @@
       <tr id="INV-10" class="spec-row" data-section="invariants" data-status="Confirmed" data-item-id="INV-10" data-source-file="specs/invariants.md">
         <td><a class="id-pill id-doc" href="#INV-10">INV-10</a></td>
         <td><span class="cat-pill">武装・敵役割保証</span></td>
-        <td><code class="inline-code">pulse_blade</code> は全レベルで <code class="inline-code">fullCircle === false</code>（扇形維持）であり、<code class="inline-code">shooter</code> および <code class="inline-code">isGrandBoss</code> はノックバックで座標移動しない</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>, <code class="inline-code">[APP-MAP-07]</code>)</div></td>
+        <td><code class="inline-code">pulse_blade</code> は全レベルで <code class="inline-code">fullCircle === false</code>（扇形維持）であり、<code class="inline-code">shooter</code>・守護中ボス（<code class="inline-code">isRoomBoss</code>）・大ボス（<code class="inline-code">isGrandBoss</code>）はノックバックで座標移動しない</td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>, <code class="inline-code">[APP-MAP-07]</code>, <code class="inline-code">[APP-MAP-07 &amp; APP-CMB-02]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#NG-10">NG-10</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
-        <td><div class="note-text">装備役割の重複防止と固定砲台ギミックの維持</div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#NG-10">NG-10</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
+        <td><div class="note-text">装備役割の重複防止と固定砲台・ボス戦ギミックの維持</div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-10" data-source-file="specs/invariants.md" data-item-id="INV-10" title="元仕様ファイル specs/invariants.md (INV-10)">specs/invariants.md#INV-10</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2844,10 +2844,10 @@
       </tr>
       <tr id="NG-12" class="spec-row" data-section="non-goals" data-status="Confirmed" data-item-id="NG-12" data-source-file="specs/non-goals.md">
         <td><a class="id-pill id-doc" href="#NG-12">NG-12</a></td>
-        <td><strong>シューター（固定砲台）および大ボスへのノックバック適用</strong></td>
-        <td><div class="note-text">固定砲台の陣地維持と弾幕ギミック性を保つため、リパルサー等のノックバックを無効化する（<code class="inline-code">DEC-10</code>）</div></td>
+        <td><strong>シューター（固定砲台）・守護中ボス（3/6/9F）・大ボス（10F毎）へのノックバック適用</strong></td>
+        <td><div class="note-text">固定砲台の陣地維持および中ボス・大ボス戦の緊迫感・立ち回りギミックを保つため、リパルサー等のノックバックを無効化する（<code class="inline-code">DEC-10</code>, <code class="inline-code">DEC-11</code>）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a></div><div class="source-cell">
     <a class="source-link" href="../specs/non-goals.md#NG-12" data-source-file="specs/non-goals.md" data-item-id="NG-12" title="元仕様ファイル specs/non-goals.md (NG-12)">specs/non-goals.md#NG-12</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/non-goals.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2861,7 +2861,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(10件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(11件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -2981,6 +2981,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-04">BIZ-EXP-04</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-04">APP-MAP-04</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-31">PRM-31</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#ST-01">ST-01</a><a class="ref-pill ref-link" href="#ST-08">ST-08</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#NG-10">NG-10</a><a class="ref-pill ref-link" href="#NG-11">NG-11</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a></div></td>
         <td><div class="note-text">プレイテストでInferred数値の納得度を確認した時、および波線弾幕Issue着手時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-10" data-source-file="specs/decisions.md" data-item-id="DEC-10" title="元仕様ファイル specs/decisions.md (DEC-10)">specs/decisions.md#DEC-10</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-11" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-11" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-11">DEC-11</a></td>
+        <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
+        <td><strong>実機プレイテスト反映バランス調整：(1) <code class="inline-code">orbit_shield</code> 接触ダメ・内側スロー弱体化 (2) チャクラム単発追尾＋反射＋対象不在時1周(<code class="inline-code">2π</code>)再ヒット化 (3) 守護中ボス／大ボスHP増＋守護中ボスノックバック無効＋ボス予兆付き高速突進追加 (4) <code class="inline-code">tank</code> 放物線迫撃砲＋通常赤丸敵のプレイヤーLv連動弱砲撃追加 (5) <code class="inline-code">pulse_blade</code> 厚み付き三日月斬撃＋敵弾反射追加 (6) 枠拡張コスト段階化(<code class="inline-code">1/2/3</code>)＋Lv10重複の自動枠拡張充当＋HUD常設EXPバー追加</strong><div class="note-text">シールドの攻防一強を是正し、各装備の差別化・中ボス/大ボスの手応え・敵弾幕と迫撃砲による回避の緊迫感・枠拡張テンポを向上させるため（AI決定数値はInferred）</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed (方針) / Inferred (AI数値)</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#ST-11">ST-11</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
+        <td><div class="note-text">再プレイテストで新規数値（Inferred）の手触りを検証する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-11" data-source-file="specs/decisions.md" data-item-id="DEC-11" title="元仕様ファイル specs/decisions.md (DEC-11)">specs/decisions.md#DEC-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>

@@ -26,11 +26,16 @@ export interface EquippedItem {
 
 export const MAX_EQUIP_SLOTS = 2;
 export const MAX_EQUIP_SLOTS_CAP = 5;
-export const SCRAP_EXPAND_COST = 3;
+export const SCRAP_EXPAND_COSTS = [1, 2, 3] as const;
 export const MAX_TARGET_RANGE = 180;
 export const MAX_EQUIPMENT_LEVEL = 10;
 export const MAX_EQUIPMENT_COUNT_EVO_LEVEL = 6;
-export const ORBIT_SHIELD_INNER_SLOW = 0.72;
+export const ORBIT_SHIELD_INNER_SLOW = 0.86;
+
+export function getScrapExpandCost(currentMaxSlots: number): number {
+  const tier = Math.max(0, Math.floor(currentMaxSlots - MAX_EQUIP_SLOTS));
+  return SCRAP_EXPAND_COSTS[Math.min(SCRAP_EXPAND_COSTS.length - 1, tier)];
+}
 
 export function clampEquipmentLevel(level: number): number {
   return Math.max(1, Math.min(MAX_EQUIPMENT_LEVEL, Math.floor(level)));
@@ -43,9 +48,9 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     category: '近接迎撃',
     color: '#22d3ee',
     baseCooldown: 0.88,
-    baseRange: 84,
+    baseRange: 88,
     baseDamage: 25,
-    description: '敵方向への扇形高火力斬撃。Lv6まで扇角拡大、Lv7〜10は威力・射程・CD強化',
+    description: '厚みある扇形斬撃で敵弾を反射！Lv6まで斬撃角拡大、Lv7〜10は威力・射程・CD強化',
   },
   orbit_shield: {
     id: 'orbit_shield',
@@ -54,8 +59,8 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     color: '#a78bfa',
     baseCooldown: 0,
     baseRange: 78,
-    baseDamage: 15,
-    description: '範囲内敵をスロー化＋弾消し公転ビット。少ビット時は高速回転、Lv6で6個完成後は範囲・威力強化',
+    baseDamage: 10,
+    description: '範囲内敵を軽くスロー化＋弾消し公転ビット。少ビット時は高速回転、Lv6で6個完成後は範囲・威力強化',
   },
   seeker_drone: {
     id: 'seeker_drone',
@@ -83,9 +88,9 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     category: '跳弾投擲',
     color: '#fb923c',
     baseCooldown: 1.12,
-    baseRange: 145,
-    baseDamage: 17,
-    description: '敵を跳ね回る回転刃。Lv3で2枚/Lv6で3枚・最大7回跳弾、Lv7〜10は威力・射程・CD強化',
+    baseRange: 150,
+    baseDamage: 18,
+    description: '追尾し敵間を跳ね回る単発円刃。次の敵がいなければ周囲を1周して再ヒット！（Lv6で跳弾数最大）',
   },
 };
 
@@ -149,14 +154,16 @@ export function getPulseBladeStats(
   level: number,
   baseRange: number,
   rangeMult: number
-): { range: number; halfArcRad: number; fullCircle: boolean } {
+): { range: number; halfArcRad: number; fullCircle: boolean; thickness: number } {
   const lv = clampEquipmentLevel(level);
   const evoLv = Math.min(MAX_EQUIPMENT_COUNT_EVO_LEVEL, lv);
-  const halfArcRad = 1.15 + (evoLv - 1) * 0.1;
+  const halfArcRad = 1.0 + (evoLv - 1) * 0.06;
+  const range = (baseRange + (Math.min(6, lv) - 1) * 10 + Math.max(0, lv - 6) * 14) * rangeMult;
   return {
-    range: (baseRange + (Math.min(6, lv) - 1) * 10 + Math.max(0, lv - 6) * 14) * rangeMult,
+    range,
     halfArcRad,
     fullCircle: false,
+    thickness: Math.round(Math.min(38, 24 + (lv - 1) * 1.4)),
   };
 }
 
@@ -180,14 +187,16 @@ export function getRicochetDiscStats(
   count: number;
   maxBounces: number;
   speed: number;
+  homingTurnRate: number;
   range: number;
 } {
   const lv = clampEquipmentLevel(level);
   const evoLv = Math.min(MAX_EQUIPMENT_COUNT_EVO_LEVEL, lv);
   return {
-    count: evoLv >= 6 ? 3 : evoLv >= 3 ? 2 : 1,
+    count: 1,
     maxBounces: 1 + evoLv,
-    speed: 390 + (lv - 1) * 20,
+    speed: 360 + (lv - 1) * 20,
+    homingTurnRate: 7.5 + (evoLv - 1) * 1.2 + Math.max(0, lv - 6) * 0.6,
     range: (EQUIPMENT_CATALOG.ricochet_disc.baseRange + Math.max(0, lv - 6) * 8) * rangeMult,
   };
 }
@@ -198,12 +207,12 @@ export function getEquipmentEvolutionSummary(id: EquipmentId, level: number): st
     case 'orbit_shield': {
       const bits = getOrbitBitCount(lv);
       const radius = Math.round(getOrbitShieldRadius(lv, 1));
-      return `${bits}個 / 半径${radius}px / 減速`;
+      return `${bits}個 / 半径${radius}px / 弱減速`;
     }
     case 'pulse_blade': {
       const s = getPulseBladeStats(lv, EQUIPMENT_CATALOG.pulse_blade.baseRange, 1);
       const deg = Math.round((s.halfArcRad * 2 * 180) / Math.PI);
-      return `扇${deg}° / 射程${Math.round(Math.min(MAX_TARGET_RANGE, s.range))}px`;
+      return `扇${deg}° / 射程${Math.round(Math.min(MAX_TARGET_RANGE, s.range))}px / 弾反射`;
     }
     case 'seeker_drone':
       return `${getSeekerDroneCount(lv)}機 / 射程${Math.round(Math.min(MAX_TARGET_RANGE, getSeekerDroneRange(lv)))}px`;
@@ -213,7 +222,7 @@ export function getEquipmentEvolutionSummary(id: EquipmentId, level: number): st
     }
     case 'ricochet_disc': {
       const d = getRicochetDiscStats(lv);
-      return `${d.count}枚 / 跳弾${d.maxBounces}回`;
+      return `単発追尾 / 跳弾${d.maxBounces}回`;
     }
   }
 }

@@ -16,6 +16,8 @@ const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 const hpText = document.getElementById('hpText')!;
 const hpFill = document.getElementById('hpFill')!;
+const expText = document.getElementById('expText')!;
+const expFill = document.getElementById('expFill')!;
 const floorText = document.getElementById('floorText')!;
 const pauseBtn = document.getElementById('pauseBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
@@ -63,8 +65,11 @@ function getModalKey(): string {
 function syncUi(forceModals = false): void {
   const { player, floor, stats } = state;
   const hpPct = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
+  const expPct = Math.max(0, Math.min(100, (player.exp / Math.max(1, player.expToNext)) * 100));
   hpText.textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
   hpFill.style.width = `${hpPct}%`;
+  expText.textContent = `EXP ${player.exp}/${player.expToNext}`;
+  expFill.style.width = `${expPct}%`;
   floorText.textContent = `${floor}F`;
   skillBtn.textContent = `🌳 LV${player.level} (SP ${player.skillPoints})`;
   const canUnlockAny = SKILL_TREE_NODES.some((n) =>
