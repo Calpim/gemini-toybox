@@ -9,7 +9,7 @@
 | PRM-02 | プレイヤー | 初期HP / 最大HP (`hp` / `maxHp`) | `100` | `HP` |  | Confirmed (AI提案) | APP-MAP-03, DEC-08, FML-13 | `src/game/engine.ts#L454-L455` |
 | PRM-03 | プレイヤー | 自然回復レート (`autoRegenPerSec`) | `0` | `HP/s` | 時間経過での自然回復に頼らず、回復アイテム回収でHPを維持させるため（BIZ-EXP-03） | Confirmed | BIZ-EXP-03, APP-MAP-03, INV-02, FML-13, NG-05 | `src/game/engine.ts#L456` |
 | PRM-04 | プレイヤー | 初期必要経験値・成長係数 (`expToNext`) | `25`（Lv毎に `×1.22`） | `EXP` |  | Confirmed (AI提案) | BIZ-GRW-01, APP-GRW-01, DEC-08, FML-01 | `src/game/engine.ts#L459,L1764` |
-| PRM-05 | 装備 | 装備スロット数 (`MAX_EQUIP_SLOTS` / 拡張上限) | `初期 3 / スクラップ5回で+1（実質上限 5）` | `スロット` | 初期は3枠でビルドの取捨選択を生みつつ、スクラップ＆ビルドで最大5枠まで拡張可能にするため（装備増加時再検討／DEC-07） | Confirmed | BIZ-GRW-03, APP-GRW-03, DEC-07, INV-03, GLS-02, GLS-09 | `src/game/equipment.ts#L27` |
+| PRM-05 | 装備 | 装備スロット数 (`MAX_EQUIP_SLOTS` / 拡張上限) | `初期 2 / スクラップ3回で+1（実質上限 5）` | `スロット` | 初期は2枠でビルドの取捨選択を生みつつ、スクラップ＆ビルドで最大5枠まで拡張可能にするため（装備増加時再検討／DEC-07） | Confirmed | BIZ-GRW-03, APP-GRW-03, DEC-07, INV-03, GLS-02, GLS-09 | `src/game/equipment.ts#L27-L29` |
 | PRM-06 | 戦闘 | 索敵上限距離 (`MAX_TARGET_RANGE`) | `180` | `px` | 2つ隣の部屋への壁越し・長通路スナイプを防止し、部屋・通路規模の交戦距離に収めるため（BIZ-CMB-03, GLS-13） | Confirmed (AI提案) | BIZ-CMB-03, APP-CMB-03, DEC-08, INV-06, GLS-13, FML-05, FML-07, NG-09 | `src/game/equipment.ts#L28` |
 | PRM-07 | 戦闘 | ドロップ装備レベル抽選基準 | `所持最低Lv基準（-1〜+2 ランダム）` | `Lv` | 平均基準による装備更新メリットの低下を防ぎ、最低Lv装備の底上げと上振れを狙えるようにするため（DEC-04, BIZ-GRW-07） | Confirmed | BIZ-GRW-07, APP-GRW-07, DEC-04, FML-08 | `src/game/engine.ts#L691-L702` |
 | PRM-08 | 戦闘 | 敵からの基礎装備ドロップ率 | `1.5%` | `確率` | ドロップ過多で宝箱探索の旨味が落ちるのを防ぎつつ、希少ドロップの期待感を残すため（DEC-04, BIZ-GRW-07） | Confirmed (AI提案) | BIZ-GRW-07, APP-GRW-07, DEC-04, DEC-08 | `src/game/engine.ts#L1321` |

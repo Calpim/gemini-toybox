@@ -24,9 +24,9 @@ export interface EquippedItem {
   cooldown: number;
 }
 
-export const MAX_EQUIP_SLOTS = 3;
+export const MAX_EQUIP_SLOTS = 2;
 export const MAX_EQUIP_SLOTS_CAP = 5;
-export const SCRAP_EXPAND_COST = 5;
+export const SCRAP_EXPAND_COST = 3;
 export const MAX_TARGET_RANGE = 180;
 
 export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {

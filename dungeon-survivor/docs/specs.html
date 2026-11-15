@@ -1100,7 +1100,7 @@
           <div class="bg-box">
     <div class="bg-title">📋 背景: ハイブリッド成長ルールの決定経緯</div>
     <ul class="bg-steps">
-      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット3枠（5種から選択）」「重複装備の自動レベルアップ」「スキル毎の最大Lv5・Lv3で次解放・Lv1-3=1SP / Lv4=2SP / Lv5=3SP ＆ Lv4以降の大幅成長」「初期ノーアイテム開始（自機ショットあり）」「敵からの低確率ドロップ（頻度抑えめ）」「所持装備の中で最低レベル基準のドロップLv変動」を確定</li>
+      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット初期2枠（5種から選択・最大5枠まで拡張可）」「重複装備の自動レベルアップ」「スキル毎の最大Lv5・Lv3で次解放・Lv1-3=1SP / Lv4=2SP / Lv5=3SP ＆ Lv4以降の大幅成長」「初期ノーアイテム開始（自機ショットあり）」「敵からの低確率ドロップ（頻度抑えめ）」「所持装備の中で最低レベル基準のドロップLv変動」を確定</li>
     </ul>
   </div>
           <h3>探索で拾った装備とレベルアップ成長を組み合わせて強化する</h3>
@@ -1120,7 +1120,7 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 <div class="bg-box">
-    <div class="bg-title">📋 背景: 3スロット制・重複強化・段階SPコスト・Lv4-5強化カーブのアプリ仕様</div>
+    <div class="bg-title">📋 背景: 初期2スロット制（最大5枠）・重複強化・段階SPコスト・Lv4-5強化カーブのアプリ仕様</div>
     <ul class="bg-steps">
       <li>決定経緯: Lv1-3=1SP / Lv4=2SP / Lv5=3SP の枠組みと Lv4以降の伸び率引き上げは2026-11-14先輩確定、各スキルの具体数値カーブは AI提案（@Inferred）</li>
     </ul>
@@ -1181,9 +1181,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>初期装備枠3枠を上限とし、余剰装備は入れ替えまたはスクラップ＆ビルドで強化・枠拡張できる</h3>
+          <h3>初期装備枠2枠を上限とし、余剰装備は入れ替えまたはスクラップ＆ビルドで強化・枠拡張できる</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの初期装備スロット上限（3枠）がすべて埋まっている（装備種類数に応じた実質上限は最大5枠）</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、「スクラップ＆ビルド」（所持装備1個の強化、または枠拡張への蓄積：5回蓄積で装備枠+1・最大5枠、装備種類が増えた場合は上限再検討）を選択できる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの初期装備スロット上限（2枠）がすべて埋まっている（装備種類数に応じた実質上限は最大5枠）</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、「スクラップ＆ビルド」（所持装備1個の強化、または枠拡張への蓄積：3回蓄積で装備枠+1・最大5枠、装備種類が増えた場合は上限再検討）を選択できる</span></li>
   </ul>
         </div>
         <div class="app-branch">
@@ -1200,7 +1200,7 @@
                 
                 <h4>装備スロット満杯時の未所持装備獲得時は入れ替えまたはスクラップ＆ビルド（装備1個強化／枠拡張蓄積）を選べる</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在装備スロット上限（初期 3枠・拡張により最大 5枠）がすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">未所持の新しい装備を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">ゲームを一時停止して「入れ替えるスロット選択」または「スクラップ＆ビルド（所持装備1個の強化、または枠拡張への蓄積：5回蓄積で装備枠+1、実質上限5枠・装備追加時に再検討）」モーダルを表示する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在装備スロット上限（初期 2枠・拡張により最大 5枠）がすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">未所持の新しい装備を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">ゲームを一時停止して「入れ替えるスロット選択」または「スクラップ＆ビルド（所持装備1個の強化、または枠拡張への蓄積：3回蓄積で装備枠+1、実質上限5枠・装備追加時に再検討）」モーダルを表示する</span></li>
   </ul>
               </div>
         </div>
@@ -1303,9 +1303,9 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 
-                <h4>初期装備 0 個（GEAR 0/3）で開始し、自機基本攻撃で戦いながら探索で装備を集める</h4>
+                <h4>初期装備 0 個（GEAR 0/2）で開始し、自機基本攻撃で戦いながら探索で装備を集める</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">決定経緯: ノーアイテム開始と自機基本攻撃は人間確定（2026-11-14）</span></li><li><span class="kw">もし</span><span class="st-text">createGameState で新規ランを開始する</span></li><li><span class="kw">ならば</span><span class="st-text">player.equipment は空配列（GEAR 0/3）で初期化され、自機の基本攻撃で初戦を戦いながらダンジョン内の宝箱や敵ドロップで装備を獲得する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">決定経緯: ノーアイテム開始と自機基本攻撃は人間確定（2026-11-14）</span></li><li><span class="kw">もし</span><span class="st-text">createGameState で新規ランを開始する</span></li><li><span class="kw">ならば</span><span class="st-text">player.equipment は空配列（GEAR 0/2）で初期化され、自機の基本攻撃で初戦を戦いながらダンジョン内の宝箱や敵ドロップで装備を獲得する</span></li>
   </ul>
               </div>
         </div>
@@ -1451,7 +1451,7 @@
       <tr id="GLS-02" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-02" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-02">GLS-02</a></td>
         <td><strong>迎撃装備（Gear）</strong><div class="sub-code"><code class="inline-code">EquippedItem</code> / <code class="inline-code">EquipmentId</code></div></td>
-        <td>最大3スロットに装着し、敵の接近に応じて自動で攻撃・防御を行う5系統（<code class="inline-code">pulse_blade</code>・<code class="inline-code">orbit_shield</code>・<code class="inline-code">seeker_drone</code>・<code class="inline-code">reactive_coil</code>・<code class="inline-code">ricochet_disc</code>）の武装。</td>
+        <td>初期2スロット（スクラップ＆ビルドで最大5スロット）に装着し、敵の接近に応じて自動で攻撃・防御を行う5系統（<code class="inline-code">pulse_blade</code>・<code class="inline-code">orbit_shield</code>・<code class="inline-code">seeker_drone</code>・<code class="inline-code">reactive_coil</code>・<code class="inline-code">ricochet_disc</code>）の武装。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/equipment.ts</code></div><div class="source-cell">
@@ -1527,11 +1527,11 @@
       </tr>
       <tr id="GLS-09" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-09" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-09">GLS-09</a></td>
-        <td><strong>スクラップ＆ビルド</strong><div class="sub-code"><code class="inline-code">resolveEquipChoice(&#39;scrap&#39;)</code>（改修予定）</div></td>
-        <td>装備枠満杯時に未所持装備を入手した際の処理。所持装備1個の強化、または枠拡張への蓄積（5回で枠+1・最大5枠、装備追加時再検討）を選択する（※コードは暫定全強化のまま未追従）。</td>
+        <td><strong>スクラップ＆ビルド</strong><div class="sub-code"><code class="inline-code">resolveEquipChoice</code> (<code class="inline-code">scrap_upgrade</code> / <code class="inline-code">scrap_expand</code>)</div></td>
+        <td>装備枠満杯時に未所持装備を入手した際の処理。所持装備1個の強化、または枠拡張への蓄積（3回で枠+1・最大5枠、装備追加時再検討）を選択する。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
-        <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>（新仕様確定・実装予定）</div><div class="source-cell">
+        <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-09" data-source-file="specs/glossary.md" data-item-id="GLS-09" title="元仕様ファイル specs/glossary.md (GLS-09)">specs/glossary.md#GLS-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1662,12 +1662,12 @@
         <td><a class="id-pill id-doc" href="#PRM-05">PRM-05</a></td>
         <td><span class="cat-pill">装備</span></td>
         <td><strong>装備スロット数 (<code class="inline-code">MAX_EQUIP_SLOTS</code> / 拡張上限)</strong></td>
-        <td><span class="param-val"><code class="inline-code">初期 3 / スクラップ5回で+1（実質上限 5）</code></span></td>
+        <td><span class="param-val"><code class="inline-code">初期 2 / スクラップ3回で+1（実質上限 5）</code></span></td>
         <td><code class="inline-code">スロット</code></td>
-        <td><div class="note-text">初期は3枠でビルドの取捨選択を生みつつ、スクラップ＆ビルドで最大5枠まで拡張可能にするため（装備増加時再検討／DEC-07）</div></td>
+        <td><div class="note-text">初期は2枠でビルドの取捨選択を生みつつ、スクラップ＆ビルドで最大5枠まで拡張可能にするため（装備増加時再検討／DEC-07）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L27</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L27-L29</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-05" data-source-file="specs/parameters.md" data-item-id="PRM-05" title="元仕様ファイル specs/parameters.md (PRM-05)">specs/parameters.md#PRM-05</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2292,8 +2292,8 @@
   [*] --&gt; playing : createGameState() (1F開始)
   playing --&gt; skill_tree : スキルボタン / Kキー
   skill_tree --&gt; playing : 閉じるボタン / Kキー
-  playing --&gt; equip_choice : 枠3/3満杯時に未所持装備取得
-  equip_choice --&gt; playing : 入れ替え または スクラップ変換
+  playing --&gt; equip_choice : 現在上限（初期2/2〜最大5/5）満杯時に未所持装備取得
+  equip_choice --&gt; playing : 入れ替え または スクラップ＆ビルド
   playing --&gt; playing : 守護中ボス撃破後に階段接触 (N+1F生成)
   playing --&gt; gameover : player.hp &lt;= 0
   gameover --&gt; playing : リトライ (1F再生成)</code></pre>
@@ -2348,7 +2348,7 @@
         <td><code class="inline-code">playing</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a></div></td>
-        <td><div class="note-text">※コードは暫定全強化のまま未追従</div><div class="source-cell">
+        <td><div class="note-text">選択結果を即時反映して探索再開</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-04" data-source-file="specs/state-transitions.md" data-item-id="ST-04" title="元仕様ファイル specs/state-transitions.md (ST-04)">specs/state-transitions.md#ST-04</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2428,11 +2428,11 @@
       <tr id="ST-11" class="spec-row " data-section="transitions" data-status="Confirmed" data-undefined="false" data-item-id="ST-11" data-source-file="specs/state-transitions.md">
         <td><a class="id-pill id-doc" href="#ST-11">ST-11</a></td>
         <td><code class="inline-code">equip_choice</code></td>
-        <td>スクラップ＆ビルドで枠拡張蓄積が5回に到達（現在枠 &lt; 5）</td>
+        <td>スクラップ＆ビルドで枠拡張蓄積が3回に到達（現在枠 &lt; 5）</td>
         <td><code class="inline-code">playing（装備枠 +1・上限5）</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
-        <td><div class="note-text">初期3枠→最大5枠。装備種類追加時に再検討</div><div class="source-cell">
+        <td><div class="note-text">初期2枠→最大5枠。装備種類追加時に再検討</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-11" data-source-file="specs/state-transitions.md" data-item-id="ST-11" title="元仕様ファイル specs/state-transitions.md (ST-11)">specs/state-transitions.md#ST-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2486,11 +2486,11 @@
       <tr id="INV-03" class="spec-row" data-section="invariants" data-status="Confirmed" data-item-id="INV-03" data-source-file="specs/invariants.md">
         <td><a class="id-pill id-doc" href="#INV-03">INV-03</a></td>
         <td><span class="cat-pill">装備枠・採用方針</span></td>
-        <td><code class="inline-code">player.equipment.length &lt;= 5</code>（初期3枠、スクラップ＆ビルドで最大5枠）を満たし、<code class="inline-code">auto_turret</code> は装備候補に含まれない</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-02]</code>)</div></td>
+        <td><code class="inline-code">player.equipment.length &lt;= 5</code>（初期2枠、スクラップ＆ビルドで最大5枠）を満たし、<code class="inline-code">auto_turret</code> は装備候補に含まれない</td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-02]</code>, <code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-04">BIZ-CMB-04</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-03">GLS-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a></div></td>
-        <td><div class="note-text">現行コードは <code class="inline-code">MAX_EQUIP_SLOTS = 3</code> 固定（スクラップ＆ビルド未追従）</div><div class="source-cell">
+        <td><div class="note-text">初期 <code class="inline-code">MAX_EQUIP_SLOTS = 2</code>、<code class="inline-code">MAX_EQUIP_SLOTS_CAP = 5</code></div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-03" data-source-file="specs/invariants.md" data-item-id="INV-03" title="元仕様ファイル specs/invariants.md (INV-03)">specs/invariants.md#INV-03</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2729,7 +2729,7 @@
       <tr id="NG-07" class="spec-row" data-section="non-goals" data-status="Confirmed" data-item-id="NG-07" data-source-file="specs/non-goals.md">
         <td><a class="id-pill id-doc" href="#NG-07">NG-07</a></td>
         <td><strong>ゲーム開始時の初期装備付与（装備ありスタート）</strong></td>
-        <td><div class="note-text">初期ノーアイテム（GEAR 0/3）から自機ショットで戦いながら探索・ドロップで装備を揃える導入にするため（<code class="inline-code">DEC-03</code>, <code class="inline-code">BIZ-GRW-06</code>）</div></td>
+        <td><div class="note-text">初期ノーアイテム（GEAR 0/2）から自機ショットで戦いながら探索・ドロップで装備を揃える導入にするため（<code class="inline-code">DEC-03</code>, <code class="inline-code">BIZ-GRW-06</code>）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-06">BIZ-GRW-06</a><a class="ref-pill ref-link" href="#APP-GRW-06">APP-GRW-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a></div><div class="source-cell">
     <a class="source-link" href="../specs/non-goals.md#NG-07" data-source-file="specs/non-goals.md" data-item-id="NG-07" title="元仕様ファイル specs/non-goals.md (NG-07)">specs/non-goals.md#NG-07</a>
@@ -2847,7 +2847,7 @@
       <tr id="DEC-07" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-07" data-source-file="specs/decisions.md">
         <td><a class="id-pill id-doc" href="#DEC-07">DEC-07</a></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
-        <td><strong>初期3枠上限＋満杯時「スクラップ＆ビルド」（所持装備1個強化 or 拡張蓄積5回で枠+1・実質上限5枠）を確定</strong><div class="note-text">単なる全装備強化ではなく、装備強化と枠拡張（5回蓄積で+1枠、現行装備が5種のため実質上限5枠）を選べるようにするため</div></td>
+        <td><strong>初期2枠上限＋満杯時「スクラップ＆ビルド」（所持装備1個強化 or 拡張蓄積3回で枠+1・実質上限5枠）を確定</strong><div class="note-text">単なる全装備強化ではなく、装備強化と枠拡張（3回蓄積で+1枠、現行装備が5種のため実質上限5枠）を選べるようにするため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Inferred → Confirmed</div></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#ST-03">ST-03</a><a class="ref-pill ref-link" href="#ST-04">ST-04</a><a class="ref-pill ref-link" href="#ST-11">ST-11</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a></div></td>
         <td><div class="note-text">装備アイテムの種類が6種以上に増えた時</div><div class="source-cell">

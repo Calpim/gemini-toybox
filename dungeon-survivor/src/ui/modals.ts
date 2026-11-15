@@ -157,7 +157,7 @@ export function renderModals(
       const canExpand = state.player.maxEquipSlots < MAX_EQUIP_SLOTS_CAP;
       scrapExpandBtn.disabled = !canExpand;
       scrapExpandBtn.textContent = canExpand
-        ? `🔧 スクラップ＆ビルド：枠拡張へ蓄積（${state.player.scrapExpandProgress}/${SCRAP_EXPAND_COST}）→ 5回で枠+1`
+        ? `🔧 スクラップ＆ビルド：枠拡張へ蓄積（${state.player.scrapExpandProgress}/${SCRAP_EXPAND_COST}）→ ${SCRAP_EXPAND_COST}回で枠+1`
         : `🔧 装備枠は最大（${MAX_EQUIP_SLOTS_CAP}/${MAX_EQUIP_SLOTS_CAP}）`;
     }
 

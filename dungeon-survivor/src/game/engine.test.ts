@@ -492,13 +492,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.hp).toBe(74);
   });
 
-  it('[APP-GRW-03 & APP-GRW-04] enforces 3-slot limit, auto-levels owned duplicates (including higher-Lv drops), and prompts on 4th unowned gear', () => {
-    expect(MAX_EQUIP_SLOTS).toBe(3);
+  it('[APP-GRW-03 & APP-GRW-04] enforces initial 2-slot limit, auto-levels owned duplicates (including higher-Lv drops), prompts on 3rd unowned gear, and expands via Scrap & Build', () => {
+    expect(MAX_EQUIP_SLOTS).toBe(2);
 
     const state = createGameState({ seed: 606 });
+    expect(state.player.maxEquipSlots).toBe(2);
     state.player.equipment = [
       createEquippedItem('pulse_blade'),
-      createEquippedItem('orbit_shield'),
       createEquippedItem('seeker_drone'),
     ];
     expect(state.player.equipment.length).toBe(MAX_EQUIP_SLOTS);
@@ -513,7 +513,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     acquireEquipment(state, createEquippedItem('seeker_drone', 5));
     expect(state.player.equipment.find((e) => e.id === 'seeker_drone')?.level).toBe(5);
 
-    // Unowned 4th item triggers replace/scrap_upgrade/scrap_expand choice modal
+    // Unowned 3rd item triggers replace/scrap_upgrade/scrap_expand choice modal
     acquireEquipment(state, createEquippedItem('reactive_coil', 1));
     expect(state.status).toBe('equip_choice');
     expect(state.pendingEquipDrop).not.toBeNull();
@@ -521,7 +521,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     // Scrap & Build: upgrade a single selected slot (slot 1) by Lv+1
     expect(resolveEquipChoice(state, { type: 'scrap_upgrade', slotIndex: 1 })).toBe(true);
     expect(state.status).toBe('playing');
-    expect(state.player.equipment.map((e) => e.level)).toEqual([1, 2, 5]);
+    expect(state.player.equipment.map((e) => e.level)).toEqual([1, 6]);
 
     // Replace slot 0 on next unowned drop (preserving drop level)
     acquireEquipment(state, createEquippedItem('ricochet_disc', 4));
@@ -529,23 +529,23 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.equipment[0].id).toBe('ricochet_disc');
     expect(state.player.equipment[0].level).toBe(4);
 
-    // Scrap & Build: 5 accumulations expand maxEquipSlots from 3 to 4
-    for (let i = 1; i <= 4; i++) {
+    // Scrap & Build: 3 accumulations expand maxEquipSlots from 2 to 3
+    for (let i = 1; i <= 2; i++) {
       acquireEquipment(state, createEquippedItem('pulse_blade', 1));
       expect(state.status).toBe('equip_choice');
       expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
       expect(state.player.scrapExpandProgress).toBe(i);
-      expect(state.player.maxEquipSlots).toBe(3);
+      expect(state.player.maxEquipSlots).toBe(2);
     }
     acquireEquipment(state, createEquippedItem('pulse_blade', 1));
     expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
     expect(state.player.scrapExpandProgress).toBe(0);
-    expect(state.player.maxEquipSlots).toBe(4);
+    expect(state.player.maxEquipSlots).toBe(3);
 
-    // 4th unowned equipment now equips directly without modal
+    // 3rd unowned equipment now equips directly without modal
     acquireEquipment(state, createEquippedItem('pulse_blade', 2));
     expect(state.status).toBe('playing');
-    expect(state.player.equipment.length).toBe(4);
+    expect(state.player.equipment.length).toBe(3);
   });
 
   it('[APP-GRW-06] starts run with 0 items without Room 0 chest and fights using intrinsic base attack', () => {
