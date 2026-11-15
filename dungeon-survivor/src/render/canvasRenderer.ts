@@ -6,7 +6,12 @@ import {
   getStairsLockCount,
   isPointInPlayerVision,
 } from '../game/engine';
-import { EQUIPMENT_CATALOG, MAX_TARGET_RANGE } from '../game/equipment';
+import {
+  EQUIPMENT_CATALOG,
+  MAX_TARGET_RANGE,
+  getOrbitShieldRadius,
+  getSeekerDroneRange,
+} from '../game/equipment';
 import { computeSkillModifiers } from '../game/skillTree';
 import type { EnemyState, GameState } from '../game/types';
 import type { VirtualStickState } from '../input/controller';
@@ -38,8 +43,6 @@ function getFogCanvas(w: number, h: number): HTMLCanvasElement | null {
 function drawEnemyBody(
   ctx: CanvasRenderingContext2D,
   enemy: EnemyState,
-  playerX: number,
-  playerY: number,
   nowSec: number
 ): void {
   const kind = enemy.kind ?? 'normal';
@@ -47,6 +50,17 @@ function drawEnemyBody(
 
   ctx.save();
   ctx.translate(enemy.x, enemy.y);
+
+  if ((enemy.spawnDelay ?? 0) > 0) {
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + 9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   if (enemy.isAmbush) {
     const glow = 0.65 + 0.35 * Math.sin(nowSec * 12);
@@ -64,17 +78,31 @@ function drawEnemyBody(
 
   if (enemy.isRoomBoss) {
     const bossPulse = 0.7 + 0.3 * Math.sin(nowSec * 5);
-    ctx.strokeStyle = `rgba(250, 204, 21, ${0.85 * bossPulse})`;
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = enemy.isGrandBoss
+      ? `rgba(244, 63, 94, ${0.9 * bossPulse})`
+      : `rgba(250, 204, 21, ${0.85 * bossPulse})`;
+    ctx.lineWidth = enemy.isGrandBoss ? 3.2 : 2.5;
     ctx.beginPath();
-    ctx.arc(0, 0, enemy.radius + 6, 0, Math.PI * 2);
+    ctx.arc(0, 0, enemy.radius + (enemy.isGrandBoss ? 9 : 6), 0, Math.PI * 2);
     ctx.stroke();
   }
 
   if (kind === 'tank') {
     // Heavy armored hexagon
-    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#7c3aed' : '#4c1d95';
-    ctx.strokeStyle = enemy.isRoomBoss ? '#fde047' : enemy.awake ? '#ddd6fe' : '#6d28d9';
+    ctx.fillStyle = flash
+      ? '#ffffff'
+      : enemy.isGrandBoss
+      ? '#9f1239'
+      : enemy.awake
+      ? '#7c3aed'
+      : '#4c1d95';
+    ctx.strokeStyle = enemy.isGrandBoss
+      ? '#fda4af'
+      : enemy.isRoomBoss
+      ? '#fde047'
+      : enemy.awake
+      ? '#ddd6fe'
+      : '#6d28d9';
     ctx.lineWidth = enemy.isRoomBoss ? 3.5 : 3;
     ctx.beginPath();
     for (let s = 0; s < 6; s++) {
@@ -88,7 +116,9 @@ function drawEnemyBody(
     ctx.fill();
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(221, 214, 254, 0.45)';
+    ctx.strokeStyle = enemy.isGrandBoss
+      ? 'rgba(253, 224, 71, 0.6)'
+      : 'rgba(221, 214, 254, 0.45)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius * 0.55, 0, Math.PI * 2);
@@ -108,11 +138,11 @@ function drawEnemyBody(
     ctx.fill();
     ctx.stroke();
   } else if (kind === 'shooter') {
-    // Stationary ranged turret with charge-up telegraph ring before firing
+    // Stationary 8-way barrage turret with charge-up telegraph ring before firing
     const s = enemy.radius;
     const cd = enemy.attackCooldown ?? 1;
-    if (enemy.awake && cd <= 0.7) {
-      const charge = Math.max(0, Math.min(1, (0.7 - cd) / 0.7));
+    if (enemy.awake && cd <= 0.65) {
+      const charge = Math.max(0, Math.min(1, (0.65 - cd) / 0.65));
       ctx.strokeStyle = `rgba(244, 114, 182, ${0.35 + charge * 0.6})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -120,18 +150,37 @@ function drawEnemyBody(
       ctx.stroke();
     }
 
+    // 8 radial barrage nozzles
+    const rotOffset = ((enemy.bossPatternIndex ?? 0) % 2) * (Math.PI / 8);
+    ctx.fillStyle = '#fdf2f8';
+    for (let k = 0; k < 8; k++) {
+      ctx.save();
+      ctx.rotate(rotOffset + (k * Math.PI) / 4);
+      ctx.fillRect(s * 0.45, -2, s * 0.72, 4);
+      ctx.restore();
+    }
+
     ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#db2777' : '#831843';
     ctx.strokeStyle = enemy.awake ? '#fbcfe8' : '#500724';
     ctx.lineWidth = 2;
-    ctx.fillRect(-s, -s, s * 2, s * 2);
-    ctx.strokeRect(-s, -s, s * 2, s * 2);
+    ctx.beginPath();
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4 + Math.PI / 8;
+      const vx = Math.cos(a) * s;
+      const vy = Math.sin(a) * s;
+      if (k === 0) ctx.moveTo(vx, vy);
+      else ctx.lineTo(vx, vy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
-    const aimAngle = Math.atan2(playerY - enemy.y, playerX - enemy.x);
-    ctx.rotate(aimAngle);
-    ctx.fillStyle = '#fdf2f8';
-    ctx.fillRect(0, -3, s + 6, 6);
-  } else if (kind === 'caller') {
-    // Wandering scout & caller with radar ring
+    ctx.fillStyle = '#fbcfe8';
+    ctx.beginPath();
+    ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (kind === 'scout') {
+    // Wandering scout with radar ring
     const pulse = 0.65 + 0.35 * Math.sin(nowSec * 6);
     ctx.strokeStyle = enemy.awake
       ? `rgba(249, 115, 22, ${0.75 * pulse})`
@@ -166,10 +215,14 @@ function drawEnemyBody(
 
   if (enemy.isRoomBoss) {
     ctx.save();
-    ctx.fillStyle = '#fde047';
+    ctx.fillStyle = enemy.isGrandBoss ? '#fda4af' : '#fde047';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('GUARDIAN', enemy.x, enemy.y - enemy.radius - 14);
+    ctx.fillText(
+      enemy.isGrandBoss ? 'GRAND BOSS' : 'GUARDIAN',
+      enemy.x,
+      enemy.y - enemy.radius - 14
+    );
     ctx.restore();
   }
 
@@ -178,7 +231,7 @@ function drawEnemyBody(
     const ratio = Math.max(0, enemy.hp / enemy.maxHp);
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
     ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw, 4);
-    ctx.fillStyle = enemy.isRoomBoss ? '#facc15' : '#fb7185';
+    ctx.fillStyle = enemy.isGrandBoss ? '#f43f5e' : enemy.isRoomBoss ? '#facc15' : '#fb7185';
     ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw * ratio, 4);
   }
 }
@@ -263,6 +316,27 @@ export function renderGame(
           ctx.font = 'bold 10px monospace';
           ctx.textAlign = 'center';
           ctx.fillText(locked ? `LOCKED (${stairsLockCount})` : 'NEXT ▲', center.x, center.y - 16);
+          ctx.restore();
+        } else if (tile === 'fountain') {
+          const center = tileCenterWorld(tx, ty);
+          const used = Boolean(state.fountainUsed);
+          const pulse = 0.72 + 0.28 * Math.sin(nowSec * 4);
+          ctx.save();
+          ctx.fillStyle = used
+            ? 'rgba(51, 65, 85, 0.35)'
+            : `rgba(45, 212, 191, ${0.26 * pulse})`;
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, TILE_SIZE * 0.46, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = used ? '#64748b' : '#2dd4bf';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          if (!used) {
+            ctx.fillStyle = '#99f6e4';
+            ctx.font = 'bold 10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('FOUNTAIN', center.x, center.y - 16);
+          }
           ctx.restore();
         }
       }
@@ -359,19 +433,29 @@ export function renderGame(
     ctx.arc(
       player.x,
       player.y,
-      Math.min(MAX_TARGET_RANGE, EQUIPMENT_CATALOG.seeker_drone.baseRange * mods.rangeMult),
+      Math.min(
+        MAX_TARGET_RANGE,
+        getSeekerDroneRange(droneEquip.level, EQUIPMENT_CATALOG.seeker_drone.baseRange, mods.rangeMult)
+      ),
       0,
       Math.PI * 2
     );
     ctx.stroke();
   }
 
+  const orbitEquip = player.equipment.find((e) => e.id === 'orbit_shield');
   const bits = getOrbitBitPositions(state);
-  if (bits.length > 0) {
-    ctx.strokeStyle = 'rgba(167, 139, 250, 0.22)';
+  if (bits.length > 0 && orbitEquip) {
+    const orbitR = getOrbitShieldRadius(orbitEquip.level, mods.rangeMult);
+    ctx.fillStyle = 'rgba(167, 139, 250, 0.07)';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, orbitR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(167, 139, 250, 0.25)';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    ctx.arc(player.x, player.y, player.orbitRadius, 0, Math.PI * 2);
+    ctx.arc(player.x, player.y, orbitR, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
 
@@ -407,14 +491,10 @@ export function renderGame(
     ctx.globalAlpha = alpha;
     if (fx.kind === 'slash' && fx.radius !== undefined && fx.angle !== undefined) {
       ctx.strokeStyle = fx.color;
-      ctx.lineWidth = fx.fullCircle ? 6 : 5;
+      ctx.lineWidth = 5;
       ctx.beginPath();
-      if (fx.fullCircle) {
-        ctx.arc(fx.x, fx.y, fx.radius * 0.85, 0, Math.PI * 2);
-      } else {
-        const half = fx.halfArcRad ?? 1.15;
-        ctx.arc(fx.x, fx.y, fx.radius * 0.8, fx.angle - half, fx.angle + half);
-      }
+      const half = fx.halfArcRad ?? 1.15;
+      ctx.arc(fx.x, fx.y, fx.radius * 0.8, fx.angle - half, fx.angle + half);
       ctx.stroke();
     } else if (fx.kind === 'pulse' && fx.radius !== undefined) {
       ctx.strokeStyle = fx.color;
@@ -435,12 +515,12 @@ export function renderGame(
     ctx.restore();
   }
 
-  // 7. Enemies (rendered when inside player's vision, or glowing ambush runners summoned by tracer)
+  // 7. Enemies (rendered when inside player's vision, or glowing ambush runners summoned by scout)
   for (const enemy of state.enemies) {
     if (!enemy.isAmbush && !isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y)) {
       continue;
     }
-    drawEnemyBody(ctx, enemy, player.x, player.y, nowSec);
+    drawEnemyBody(ctx, enemy, nowSec);
   }
 
   // 8. Projectiles
@@ -481,7 +561,7 @@ export function renderGame(
 
   for (const ep of state.enemyProjectiles) {
     if (!isPointInPlayerVision(map, player.x, player.y, ep.x, ep.y)) continue;
-    ctx.fillStyle = '#fb7185';
+    ctx.fillStyle = ep.color ?? '#fb7185';
     ctx.beginPath();
     ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
     ctx.fill();
@@ -558,20 +638,29 @@ export function renderGame(
     ctx.fill();
   }
 
-  // 13. Toast Notifications (Level-up & Caller Alert) & Floor entry banner
+  // 13. Toast Notifications (Level-up & Scout Alert) & Floor entry banner
   renderNotifications(ctx, width, state);
 
   if (state.floorBannerTimer > 0) {
+    const isBoss = map.floorType === 'boss';
+    const isGuardian = map.floorType === 'guardian';
+    const bannerText = isBoss
+      ? `BOSS FLOOR ${state.floor}F`
+      : isGuardian
+      ? `GUARDIAN ${state.floor}F`
+      : `FLOOR ${state.floor}F`;
+    const borderColor = isBoss ? '#f43f5e' : isGuardian ? '#facc15' : '#38bdf8';
+
     ctx.save();
     ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-    ctx.fillRect(width / 2 - 120, 74, 240, 42);
-    ctx.strokeStyle = '#38bdf8';
-    ctx.strokeRect(width / 2 - 120, 74, 240, 42);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(width / 2 - 135, 74, 270, 42);
+    ctx.strokeStyle = borderColor;
+    ctx.strokeRect(width / 2 - 135, 74, 270, 42);
     ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 18px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`FLOOR ${state.floor}F`, width / 2, 101);
+    ctx.fillText(bannerText, width / 2, 101);
     ctx.restore();
   }
 }
@@ -636,7 +725,7 @@ function renderFogOverlay(
     fCtx.fill();
   }
 
-  // Illuminate surroundings of tracer-summoned ambush runners so they stand out in dark corridors
+  // Illuminate surroundings of scout-summoned ambush runners so they stand out in dark corridors
   for (const enemy of state.enemies) {
     if (!enemy.isAmbush) continue;
     const esx = (enemy.x - camX) * zoom;
@@ -714,7 +803,15 @@ function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state
       const t = map.tiles[idx];
       if (t === 'wall') continue;
       ctx.fillStyle =
-        t === 'stairs' ? (stairsLocked ? '#fb7185' : '#22d3ee') : 'rgba(148, 163, 184, 0.45)';
+        t === 'stairs'
+          ? stairsLocked
+            ? '#fb7185'
+            : '#22d3ee'
+          : t === 'fountain'
+          ? state.fountainUsed
+            ? '#475569'
+            : '#2dd4bf'
+          : 'rgba(148, 163, 184, 0.45)';
       ctx.fillRect(ox + tx * cell, oy + ty * cell, cell, cell);
     }
   }

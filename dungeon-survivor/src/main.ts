@@ -1,9 +1,9 @@
 import {
   closeSkillTree,
   createGameState,
-  openSkillTree,
   resolveEquipChoice,
   stepGame,
+  toggleSkillTree,
   unlockSkillNode,
 } from './game/engine';
 import { SKILL_TREE_NODES, canUnlockSkill } from './game/skillTree';
@@ -17,6 +17,7 @@ const ctx = canvas.getContext('2d')!;
 const hpText = document.getElementById('hpText')!;
 const hpFill = document.getElementById('hpFill')!;
 const floorText = document.getElementById('floorText')!;
+const pauseBtn = document.getElementById('pauseBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
 const gearCountText = document.getElementById('gearCountText')!;
 const killsText = document.getElementById('killsText')!;
@@ -70,6 +71,7 @@ function syncUi(forceModals = false): void {
     canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
   );
   skillBtn.classList.toggle('has-sp', canUnlockAny);
+  pauseBtn.classList.toggle('has-sp', state.status === 'skill_tree');
   gearCountText.textContent = `GEAR ${player.equipment.length}/${player.maxEquipSlots}`;
   killsText.textContent = `KILLS ${stats.kills}`;
 
@@ -100,12 +102,13 @@ function syncUi(forceModals = false): void {
   }
 }
 
+pauseBtn.addEventListener('click', () => {
+  toggleSkillTree(state);
+  syncUi(true);
+});
+
 skillBtn.addEventListener('click', () => {
-  if (state.status === 'playing') {
-    openSkillTree(state);
-  } else if (state.status === 'skill_tree') {
-    closeSkillTree(state);
-  }
+  toggleSkillTree(state);
   syncUi(true);
 });
 
@@ -120,10 +123,12 @@ scrapEquipBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'k') {
-    if (state.status === 'playing') openSkillTree(state);
-    else if (state.status === 'skill_tree') closeSkillTree(state);
-    syncUi(true);
+  if (e.key === 'Escape' || e.key.toLowerCase() === 'k') {
+    if (state.status === 'playing' || state.status === 'skill_tree') {
+      if (e.key === 'Escape') e.preventDefault();
+      toggleSkillTree(state);
+      syncUi(true);
+    }
   }
 });
 

@@ -292,6 +292,7 @@
       <span id="hpText">100 / 100</span>
     </div>
     <div class="hud-group">
+      <button id="pauseBtn" type="button" class="skill-btn" title="ポーズ / ステータス確認 (ESC)">⏸</button>
       <button id="skillBtn" type="button" class="skill-btn">🌳 LV1 (SP 0)</button>
       <span id="gearCountText" style="color:#fbbf24">GEAR 0/2</span>
       <span id="killsText" style="color:#fda4af">KILLS 0</span>
@@ -300,16 +301,16 @@
   </div>
 
   <canvas id="gameCanvas"></canvas>
-  <div class="hint">移動: ドラッグ/WASD · Kキー/🌳ボタンでスキルツリー · 同種装備で自動LvUP</div>
+  <div class="hint">移動: ドラッグ/WASD · ESC・K・⏸でポーズ/スキル確認 · 同種装備で自動LvUP</div>
 
   <div id="skillModal" class="modal hidden">
     <div class="modal-panel">
       <div class="modal-head">
-        <h2>🌳 スキルツリー（前提強化）</h2>
+        <h2>⏸ ポーズ / 🌳 スキルツリー</h2>
         <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
       </div>
       <div id="skillColumns" class="tree-grid"></div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">装着中の装備</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">装着中の装備・ステータス（時間停止中）</div>
       <div id="skillGearSummary" class="gear-summary"></div>
       <button id="closeSkillBtn" type="button" class="btn">戦闘に戻る</button>
     </div>

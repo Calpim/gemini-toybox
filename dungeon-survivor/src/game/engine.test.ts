@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { TILE_SIZE, tileCenterWorld } from '../core/dungeon';
+import { TILE_SIZE, findRoomAtTile, tileCenterWorld } from '../core/dungeon';
 import { computeCameraZoom } from '../render/canvasRenderer';
 import {
   ALL_EQUIPMENT_IDS,
+  MAX_EQUIPMENT_LEVEL,
   MAX_EQUIP_SLOTS,
+  MAX_EQUIP_SLOTS_CAP,
   MAX_TARGET_RANGE,
+  ORBIT_SHIELD_INNER_SLOW,
   createEquippedItem,
+  getEquipmentCooldownMultiplier,
+  getOrbitShieldAngularSpeed,
+  getOrbitShieldRadius,
+  getPulseBladeStats,
   getReactiveCoilStats,
   getRicochetDiscStats,
 } from './equipment';
 import {
-  CALLER_ALERT_RADIUS,
   CORRIDOR_VISION_RADIUS,
+  SCOUT_ALERT_RADIUS,
+  SHOOTER_AGGRO_RANGE,
   acquireEquipment,
   createEnemyByKind,
   createGameState,
@@ -24,6 +32,7 @@ import {
   resolveEquipChoice,
   rollDropEquipmentLevel,
   stepGame,
+  toggleSkillTree,
   upgradeSkillNode,
 } from './engine';
 import {
@@ -71,11 +80,24 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.x - startX).toBeCloseTo(210 * 0.05, 1);
   });
 
-  it('[APP-MAP-01] spawns guardian mid-boss in stairs room, locks upstairs until mid-boss is defeated, then advances to floor N+1', () => {
-    const state = createGameState({ seed: 2026 });
-    expect(state.floor).toBe(1);
+  it('[APP-MAP-01 & APP-MAP-08] keeps normal floor stairs unlocked, spawns Guardian mid-boss every 3/6/9F to lock stairs, and drops higher-level gear on defeat', () => {
+    // 1F (normal floor) has unlocked stairs without mid-boss
+    const normalState = createGameState({ seed: 2026, startFloor: 1 });
+    expect(normalState.floor).toBe(1);
+    expect(normalState.enemies.some((e) => e.isRoomBoss)).toBe(false);
+    expect(getStairsLockCount(normalState)).toBe(0);
+    const f1Stairs = tileCenterWorld(normalState.map.stairsTile.tx, normalState.map.stairsTile.ty);
+    normalState.player.x = f1Stairs.x;
+    normalState.player.y = f1Stairs.y;
+    stepGame(normalState, { x: 0, y: 0 }, 1 / 60);
+    expect(normalState.floor).toBe(2);
+    expect(normalState.stats.floorsCleared).toBe(1);
+
+    // 3F (guardian floor) spawns Guardian mid-boss scaled with player level and locks stairs
+    const state = createGameState({ seed: 2026, startFloor: 3 });
+    expect(state.floor).toBe(3);
     const guards = state.enemies.filter((e) => e.isStairsGuard);
-    const roomBoss = state.enemies.find((e) => e.isRoomBoss);
+    const roomBoss = state.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss);
     expect(guards.length).toBeGreaterThanOrEqual(5);
     expect(roomBoss).toBeDefined();
     expect(getStairsLockCount(state)).toBe(1);
@@ -84,23 +106,27 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     state.player.x = stairs.x;
     state.player.y = stairs.y;
 
-    // Locked while stairs mid-boss is still alive
+    // Locked while Guardian mid-boss is still alive
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    expect(state.floor).toBe(1);
+    expect(state.floor).toBe(3);
     expect(state.notifications.some((n) => n.text.includes('封印'))).toBe(true);
 
-    // Defeat only the mid-boss (regular guards/reinforcements can remain alive) -> unlock notification emitted and stepping onto stairs advances to floor 2
+    // Defeating Guardian unlocks stairs AND guarantees a higher-level equip pickup drop
+    state.player.equipment = [createEquippedItem('pulse_blade', 3)];
     roomBoss!.hp = 0;
     state.player.x = state.map.rooms[0].cx * TILE_SIZE;
     state.player.y = state.map.rooms[0].cy * TILE_SIZE;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(getStairsLockCount(state)).toBe(0);
     expect(state.notifications.some((n) => n.text.includes('封印が解けた'))).toBe(true);
+    const bossDrop = state.pickups.find((p) => p.kind === 'equip');
+    expect(bossDrop).toBeDefined();
+    expect(bossDrop!.itemLevel).toBeGreaterThanOrEqual(4);
 
     state.player.x = stairs.x;
     state.player.y = stairs.y;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    expect(state.floor).toBe(2);
+    expect(state.floor).toBe(4);
     expect(state.stats.floorsCleared).toBe(1);
   });
 
@@ -257,20 +283,28 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.visualFx.some((fx) => fx.kind === 'lightning')).toBe(true);
   });
 
-  it('[APP-CMB-05] evolves equipment capabilities by level (bits, 360 slash, drones, chain, ricochet bounce)', () => {
-    // 1. Orbit bit count & seeker drone count evolve by level
+  it('[APP-CMB-05] evolves equipment in two phases (Lv1-6 count/arc max, Lv7-10 power/CD/range), keeps pulse_blade directional, and slows enemies inside orbit_shield', () => {
+    // 1. Orbit bit count & seeker drone count cap at Lv6; Lv7-10 boost radius/power/CD
     const state = createGameState({ seed: 450 });
     state.chests = [];
     state.pickups = [];
     state.enemies = [];
     state.player.equipment = [
-      createEquippedItem('orbit_shield', 3),
-      createEquippedItem('seeker_drone', 2),
+      createEquippedItem('orbit_shield', 6),
+      createEquippedItem('seeker_drone', 6),
     ];
-    expect(getOrbitBitPositions(state).length).toBe(3);
-    expect(getSeekerDronePositions(state).length).toBe(2);
+    expect(getOrbitBitPositions(state).length).toBe(6);
+    expect(getSeekerDronePositions(state).length).toBe(4);
+    state.player.equipment[0].level = 10;
+    state.player.equipment[1].level = 10;
+    expect(getOrbitBitPositions(state).length).toBe(6);
+    expect(getSeekerDronePositions(state).length).toBe(4);
+    expect(getOrbitShieldRadius(10, 1)).toBeGreaterThan(getOrbitShieldRadius(6, 1));
+    expect(getOrbitShieldAngularSpeed(1)).toBeGreaterThan(getOrbitShieldAngularSpeed(6));
+    expect(getEquipmentCooldownMultiplier(10)).toBeLessThan(getEquipmentCooldownMultiplier(6));
 
-    // 2. Pulse blade Lv1 is directional cone, Lv3 evolves into 360 fullCircle slash
+    // 2. Pulse blade stays directional fan (never 360°) even at Lv3 and Lv10
+    expect(getPulseBladeStats(10, 84, 1).fullCircle).toBe(false);
     const bladeState = createGameState({ seed: 451 });
     bladeState.chests = [];
     bladeState.pickups = [];
@@ -283,8 +317,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
         y: bladeState.player.y,
         radius: 13,
         speed: 0,
-        hp: 100,
-        maxHp: 100,
+        hp: 300,
+        maxHp: 300,
         damage: 10,
         aggroRange: 0,
         awake: false,
@@ -297,8 +331,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
         y: bladeState.player.y,
         radius: 13,
         speed: 0,
-        hp: 100,
-        maxHp: 100,
+        hp: 300,
+        maxHp: 300,
         damage: 10,
         aggroRange: 0,
         awake: false,
@@ -307,22 +341,40 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
     stepGame(bladeState, { x: 0, y: 0 }, 1 / 60);
-    expect(bladeState.enemies[0].hp).toBeLessThan(100);
-    expect(bladeState.enemies[1].hp).toBe(100); // behind player not hit at Lv1
+    expect(bladeState.enemies[0].hp).toBeLessThan(300);
+    expect(bladeState.enemies[1].hp).toBe(300);
 
-    bladeState.player.equipment[0].level = 3;
+    bladeState.player.equipment[0].level = 10;
     bladeState.player.equipment[0].cooldown = 0;
     stepGame(bladeState, { x: 0, y: 0 }, 1 / 60);
-    expect(bladeState.enemies[1].hp).toBeLessThan(100); // 360° hits behind at Lv3
-    expect(bladeState.visualFx.some((fx) => fx.kind === 'slash' && fx.fullCircle)).toBe(true);
+    expect(bladeState.enemies[1].hp).toBe(300); // Still directional fan, never 360° behind
+    expect(bladeState.visualFx.some((fx) => fx.kind === 'slash' && !fx.fullCircle)).toBe(true);
 
-    // 3. Reactive coil maxTargets & ricochet disc count/bounces evolve by level
-    expect(getReactiveCoilStats(1, 74, 1).maxTargets).toBe(3);
-    expect(getReactiveCoilStats(3, 74, 1).maxTargets).toBe(5);
+    // 3. Orbit shield slows enemies inside its ring
+    const slowState = createGameState({ seed: 453 });
+    slowState.chests = [];
+    slowState.pickups = [];
+    slowState.player.baseAttackCooldown = 999;
+    slowState.player.equipment = [createEquippedItem('orbit_shield', 1)];
+    const insideEnemy = createEnemyByKind(850, 'normal', slowState.player.x + 40, slowState.player.y, 1);
+    insideEnemy.awake = true;
+    const baseSpd = insideEnemy.speed;
+    slowState.enemies = [insideEnemy];
+    const startEx = insideEnemy.x;
+    stepGame(slowState, { x: 0, y: 0 }, 0.05);
+    const movedDist = startEx - insideEnemy.x;
+    expect(movedDist).toBeCloseTo(baseSpd * ORBIT_SHIELD_INNER_SLOW * 0.05, 1);
+
+    // 4. Reactive coil & ricochet disc cap count/bounces at Lv6
+    expect(getReactiveCoilStats(1, 78, 1).maxTargets).toBe(3);
+    expect(getReactiveCoilStats(6, 78, 1).maxTargets).toBe(8);
+    expect(getReactiveCoilStats(10, 78, 1).maxTargets).toBe(8);
     expect(getRicochetDiscStats(1)).toMatchObject({ count: 1, maxBounces: 2 });
     expect(getRicochetDiscStats(3)).toMatchObject({ count: 2, maxBounces: 4 });
+    expect(getRicochetDiscStats(6)).toMatchObject({ count: 3, maxBounces: 7 });
+    expect(getRicochetDiscStats(10)).toMatchObject({ count: 3, maxBounces: 7 });
 
-    // 4. Ricochet disc actually bounces to a second enemy off-axis
+    // 5. Ricochet disc actually bounces to a second enemy off-axis
     const discState = createGameState({ seed: 452 });
     discState.chests = [];
     discState.pickups = [];
@@ -660,11 +712,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     // 1F has only normal/runner/tank; 2F+ introduces shooter and caller with rising rates
     const f1Kinds = new Set([0, 0.2, 0.5, 0.7, 0.9].map((r) => pickEnemyKindForFloor(1, r)));
     expect(f1Kinds.has('shooter')).toBe(false);
-    expect(f1Kinds.has('caller')).toBe(false);
+    expect(f1Kinds.has('scout')).toBe(false);
 
-    const f4Kinds = [0.02, 0.22, 0.42, 0.65, 0.95].map((r) => pickEnemyKindForFloor(4, r));
+    const f4Kinds = [0.02, 0.16, 0.22, 0.5, 0.95].map((r) => pickEnemyKindForFloor(4, r));
     expect(f4Kinds).toContain('shooter');
-    expect(f4Kinds).toContain('caller');
+    expect(f4Kinds).toContain('scout');
 
     const state = createGameState({ seed: 910, startFloor: 2 });
     state.enemies = [];
@@ -674,6 +726,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.enemies.length).toBeGreaterThanOrEqual(1);
     for (const spawned of state.enemies) {
       expect(Math.hypot(spawned.x - state.player.x, spawned.y - state.player.y)).toBeGreaterThanOrEqual(260);
+      // Corridor respawn suppressed: must spawn inside a room tile
+      const r = findRoomAtTile(
+        state.map,
+        Math.floor(spawned.x / TILE_SIZE),
+        Math.floor(spawned.y / TILE_SIZE)
+      );
+      expect(r).not.toBeNull();
     }
     expect(state.notifications.some((n) => n.kind === 'info')).toBe(true);
   });
@@ -704,7 +763,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ).toBe(false);
   });
 
-  it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter (with wind-up delay)/caller archetypes with alert notifications', () => {
+  it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter (8-way barrage + knockback immunity)/scout archetypes', () => {
     // Verify no duplicate exact spawn positions across multiple seeds
     for (const seed of [101, 202, 303]) {
       const s = createGameState({ seed, startFloor: 3 });
@@ -721,36 +780,45 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(runner.hp).toBeLessThan(normal.hp);
     expect(runner.speed).toBeGreaterThan(normal.speed);
 
-    // Shooter stays stationary (speed 0), never pre-arms while unawakened, delays first shot after spotting player, and fires after wind-up
+    // Shooter stays stationary (speed 0), immune to player knockback, never pre-arms while dormant, and fires 8-way barrage
     const shootState = createGameState({ seed: 930, startFloor: 2 });
     shootState.chests = [];
     shootState.pickups = [];
     shootState.player.baseAttackCooldown = 999;
     shootState.map.tiles.fill('floor');
 
-    // Place an unawakened shooter beyond aggroRange and outside rooms[0] for 2 seconds: cooldown must stay armed
     const dormantTurret = createEnemyByKind(9000, 'shooter', shootState.player.x + 320, shootState.player.y, 2);
+    expect(dormantTurret.aggroRange).toBeGreaterThanOrEqual(SHOOTER_AGGRO_RANGE);
     shootState.enemies = [dormantTurret];
     for (let f = 0; f < 120; f++) {
       stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
     }
     expect(dormantTurret.awake).toBe(false);
-    expect(dormantTurret.attackCooldown).toBeCloseTo(1.1, 2);
+    expect(dormantTurret.attackCooldown).toBeCloseTo(1.0, 2);
 
-    // Move turret into sight: it awakens but does NOT fire on contact frame (wind-up delay >= 0.95s)
-    dormantTurret.x = shootState.player.x + 120;
+    // Move turret into expanded aggroRange (220px <= 250px): awakens without firing frame 1
+    dormantTurret.x = shootState.player.x + 220;
     stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
     expect(dormantTurret.awake).toBe(true);
     expect(shootState.enemyProjectiles.length).toBe(0);
     expect(dormantTurret.attackCooldown).toBeGreaterThanOrEqual(0.95);
 
-    // Once wind-up finishes (~1.2s), it fires a projectile while staying stationary
+    // Once wind-up finishes (~1.2s), it fires 8 radial projectiles while staying stationary
     const turretStartX = dormantTurret.x;
     for (let f = 0; f < 75; f++) {
       stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
     }
     expect(dormantTurret.x).toBe(turretStartX);
-    expect(shootState.enemyProjectiles.length).toBeGreaterThanOrEqual(1);
+    expect(shootState.enemyProjectiles.length).toBeGreaterThanOrEqual(8);
+
+    // Shooter is immune to Repulsor Pulse knockback (takes damage, stays put)
+    shootState.player.skillLevels = { def_pulse: 1 };
+    shootState.player.repulsorCooldown = 0;
+    dormantTurret.x = shootState.player.x + 60;
+    const hpBeforePulse = dormantTurret.hp;
+    stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
+    expect(dormantTurret.hp).toBeLessThan(hpBeforePulse);
+    expect(dormantTurret.x).toBe(shootState.player.x + 60);
 
     // Entering a room wakes ALL enemies inside that room (while shooters still wait for wind-up)
     const roomWakeState = createGameState({ seed: 932, startFloor: 2 });
@@ -767,11 +835,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(farTurret.awake).toBe(true);
     expect(roomWakeState.enemyProjectiles.length).toBe(0);
 
-    // Floor spawns a free-roaming patrol tracer in corridors while keeping random room caller rate low (<= 10%)
+    // Floor spawns a free-roaming patrol scout in corridors
     const patrolFloor = createGameState({ seed: 933, startFloor: 2 });
-    const corridorCallers = patrolFloor.enemies.filter(
+    const corridorScouts = patrolFloor.enemies.filter(
       (e) =>
-        e.kind === 'caller' &&
+        e.kind === 'scout' &&
         !patrolFloor.map.rooms.some(
           (r) =>
             Math.floor(e.x / 40) >= r.x &&
@@ -780,48 +848,150 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
             Math.floor(e.y / 40) < r.y + r.h
         )
     );
-    expect(corridorCallers.length).toBeGreaterThanOrEqual(1);
+    expect(corridorScouts.length).toBeGreaterThanOrEqual(1);
 
-    // Caller wanders while unawakened, and on spotting player wakes nearby allies, spawns awake runners, and alerts
-    const callState = createGameState({ seed: 931, startFloor: 2 });
-    callState.chests = [];
-    callState.pickups = [];
-    callState.player.baseAttackCooldown = 999;
-    callState.map.tiles.fill('floor');
+    // Scout wanders while unawakened, and on spotting player wakes allies, spawns fast ambush runners (> player baseSpeed) with spawnDelay
+    const scoutState = createGameState({ seed: 931, startFloor: 2 });
+    scoutState.chests = [];
+    scoutState.pickups = [];
+    scoutState.player.baseAttackCooldown = 999;
+    scoutState.map.tiles.fill('floor');
 
-    const wanderCaller = createEnemyByKind(9010, 'caller', callState.player.x + 400, callState.player.y, 2);
-    const wanderStart = { x: wanderCaller.x, y: wanderCaller.y };
-    callState.enemies = [wanderCaller];
+    const wanderScout = createEnemyByKind(9010, 'scout', scoutState.player.x + 400, scoutState.player.y, 2);
+    const wanderStart = { x: wanderScout.x, y: wanderScout.y };
+    scoutState.enemies = [wanderScout];
     for (let f = 0; f < 30; f++) {
-      stepGame(callState, { x: 0, y: 0 }, 1 / 60);
+      stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
     }
-    expect(Math.hypot(wanderCaller.x - wanderStart.x, wanderCaller.y - wanderStart.y)).toBeGreaterThan(5);
+    expect(Math.hypot(wanderScout.x - wanderStart.x, wanderScout.y - wanderStart.y)).toBeGreaterThan(5);
 
-    // Spot player -> alert nearby ally, spawn 2+ fast awake runners, and emit alert notification
-    const spotCaller = createEnemyByKind(9011, 'caller', callState.player.x + 100, callState.player.y, 2);
+    const spotScout = createEnemyByKind(9011, 'scout', scoutState.player.x + 100, scoutState.player.y, 2);
     const nearbyAlly = createEnemyByKind(
       9012,
       'normal',
-      spotCaller.x + CALLER_ALERT_RADIUS - 30,
-      spotCaller.y,
+      spotScout.x + SCOUT_ALERT_RADIUS - 30,
+      spotScout.y,
       2
     );
-    callState.enemies = [spotCaller, nearbyAlly];
-    stepGame(callState, { x: 0, y: 0 }, 1 / 60);
-    expect(spotCaller.awake).toBe(true);
+    scoutState.enemies = [spotScout, nearbyAlly];
+    stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    expect(spotScout.awake).toBe(true);
     expect(nearbyAlly.awake).toBe(true);
-    const ambushRunners = callState.enemies.filter((e) => e.kind === 'runner' && e.awake);
+    const ambushRunners = scoutState.enemies.filter((e) => e.kind === 'runner' && e.awake);
     expect(ambushRunners.length).toBeGreaterThanOrEqual(2);
     expect(ambushRunners.every((e) => e.isAmbush === true)).toBe(true);
-    expect(callState.notifications.some((n) => n.kind === 'alert')).toBe(true);
+    expect(ambushRunners.every((e) => e.speed > scoutState.player.baseSpeed)).toBe(true);
+    expect(ambushRunners.every((e) => (e.spawnDelay ?? 0) > 0.3)).toBe(true);
+    expect(scoutState.notifications.some((n) => n.kind === 'alert' && n.text.includes('スカウト'))).toBe(true);
 
-    // Defeating a tracer-spawned ambush runner yields zero EXP/heal/equip drops
-    callState.pickups = [];
+    // Defeating a scout-spawned ambush runner yields zero EXP/heal/equip drops
+    scoutState.pickups = [];
     ambushRunners[0].hp = 0;
-    callState.enemies = [ambushRunners[0]];
-    stepGame(callState, { x: 0, y: 0 }, 1 / 60);
-    expect(callState.stats.kills).toBeGreaterThanOrEqual(1);
-    expect(callState.pickups.length).toBe(0);
+    scoutState.enemies = [ambushRunners[0]];
+    stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    expect(scoutState.stats.kills).toBeGreaterThanOrEqual(1);
+    expect(scoutState.pickups.length).toBe(0);
+  });
+
+  it('[APP-GRW-08] enforces MAX_EQUIPMENT_LEVEL=10 cap, disables scrap_upgrade at Lv10, and converts excess drops into overflow bonus', () => {
+    expect(MAX_EQUIPMENT_LEVEL).toBe(10);
+    const state = createGameState({ seed: 940 });
+    state.player.maxEquipSlots = MAX_EQUIP_SLOTS_CAP;
+    state.player.equipment = ALL_EQUIPMENT_IDS.map((id) => createEquippedItem(id, 10));
+
+    // Duplicate item already at Lv10 stays at Lv10 and grants HP/EXP overflow bonus
+    state.player.hp = 50;
+    const expBefore = state.stats.totalExp;
+    acquireEquipment(state, createEquippedItem('pulse_blade', 10));
+    expect(state.player.equipment[0].level).toBe(10);
+    expect(state.player.hp).toBe(70);
+    expect(state.stats.totalExp).toBe(expBefore + 25);
+
+    // scrap_upgrade rejects Lv10 slot
+    state.player.equipment[0].level = 9;
+    acquireEquipment(state, createEquippedItem('pulse_blade', 1));
+    expect(state.player.equipment[0].level).toBe(10);
+
+    state.player.maxEquipSlots = 2;
+    state.player.equipment = [
+      createEquippedItem('pulse_blade', 10),
+      createEquippedItem('orbit_shield', 5),
+    ];
+    acquireEquipment(state, createEquippedItem('seeker_drone', 1));
+    expect(state.status).toBe('equip_choice');
+    expect(resolveEquipChoice(state, { type: 'scrap_upgrade', slotIndex: 0 })).toBe(false);
+    expect(state.status).toBe('equip_choice');
+    expect(resolveEquipChoice(state, { type: 'scrap_upgrade', slotIndex: 1 })).toBe(true);
+    expect(state.player.equipment[1].level).toBe(6);
+  });
+
+  it('[APP-MAP-09 & APP-UI-01] heals 100% once at 10F Fountain, fights Grand Boss with 3 barrage patterns, continues endlessly to 11F, and pauses cleanly via toggleSkillTree', () => {
+    const state = createGameState({ seed: 950, startFloor: 10 });
+    expect(state.map.floorType).toBe('boss');
+    expect(state.map.fountainTile).not.toBeNull();
+
+    // Pause toggle only switches playing <-> skill_tree and stepGame freezes while paused
+    toggleSkillTree(state);
+    expect(state.status).toBe('skill_tree');
+    const frozenTime = state.elapsedFloorTime;
+    stepGame(state, { x: 1, y: 0 }, 0.05);
+    expect(state.elapsedFloorTime).toBe(frozenTime);
+    toggleSkillTree(state);
+    expect(state.status).toBe('playing');
+
+    // Fountain heals 100% HP once
+    state.player.hp = 25;
+    const fountainWorld = tileCenterWorld(state.map.fountainTile!.tx, state.map.fountainTile!.ty);
+    state.player.x = fountainWorld.x;
+    state.player.y = fountainWorld.y;
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.player.hp).toBe(state.player.maxHp);
+    expect(state.fountainUsed).toBe(true);
+
+    // Stepping on fountain again does NOT heal again
+    state.player.hp = 40;
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.player.hp).toBe(40);
+
+    // Grand Boss exists, locks stairs, and cycles through Ring / Homing / Wall-Bounce patterns
+    const grandBoss = state.enemies.find((e) => e.isGrandBoss);
+    expect(grandBoss).toBeDefined();
+    expect(getStairsLockCount(state)).toBe(1);
+
+    state.enemies = [grandBoss!];
+    state.player.baseAttackCooldown = 999;
+    state.player.x = grandBoss!.x - 160;
+    state.player.y = grandBoss!.y;
+    grandBoss!.awake = true;
+    grandBoss!.attackCooldown = 0.01;
+    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 0: 12-way ring
+    expect(state.enemyProjectiles.length).toBeGreaterThanOrEqual(12);
+
+    state.enemyProjectiles = [];
+    grandBoss!.attackCooldown = 0.01;
+    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 1: homing orbs
+    expect(state.enemyProjectiles.some((p) => (p.homingRate ?? 0) > 0)).toBe(true);
+
+    state.enemyProjectiles = [];
+    grandBoss!.attackCooldown = 0.01;
+    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 2: wall-bouncing shots
+    expect(state.enemyProjectiles.some((p) => (p.bouncesLeft ?? 0) >= 2)).toBe(true);
+
+    // Defeating Grand Boss unlocks stairs, drops high-level gear, and advances endlessly to 11F
+    state.player.equipment = [createEquippedItem('orbit_shield', 4)];
+    grandBoss!.hp = 0;
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(getStairsLockCount(state)).toBe(0);
+    const grandDrop = state.pickups.find((p) => p.kind === 'equip');
+    expect(grandDrop).toBeDefined();
+    expect(grandDrop!.itemLevel).toBeGreaterThanOrEqual(6);
+
+    const stairsWorld = tileCenterWorld(state.map.stairsTile.tx, state.map.stairsTile.ty);
+    state.player.x = stairsWorld.x;
+    state.player.y = stairsWorld.y;
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.floor).toBe(11);
+    expect(state.map.floorType).toBe('normal');
   });
 });
 

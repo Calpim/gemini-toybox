@@ -138,4 +138,58 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
     map.tiles[ty * map.width + tx] = 'wall';
     expect(hasLineOfSight(left.x, left.y, right.x, right.y, map)).toBe(false);
   });
+
+  it('[APP-MAP-08 & APP-MAP-09] guarantees spacious stairs room on Guardian floors (3/6/9F) and generates Boss Arena + Fountain anteroom on 10F/20F', () => {
+    for (const gf of [3, 6, 9, 13]) {
+      const gMap = generateDungeon({ floor: gf, seed: 4242 });
+      expect(gMap.floorType).toBe('guardian');
+      const stairsRoom = gMap.rooms.find(
+        (r) =>
+          gMap.stairsTile.tx >= r.x &&
+          gMap.stairsTile.tx < r.x + r.w &&
+          gMap.stairsTile.ty >= r.y &&
+          gMap.stairsTile.ty < r.y + r.h
+      );
+      expect(stairsRoom).toBeDefined();
+      expect(stairsRoom!.w).toBeGreaterThanOrEqual(11);
+      expect(stairsRoom!.h).toBeGreaterThanOrEqual(9);
+    }
+
+    for (const bf of [10, 20]) {
+      const bMap = generateDungeon({ floor: bf, seed: 999 });
+      expect(bMap.floorType).toBe('boss');
+      expect(bMap.rooms).toHaveLength(2);
+      const [anteroom, arena] = bMap.rooms;
+      expect(anteroom.w).toBeGreaterThanOrEqual(8);
+      expect(arena.w).toBeGreaterThanOrEqual(20);
+      expect(arena.h).toBeGreaterThanOrEqual(20);
+      expect(bMap.fountainTile).not.toBeNull();
+      expect(getTile(bMap, bMap.fountainTile!.tx, bMap.fountainTile!.ty)).toBe('fountain');
+      expect(getTile(bMap, bMap.stairsTile.tx, bMap.stairsTile.ty)).toBe('stairs');
+
+      // Verify BFS reachability from start -> fountain -> stairs
+      const visited = new Set<string>();
+      const queue = [bMap.startTile];
+      visited.add(`${bMap.startTile.tx},${bMap.startTile.ty}`);
+      while (queue.length > 0) {
+        const cur = queue.shift()!;
+        for (const [dx, dy] of [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ]) {
+          const nx = cur.tx + dx;
+          const ny = cur.ty + dy;
+          const key = `${nx},${ny}`;
+          if (!visited.has(key) && !isWallTile(bMap, nx, ny)) {
+            visited.add(key);
+            queue.push({ tx: nx, ty: ny });
+          }
+        }
+      }
+      expect(visited.has(`${bMap.fountainTile!.tx},${bMap.fountainTile!.ty}`)).toBe(true);
+      expect(visited.has(`${bMap.stairsTile.tx},${bMap.stairsTile.ty}`)).toBe(true);
+    }
+  });
 });

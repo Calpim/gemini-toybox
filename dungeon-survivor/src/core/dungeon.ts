@@ -2,7 +2,25 @@ import { createRng, type Rng } from './rng';
 
 export const TILE_SIZE = 40;
 
-export type TileType = 'wall' | 'floor' | 'stairs';
+export type TileType = 'wall' | 'floor' | 'stairs' | 'fountain';
+
+export type FloorType = 'normal' | 'guardian' | 'boss';
+
+export function isBossFloor(floor: number): boolean {
+  return floor > 0 && floor % 10 === 0;
+}
+
+export function isGuardianFloor(floor: number): boolean {
+  if (floor <= 0 || isBossFloor(floor)) return false;
+  const mod = floor % 10;
+  return mod === 3 || mod === 6 || mod === 9;
+}
+
+export function getFloorType(floor: number): FloorType {
+  if (isBossFloor(floor)) return 'boss';
+  if (isGuardianFloor(floor)) return 'guardian';
+  return 'normal';
+}
 
 export interface Room {
   id: number;
@@ -21,6 +39,8 @@ export interface DungeonMap {
   rooms: Room[];
   startTile: { tx: number; ty: number };
   stairsTile: { tx: number; ty: number };
+  fountainTile?: { tx: number; ty: number };
+  floorType: FloorType;
   floor: number;
   seed: number;
 }
@@ -333,15 +353,92 @@ export function computeBfsDistances(width: number, height: number, tiles: TileTy
   return dist;
 }
 
+function buildRoomMasks(
+  width: number,
+  height: number,
+  rooms: readonly Room[]
+): { roomMask: Int16Array; nearRoomMask: Int16Array } {
+  const roomMask = new Int16Array(width * height).fill(-1);
+  const nearRoomMask = new Int16Array(width * height).fill(-1);
+  for (const room of rooms) {
+    for (let y = Math.max(1, room.y - 1); y <= Math.min(height - 2, room.y + room.h); y++) {
+      for (let x = Math.max(1, room.x - 1); x <= Math.min(width - 2, room.x + room.w); x++) {
+        const idx = y * width + x;
+        nearRoomMask[idx] = room.id;
+        if (x >= room.x && x < room.x + room.w && y >= room.y && y < room.y + room.h) {
+          roomMask[idx] = room.id;
+        }
+      }
+    }
+  }
+  return { roomMask, nearRoomMask };
+}
+
+function generateBossFloor(floor: number, seed: number, corridorWidth: 1 | 2 | 3): DungeonMap {
+  const width = 48;
+  const height = 34;
+  const tiles: TileType[] = new Array(width * height).fill('wall');
+
+  // Room 0: Safe healing fountain anteroom (10x10)
+  const anteroom: Room = { id: 0, x: 3, y: 12, w: 10, h: 10, cx: 8, cy: 17 };
+  // Room 1: Grand boss arena (22x22)
+  const arena: Room = { id: 1, x: 21, y: 6, w: 22, h: 22, cx: 32, cy: 17 };
+  const rooms: Room[] = [anteroom, arena];
+
+  carveRect(tiles, width, height, anteroom.x, anteroom.y, anteroom.w, anteroom.h);
+  carveRect(tiles, width, height, arena.x, arena.y, arena.w, arena.h);
+
+  const { roomMask, nearRoomMask } = buildRoomMasks(width, height, rooms);
+  const corridorMask = new Uint8Array(width * height);
+  routeNonOverlappingCorridor(
+    tiles,
+    width,
+    height,
+    roomMask,
+    nearRoomMask,
+    corridorMask,
+    anteroom,
+    arena,
+    corridorWidth
+  );
+
+  const startTile = { tx: 6, ty: anteroom.cy };
+  const fountainTile = { tx: 10, ty: anteroom.cy };
+  const stairsTile = { tx: arena.x + arena.w - 3, ty: arena.cy };
+
+  tiles[fountainTile.ty * width + fountainTile.tx] = 'fountain';
+  tiles[stairsTile.ty * width + stairsTile.tx] = 'stairs';
+
+  return {
+    width,
+    height,
+    tiles,
+    rooms,
+    startTile,
+    stairsTile,
+    fountainTile,
+    floorType: 'boss',
+    floor,
+    seed,
+  };
+}
+
 /**
  * Generates a connected dungeon floor with wide rectangular rooms (8-13 x 7-11),
  * clean 2-tile non-overlapping corridors routed via Prim MST + Dijkstra,
  * a safe start room, and an upstairs tile in the farthest reachable room (APP-MAP-01).
+ * Guardian floors (3/6/9 mod 10) guarantee a spacious (>= 11x9) stairs room.
+ * Boss floors (10F, 20F...) generate a safe healing fountain anteroom + grand boss arena.
  */
 export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   const { floor, seed } = options;
   const rng: Rng = createRng(seed ^ (floor * 0x9e3779b1));
   const corridorWidth: 1 | 2 | 3 = options.corridorWidth ?? 2;
+  const floorType = getFloorType(floor);
+
+  if (floorType === 'boss') {
+    return generateBossFloor(floor, seed, corridorWidth);
+  }
 
   const width = Math.min(76, 48 + floor * 3);
   const height = Math.min(58, 38 + floor * 2);
@@ -350,9 +447,14 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   const tiles: TileType[] = new Array(width * height).fill('wall');
   const rooms: Room[] = [];
 
-  for (let attempt = 0; attempt < 240 && rooms.length < targetRooms; attempt++) {
-    const rw = rng.int(8, 13);
-    const rh = rng.int(7, 11);
+  for (let attempt = 0; attempt < 260 && rooms.length < targetRooms; attempt++) {
+    const needSpaciousGuardianRoom =
+      floorType === 'guardian' &&
+      rooms.length >= 1 &&
+      !rooms.slice(1).some((r) => r.w >= 11 && r.h >= 9);
+
+    const rw = needSpaciousGuardianRoom ? rng.int(11, 13) : rng.int(8, 13);
+    const rh = needSpaciousGuardianRoom ? rng.int(9, 11) : rng.int(7, 11);
     const rx = rng.int(2, width - rw - 3);
     const ry = rng.int(2, height - rh - 3);
     const candidate = { x: rx, y: ry, w: rw, h: rh };
@@ -372,16 +474,21 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   }
 
   // Fallback guarantee: at least 2 wide rooms even on pathological seeds
-  if (rooms.length < 2) {
+  if (rooms.length < 2 || (floorType === 'guardian' && !rooms.slice(1).some((r) => r.w >= 11 && r.h >= 9))) {
+    tiles.fill('wall');
     const fallbackA: Room = { id: 0, x: 3, y: 3, w: 9, h: 8, cx: 7, cy: 7 };
+    const bw = floorType === 'guardian' ? 12 : 9;
+    const bh = floorType === 'guardian' ? 10 : 8;
+    const bx = width - bw - 3;
+    const by = height - bh - 3;
     const fallbackB: Room = {
       id: 1,
-      x: width - 13,
-      y: height - 12,
-      w: 9,
-      h: 8,
-      cx: width - 9,
-      cy: height - 8,
+      x: bx,
+      y: by,
+      w: bw,
+      h: bh,
+      cx: bx + Math.floor(bw / 2),
+      cy: by + Math.floor(bh / 2),
     };
     rooms.length = 0;
     rooms.push(fallbackA, fallbackB);
@@ -389,19 +496,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
     carveRect(tiles, width, height, fallbackB.x, fallbackB.y, fallbackB.w, fallbackB.h);
   }
 
-  const roomMask = new Int16Array(width * height).fill(-1);
-  const nearRoomMask = new Int16Array(width * height).fill(-1);
-  for (const room of rooms) {
-    for (let y = Math.max(1, room.y - 1); y <= Math.min(height - 2, room.y + room.h); y++) {
-      for (let x = Math.max(1, room.x - 1); x <= Math.min(width - 2, room.x + room.w); x++) {
-        const idx = y * width + x;
-        nearRoomMask[idx] = room.id;
-        if (x >= room.x && x < room.x + room.w && y >= room.y && y < room.y + room.h) {
-          roomMask[idx] = room.id;
-        }
-      }
-    }
-  }
+  const { roomMask, nearRoomMask } = buildRoomMasks(width, height, rooms);
 
   // True Prim's MST so rooms connect cleanly without long criss-crossing edges,
   // routed via weighted Dijkstra to prevent overlapping/adjacent corridor blobs.
@@ -446,10 +541,15 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   const startTile = { tx: startRoom.cx, ty: startRoom.cy };
   const bfsDist = computeBfsDistances(width, height, tiles, startTile.tx, startTile.ty);
 
-  let stairsRoom = rooms[rooms.length - 1];
+  const eligibleStairsRooms =
+    floorType === 'guardian'
+      ? rooms.slice(1).filter((r) => r.w >= 11 && r.h >= 9)
+      : rooms.slice(1);
+  const candidates = eligibleStairsRooms.length > 0 ? eligibleStairsRooms : rooms.slice(1);
+
+  let stairsRoom = candidates[candidates.length - 1];
   let maxDist = -1;
-  for (let i = 1; i < rooms.length; i++) {
-    const r = rooms[i];
+  for (const r of candidates) {
     const d = bfsDist[r.cy * width + r.cx];
     if (d > maxDist) {
       maxDist = d;
@@ -467,6 +567,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
     rooms,
     startTile,
     stairsTile,
+    floorType,
     floor,
     seed,
   };

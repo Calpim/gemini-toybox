@@ -37,7 +37,7 @@ export interface PlayerState {
   tacticalStepCooldown: number;
 }
 
-export type EnemyKind = 'normal' | 'tank' | 'runner' | 'shooter' | 'caller';
+export type EnemyKind = 'normal' | 'tank' | 'runner' | 'shooter' | 'scout';
 
 export interface EnemyState {
   id: number;
@@ -55,12 +55,15 @@ export interface EnemyState {
   bitHitCooldown: number;
   attackCooldown?: number;
   alertCooldown?: number;
+  spawnDelay?: number;
   wanderTarget?: Vec2 | null;
   wanderTimer?: number;
   wanderDir?: Vec2 | null;
   isAmbush?: boolean;
   isStairsGuard?: boolean;
   isRoomBoss?: boolean;
+  isGrandBoss?: boolean;
+  bossPatternIndex?: number;
 }
 
 export interface ProjectileState {
@@ -90,6 +93,9 @@ export interface EnemyProjectileState {
   radius: number;
   damage: number;
   life: number;
+  bouncesLeft?: number;
+  homingRate?: number;
+  color?: string;
 }
 
 export interface ChestState {
@@ -173,6 +179,7 @@ export interface GameState {
   elapsedFloorTime: number;
   respawnTimer: number;
   stairsNoticeCooldown?: number;
+  fountainUsed?: boolean;
   nextEntityId: number;
   floorBannerTimer: number;
   stats: GameStats;

@@ -4,6 +4,8 @@ import {
   computeBfsDistances,
   findRoomAtTile,
   generateDungeon,
+  isBossFloor,
+  isGuardianFloor,
   isTileInRoom,
   isWallAtWorld,
   isWallTile,
@@ -15,18 +17,24 @@ import { createRng } from '../core/rng';
 import {
   ALL_EQUIPMENT_IDS,
   EQUIPMENT_CATALOG,
+  MAX_EQUIPMENT_LEVEL,
   MAX_EQUIP_SLOTS,
   MAX_EQUIP_SLOTS_CAP,
   MAX_TARGET_RANGE,
+  ORBIT_SHIELD_INNER_SLOW,
   SCRAP_EXPAND_COST,
+  clampEquipmentLevel,
   createEquippedItem,
   getEquipmentCooldownMultiplier,
   getEquipmentDamage,
   getOrbitBitCount,
+  getOrbitShieldAngularSpeed,
+  getOrbitShieldRadius,
   getPulseBladeStats,
   getReactiveCoilStats,
   getRicochetDiscStats,
   getSeekerDroneCount,
+  getSeekerDroneRange,
   type EquipmentId,
   type EquippedItem,
 } from './equipment';
@@ -50,7 +58,8 @@ import type {
 } from './types';
 
 export const CORRIDOR_VISION_RADIUS = 210;
-export const CALLER_ALERT_RADIUS = 300;
+export const SCOUT_ALERT_RADIUS = 300;
+export const SHOOTER_AGGRO_RANGE = 250;
 export const INITIAL_RESPAWN_DELAY = 24;
 
 export interface CreateGameOptions {
@@ -217,13 +226,13 @@ export function createEnemyByKind(
         hp: Math.round(baseHp * 1.15),
         maxHp: Math.round(baseHp * 1.15),
         damage: Math.round(baseDmg * 0.9),
-        aggroRange,
+        aggroRange: Math.max(aggroRange, SHOOTER_AGGRO_RANGE),
         awake: false,
         hitFlash: 0,
         bitHitCooldown: 0,
-        attackCooldown: 1.1,
+        attackCooldown: 1.0,
       };
-    case 'caller':
+    case 'scout':
       return {
         id,
         kind,
@@ -269,14 +278,14 @@ export function pickEnemyKindForFloor(floor: number, roll: number): EnemyKind {
   }
   const extra = Math.min(0.18, (floor - 2) * 0.045);
   const shooterWeight = 0.14 + extra * 0.65;
-  const callerWeight = 0.04 + Math.min(0.05, (floor - 2) * 0.012);
+  const scoutWeight = 0.04 + Math.min(0.05, (floor - 2) * 0.012);
   const tankWeight = 0.17 + Math.min(0.05, (floor - 2) * 0.015);
   const runnerWeight = 0.24;
 
   if (roll < shooterWeight) return 'shooter';
-  if (roll < shooterWeight + callerWeight) return 'caller';
-  if (roll < shooterWeight + callerWeight + tankWeight) return 'tank';
-  if (roll < shooterWeight + callerWeight + tankWeight + runnerWeight) return 'runner';
+  if (roll < shooterWeight + scoutWeight) return 'scout';
+  if (roll < shooterWeight + scoutWeight + tankWeight) return 'tank';
+  if (roll < shooterWeight + scoutWeight + tankWeight + runnerWeight) return 'runner';
   return 'normal';
 }
 
@@ -285,7 +294,8 @@ function populateFloor(
   floor: number,
   seed: number,
   startId: number,
-  lootBonusRate = 0
+  lootBonusRate = 0,
+  playerLevel = 1
 ): { enemies: EnemyState[]; pickups: PickupState[]; chests: ChestState[]; nextId: number } {
   const rng = createRng(seed ^ (floor * 0x517cc1b7));
   const enemies: EnemyState[] = [];
@@ -296,6 +306,59 @@ function populateFloor(
   const occupiedTiles = new Set<number>();
   occupiedTiles.add(tileIndex(map, map.startTile.tx, map.startTile.ty));
   occupiedTiles.add(tileIndex(map, map.stairsTile.tx, map.stairsTile.ty));
+  if (map.fountainTile) {
+    occupiedTiles.add(tileIndex(map, map.fountainTile.tx, map.fountainTile.ty));
+  }
+
+  // Boss floor (10F, 20F...): Room 0 is safe fountain anteroom; Room 1 is Grand Boss Arena
+  if (isBossFloor(floor) && map.rooms.length >= 2) {
+    const arena = map.rooms[1];
+    const bossPos = tileCenterWorld(arena.cx, arena.cy);
+    occupiedTiles.add(tileIndex(map, arena.cx, arena.cy));
+
+    const grandBoss = createEnemyByKind(nextId++, 'tank', bossPos.x, bossPos.y, floor, 360);
+    const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.16;
+    grandBoss.maxHp = Math.round(grandBoss.maxHp * 4.5 * lvScale);
+    grandBoss.hp = grandBoss.maxHp;
+    grandBoss.radius += 8;
+    grandBoss.speed = Math.max(58, Math.round(grandBoss.speed * 1.15));
+    grandBoss.damage = Math.round(grandBoss.damage * 1.35);
+    grandBoss.isRoomBoss = true;
+    grandBoss.isGrandBoss = true;
+    grandBoss.isStairsGuard = true;
+    grandBoss.attackCooldown = 1.3;
+    grandBoss.bossPatternIndex = 0;
+    enemies.push(grandBoss);
+
+    const freeTiles: { tx: number; ty: number }[] = [];
+    for (let ty = arena.y + 2; ty <= arena.y + arena.h - 3; ty++) {
+      for (let tx = arena.x + 3; tx <= arena.x + arena.w - 3; tx++) {
+        const idx = tileIndex(map, tx, ty);
+        if (!isWallTile(map, tx, ty) && !occupiedTiles.has(idx)) {
+          freeTiles.push({ tx, ty });
+        }
+      }
+    }
+    for (let j = freeTiles.length - 1; j > 0; j--) {
+      const swapIdx = rng.int(0, j);
+      const tmp = freeTiles[j];
+      freeTiles[j] = freeTiles[swapIdx];
+      freeTiles[swapIdx] = tmp;
+    }
+
+    const minionCount = Math.min(freeTiles.length, 4 + Math.min(4, Math.floor(floor / 10)));
+    for (let m = 0; m < minionCount; m++) {
+      const tile = freeTiles[m];
+      occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
+      const pos = tileCenterWorld(tile.tx, tile.ty);
+      const kind = pickEnemyKindForFloor(floor, rng.next());
+      const minion = createEnemyByKind(nextId++, kind, pos.x, pos.y, floor, 320);
+      minion.isStairsGuard = true;
+      enemies.push(minion);
+    }
+
+    return { enemies, pickups, chests, nextId };
+  }
 
   const chestCandidates: number[] = [];
   for (let i = 1; i < map.rooms.length; i++) {
@@ -324,6 +387,8 @@ function populateFloor(
     });
     occupiedTiles.add(tileIndex(map, room.cx, room.cy));
   }
+
+  const guardianFloor = isGuardianFloor(floor);
 
   // 2. Populate rooms with non-overlapping heal orbs & enemies
   for (let i = 1; i < map.rooms.length; i++) {
@@ -361,7 +426,8 @@ function populateFloor(
       });
     }
 
-    const count = rng.int(2, 3 + Math.min(3, Math.floor(floor / 2))) + (isStairsRoom ? 3 : 0);
+    const extraStairsMobs = isStairsRoom ? (guardianFloor ? 3 : 1) : 0;
+    const count = rng.int(2, 3 + Math.min(3, Math.floor(floor / 2))) + extraStairsMobs;
     for (let k = 0; k < count; k++) {
       let wx: number;
       let wy: number;
@@ -378,14 +444,17 @@ function populateFloor(
         wy = fallback.y + Math.sin(angle) * 26;
       }
 
-      if (isStairsRoom && k === 0) {
-        const boss = createEnemyByKind(nextId++, 'tank', wx, wy, floor, MAX_TARGET_RANGE);
-        boss.maxHp = Math.round(boss.maxHp * 1.45);
+      if (guardianFloor && isStairsRoom && k === 0) {
+        const boss = createEnemyByKind(nextId++, 'tank', wx, wy, floor, 260);
+        const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.14;
+        boss.maxHp = Math.round(boss.maxHp * 1.9 * lvScale);
         boss.hp = boss.maxHp;
-        boss.radius += 3;
-        boss.damage = Math.round(boss.damage * 1.15);
+        boss.radius += 5;
+        boss.damage = Math.round(boss.damage * 1.25);
         boss.isRoomBoss = true;
         boss.isStairsGuard = true;
+        boss.attackCooldown = 1.35;
+        boss.bossPatternIndex = 0;
         enemies.push(boss);
       } else {
         const kind = pickEnemyKindForFloor(floor, rng.next());
@@ -398,7 +467,7 @@ function populateFloor(
     }
   }
 
-  // 3. Place 1-2 free-roaming patrol tracers (caller) inside corridors so corridor encounters occur naturally
+  // 3. Place 1-2 free-roaming patrol scouts inside corridors so corridor encounters occur naturally
   const startCenter = tileCenterWorld(map.startTile.tx, map.startTile.ty);
   const corridorTiles: { tx: number; ty: number }[] = [];
   for (let ty = 1; ty < map.height - 1; ty++) {
@@ -417,7 +486,7 @@ function populateFloor(
     const picked = corridorTiles.splice(pickIdx, 1)[0];
     occupiedTiles.add(tileIndex(map, picked.tx, picked.ty));
     const pos = tileCenterWorld(picked.tx, picked.ty);
-    enemies.push(createEnemyByKind(nextId++, 'caller', pos.x, pos.y, floor, MAX_TARGET_RANGE));
+    enemies.push(createEnemyByKind(nextId++, 'scout', pos.x, pos.y, floor, MAX_TARGET_RANGE));
   }
 
   return { enemies, pickups, chests, nextId };
@@ -431,7 +500,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
   const explored = new Uint8Array(map.width * map.height);
   revealAroundPlayer(map, explored, startPos.x, startPos.y);
 
-  const populated = populateFloor(map, floor, seed, 1, 0);
+  const populated = populateFloor(map, floor, seed, 1, 0, 1);
 
   return {
     seed,
@@ -459,7 +528,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       invulnTimer: 0,
       facingAngle: 0,
       orbitAngle: 0,
-      orbitRadius: 64,
+      orbitRadius: 78,
       baseAttackCooldown: 0,
       repulsorCooldown: 0,
       aegisCooldown: 0,
@@ -477,6 +546,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     elapsedFloorTime: 0,
     respawnTimer: INITIAL_RESPAWN_DELAY,
     stairsNoticeCooldown: 0,
+    fountainUsed: false,
     nextEntityId: populated.nextId,
     floorBannerTimer: 2.2,
     stats: {
@@ -500,7 +570,14 @@ export function advanceToNextFloor(state: GameState): void {
   revealAroundPlayer(state.map, state.explored, startPos.x, startPos.y);
 
   const mods = computeSkillModifiers(state.player.skillLevels);
-  const populated = populateFloor(state.map, state.floor, state.seed, state.nextEntityId, mods.lootBonusRate);
+  const populated = populateFloor(
+    state.map,
+    state.floor,
+    state.seed,
+    state.nextEntityId,
+    mods.lootBonusRate,
+    state.player.level
+  );
   state.enemies = populated.enemies;
   state.pickups = populated.pickups;
   state.chests = populated.chests;
@@ -512,6 +589,7 @@ export function advanceToNextFloor(state: GameState): void {
   state.elapsedFloorTime = 0;
   state.respawnTimer = INITIAL_RESPAWN_DELAY;
   state.stairsNoticeCooldown = 0;
+  state.fountainUsed = false;
   state.nextEntityId = populated.nextId;
   state.floorBannerTimer = 2.2;
 }
@@ -552,15 +630,66 @@ export function closeSkillTree(state: GameState): void {
   }
 }
 
+export function toggleSkillTree(state: GameState): void {
+  if (state.status === 'playing') {
+    state.status = 'skill_tree';
+  } else if (state.status === 'skill_tree') {
+    state.status = 'playing';
+  }
+}
+
+function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
+  const { player } = state;
+  player.exp += gainedExp;
+  state.stats.totalExp += gainedExp;
+  while (player.exp >= player.expToNext) {
+    player.exp -= player.expToNext;
+    player.level += 1;
+    player.skillPoints += 1;
+    player.expToNext = Math.round(player.expToNext * 1.22);
+    state.floatingTexts.push({
+      x: player.x,
+      y: player.y - 24,
+      text: `LEVEL ${player.level}! (+1 SP)`,
+      color: '#38bdf8',
+      life: 1.0,
+      maxLife: 1.0,
+    });
+    pushNotification(
+      state,
+      'levelup',
+      `🎉 LEVEL UP! Lv${player.level} (+1 SP)`,
+      '#38bdf8',
+      2.6
+    );
+  }
+}
+
 export function acquireEquipment(state: GameState, droppedItem: EquippedItem): void {
-  const { equipment } = state.player;
-  const existing = equipment.find((eq) => eq.id === droppedItem.id);
+  const { player } = state;
+  const { equipment } = player;
+  const clampedLevel = clampEquipmentLevel(droppedItem.level);
+  const normalizedItem: EquippedItem = { ...droppedItem, level: clampedLevel };
+  const existing = equipment.find((eq) => eq.id === normalizedItem.id);
   if (existing) {
-    existing.level = Math.max(existing.level + 1, droppedItem.level);
+    if (existing.level >= MAX_EQUIPMENT_LEVEL) {
+      player.hp = Math.min(player.maxHp, player.hp + 20);
+      grantExpAndCheckLevelUp(state, 25);
+      state.floatingTexts.push({
+        x: player.x,
+        y: player.y - 26,
+        text: 'MAX LV BONUS! (+20HP/+25EXP)',
+        color: '#fbbf24',
+        life: 1.25,
+        maxLife: 1.25,
+      });
+      return;
+    }
+    existing.level = clampEquipmentLevel(Math.max(existing.level + 1, clampedLevel));
     const def = EQUIPMENT_CATALOG[existing.id];
     state.floatingTexts.push({
-      x: state.player.x,
-      y: state.player.y - 26,
+      x: player.x,
+      y: player.y - 26,
       text: `LV UP! ${def.name} Lv${existing.level}`,
       color: def.color,
       life: 1.25,
@@ -569,13 +698,13 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
     return;
   }
 
-  if (equipment.length < state.player.maxEquipSlots) {
-    equipment.push(droppedItem);
-    const def = EQUIPMENT_CATALOG[droppedItem.id];
+  if (equipment.length < player.maxEquipSlots) {
+    equipment.push(normalizedItem);
+    const def = EQUIPMENT_CATALOG[normalizedItem.id];
     state.floatingTexts.push({
-      x: state.player.x,
-      y: state.player.y - 26,
-      text: `+GEAR: ${def.name} Lv${droppedItem.level}`,
+      x: player.x,
+      y: player.y - 26,
+      text: `+GEAR: ${def.name} Lv${normalizedItem.level}`,
       color: def.color,
       life: 1.2,
       maxLife: 1.2,
@@ -583,7 +712,24 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
     return;
   }
 
-  state.pendingEquipDrop = { item: droppedItem };
+  if (
+    player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP &&
+    equipment.every((eq) => eq.level >= MAX_EQUIPMENT_LEVEL)
+  ) {
+    player.hp = Math.min(player.maxHp, player.hp + 30);
+    grantExpAndCheckLevelUp(state, 40);
+    state.floatingTexts.push({
+      x: player.x,
+      y: player.y - 26,
+      text: 'ALL GEAR MAX! (+30HP/+40EXP)',
+      color: '#fbbf24',
+      life: 1.3,
+      maxLife: 1.3,
+    });
+    return;
+  }
+
+  state.pendingEquipDrop = { item: normalizedItem };
   state.status = 'equip_choice';
 }
 
@@ -605,7 +751,10 @@ export function resolveEquipChoice(
     if (choice.slotIndex < 0 || choice.slotIndex >= state.player.equipment.length) {
       return false;
     }
-    state.player.equipment[choice.slotIndex] = dropped;
+    state.player.equipment[choice.slotIndex] = {
+      ...dropped,
+      level: clampEquipmentLevel(dropped.level),
+    };
     const def = EQUIPMENT_CATALOG[dropped.id];
     state.floatingTexts.push({
       x: state.player.x,
@@ -620,7 +769,10 @@ export function resolveEquipChoice(
       return false;
     }
     const target = state.player.equipment[choice.slotIndex];
-    target.level += 1;
+    if (target.level >= MAX_EQUIPMENT_LEVEL) {
+      return false;
+    }
+    target.level = clampEquipmentLevel(target.level + 1);
     const def = EQUIPMENT_CATALOG[target.id];
     state.floatingTexts.push({
       x: state.player.x,
@@ -670,13 +822,14 @@ export function getOrbitBitPositions(state: GameState): Vec2[] {
 
   const mods = computeSkillModifiers(player.skillLevels);
   const count = getOrbitBitCount(orbitItem.level, mods.extraBits);
+  const radius = getOrbitShieldRadius(orbitItem.level, mods.rangeMult);
 
   const positions: Vec2[] = [];
   for (let i = 0; i < count; i++) {
     const a = player.orbitAngle + (i * Math.PI * 2) / count;
     positions.push({
-      x: player.x + Math.cos(a) * player.orbitRadius,
-      y: player.y + Math.sin(a) * player.orbitRadius,
+      x: player.x + Math.cos(a) * radius,
+      y: player.y + Math.sin(a) * radius,
     });
   }
   return positions;
@@ -710,10 +863,10 @@ export function rollDropEquipmentLevel(
     if (item.level < minLevel) minLevel = item.level;
   }
   const r = rngNext();
-  if (r < 0.2) return Math.max(1, minLevel - 1);
-  if (r < 0.7) return minLevel;
-  if (r < 0.92) return minLevel + 1;
-  return minLevel + 2;
+  if (r < 0.2) return clampEquipmentLevel(minLevel - 1);
+  if (r < 0.7) return clampEquipmentLevel(minLevel);
+  if (r < 0.92) return clampEquipmentLevel(minLevel + 1);
+  return clampEquipmentLevel(minLevel + 2);
 }
 
 function pickChestDrop(state: GameState, chestId: number): { id: EquipmentId; level: number } {
@@ -964,7 +1117,34 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     revealAroundPlayer(map, state.explored, player.x, player.y);
   }
 
-  // 2. Stairs check -> unlockable only after defeating all stairs-room guards & mid-boss (APP-MAP-01)
+  // 2. Fountain check (Boss floor safe anteroom 100% heal once)
+  if (map.fountainTile && !state.fountainUsed) {
+    const fountainPos = tileCenterWorld(map.fountainTile.tx, map.fountainTile.ty);
+    if (Math.hypot(player.x - fountainPos.x, player.y - fountainPos.y) <= TILE_SIZE * 0.65) {
+      player.hp = player.maxHp;
+      state.fountainUsed = true;
+      state.floatingTexts.push({
+        x: player.x,
+        y: player.y - 24,
+        text: 'FOUNTAIN 100% HP!',
+        color: '#2dd4bf',
+        life: 1.4,
+        maxLife: 1.4,
+      });
+      state.visualFx.push({
+        kind: 'pulse',
+        x: fountainPos.x,
+        y: fountainPos.y,
+        radius: 76,
+        color: '#2dd4bf',
+        life: 0.55,
+        maxLife: 0.55,
+      });
+      pushNotification(state, 'info', '⛲ 回復の泉でHPが全回復した！', '#2dd4bf', 2.8);
+    }
+  }
+
+  // 2.5. Stairs check -> unlockable only after defeating mid-boss/grand boss (APP-MAP-01)
   const stairsPos = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
   if (Math.hypot(player.x - stairsPos.x, player.y - stairsPos.y) <= TILE_SIZE * 0.52) {
     const lockCount = getStairsLockCount(state);
@@ -976,7 +1156,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       pushNotification(
         state,
         'alert',
-        `🔒 階段は封印中！部屋の敵（残り${lockCount}体）を倒せ！`,
+        `🔒 階段は封印中！ボス（残り${lockCount}体）を倒せ！`,
         '#f43f5e',
         2.4
       );
@@ -1005,17 +1185,20 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     );
     if (nearby.length > 0) {
       for (const e of nearby) {
-        const dx = e.x - player.x;
-        const dy = e.y - player.y;
-        const d = Math.max(1, Math.hypot(dx, dy));
-        const pushed = resolveCircleGridCollision(
-          e.x + (dx / d) * 38,
-          e.y + (dy / d) * 38,
-          e.radius,
-          map
-        );
-        e.x = pushed.x;
-        e.y = pushed.y;
+        const knockbackImmune = e.kind === 'shooter' || Boolean(e.isGrandBoss);
+        if (!knockbackImmune) {
+          const dx = e.x - player.x;
+          const dy = e.y - player.y;
+          const d = Math.max(1, Math.hypot(dx, dy));
+          const pushed = resolveCircleGridCollision(
+            e.x + (dx / d) * 38,
+            e.y + (dy / d) * 38,
+            e.radius,
+            map
+          );
+          e.x = pushed.x;
+          e.y = pushed.y;
+        }
         damageEnemy(state, e, mods.repulsorDamage * mods.damageMult);
       }
       state.visualFx.push({
@@ -1062,7 +1245,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   // 5. Equipment parallel execution & per-level evolutions (APP-CMB-01, APP-CMB-02, APP-CMB-05)
   const orbitItem = player.equipment.find((e) => e.id === 'orbit_shield');
-  const orbitAngularSpeed = 2.4 + (orbitItem ? (orbitItem.level - 1) * 0.18 : 0);
+  const orbitCount = orbitItem ? getOrbitBitCount(orbitItem.level, mods.extraBits) : 0;
+  const orbitAngularSpeed = orbitItem ? getOrbitShieldAngularSpeed(orbitCount) : 2.4;
+  if (orbitItem) {
+    player.orbitRadius = getOrbitShieldRadius(orbitItem.level, mods.rangeMult);
+  }
   player.orbitAngle = (player.orbitAngle + orbitAngularSpeed * clampedDt) % (Math.PI * 2);
   const seekerDrones = getSeekerDronePositions(state);
   let droneCursor = 0;
@@ -1091,7 +1278,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         const targets = state.enemies.filter((e) => {
           if (Math.hypot(e.x - player.x, e.y - player.y) > cappedRange) return false;
           if (!hasLineOfSight(player.x, player.y, e.x, e.y, map)) return false;
-          if (blade.fullCircle) return true;
           const ea = Math.atan2(e.y - player.y, e.x - player.x);
           let diff = Math.abs(ea - slashAngle);
           if (diff > Math.PI) diff = Math.PI * 2 - diff;
@@ -1107,7 +1293,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           radius: cappedRange,
           angle: slashAngle,
           halfArcRad: blade.halfArcRad,
-          fullCircle: blade.fullCircle,
+          fullCircle: false,
           color: def.color,
           life: 0.22,
           maxLife: 0.22,
@@ -1115,7 +1301,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         item.cooldown = def.baseCooldown * cdMult;
       }
     } else if (item.id === 'seeker_drone') {
-      const range = Math.min(MAX_TARGET_RANGE, def.baseRange * mods.rangeMult);
+      const range = Math.min(
+        MAX_TARGET_RANGE,
+        getSeekerDroneRange(item.level, def.baseRange, mods.rangeMult)
+      );
       const target = findNearestVisibleEnemy(player.x, player.y, range, state);
       if (target) {
         const dronesToFire = Math.max(1, seekerDrones.length);
@@ -1151,13 +1340,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         item.cooldown = def.baseCooldown * cdMult;
       }
     } else if (item.id === 'ricochet_disc') {
-      const range = Math.min(MAX_TARGET_RANGE, def.baseRange * mods.rangeMult);
+      const discStats = getRicochetDiscStats(item.level, mods.rangeMult);
+      const range = Math.min(MAX_TARGET_RANGE, discStats.range);
       const target = findNearestVisibleEnemy(player.x, player.y, range, state);
       if (target) {
-        const discStats = getRicochetDiscStats(item.level);
         const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
         for (let d = 0; d < discStats.count; d++) {
-          const spread = discStats.count > 1 ? (d === 0 ? -0.18 : 0.18) : 0;
+          const spread =
+            discStats.count === 1
+              ? 0
+              : (d - (discStats.count - 1) / 2) * 0.18;
           const angle = baseAngle + spread;
           state.projectiles.push({
             id: state.nextEntityId++,
@@ -1182,7 +1374,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 7. Orbit Shield Bits & projectile destruction
+  // 7. Orbit Shield Bits & enemy projectile update (including homing steering & wall bounce)
   const bits = getOrbitBitPositions(state);
   const orbitDmg = orbitItem
     ? getEquipmentDamage(orbitItem, mods.damageMult) * mods.bitDroneDamageMult
@@ -1190,8 +1382,49 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
     const ep = state.enemyProjectiles[i];
-    ep.x += ep.vx * clampedDt;
-    ep.y += ep.vy * clampedDt;
+    if ((ep.homingRate ?? 0) > 0) {
+      const spd = Math.hypot(ep.vx, ep.vy);
+      if (spd > 1e-3) {
+        const currAngle = Math.atan2(ep.vy, ep.vx);
+        const desiredAngle = Math.atan2(player.y - ep.y, player.x - ep.x);
+        let diff = desiredAngle - currAngle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const maxTurn = (ep.homingRate ?? 0) * clampedDt;
+        const nextAngle = currAngle + Math.max(-maxTurn, Math.min(maxTurn, diff));
+        ep.vx = Math.cos(nextAngle) * spd;
+        ep.vy = Math.sin(nextAngle) * spd;
+      }
+    }
+
+    let nx = ep.x + ep.vx * clampedDt;
+    let ny = ep.y + ep.vy * clampedDt;
+    if ((ep.bouncesLeft ?? 0) > 0) {
+      let bounced = false;
+      if (isWallAtWorld(map, nx, ep.y)) {
+        ep.vx = -ep.vx;
+        nx = ep.x + ep.vx * clampedDt;
+        bounced = true;
+      }
+      if (isWallAtWorld(map, ep.x, ny)) {
+        ep.vy = -ep.vy;
+        ny = ep.y + ep.vy * clampedDt;
+        bounced = true;
+      }
+      if (!bounced && isWallAtWorld(map, nx, ny)) {
+        ep.vx = -ep.vx;
+        ep.vy = -ep.vy;
+        nx = ep.x + ep.vx * clampedDt;
+        ny = ep.y + ep.vy * clampedDt;
+        bounced = true;
+      }
+      if (bounced) {
+        ep.bouncesLeft = (ep.bouncesLeft ?? 0) - 1;
+      }
+    }
+
+    ep.x = nx;
+    ep.y = ny;
     ep.life -= clampedDt;
     if (ep.life <= 0 || isWallAtWorld(map, ep.x, ep.y)) {
       state.enemyProjectiles.splice(i, 1);
@@ -1249,18 +1482,24 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 9. Update enemies (with BFS corridor pathfinding, caller wander/alert, shooter projectiles, timed repop)
+  // 9. Update enemies (with BFS corridor pathfinding, scout wander/alert, shooter 8-way barrage, boss patterns, room-only repop)
   const rng = createRng(
     (state.seed ^ (state.stats.kills * 7919) ^ (state.floor * 131) ^ Math.floor(state.elapsedFloorTime * 10)) >>> 0
   );
 
-  // 9a. Timed reinforcement respawn for long exploration (APP-MAP-04)
+  // 9a. Timed reinforcement respawn (room tiles only; boss floor spawns inside boss arena only while grand boss is active)
   state.elapsedFloorTime += clampedDt;
   state.respawnTimer -= clampedDt;
   const maxAlive = 26 + state.floor * 3;
+  const isBossArenaFloor = map.floorType === 'boss';
+  const activeGrandBoss = isBossArenaFloor
+    ? state.enemies.find((e) => e.isGrandBoss && e.hp > 0)
+    : undefined;
+  const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss && activeGrandBoss.awake);
+
   if (state.respawnTimer <= 0) {
-    state.respawnTimer = Math.max(9, 14 - (state.floor - 1) * 0.8);
-    if (state.enemies.length < maxAlive) {
+    state.respawnTimer = isBossArenaFloor ? 7.5 : Math.max(9, 14 - (state.floor - 1) * 0.8);
+    if (canRespawnOnFloor && state.enemies.length < maxAlive) {
       const occupied = new Set<number>();
       for (const e of state.enemies) {
         occupied.add(tileIndex(map, Math.floor(e.x / TILE_SIZE), Math.floor(e.y / TILE_SIZE)));
@@ -1269,11 +1508,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         occupied.add(tileIndex(map, Math.floor(c.x / TILE_SIZE), Math.floor(c.y / TILE_SIZE)));
       }
       const candidates: { tx: number; ty: number }[] = [];
+      const bossArena = isBossArenaFloor && map.rooms.length >= 2 ? map.rooms[1] : null;
       for (let ty = 1; ty < map.height - 1; ty++) {
         for (let tx = 1; tx < map.width - 1; tx++) {
           if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+          const room = findRoomAtTile(map, tx, ty);
+          if (!room) continue; // Corridor respawn suppressed
+          if (bossArena && room !== bossArena) continue; // Never spawn inside fountain anteroom
           const pos = tileCenterWorld(tx, ty);
-          if (Math.hypot(pos.x - player.x, pos.y - player.y) >= 260) {
+          const minDist = bossArena ? 180 : 260;
+          if (Math.hypot(pos.x - player.x, pos.y - player.y) >= minDist) {
             candidates.push({ tx, ty });
           }
         }
@@ -1285,11 +1529,17 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const picked = candidates.splice(pickIdx, 1)[0];
           const pos = tileCenterWorld(picked.tx, picked.ty);
           const kind = pickEnemyKindForFloor(state.floor, rng.next());
-          state.enemies.push(
-            createEnemyByKind(state.nextEntityId++, kind, pos.x, pos.y, state.floor, MAX_TARGET_RANGE)
-          );
+          const spawned = createEnemyByKind(state.nextEntityId++, kind, pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
+          if (bossArena) spawned.awake = true;
+          state.enemies.push(spawned);
         }
-        pushNotification(state, 'info', '👾 ダンジョン奥に新たな敵の気配…', '#c084fc', 2.2);
+        pushNotification(
+          state,
+          'info',
+          bossArena ? '👾 ボスアリーナに増援が出現！' : '👾 ダンジョン奥の部屋に新たな敵の気配…',
+          '#c084fc',
+          2.2
+        );
       }
     }
   }
@@ -1308,6 +1558,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if ((enemy.alertCooldown ?? 0) > 0) {
       enemy.alertCooldown = Math.max(0, (enemy.alertCooldown ?? 0) - clampedDt);
     }
+    if ((enemy.spawnDelay ?? 0) > 0) {
+      enemy.spawnDelay = Math.max(0, (enemy.spawnDelay ?? 0) - clampedDt);
+    }
 
     if (orbitItem && enemy.bitHitCooldown <= 0) {
       for (const bit of bits) {
@@ -1325,30 +1578,34 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if (enemy.hp <= 0) {
       state.stats.kills += 1;
       const wasRoomBoss = Boolean(enemy.isRoomBoss);
+      const wasGrandBoss = Boolean(enemy.isGrandBoss);
 
-      // Tracer-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
+      // Scout-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
       if (!enemy.isAmbush) {
         state.pickups.push({
           id: state.nextEntityId++,
           kind: 'exp',
           x: enemy.x,
           y: enemy.y,
-          value: enemy.isRoomBoss ? 35 : 10,
+          value: wasGrandBoss ? 120 : wasRoomBoss ? 45 : 10,
         });
-        if (enemy.isRoomBoss || rng.next() < 0.22 + mods.lootBonusRate * 0.4) {
+        if (wasRoomBoss || rng.next() < 0.22 + mods.lootBonusRate * 0.4) {
           state.pickups.push({
             id: state.nextEntityId++,
             kind: 'heal',
             x: enemy.x + 10,
             y: enemy.y + 6,
-            value: enemy.isRoomBoss ? 35 : 25,
+            value: wasGrandBoss ? 60 : wasRoomBoss ? 40 : 25,
           });
         }
-        // Low-probability enemy equipment drop (1.5% base) scaled to player's lowest equipment level (APP-GRW-07)
-        const equipDropChance = 0.015 + mods.equipDropBonus;
-        if (rng.next() < equipDropChance) {
+        if (wasRoomBoss) {
           const eqId = rng.pick(ALL_EQUIPMENT_IDS);
-          const itemLevel = rollDropEquipmentLevel(player.equipment, () => rng.next());
+          let minEquippedLv = 1;
+          if (player.equipment.length > 0) {
+            minEquippedLv = Math.min(...player.equipment.map((eq) => eq.level));
+          }
+          const bonus = (wasGrandBoss ? 2 : 1) + (rng.next() < 0.35 ? 1 : 0);
+          const itemLevel = clampEquipmentLevel(minEquippedLv + bonus);
           state.pickups.push({
             id: state.nextEntityId++,
             kind: 'equip',
@@ -1358,12 +1615,36 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             equipmentId: eqId,
             itemLevel,
           });
+        } else {
+          // Low-probability enemy equipment drop (1.5% base) scaled to player's lowest equipment level (APP-GRW-07)
+          const equipDropChance = 0.015 + mods.equipDropBonus;
+          if (rng.next() < equipDropChance) {
+            const eqId = rng.pick(ALL_EQUIPMENT_IDS);
+            const itemLevel = rollDropEquipmentLevel(player.equipment, () => rng.next());
+            state.pickups.push({
+              id: state.nextEntityId++,
+              kind: 'equip',
+              x: enemy.x - 10,
+              y: enemy.y + 6,
+              value: 1,
+              equipmentId: eqId,
+              itemLevel,
+            });
+          }
         }
       }
       state.enemies.splice(i, 1);
       if (wasRoomBoss && getStairsLockCount(state) === 0) {
         const stairsWorld = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
-        pushNotification(state, 'info', '🔓 階段の封印が解けた！次の階層へ進める！', '#22d3ee', 2.8);
+        pushNotification(
+          state,
+          'info',
+          wasGrandBoss
+            ? `🏆 階層ボス撃破！階段から先（${state.floor + 1}F）へ進める！`
+            : '🔓 中ボス撃破！階段の封印が解けた！',
+          '#22d3ee',
+          3.2
+        );
         state.visualFx.push({
           kind: 'pulse',
           x: stairsWorld.x,
@@ -1396,13 +1677,18 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Caller (tracer) archetype: patrol corridors/rooms freely while unalerted; on alert wake allies & ambush with fast runners
-    if (enemy.kind === 'caller') {
+    // Ambush spawn delay prevents unfair frame-1 contact damage immediately upon popping in
+    if ((enemy.spawnDelay ?? 0) > 0) {
+      continue;
+    }
+
+    // Scout archetype: patrol corridors/rooms freely while unalerted; on alert wake allies & ambush with fast runners
+    if (enemy.kind === 'scout') {
       if (enemy.awake) {
         if ((enemy.alertCooldown ?? 0) <= 0) {
           enemy.alertCooldown = 7.5;
           for (const ally of state.enemies) {
-            if (ally.id !== enemy.id && Math.hypot(ally.x - enemy.x, ally.y - enemy.y) <= CALLER_ALERT_RADIUS) {
+            if (ally.id !== enemy.id && Math.hypot(ally.x - enemy.x, ally.y - enemy.y) <= SCOUT_ALERT_RADIUS) {
               if (!ally.awake && ally.kind === 'shooter') {
                 ally.attackCooldown = Math.max(ally.attackCooldown ?? 0, 0.95);
               }
@@ -1410,7 +1696,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             }
           }
 
-          // Spawn 2-3 fast awake runners nearby (130-320px away) to rush the player
+          // Spawn 2-3 fast awake runners nearby (130-320px away) that outpace player baseSpeed
           const spawnCandidates: { tx: number; ty: number }[] = [];
           const occupied = new Set<number>();
           for (const existing of state.enemies) {
@@ -1451,6 +1737,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             const picked = spawnCandidates.splice(pickIdx, 1)[0];
             const pos = tileCenterWorld(picked.tx, picked.ty);
             const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
+            runner.speed = Math.max(228, Math.min(265, Math.round(224 + (state.floor - 1) * 4)));
+            runner.spawnDelay = 0.45;
             runner.awake = true;
             runner.isAmbush = true;
             alertSpawns.push(runner);
@@ -1487,8 +1775,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             state,
             'alert',
             inCorridorEncounter
-              ? '⚠️ 通路でトレーサーと遭遇！高速の敵が迫る！'
-              : '⚠️ トレーサーに発見された！高速の敵が迫る！',
+              ? '⚠️ 通路でスカウトと遭遇！高速の敵が迫る！'
+              : '⚠️ スカウトに発見された！高速の敵が迫る！',
             '#f97316',
             2.8
           );
@@ -1550,11 +1838,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Shooter archetype: stationary turret with wind-up charge delay after gaining sight/room entry
+    // Shooter archetype: stationary knockback-immune turret firing 8-way periodic barrage within expanded aggroRange
     if (enemy.kind === 'shooter' && enemy.awake) {
       const inSight =
         distToPlayer > 1e-3 &&
-        distToPlayer <= MAX_TARGET_RANGE &&
+        distToPlayer <= enemy.aggroRange &&
         hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
       if (!inSight) {
         enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
@@ -1563,19 +1851,101 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
         }
         if ((enemy.attackCooldown ?? 0) <= 0) {
-          const projSpeed = 215 + Math.min(65, (state.floor - 1) * 10);
-          const angle = Math.atan2(dy, dx);
-          state.enemyProjectiles.push({
-            id: state.nextEntityId++,
-            x: enemy.x,
-            y: enemy.y,
-            vx: Math.cos(angle) * projSpeed,
-            vy: Math.sin(angle) * projSpeed,
-            radius: 5,
-            damage: enemy.damage,
-            life: 1.5,
-          });
-          enemy.attackCooldown = Math.max(1.25, 2.0 - (state.floor - 1) * 0.1);
+          const projSpeed = 152 + Math.min(55, (state.floor - 1) * 7);
+          const shotIdx = enemy.bossPatternIndex ?? 0;
+          const baseOffset = (shotIdx % 2) * (Math.PI / 8);
+          for (let k = 0; k < 8; k++) {
+            const angle = baseOffset + (k * Math.PI) / 4;
+            state.enemyProjectiles.push({
+              id: state.nextEntityId++,
+              x: enemy.x,
+              y: enemy.y,
+              vx: Math.cos(angle) * projSpeed,
+              vy: Math.sin(angle) * projSpeed,
+              radius: 5,
+              damage: enemy.damage,
+              life: 1.85,
+            });
+          }
+          enemy.bossPatternIndex = (shotIdx + 1) % 2;
+          enemy.attackCooldown = Math.max(0.85, 1.45 - (state.floor - 1) * 0.08);
+        }
+      }
+    }
+
+    // Guardian / Grand Boss rotating barrage patterns (ring, homing orbs, wall-bouncing shots)
+    if (enemy.isRoomBoss && enemy.awake) {
+      const inSight =
+        distToPlayer > 1e-3 &&
+        distToPlayer <= (enemy.isGrandBoss ? 380 : 280) &&
+        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+      if (inSight && wasAwake) {
+        if ((enemy.attackCooldown ?? 0) > 0) {
+          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+        }
+        if ((enemy.attackCooldown ?? 0) <= 0) {
+          const pattern = enemy.bossPatternIndex ?? 0;
+          const aimAngle = Math.atan2(dy, dx);
+          const isGrand = Boolean(enemy.isGrandBoss);
+          const dmgVal = Math.round(enemy.damage * 0.8);
+
+          if (pattern === 0) {
+            const count = isGrand ? 12 : 8;
+            const spd = isGrand ? 190 : 168;
+            for (let k = 0; k < count; k++) {
+              const a = aimAngle + (k * Math.PI * 2) / count;
+              state.enemyProjectiles.push({
+                id: state.nextEntityId++,
+                x: enemy.x,
+                y: enemy.y,
+                vx: Math.cos(a) * spd,
+                vy: Math.sin(a) * spd,
+                radius: 6,
+                damage: dmgVal,
+                life: 2.1,
+                color: isGrand ? '#f43f5e' : '#fb7185',
+              });
+            }
+          } else if (pattern === 1) {
+            const count = isGrand ? 3 : 2;
+            const spd = isGrand ? 148 : 132;
+            for (let k = 0; k < count; k++) {
+              const offset = (k - (count - 1) / 2) * 0.42;
+              const a = aimAngle + offset;
+              state.enemyProjectiles.push({
+                id: state.nextEntityId++,
+                x: enemy.x,
+                y: enemy.y,
+                vx: Math.cos(a) * spd,
+                vy: Math.sin(a) * spd,
+                radius: 7,
+                damage: dmgVal,
+                life: 2.5,
+                homingRate: isGrand ? 2.1 : 1.75,
+                color: '#c084fc',
+              });
+            }
+          } else {
+            const count = isGrand ? 6 : 4;
+            const spd = isGrand ? 185 : 165;
+            for (let k = 0; k < count; k++) {
+              const a = aimAngle + (k - (count - 1) / 2) * 0.34;
+              state.enemyProjectiles.push({
+                id: state.nextEntityId++,
+                x: enemy.x,
+                y: enemy.y,
+                vx: Math.cos(a) * spd,
+                vy: Math.sin(a) * spd,
+                radius: 6,
+                damage: dmgVal,
+                life: 2.8,
+                bouncesLeft: isGrand ? 2 : 1,
+                color: '#fbbf24',
+              });
+            }
+          }
+          enemy.bossPatternIndex = (pattern + 1) % 3;
+          enemy.attackCooldown = isGrand ? 1.55 : 2.15;
         }
       }
     }
@@ -1592,11 +1962,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         steerY = waypoint.y;
       }
 
+      const effectiveSpeed =
+        orbitItem && distToPlayer <= player.orbitRadius
+          ? enemy.speed * ORBIT_SHIELD_INNER_SLOW
+          : enemy.speed;
+
       const sdx = steerX - enemy.x;
       const sdy = steerY - enemy.y;
       const steerDist = Math.hypot(sdx, sdy);
-      let moveX = steerDist > 1e-3 ? (sdx / steerDist) * enemy.speed : 0;
-      let moveY = steerDist > 1e-3 ? (sdy / steerDist) * enemy.speed : 0;
+      let moveX = steerDist > 1e-3 ? (sdx / steerDist) * effectiveSpeed : 0;
+      let moveY = steerDist > 1e-3 ? (sdy / steerDist) * effectiveSpeed : 0;
 
       for (let j = 0; j < state.enemies.length; j++) {
         if (i === j) continue;
@@ -1779,29 +2154,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         });
       } else {
         const gainedExp = Math.round(p.value * mods.expMult);
-        player.exp += gainedExp;
-        state.stats.totalExp += gainedExp;
-        while (player.exp >= player.expToNext) {
-          player.exp -= player.expToNext;
-          player.level += 1;
-          player.skillPoints += 1;
-          player.expToNext = Math.round(player.expToNext * 1.22);
-          state.floatingTexts.push({
-            x: player.x,
-            y: player.y - 24,
-            text: `LEVEL ${player.level}! (+1 SP)`,
-            color: '#38bdf8',
-            life: 1.0,
-            maxLife: 1.0,
-          });
-          pushNotification(
-            state,
-            'levelup',
-            `🎉 LEVEL UP! Lv${player.level} (+1 SP)`,
-            '#38bdf8',
-            2.6
-          );
-        }
+        grantExpAndCheckLevelUp(state, gainedExp);
       }
     }
   }
