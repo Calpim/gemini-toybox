@@ -6,7 +6,6 @@ import {
   stepGame,
   unlockSkillNode,
 } from './game/engine';
-import { MAX_EQUIP_SLOTS } from './game/equipment';
 import { SKILL_TREE_NODES, canUnlockSkill } from './game/skillTree';
 import type { GameState } from './game/types';
 import { InputController } from './input/controller';
@@ -55,7 +54,7 @@ function resizeCanvas(): void {
 
 function getModalKey(): string {
   const skillsKey = SKILL_TREE_NODES.map((n) => state.player.skillLevels[n.id] ?? 0).join(',');
-  return `${state.status}:${state.player.level}:${state.player.skillPoints}:${state.player.spentSkillPoints}:${skillsKey}:${state.player.equipment
+  return `${state.status}:${state.player.level}:${state.player.skillPoints}:${state.player.spentSkillPoints}:${state.player.maxEquipSlots}:${state.player.scrapExpandProgress}:${skillsKey}:${state.player.equipment
     .map((e) => `${e.id}${e.level}`)
     .join(',')}:${state.pendingEquipDrop?.item.id ?? ''}`;
 }
@@ -71,7 +70,7 @@ function syncUi(forceModals = false): void {
     canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
   );
   skillBtn.classList.toggle('has-sp', canUnlockAny);
-  gearCountText.textContent = `GEAR ${player.equipment.length}/${MAX_EQUIP_SLOTS}`;
+  gearCountText.textContent = `GEAR ${player.equipment.length}/${player.maxEquipSlots}`;
   killsText.textContent = `KILLS ${stats.kills}`;
 
   if (state.status === 'gameover') {
@@ -116,7 +115,7 @@ closeSkillBtn.addEventListener('click', () => {
 });
 
 scrapEquipBtn.addEventListener('click', () => {
-  resolveEquipChoice(state, { type: 'scrap' });
+  resolveEquipChoice(state, { type: 'scrap_expand' });
   syncUi(true);
 });
 

@@ -71,27 +71,26 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.x - startX).toBeCloseTo(210 * 0.05, 1);
   });
 
-  it('[APP-MAP-01] spawns guardian mid-boss in stairs room, locks upstairs until guards are cleared, then advances to floor N+1', () => {
+  it('[APP-MAP-01] spawns guardian mid-boss in stairs room, locks upstairs until mid-boss is defeated, then advances to floor N+1', () => {
     const state = createGameState({ seed: 2026 });
     expect(state.floor).toBe(1);
     const guards = state.enemies.filter((e) => e.isStairsGuard);
+    const roomBoss = state.enemies.find((e) => e.isRoomBoss);
     expect(guards.length).toBeGreaterThanOrEqual(5);
-    expect(guards.some((e) => e.isRoomBoss)).toBe(true);
-    expect(getStairsLockCount(state)).toBe(guards.length);
+    expect(roomBoss).toBeDefined();
+    expect(getStairsLockCount(state)).toBe(1);
 
     const stairs = tileCenterWorld(state.map.stairsTile.tx, state.map.stairsTile.ty);
     state.player.x = stairs.x;
     state.player.y = stairs.y;
 
-    // Locked while stairs guards are still alive
+    // Locked while stairs mid-boss is still alive
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.floor).toBe(1);
     expect(state.notifications.some((n) => n.text.includes('封印'))).toBe(true);
 
-    // Defeat all stairs guards -> unlock notification emitted and stepping onto stairs advances to floor 2
-    for (const guard of guards) {
-      guard.hp = 0;
-    }
+    // Defeat only the mid-boss (regular guards/reinforcements can remain alive) -> unlock notification emitted and stepping onto stairs advances to floor 2
+    roomBoss!.hp = 0;
     state.player.x = state.map.rooms[0].cx * TILE_SIZE;
     state.player.y = state.map.rooms[0].cy * TILE_SIZE;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
@@ -373,13 +372,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.equipment).toEqual([]);
 
     const initialStats = getPlayerBaseAttackStats(state.player);
-    expect(initialStats).toMatchObject({ damage: 12, shotCount: 1, range: 140, spentSp: 0 });
+    expect(initialStats).toMatchObject({ damage: 12, shotCount: 1, range: MAX_TARGET_RANGE, spentSp: 0 });
 
     // Raising player.level alone without spending SP does NOT alter Core Shot
     state.player.level = 5;
     expect(getPlayerBaseAttackStats(state.player)).toEqual(initialStats);
 
-    // Spending 3 SP (arm_base Lv3) strengthens damage, range, cooldown, and unlocks 2-way shot
+    // Spending 3 SP (arm_base Lv3) strengthens damage, cooldown, and unlocks 2-way shot while keeping range capped at MAX_TARGET_RANGE
     state.player.skillPoints = 3;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
@@ -389,7 +388,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const skilledStats = getPlayerBaseAttackStats(state.player);
     expect(skilledStats.spentSp).toBe(3);
     expect(skilledStats.damage).toBeGreaterThan(initialStats.damage);
-    expect(skilledStats.range).toBeGreaterThan(initialStats.range);
+    expect(skilledStats.range).toBe(MAX_TARGET_RANGE);
     expect(skilledStats.cooldown).toBeLessThan(initialStats.cooldown);
     expect(skilledStats.shotCount).toBe(2);
 
@@ -514,21 +513,39 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     acquireEquipment(state, createEquippedItem('seeker_drone', 5));
     expect(state.player.equipment.find((e) => e.id === 'seeker_drone')?.level).toBe(5);
 
-    // Unowned 4th item triggers replace/scrap choice modal
+    // Unowned 4th item triggers replace/scrap_upgrade/scrap_expand choice modal
     acquireEquipment(state, createEquippedItem('reactive_coil', 1));
     expect(state.status).toBe('equip_choice');
     expect(state.pendingEquipDrop).not.toBeNull();
 
-    // Scrap upgrades all 3 equipped items by Lv+1
-    expect(resolveEquipChoice(state, { type: 'scrap' })).toBe(true);
+    // Scrap & Build: upgrade a single selected slot (slot 1) by Lv+1
+    expect(resolveEquipChoice(state, { type: 'scrap_upgrade', slotIndex: 1 })).toBe(true);
     expect(state.status).toBe('playing');
-    expect(state.player.equipment.map((e) => e.level)).toEqual([2, 2, 6]);
+    expect(state.player.equipment.map((e) => e.level)).toEqual([1, 2, 5]);
 
     // Replace slot 0 on next unowned drop (preserving drop level)
     acquireEquipment(state, createEquippedItem('ricochet_disc', 4));
     expect(resolveEquipChoice(state, { type: 'replace', slotIndex: 0 })).toBe(true);
     expect(state.player.equipment[0].id).toBe('ricochet_disc');
     expect(state.player.equipment[0].level).toBe(4);
+
+    // Scrap & Build: 5 accumulations expand maxEquipSlots from 3 to 4
+    for (let i = 1; i <= 4; i++) {
+      acquireEquipment(state, createEquippedItem('pulse_blade', 1));
+      expect(state.status).toBe('equip_choice');
+      expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
+      expect(state.player.scrapExpandProgress).toBe(i);
+      expect(state.player.maxEquipSlots).toBe(3);
+    }
+    acquireEquipment(state, createEquippedItem('pulse_blade', 1));
+    expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
+    expect(state.player.scrapExpandProgress).toBe(0);
+    expect(state.player.maxEquipSlots).toBe(4);
+
+    // 4th unowned equipment now equips directly without modal
+    acquireEquipment(state, createEquippedItem('pulse_blade', 2));
+    expect(state.status).toBe('playing');
+    expect(state.player.equipment.length).toBe(4);
   });
 
   it('[APP-GRW-06] starts run with 0 items without Room 0 chest and fights using intrinsic base attack', () => {

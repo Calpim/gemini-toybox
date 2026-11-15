@@ -9,9 +9,13 @@ import {
   loadFeaturesFromDir,
   parseGlossary,
   parseParameters,
+  parseFormulas,
+  parseOpenQuestions,
+  parseNonGoals,
   parseStateTransitions,
   parseInvariants,
   parseDecisionLog,
+  buildFormulaChartsData,
   loadExtendedSpecs,
   validateExtendedSpecs,
 } from './build-spec-html.mjs';
@@ -90,7 +94,38 @@ describe('build-spec-html', () => {
     assert.equal(graph.stats.brokenCount, 2);
   });
 
-  it('parses glossary, parameters, state transitions (with mermaid), invariants, and decision log formats', () => {
+  it('parses @Confirmed @AIProposed Gherkin tags as Confirmed with ai origin', () => {
+    const biz = [
+      parseFeature(
+        `# language: ja
+機能: BIZ
+  @BIZ-AI-1 @Confirmed
+  シナリオ: B1
+    前提 A
+`,
+        'b.feature'
+      ),
+    ];
+    const app = [
+      parseFeature(
+        `# language: ja
+機能: APP
+  @APP-AI-1 @ref:BIZ-AI-1 @Confirmed @AIProposed
+  シナリオ: A1
+    前提 A
+`,
+        'a.feature'
+      ),
+    ];
+    const graph = buildTraceabilityGraph(biz, app);
+    assert.equal(graph.stats.brokenCount, 0);
+    assert.equal(graph.appScenarios[0].status, 'Confirmed');
+    assert.equal(graph.appScenarios[0].statusOrigin, 'ai');
+    const html = renderHtml(graph);
+    assert.match(html, /確定 \(AI提案\)/);
+  });
+
+  it('parses glossary, parameters (with goal), formulas, open-questions, non-goals, state transitions, invariants, and decision log formats', () => {
     const glossary = parseGlossary(
       `# 用語集
 | ID | 用語 | 別名・コード表記 | 定義 | 状態 | 関連ID | 出典・備考 |
@@ -106,15 +141,66 @@ describe('build-spec-html', () => {
 
     const params = parseParameters(
       `# パラメータ表
-| ID | カテゴリ | パラメータ名 | 現行値 | 単位・形式 | 状態 | 関連ID | 元コード参照 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| PRM-X1 | 戦闘 | 射程 | \`180\` | \`px\` | Inferred | GLS-X1 | \`src/game/equipment.ts\` |
+| ID | カテゴリ | パラメータ名 | 現行値 | 単位・形式 | 狙い（体験目標） | 状態 | 関連ID | 元コード参照 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PRM-X1 | 戦闘 | 射程 | \`180\` | \`px\` | 交戦距離の上限を保つ | Inferred | GLS-X1 | \`src/game/equipment.ts\` |
+| PRM-X2 | 戦闘 | 予備 | \`10\` | \`px\` |  | Unknown | GLS-X1 | \`src/game/equipment.ts\` |
+| PRM-X3 | 戦闘 | 速度 | \`210\` | \`px/s\` | 快適テンポ | Confirmed (AI提案) | GLS-X1 | \`src/game/engine.ts\` |
 `,
       '/tmp/specs/parameters.md'
     );
     assert.equal(params.items[0].id, 'PRM-X1');
     assert.equal(params.items[0].status, 'Inferred');
     assert.equal(params.items[0].value, '`180`');
+    assert.equal(params.items[0].goal, '交戦距離の上限を保つ');
+    assert.equal(params.items[1].goal, '');
+    assert.equal(params.items[2].status, 'Confirmed');
+    assert.equal(params.items[2].statusOrigin, 'ai');
+
+    const formulas = parseFormulas(
+      `# 計算式シート
+| ID | 名称 | 式 | 入力（パラメータIDで参照） | 出力と単位 | 状態 | 関連ID | 元コード参照 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| FML-X1 | テスト式 | \`x * PRM-X1\` | \`x\`, \`PRM-X1\` | \`値 (px)\` | Inferred | PRM-X1 | \`src/game/engine.ts\` |
+`,
+      '/tmp/specs/formulas.md'
+    );
+    assert.equal(formulas.relativePath, 'specs/formulas.md');
+    assert.equal(formulas.items.length, 1);
+    assert.equal(formulas.items[0].id, 'FML-X1');
+    assert.equal(formulas.items[0].status, 'Inferred');
+    assert.deepEqual(formulas.items[0].refs, ['PRM-X1']);
+
+    const openQuestions = parseOpenQuestions(
+      `# 未決事項リスト
+| ID | 論点 | 状態 | 関連ID | 決めるタイミング・トリガー | 保留している間の影響 |
+| --- | --- | --- | --- | --- | --- |
+| OQ-X1 | 未決論点 | Disputed | GLS-X1 | 次回判断時 | 暫定値で動作 |
+`,
+      '/tmp/specs/open-questions.md'
+    );
+    assert.equal(openQuestions.relativePath, 'specs/open-questions.md');
+    assert.equal(openQuestions.items[0].id, 'OQ-X1');
+    assert.equal(openQuestions.items[0].status, 'Disputed');
+    assert.equal(openQuestions.items[0].trigger, '次回判断時');
+
+    const nonGoals = parseNonGoals(
+      `# やらないことリスト
+
+> ここに書かれたものは未定義ではなく、意図的に存在しない。AIはこれらを補完・実装・仕様追加しない
+
+| ID | やらないこと | 理由 | 状態 | 関連ID |
+| --- | --- | --- | --- | --- |
+| NG-X1 | 設置タレット | 放置されるため | Confirmed | DEC-X1 |
+`,
+      '/tmp/specs/non-goals.md'
+    );
+    assert.equal(
+      nonGoals.declaration,
+      'ここに書かれたものは未定義ではなく、意図的に存在しない。AIはこれらを補完・実装・仕様追加しない'
+    );
+    assert.equal(nonGoals.items[0].id, 'NG-X1');
+    assert.equal(nonGoals.items[0].status, 'Confirmed');
 
     const transitions = parseStateTransitions(
       `# 状態遷移図
@@ -155,7 +241,35 @@ stateDiagram-v2
     assert.equal(decisions.items[0].transition, 'Inferred → Confirmed');
   });
 
-  it('validates extended spec ID references with zero broken links and renders dashboard, source links, filters, and mermaid fallback', () => {
+  it('dynamically updates formula chart values when parameters change', () => {
+    const baseParams = parseParameters(
+      `| ID | カテゴリ | パラメータ名 | 現行値 | 単位・形式 | 狙い（体験目標） | 状態 | 関連ID | 元コード参照 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PRM-04 | プレイヤー | 経験値 | \`25\`（Lv毎に \`×1.22\`） | \`EXP\` |  | Inferred | BIZ-GRW-01 | engine.ts |
+| PRM-17 | 戦闘 | コアショット | \`威力 12 / CD 0.62s / 射程 140px / 発射数閾値 3, 7, 12 SP (最大 4発)\` | \`DMG\` |  | Inferred | APP-CMB-06 | engine.ts |
+`,
+      'specs/parameters.md'
+    );
+    const modifiedParams = parseParameters(
+      `| ID | カテゴリ | パラメータ名 | 現行値 | 単位・形式 | 狙い（体験目標） | 状態 | 関連ID | 元コード参照 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PRM-04 | プレイヤー | 経験値 | \`50\`（Lv毎に \`×1.50\`） | \`EXP\` |  | Inferred | BIZ-GRW-01 | engine.ts |
+| PRM-17 | 戦闘 | コアショット | \`威力 20 / CD 0.50s / 射程 150px / 発射数閾値 2, 5, 10 SP (最大 4発)\` | \`DMG\` |  | Inferred | APP-CMB-06 | engine.ts |
+`,
+      'specs/parameters.md'
+    );
+
+    const chartsBase = buildFormulaChartsData(baseParams);
+    const chartsMod = buildFormulaChartsData(modifiedParams);
+    assert.equal(chartsBase[0].rows[0].expToNext, 25);
+    assert.equal(chartsBase[0].rows[1].expToNext, 31);
+    assert.equal(chartsMod[0].rows[0].expToNext, 50);
+    assert.equal(chartsMod[0].rows[1].expToNext, 75);
+    assert.equal(chartsMod[1].rows[0].damage, 20);
+    assert.equal(chartsMod[1].rows[2].shotCount, 2); // sp=2 hits threshold 2 in modifiedParams
+  });
+
+  it('validates extended spec ID references with zero broken links and renders all 10 sections, formula charts, and filters', () => {
     const biz = loadFeaturesFromDir(path.join(projectRoot, 'specs', 'business'));
     const app = loadFeaturesFromDir(path.join(projectRoot, 'specs', 'app'));
     const graph = buildTraceabilityGraph(biz, app);
@@ -163,9 +277,12 @@ stateDiagram-v2
     const validation = validateExtendedSpecs(graph, extended);
 
     assert.ok(extended.glossary && extended.glossary.items.length >= 10);
-    assert.ok(extended.parameters && extended.parameters.items.length >= 10);
+    assert.ok(extended.parameters && extended.parameters.items.length >= 20);
+    assert.ok(extended.formulas && extended.formulas.items.length >= 10);
     assert.ok(extended.stateTransitions && extended.stateTransitions.items.length >= 8);
     assert.ok(extended.invariants && extended.invariants.items.length >= 5);
+    assert.ok(extended.openQuestions && extended.openQuestions.items.length >= 5);
+    assert.ok(extended.nonGoals && extended.nonGoals.items.length >= 5);
     assert.ok(extended.decisions && extended.decisions.items.length >= 5);
 
     assert.equal(
@@ -179,22 +296,37 @@ stateDiagram-v2
       'Expected at least 1 未定義 transition for dashboard'
     );
 
+    // Every formula row must reference at least one PRM-xx parameter
+    for (const fml of extended.formulas.items) {
+      assert.match(fml.formula, /PRM-\d{2}/, `Formula ${fml.id} must reference PRM-xx`);
+    }
+
     const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extended);
 
-    // 1. All 7 sections present in single HTML
+    // 1. All 10 sections present in single HTML
     for (const secId of [
       'sec-overview',
       'sec-gherkin',
       'sec-glossary',
       'sec-parameters',
+      'sec-formulas',
       'sec-state-transitions',
       'sec-invariants',
+      'sec-open-questions',
+      'sec-non-goals',
       'sec-decisions',
     ]) {
       assert.match(html, new RegExp(`id="${secId}"`), `Missing section #${secId}`);
     }
 
-    // 2. Disputed terms and 未定義 transitions surfaced in Overview dashboard with counts & links
+    // 2. Non-goals declaration appears verbatim & Confirmed (AI提案) badge renders
+    assert.match(
+      html,
+      /ここに書かれたものは未定義ではなく、意図的に存在しない。AIはこれらを補完・実装・仕様追加しない/
+    );
+    assert.match(html, /確定 \(AI提案\)/);
+
+    // 3. Disputed terms and 未定義 transitions surfaced in Overview dashboard with counts & links
     assert.match(html, new RegExp(`Disputed（要調整）用語.*${validation.disputedTerms.length}件`, 's'));
     assert.match(html, new RegExp(`「未定義」の状態遷移.*${validation.undefinedTransitions.length}件`, 's'));
     for (const term of validation.disputedTerms) {
@@ -204,25 +336,50 @@ stateDiagram-v2
       assert.match(html, new RegExp(`href="#${tr.id}"`));
     }
 
-    // 3. Status filter buttons across all 4 core review statuses + search across sections
+    // 4. Status filter buttons across all 4 core review statuses + search across sections
     for (const f of ['all', 'inferred', 'confirmed', 'disputed', 'unknown']) {
       assert.match(html, new RegExp(`data-filter="${f}"`));
     }
-    assert.match(html, /class="spec-row[^"]*"[^>]*data-section="glossary"/);
-    assert.match(html, /class="spec-row[^"]*"[^>]*data-section="parameters"/);
-    assert.match(html, /class="spec-row[^"]*"[^>]*data-section="transitions"/);
-    assert.match(html, /class="spec-row[^"]*"[^>]*data-section="invariants"/);
-    assert.match(html, /class="spec-row[^"]*"[^>]*data-section="decisions"/);
+    for (const sec of [
+      'glossary',
+      'parameters',
+      'formulas',
+      'transitions',
+      'invariants',
+      'open-questions',
+      'non-goals',
+      'decisions',
+    ]) {
+      assert.match(html, new RegExp(`class="spec-row[^"]*"[^>]*data-section="${sec}"`));
+    }
 
-    // 4. Mermaid source + client render + raw source fallback included
+    // 5. Formula charts + numeric fallback tables exist ONLY inside #sec-formulas
+    const formulasStart = html.indexOf('<section id="sec-formulas"');
+    const transitionsStart = html.indexOf('<section id="sec-state-transitions"');
+    assert.ok(formulasStart !== -1 && transitionsStart > formulasStart);
+    const formulasSlice = html.slice(formulasStart, transitionsStart);
+    const outsideBefore = html.slice(0, formulasStart);
+    const outsideAfter = html.slice(transitionsStart);
+    assert.match(formulasSlice, /id="formulaChartsGrid"/);
+    assert.match(formulasSlice, /class="formula-fallback-wrap"/);
+    assert.match(formulasSlice, /chart-exp-curve/);
+    assert.match(formulasSlice, /chart-core-shot/);
+    assert.match(formulasSlice, /chart-skill-curve/);
+    assert.doesNotMatch(outsideBefore, /class="formula-chart-card"/);
+    assert.doesNotMatch(outsideAfter, /class="formula-chart-card"/);
+
+    // 6. Mermaid source + client render + raw source fallback included
     assert.match(html, /id="mermaidDiagram"/);
     assert.match(html, /id="mermaidSource"/);
     assert.match(html, /stateDiagram-v2/);
     assert.match(html, /フォールバック/);
 
-    // 5. Parameter & Glossary rows link to source file and item ID
+    // 7. Source links for glossary, parameters, formulas, open-questions, non-goals
     assert.match(html, /href="\.\.\/specs\/glossary\.md#GLS-01"/);
     assert.match(html, /href="\.\.\/specs\/parameters\.md#PRM-01"/);
+    assert.match(html, /href="\.\.\/specs\/formulas\.md#FML-01"/);
+    assert.match(html, /href="\.\.\/specs\/open-questions\.md#OQ-01"/);
+    assert.match(html, /href="\.\.\/specs\/non-goals\.md#NG-01"/);
   });
 
   it('detects broken ID references inside extended specification documents', () => {
@@ -236,6 +393,7 @@ stateDiagram-v2
         'specs/glossary.md'
       ),
       parameters: null,
+      formulas: null,
       stateTransitions: parseStateTransitions(
         `| ID | 遷移元 | トリガー・条件 | 遷移先 | 状態 | 関連ID | 備考 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -244,6 +402,8 @@ stateDiagram-v2
         'specs/state-transitions.md'
       ),
       invariants: null,
+      openQuestions: null,
+      nonGoals: null,
       decisions: null,
     };
     const validation = validateExtendedSpecs(graph, brokenExtended);

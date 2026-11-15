@@ -1,22 +1,36 @@
 # パラメータ表（Parameters）
 
 ゲームバランス・マップ生成・戦闘・成長に関する主要数値パラメータの一覧です。
+「狙い（体験目標）」列はその行の仕様状態（`Confirmed` / `Inferred` / `Disputed` / `Unknown`）を継承し、既存仕様・決定に根拠のない行は空欄のまま残しています。
 
-| ID | カテゴリ | パラメータ名 | 現行値 | 単位・形式 | 状態 | 関連ID | 元コード参照 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| PRM-01 | プレイヤー | 標準移動速度 (`baseSpeed`) | `210` | `px/s` | Inferred | APP-MAP-02, DEC-02 | `src/game/engine.ts#L453` |
-| PRM-02 | プレイヤー | 初期HP / 最大HP (`hp` / `maxHp`) | `100` | `HP` | Inferred | APP-MAP-03 | `src/game/engine.ts#L454-L455` |
-| PRM-03 | プレイヤー | 自然回復レート (`autoRegenPerSec`) | `0` | `HP/s` | Confirmed | BIZ-EXP-03, APP-MAP-03, INV-02 | `src/game/engine.ts#L456` |
-| PRM-04 | プレイヤー | 初期必要経験値・成長係数 (`expToNext`) | `25`（Lv毎に `×1.22`） | `EXP` | Inferred | BIZ-GRW-01, APP-GRW-01 | `src/game/engine.ts#L459` |
-| PRM-05 | 装備 | 最大装備スロット数 (`MAX_EQUIP_SLOTS`) | `3` | `スロット` | Confirmed | BIZ-GRW-03, APP-GRW-03, INV-03, GLS-02 | `src/game/equipment.ts#L27` |
-| PRM-06 | 戦闘 | 索敵上限距離 (`MAX_TARGET_RANGE`) | `180` | `px` | Inferred | BIZ-CMB-03, APP-CMB-03, INV-06, GLS-13 | `src/game/equipment.ts#L28` |
-| PRM-07 | 戦闘 | ドロップ装備レベル抽選基準 | `所持最低Lv基準（-1〜+2 ランダム）` | `Lv` | Confirmed | BIZ-GRW-07, APP-GRW-07, DEC-04 | `src/game/engine.ts#L691-L702` |
-| PRM-08 | 戦闘 | 敵からの基礎装備ドロップ率 | `1.5%` | `確率` | Inferred | BIZ-GRW-07, APP-GRW-07, DEC-04 | `src/game/engine.ts#L1321` |
-| PRM-09 | スキル | スキル強化SPコスト (`getSkillUpgradeCost`) | `Lv1-3: 1 / Lv4: 2 / Lv5: 3` | `SP` | Confirmed | BIZ-GRW-05, APP-GRW-05, DEC-03, GLS-04 | `src/game/skillTree.ts#L32-L37` |
-| PRM-10 | スキル | 上位解放前提レベル / 最大レベル | `前提 Lv3 / 最大 Lv5` | `Lv` | Confirmed | BIZ-GRW-02, APP-GRW-02, GLS-04 | `src/game/skillTree.ts#L14-L15` |
-| PRM-11 | マップ生成 | 部屋サイズ・部屋間隔・通路幅 | `8〜13 x 7〜11 / 間隔>=4 / 通路幅2(80px)` | `タイル` | Confirmed | BIZ-EXP-06, APP-MAP-01, INV-01 | `src/core/dungeon.ts#L344-L360` |
-| PRM-12 | 視界・カメラ | 目標表示幅 / 通路視界半径 | `840px (minZoom 0.72) / 半径210px` | `px` | Inferred | BIZ-EXP-06, APP-MAP-06, GLS-08 | `src/render/canvasRenderer.ts#L45-L53` |
-| PRM-13 | 装備 | 装備強化レベル上限 (`item.level`) | `上限なし（ビット数のみ上限6）` | `Lv` | Unknown | BIZ-CMB-05, APP-CMB-05, GLS-12 | `src/game/equipment.ts#L108-L110` |
-| PRM-14 | 敵・階段 | 階段守護中ボス補正 (`GUARDIAN`) | `階段部屋+3体 / 中ボス HP×1.45・攻撃×1.15` | `体・倍率` | Inferred | BIZ-EXP-01, APP-MAP-01, GLS-07, INV-04 | `src/game/engine.ts#L371-L396` |
-| PRM-15 | 敵・時間 | 滞在リポップ遅延 / 砲台初撃チャージ | `初回24s (以降9〜14s) / 0.95s` | `秒` | Inferred | BIZ-EXP-04, APP-MAP-04, APP-MAP-07 | `src/game/engine.ts#L52,L1369` |
-| PRM-16 | 階層進行 | 節目ボス階層指定 (`5F`) | `仕様上5F定義 / 実装上未分岐` | `階層` | Disputed | BIZ-BOS-01, APP-BOS-01, GLS-10, GLS-11, DEC-06 | `specs/app/04-fountain-and-boss.feature` |
+| ID | カテゴリ | パラメータ名 | 現行値 | 単位・形式 | 狙い（体験目標） | 状態 | 関連ID | 元コード参照 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PRM-01 | プレイヤー | 標準移動速度 (`baseSpeed`) | `210` | `px/s` | スキルで速度を補う前提をなくし、最初から快適な回避テンポを保証するため（DEC-02） | Confirmed (AI提案) | APP-MAP-02, DEC-02, DEC-08, NG-02 | `src/game/engine.ts#L453` |
+| PRM-02 | プレイヤー | 初期HP / 最大HP (`hp` / `maxHp`) | `100` | `HP` |  | Confirmed (AI提案) | APP-MAP-03, DEC-08, FML-13 | `src/game/engine.ts#L454-L455` |
+| PRM-03 | プレイヤー | 自然回復レート (`autoRegenPerSec`) | `0` | `HP/s` | 時間経過での自然回復に頼らず、回復アイテム回収でHPを維持させるため（BIZ-EXP-03） | Confirmed | BIZ-EXP-03, APP-MAP-03, INV-02, FML-13, NG-05 | `src/game/engine.ts#L456` |
+| PRM-04 | プレイヤー | 初期必要経験値・成長係数 (`expToNext`) | `25`（Lv毎に `×1.22`） | `EXP` |  | Confirmed (AI提案) | BIZ-GRW-01, APP-GRW-01, DEC-08, FML-01 | `src/game/engine.ts#L459,L1764` |
+| PRM-05 | 装備 | 装備スロット数 (`MAX_EQUIP_SLOTS` / 拡張上限) | `初期 3 / スクラップ5回で+1（実質上限 5）` | `スロット` | 初期は3枠でビルドの取捨選択を生みつつ、スクラップ＆ビルドで最大5枠まで拡張可能にするため（装備増加時再検討／DEC-07） | Confirmed | BIZ-GRW-03, APP-GRW-03, DEC-07, INV-03, GLS-02, GLS-09 | `src/game/equipment.ts#L27` |
+| PRM-06 | 戦闘 | 索敵上限距離 (`MAX_TARGET_RANGE`) | `180` | `px` | 2つ隣の部屋への壁越し・長通路スナイプを防止し、部屋・通路規模の交戦距離に収めるため（BIZ-CMB-03, GLS-13） | Confirmed (AI提案) | BIZ-CMB-03, APP-CMB-03, DEC-08, INV-06, GLS-13, FML-05, FML-07, NG-09 | `src/game/equipment.ts#L28` |
+| PRM-07 | 戦闘 | ドロップ装備レベル抽選基準 | `所持最低Lv基準（-1〜+2 ランダム）` | `Lv` | 平均基準による装備更新メリットの低下を防ぎ、最低Lv装備の底上げと上振れを狙えるようにするため（DEC-04, BIZ-GRW-07） | Confirmed | BIZ-GRW-07, APP-GRW-07, DEC-04, FML-08 | `src/game/engine.ts#L691-L702` |
+| PRM-08 | 戦闘 | 敵からの基礎装備ドロップ率 | `1.5%` | `確率` | ドロップ過多で宝箱探索の旨味が落ちるのを防ぎつつ、希少ドロップの期待感を残すため（DEC-04, BIZ-GRW-07） | Confirmed (AI提案) | BIZ-GRW-07, APP-GRW-07, DEC-04, DEC-08 | `src/game/engine.ts#L1321` |
+| PRM-09 | スキル | スキル強化SPコスト (`getSkillUpgradeCost`) | `Lv1-3: 1 / Lv4: 2 / Lv5: 3` | `SP` | Lv3までは1SPずつ横展開しやすくし、Lv4〜5は高コストと引き換えに一点突破のリターンを得る選択を際立たせるため（DEC-03, BIZ-GRW-05） | Confirmed | BIZ-GRW-05, APP-GRW-05, DEC-03, GLS-04, FML-02, FML-12 | `src/game/skillTree.ts#L32-L37` |
+| PRM-10 | スキル | 上位解放前提レベル / 最大レベル | `前提 Lv3 / 最大 Lv5` | `Lv` | 下位スキルの育成を通じて段階的に上位スキルを解放するビルド導線を作るため（BIZ-GRW-02） | Confirmed | BIZ-GRW-02, APP-GRW-02, GLS-04, FML-02, FML-12 | `src/game/skillTree.ts#L14-L15` |
+| PRM-11 | マップ生成 | 部屋サイズ・部屋間隔・通路幅 | `8〜13 x 7〜11 / 間隔>=4 / 通路幅2(80px)` | `タイル` | 1マス入口や重なり通路をなくし、回避・交戦しやすい探索空間を保つため（DEC-05, BIZ-EXP-06） | Confirmed | BIZ-EXP-06, APP-MAP-01, INV-01 | `src/core/dungeon.ts#L344-L360` |
+| PRM-12 | 視界・カメラ | 目標表示幅 / 通路視界半径 | `840px (minZoom 0.72) / 半径210px` | `px` | スマホでも周囲を見渡せる視野確保と、部屋・通路ごとの暗がりによる探索の緊張感を両立するため（BIZ-EXP-06, APP-MAP-06） | Confirmed (AI提案) | BIZ-EXP-06, APP-MAP-06, DEC-08, GLS-08, FML-11 | `src/render/canvasRenderer.ts#L14-L20` |
+| PRM-13 | 装備 | 装備強化レベル上限 (`item.level`) | `上限なし（ビット数のみ上限6）` | `Lv` |  | Unknown | BIZ-CMB-05, APP-CMB-05, GLS-12, FML-07, OQ-03 | `src/game/equipment.ts#L108-L110` |
+| PRM-14 | 敵・階段 | 階段守護中ボス補正 (`GUARDIAN`) | `階段部屋+3体 / 中ボス HP×1.45・攻撃×1.15 / 中ボス撃破で階段ロック解除` | `体・倍率` | 階段部屋の緊張感を演出し、守護中ボス撃破でロック解除する達成感を作るため（増援・リポップ雑魚ではロックしない／DEC-08） | Confirmed | BIZ-EXP-01, APP-MAP-01, DEC-08, GLS-07, INV-04, FML-09 | `src/game/engine.ts#L81-L91,L388-L396` |
+| PRM-15 | 敵・時間 | 滞在リポップ遅延 / 砲台初撃チャージ | `初回24s (以降9〜14s) / 0.95s` | `秒` | 長期滞在時の敵リポップによる緊張維持と、砲台部屋入り直後の理不尽な即死被弾を防ぐ予兆確保のため（BIZ-EXP-04, BIZ-EXP-07） | Confirmed (AI提案) | BIZ-EXP-04, APP-MAP-04, APP-MAP-07, DEC-08, FML-10 | `src/game/engine.ts#L52,L1233,L1369` |
+| PRM-16 | 階層進行 | 節目ボス階層指定 (`10F毎・暫定`) | `暫定10F毎定義（再計画中） / 実装未分岐` | `階層` | 節目階層で回復の泉による予兆と準備時間を与え、大ボス戦へ繋げる想定（BIZ-BOS-01, DEC-06／再計画中） | Disputed | BIZ-BOS-01, APP-BOS-01, GLS-10, GLS-11, DEC-06, OQ-01, OQ-02 | `specs/app/04-fountain-and-boss.feature` |
+| PRM-17 | 戦闘 | コアショット初期性能 (`APP-CMB-06`) | `威力 12 / CD 0.62s / 射程 180px (MAX_TARGET_RANGE) / 発射数閾値 3, 7, 12 SP (最大 4発)` | `DMG・秒・px・SP・発` | 初期装備ゼロから戦え、見えている索敵範囲内の敵にそのまま攻撃でき、SP投資で段階強化される基盤にするため（DEC-03, DEC-08） | Confirmed | BIZ-CMB-06, APP-CMB-06, DEC-08, GLS-01, FML-03, FML-04, FML-05, NG-06, NG-07 | `src/game/engine.ts#L868-L885` |
+| PRM-18 | 戦闘 | コアショットSP成長係数・弾速（コード実値） | `威力+1.8/SP / CD短縮0.015s/SP (上限0.24s, 最小CD 0.24s) / 射程+3px/SP / 弾速 460+min(180, 8×SP)` | `係数・秒・px・px/s` |  | Unknown | APP-CMB-06, GLS-01, FML-03, FML-04, FML-05, OQ-06 | `src/game/engine.ts#L871-L885` |
+| PRM-19 | 装備 | 5系統装備基礎レンジ・軌道 (`APP-CMB-02`) | `blade 78 / orbit 64 (角速度 2.4) / drone 155 / coil 74 / disc 145` | `px・rad/s` |  | Confirmed (AI提案) | BIZ-CMB-02, APP-CMB-02, DEC-08, GLS-02, FML-07 | `src/game/equipment.ts#L30-L81, src/game/engine.ts#L1036` |
+| PRM-20 | 装備 | 5系統装備基礎威力・基礎CD（コード実値） | `blade(22, 1.05s) / orbit(14, 0s) / drone(15, 0.48s) / coil(18, 1.50s) / disc(17, 1.15s)` | `DMG・秒` |  | Unknown | BIZ-CMB-02, APP-CMB-02, GLS-02, FML-06, OQ-06 | `src/game/equipment.ts#L30-L81` |
+| PRM-21 | 装備 | 装備レベル進化定数 (`APP-CMB-05`) | `blade(+12px/Lv, Lv3+全方位) / drone(+1機/2Lv) / coil(+14px/Lv, +1連鎖/Lv) / disc(+1跳弾/Lv, Lv3+ 2枚)` | `px・Lv・数` | 威力やCDだけでなくビット数や攻撃範囲などの挙動進化を実感させるため（BIZ-CMB-05） | Confirmed (AI提案) | BIZ-CMB-05, APP-CMB-05, DEC-08, GLS-02, FML-07 | `src/game/equipment.ts#L108-L151` |
+| PRM-22 | 装備 | 装備共通Lv倍率・コード実値定数 | `威力+25%/Lv / CD-5%/Lv (下限0.70) / orbit角速度+0.18/Lv / drone上限4機 / coil連鎖 2+Lv (減衰×0.8) / disc跳弾 1+Lv・初速 390(+20/Lv)` | `倍率・rad/s・機・px/s` |  | Unknown | BIZ-CMB-05, APP-CMB-05, PRM-13, FML-06, FML-07, OQ-06 | `src/game/equipment.ts#L99-L150, src/game/engine.ts#L765,L1036` |
+| PRM-23 | スキル | 各スキルノードLv1〜5効果量 (`APP-GRW-02`) | `arm_base(+8/16/24/42/68%) / arm_parallel(+1/1/2/3/4機, +32/52%@4-5) / arm_overclock(-6/12/18/28/40%) / def_sensor(+8/16/24/38/55%) / def_pulse(12/16/20/32/48, CD2.5/1.8s@4-5) / def_aegis(24/32/40/64/96, CD4.0/2.8s@4-5) / mob_magnet(吸引+22/44/66/160%@5, 回復+10/20/30/50/75%) / mob_dash(40/46/52/66/84px, 無敵1.30/1.65s@4-5) / mob_loot(宝+8/16/24/40/60%, EXP+8/16/24/42/68%)` | `%・px・秒・DMG` | Lv4〜5の大幅な性能ジャンプにより、高SP投資による一点突破のリターンを体感させるため（BIZ-GRW-05, DEC-03） | Confirmed (AI提案) | BIZ-GRW-02, BIZ-GRW-05, APP-GRW-02, DEC-03, DEC-08, GLS-04, FML-03, FML-04, FML-05, FML-06, FML-07, FML-12 | `src/game/skillTree.ts#L143-L163` |
+| PRM-24 | スキル | スキル補助テーブル・希少ドロップ加算（コード実値） | `arm_overclock最小倍率 0.55 / 弾速+20..150 / arm_parallel Lv1-3威力+6/12/18% / mob_lootドロップ加算 0.2/0.4/0.6/1.1/1.8% (仕様書APP-GRW-07は+0.3%/Lv記載)` | `倍率・%・px/s` |  | Disputed | APP-GRW-02, APP-GRW-07, FML-04, FML-06, OQ-07 | `src/game/skillTree.ts#L145-L162,L219` |
+| PRM-25 | 戦闘 | ドロップ装備レベル抽選確率 (`APP-GRW-07`) | `20%: max(1, M-1) / 50%: M / 22%: M+1 / 8%: M+2` | `確率` | 所持最低Lvに合わせつつ高レベル装備の上振れも狙えるようにするため（BIZ-GRW-07, DEC-04） | Confirmed (AI提案) | BIZ-GRW-07, APP-GRW-07, DEC-04, DEC-08, PRM-07, FML-08 | `src/game/engine.ts#L683-L688` |
+| PRM-26 | 敵 | 階層別敵基礎ステータス式・種別係数（コード実値） | `HP: 26+(F-1)×9 / 速度: 78+min(48,(F-1)×6) / 攻撃: 10+(F-1)×2 / runner攻撃×0.80 / shooter(HP×1.15, 速度0, 攻撃×0.90) / caller(HP×0.95, 速度×1.05, 攻撃×0.85)` | `HP・px/s・DMG・倍率` |  | Unknown | BIZ-EXP-04, FML-09, OQ-06 | `src/game/engine.ts#L179-L268` |
+| PRM-27 | 敵 | `tank` / `runner` 主要種別倍率 (`APP-MAP-07`) | `tank(HP×2.4, 速度×0.56, 攻撃×1.45) / runner(HP×0.55, 速度×1.55)` | `倍率` |  | Confirmed (AI提案) | BIZ-EXP-07, APP-MAP-07, DEC-08, FML-09 | `src/game/engine.ts#L184-L215` |
+| PRM-28 | マップ生成 | フロア規模・同時生存上限・リポップ短縮（コード実値） | `幅 min(76, 48+3F) / 高 min(58, 38+2F) / 部屋 min(11, 6+F) / 最大敵 26+3F / リポップ短縮 0.8s/F` | `タイル・室・体・秒` |  | Unknown | BIZ-EXP-01, BIZ-EXP-04, APP-MAP-01, APP-MAP-04, FML-10, OQ-06 | `src/core/dungeon.ts#L346-L348, src/game/engine.ts#L1231-L1233` |
+| PRM-29 | 視界・カメラ | カメラズーム上限・基準高さ（コード実値） | `maxZoom 2.4 (APP-MAP-06記載) / 基準高 480 (コードのみ)` | `倍・px` |  | Unknown | APP-MAP-06, PRM-12, FML-11, OQ-06 | `src/render/canvasRenderer.ts#L16-L20` |

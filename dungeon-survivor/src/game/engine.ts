@@ -16,7 +16,9 @@ import {
   ALL_EQUIPMENT_IDS,
   EQUIPMENT_CATALOG,
   MAX_EQUIP_SLOTS,
+  MAX_EQUIP_SLOTS_CAP,
   MAX_TARGET_RANGE,
+  SCRAP_EXPAND_COST,
   createEquippedItem,
   getEquipmentCooldownMultiplier,
   getEquipmentDamage,
@@ -79,20 +81,11 @@ export function isPointInPlayerVision(
 }
 
 export function getStairsLockCount(state: GameState): number {
-  const stairsRoom = findRoomAtTile(state.map, state.map.stairsTile.tx, state.map.stairsTile.ty);
   let remaining = 0;
   for (const enemy of state.enemies) {
     if (enemy.hp <= 0) continue;
-    if (enemy.isStairsGuard) {
+    if (enemy.isRoomBoss) {
       remaining++;
-      continue;
-    }
-    if (stairsRoom) {
-      const etx = Math.floor(enemy.x / TILE_SIZE);
-      const ety = Math.floor(enemy.y / TILE_SIZE);
-      if (isTileInRoom(stairsRoom, etx, ety)) {
-        remaining++;
-      }
     }
   }
   return remaining;
@@ -461,6 +454,8 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       spentSkillPoints: 0,
       skillLevels: {},
       equipment: [],
+      maxEquipSlots: MAX_EQUIP_SLOTS,
+      scrapExpandProgress: 0,
       invulnTimer: 0,
       facingAngle: 0,
       orbitAngle: 0,
@@ -574,7 +569,7 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
     return;
   }
 
-  if (equipment.length < MAX_EQUIP_SLOTS) {
+  if (equipment.length < state.player.maxEquipSlots) {
     equipment.push(droppedItem);
     const def = EQUIPMENT_CATALOG[droppedItem.id];
     state.floatingTexts.push({
@@ -592,9 +587,14 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
   state.status = 'equip_choice';
 }
 
+export type EquipChoice =
+  | { type: 'replace'; slotIndex: number }
+  | { type: 'scrap_upgrade'; slotIndex: number }
+  | { type: 'scrap_expand' };
+
 export function resolveEquipChoice(
   state: GameState,
-  choice: { type: 'replace'; slotIndex: number } | { type: 'scrap' }
+  choice: EquipChoice
 ): boolean {
   if (state.status !== 'equip_choice' || !state.pendingEquipDrop) {
     return false;
@@ -615,18 +615,47 @@ export function resolveEquipChoice(
       life: 1.1,
       maxLife: 1.1,
     });
-  } else {
-    for (const eq of state.player.equipment) {
-      eq.level += 1;
+  } else if (choice.type === 'scrap_upgrade') {
+    if (choice.slotIndex < 0 || choice.slotIndex >= state.player.equipment.length) {
+      return false;
     }
+    const target = state.player.equipment[choice.slotIndex];
+    target.level += 1;
+    const def = EQUIPMENT_CATALOG[target.id];
     state.floatingTexts.push({
       x: state.player.x,
       y: state.player.y - 26,
-      text: 'ALL GEAR LV+1!',
+      text: `SCRAP UP! ${def.name} Lv${target.level}`,
       color: '#fbbf24',
       life: 1.2,
       maxLife: 1.2,
     });
+  } else {
+    if (state.player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP) {
+      return false;
+    }
+    state.player.scrapExpandProgress += 1;
+    if (state.player.scrapExpandProgress >= SCRAP_EXPAND_COST) {
+      state.player.scrapExpandProgress -= SCRAP_EXPAND_COST;
+      state.player.maxEquipSlots = Math.min(MAX_EQUIP_SLOTS_CAP, state.player.maxEquipSlots + 1);
+      state.floatingTexts.push({
+        x: state.player.x,
+        y: state.player.y - 26,
+        text: `SLOT EXPANDED! (${state.player.maxEquipSlots}/${MAX_EQUIP_SLOTS_CAP})`,
+        color: '#34d399',
+        life: 1.4,
+        maxLife: 1.4,
+      });
+    } else {
+      state.floatingTexts.push({
+        x: state.player.x,
+        y: state.player.y - 26,
+        text: `SCRAP BUILD (${state.player.scrapExpandProgress}/${SCRAP_EXPAND_COST})`,
+        color: '#fbbf24',
+        life: 1.2,
+        maxLife: 1.2,
+      });
+    }
   }
 
   state.pendingEquipDrop = null;
@@ -875,7 +904,7 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
   );
   const range = Math.min(
     MAX_TARGET_RANGE,
-    Math.round((140 + spentSp * 3) * mods.rangeMult)
+    Math.round((MAX_TARGET_RANGE + spentSp * 3) * mods.rangeMult)
   );
   const shotCount = Math.min(
     4,
@@ -1269,7 +1298,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   const ptx = Math.floor(player.x / TILE_SIZE);
   const pty = Math.floor(player.y / TILE_SIZE);
   const playerRoom = findRoomAtTile(map, ptx, pty);
-  const stairsRoom = findRoomAtTile(map, map.stairsTile.tx, map.stairsTile.ty);
   const alertSpawns: EnemyState[] = [];
 
   for (let i = state.enemies.length - 1; i >= 0; i--) {
@@ -1296,11 +1324,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     if (enemy.hp <= 0) {
       state.stats.kills += 1;
-      const deadTx = Math.floor(enemy.x / TILE_SIZE);
-      const deadTy = Math.floor(enemy.y / TILE_SIZE);
-      const wasStairsGuard = Boolean(
-        enemy.isStairsGuard || (stairsRoom && isTileInRoom(stairsRoom, deadTx, deadTy))
-      );
+      const wasRoomBoss = Boolean(enemy.isRoomBoss);
 
       // Tracer-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
       if (!enemy.isAmbush) {
@@ -1337,7 +1361,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         }
       }
       state.enemies.splice(i, 1);
-      if (wasStairsGuard && getStairsLockCount(state) === 0) {
+      if (wasRoomBoss && getStairsLockCount(state) === 0) {
         const stairsWorld = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
         pushNotification(state, 'info', '🔓 階段の封印が解けた！次の階層へ進める！', '#22d3ee', 2.8);
         state.visualFx.push({

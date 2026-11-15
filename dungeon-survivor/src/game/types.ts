@@ -25,6 +25,8 @@ export interface PlayerState {
   spentSkillPoints: number;
   skillLevels: Partial<Record<SkillNodeId, number>>;
   equipment: EquippedItem[];
+  maxEquipSlots: number;
+  scrapExpandProgress: number;
   invulnTimer: number;
   facingAngle: number;
   orbitAngle: number;
