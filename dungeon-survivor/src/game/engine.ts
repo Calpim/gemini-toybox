@@ -2221,9 +2221,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const angleStep = Math.PI / (dirCount * 2);
           const shotIdx = enemy.bossPatternIndex ?? 0;
           const baseOffset = shotIdx * angleStep;
+          const pierceSlotA = rng.int(0, dirCount - 1);
+          const pierceSlotB =
+            dirCount >= 6 ? (pierceSlotA + rng.int(1, dirCount - 1)) % dirCount : -1;
           for (let k = 0; k < dirCount; k++) {
             const angle = baseOffset + (k * Math.PI * 2) / dirCount;
-            const isPiercing = dirCount >= 6 ? k % 3 === 0 : k === 0;
+            const isPiercing = k === pierceSlotA || k === pierceSlotB;
             state.enemyProjectiles.push({
               id: state.nextEntityId++,
               x: enemy.x,
@@ -2238,7 +2241,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             });
           }
           enemy.bossPatternIndex = (shotIdx + 1) % 16;
-          enemy.attackCooldown = Math.max(0.28, 0.38 - (state.floor - 1) * 0.015);
+          enemy.attackCooldown = Math.max(0.36, 0.48 - (state.floor - 1) * 0.015);
         }
       }
     }
