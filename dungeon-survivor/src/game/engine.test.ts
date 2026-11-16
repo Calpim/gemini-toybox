@@ -939,7 +939,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     shootState.player.baseAttackCooldown = 999;
     shootState.map.tiles.fill('floor');
 
-    const dormantTurret = createEnemyByKind(9000, 'shooter', shootState.player.x + 320, shootState.player.y, 2);
+    const dormantTurret = createEnemyByKind(
+      9000,
+      'shooter',
+      shootState.player.x + SHOOTER_AGGRO_RANGE + 70,
+      shootState.player.y,
+      2
+    );
     expect(dormantTurret.aggroRange).toBeGreaterThanOrEqual(SHOOTER_AGGRO_RANGE);
     shootState.enemies = [dormantTurret];
     for (let f = 0; f < 120; f++) {
@@ -948,8 +954,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(dormantTurret.awake).toBe(false);
     expect(dormantTurret.attackCooldown).toBeCloseTo(1.0, 2);
 
-    // Move turret into expanded aggroRange (220px <= 250px): awakens without firing frame 1
-    dormantTurret.x = shootState.player.x + 220;
+    // Move turret into expanded aggroRange (280px <= 320px): awakens without firing frame 1
+    dormantTurret.x = shootState.player.x + 280;
     stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
     expect(dormantTurret.awake).toBe(true);
     expect(shootState.enemyProjectiles.length).toBe(0);
@@ -1401,6 +1407,32 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(pierceState, { x: 0, y: 0 }, 0.016);
     expect(pierceState.enemyProjectiles.some((ep) => ep.id === pShot.id)).toBe(true);
     expect(pierceState.projectiles.some((p) => p.kind === 'reflected')).toBe(false);
+
+    // 4. Awakened tank fires mortar in the same room even when a wall blocks LOS, and awakened shooter keeps firing within 380px
+    const losBlockedState = createGameState({ seed: 984, startFloor: 2 });
+    losBlockedState.chests = [];
+    losBlockedState.pickups = [];
+    losBlockedState.player.baseAttackCooldown = 999;
+    const room = losBlockedState.map.rooms[0];
+    const pCenter = tileCenterWorld(room.x + 1, room.y + 1);
+    const wallTx = room.x + 2;
+    const wallTy = room.y + 1;
+    losBlockedState.map.tiles[wallTy * losBlockedState.map.width + wallTx] = 'wall';
+    losBlockedState.player.x = pCenter.x;
+    losBlockedState.player.y = pCenter.y;
+
+    const eCenter = tileCenterWorld(room.x + 3, room.y + 1);
+    const blockedTank = createEnemyByKind(9904, 'tank', eCenter.x, eCenter.y, 2);
+    blockedTank.awake = true;
+    blockedTank.attackCooldown = 0.01;
+    const blockedShooter = createEnemyByKind(9905, 'shooter', eCenter.x, eCenter.y + 40, 2);
+    blockedShooter.awake = true;
+    blockedShooter.attackCooldown = 0.01;
+    losBlockedState.enemies = [blockedTank, blockedShooter];
+
+    stepGame(losBlockedState, { x: 0, y: 0 }, 0.02);
+    expect(losBlockedState.mortarZones.length).toBeGreaterThanOrEqual(1);
+    expect(losBlockedState.enemyProjectiles.length).toBeGreaterThanOrEqual(4);
   });
 });
 

@@ -1945,12 +1945,12 @@
         <td><a class="id-pill id-doc" href="#PRM-26">PRM-26</a></td>
         <td><span class="cat-pill">敵</span></td>
         <td><strong>階層別敵基礎ステータス・通常敵Lv連動砲撃・種別係数（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">HP: 26+(F-1)×9 / 速度: 78+min(48,(F-1)×6) / 攻撃: 10+(F-1)×2 / normal射撃(Lv1-2:1発CD3.2s・Lv3-5:1発2.6s・Lv6-8:2発2.4s・Lv9+:3発2.1s, 射程190px, 弾速130〜162px/s, 威力×0.65〜0.78) / runner攻撃×0.80 / shooter(HP×1.15, 速度0, 攻撃×0.90, 索敵250px, ノックバック無効, 回転放射4方向(6F+は6方向, うち25〜33%はブレード・シールド貫通弾) CD max(0.28, 0.38-(F-1)×0.015) 弾速152+min(55,(F-1)×7)) / scout(HP×0.95, 速度×1.05, 攻撃×0.85)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">HP: 26+(F-1)×9 / 速度: 78+min(48,(F-1)×6) / 攻撃: 10+(F-1)×2 / normal射撃(Lv1-2:1発CD3.2s・Lv3-5:1発2.6s・Lv6-8:2発2.4s・Lv9+:3発2.1s, 射程190px, 弾速130〜162px/s, 威力×0.65〜0.78) / runner攻撃×0.80 / shooter(HP×1.15, 速度0, 攻撃×0.90, 索敵320px, 覚醒後は同部屋内420pxまたは380px以内なら遮蔽時も射撃継続, ノックバック無効, 回転放射4方向(6F+は6方向, うち25〜33%はブレード・シールド貫通弾) CD max(0.28, 0.38-(F-1)×0.015) 弾速152+min(55,(F-1)×7)) / scout(HP×0.95, 速度×1.05, 攻撃×0.85)</code></span></td>
         <td><code class="inline-code">HP・px/s・DMG・px・秒</code></td>
-        <td><div class="note-text">プレイヤー成長に合わせて通常敵にも段階的な弱砲撃を持たせ、シューターは常時回転放射＋一部防御貫通弾で脅威を維持するため（AI仮数値）</div></td>
+        <td><div class="note-text">プレイヤー成長に合わせて通常敵にも段階的な弱砲撃を持たせ、シューターは広めの索敵範囲と覚醒後の継続射撃＋一部防御貫通弾で脅威を維持するため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-04">BIZ-EXP-04</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L60-L95,L190-L295,L2174-L2215</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L60-L95,L190-L295,L2187-L2225</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-26" data-source-file="specs/parameters.md" data-item-id="PRM-26" title="元仕様ファイル specs/parameters.md (PRM-26)">specs/parameters.md#PRM-26</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -1959,12 +1959,12 @@
         <td><a class="id-pill id-doc" href="#PRM-27">PRM-27</a></td>
         <td><span class="cat-pill">敵</span></td>
         <td><strong><code class="inline-code">tank</code>（放物線迫撃砲）/ <code class="inline-code">runner</code> 主要種別倍率 (<code class="inline-code">APP-MAP-07</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45, 距離維持125〜175px・近接時後退, 放物線迫撃砲:射程215px・偏差射撃(進行方向0.8×0.85s先読み)・着弾半径52px・予兆0.85s・CD2.4s・DMG×1.45・防壁貫通) / runner(HP×0.55, 速度×1.55, 上限195)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45, 索敵280px+, 距離維持125〜175px・近接時後退, 放物線迫撃砲:同部屋380px以内(遮蔽可)または視線あり280px以内・偏差射撃(進行方向0.8×0.85s先読み)・着弾半径52px・予兆0.85s・CD2.4s・DMG×1.45・防壁貫通) / runner(HP×0.55, 速度×1.55, 上限195)</code></span></td>
         <td><code class="inline-code">倍率・px・秒</code></td>
-        <td><div class="note-text">重戦車タンクが距離維持・後退しながら偏差放物線迫撃砲を撃つ駆け引きを作るため（迫撃砲係数はAI仮提案）</div></td>
+        <td><div class="note-text">重戦車タンクが距離維持・後退しながら、覚醒後は同部屋内であれば遮蔽を問わず偏差放物線迫撃砲を撃つ駆け引きを作るため（迫撃砲係数はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L195-L240,L2133-L2172</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L195-L240,L2142-L2185</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-27" data-source-file="specs/parameters.md" data-item-id="PRM-27" title="元仕様ファイル specs/parameters.md (PRM-27)">specs/parameters.md#PRM-27</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>

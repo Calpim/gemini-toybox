@@ -63,7 +63,7 @@ import type {
 
 export const CORRIDOR_VISION_RADIUS = 210;
 export const SCOUT_ALERT_RADIUS = 300;
-export const SHOOTER_AGGRO_RANGE = 250;
+export const SHOOTER_AGGRO_RANGE = 320;
 export const INITIAL_RESPAWN_DELAY = 24;
 
 export interface NormalEnemyShotStats {
@@ -220,7 +220,7 @@ export function createEnemyByKind(
         hp: Math.round(baseHp * 2.4),
         maxHp: Math.round(baseHp * 2.4),
         damage: Math.round(baseDmg * 1.45),
-        aggroRange,
+        aggroRange: Math.max(aggroRange, 280),
         awake: false,
         hitFlash: 0,
         bitHitCooldown: 0,
@@ -2141,11 +2141,14 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     // Tank archetype: predictive parabolic mortar lobbing ground AoE zones with clear impact timing
     if (enemy.kind === 'tank' && !enemy.isRoomBoss && enemy.awake) {
-      const inSight =
+      const enemyTx = Math.floor(enemy.x / TILE_SIZE);
+      const enemyTy = Math.floor(enemy.y / TILE_SIZE);
+      const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
+      const canMortarFire =
         distToPlayer > 1e-3 &&
-        distToPlayer <= 215 &&
-        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
-      if (!inSight) {
+        ((sameRoom && distToPlayer <= 380) ||
+          (distToPlayer <= 280 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)));
+      if (!canMortarFire) {
         enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
       } else if (wasAwake) {
         if ((enemy.attackCooldown ?? 0) > 0) {
@@ -2181,13 +2184,14 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Shooter archetype: stationary knockback-immune turret firing continuous rotating radial barrage
+    // Shooter archetype: stationary knockback-immune turret firing continuous rotating radial barrage once awake
     if (enemy.kind === 'shooter' && enemy.awake) {
-      const inSight =
-        distToPlayer > 1e-3 &&
-        distToPlayer <= enemy.aggroRange &&
-        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
-      if (!inSight) {
+      const enemyTx = Math.floor(enemy.x / TILE_SIZE);
+      const enemyTy = Math.floor(enemy.y / TILE_SIZE);
+      const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
+      const canShooterFire =
+        distToPlayer > 1e-3 && ((sameRoom && distToPlayer <= 420) || distToPlayer <= 380);
+      if (!canShooterFire) {
         enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
       } else if (wasAwake) {
         if ((enemy.attackCooldown ?? 0) > 0) {
