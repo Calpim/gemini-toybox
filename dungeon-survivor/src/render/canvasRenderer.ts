@@ -578,6 +578,7 @@ export function renderGame(
 
   // 5.5. Tank parabolic mortar landing telegraphs & airborne shells
   for (const zone of state.mortarZones) {
+    if (zone.elapsed < 0) continue;
     const progress = Math.max(0, Math.min(1, zone.elapsed / Math.max(0.01, zone.duration)));
     ctx.save();
     // Target danger zone fill & outer border

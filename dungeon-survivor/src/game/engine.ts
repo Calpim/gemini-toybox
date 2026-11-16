@@ -2277,43 +2277,47 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       if (wasAwake && enemy.dashState !== 'dashing' && enemy.dashState !== 'windup') {
         enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? 0.6) - clampedDt);
         const canBossMortar =
-          distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 520 : 400);
+          distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 780 : 400);
         if (canBossMortar && (enemy.mortarCooldown ?? 0) <= 0) {
           const mortarDuration = 0.85;
-          const leadTime = 0.55;
-          const maxLeadDist = 115;
-          let leadDx = (player.velX ?? 0) * leadTime;
-          let leadDy = (player.velY ?? 0) * leadTime;
-          const leadLen = Math.hypot(leadDx, leadDy);
-          if (leadLen > maxLeadDist) {
-            leadDx = (leadDx / leadLen) * maxLeadDist;
-            leadDy = (leadDy / leadLen) * maxLeadDist;
+          const burstCount = isGrand ? 3 : 1;
+          const mortarRadius = isGrand ? 68 : 52;
+          const maxLeadDist = isGrand ? 155 : 115;
+          for (let b = 0; b < burstCount; b++) {
+            const leadTime = 0.55 + b * 0.28;
+            let leadDx = (player.velX ?? 0) * leadTime;
+            let leadDy = (player.velY ?? 0) * leadTime;
+            const leadLen = Math.hypot(leadDx, leadDy);
+            if (leadLen > maxLeadDist) {
+              leadDx = (leadDx / leadLen) * maxLeadDist;
+              leadDy = (leadDy / leadLen) * maxLeadDist;
+            }
+            let tx = player.x;
+            let ty = player.y;
+            const steps = 5;
+            for (let s = 0; s < steps; s++) {
+              const stepped = resolveCircleGridCollision(
+                tx + leadDx / steps,
+                ty + leadDy / steps,
+                player.radius,
+                map
+              );
+              tx = stepped.x;
+              ty = stepped.y;
+            }
+            state.mortarZones.push({
+              id: state.nextEntityId++,
+              startX: enemy.x,
+              startY: enemy.y,
+              targetX: tx,
+              targetY: ty,
+              radius: mortarRadius,
+              damage: Math.round(enemy.damage * 1.2),
+              elapsed: -b * 0.24,
+              duration: mortarDuration,
+            });
           }
-          let tx = player.x;
-          let ty = player.y;
-          const steps = 5;
-          for (let s = 0; s < steps; s++) {
-            const stepped = resolveCircleGridCollision(
-              tx + leadDx / steps,
-              ty + leadDy / steps,
-              player.radius,
-              map
-            );
-            tx = stepped.x;
-            ty = stepped.y;
-          }
-          state.mortarZones.push({
-            id: state.nextEntityId++,
-            startX: enemy.x,
-            startY: enemy.y,
-            targetX: tx,
-            targetY: ty,
-            radius: 52,
-            damage: Math.round(enemy.damage * 1.2),
-            elapsed: 0,
-            duration: mortarDuration,
-          });
-          enemy.mortarCooldown = isGrand ? 2.2 : 2.6;
+          enemy.mortarCooldown = isGrand ? 2.6 : 2.6;
         }
       }
 
@@ -2363,7 +2367,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       } else {
         const inSight =
           distToPlayer > 1e-3 &&
-          distToPlayer <= (isGrand ? 420 : 300) &&
+          distToPlayer <= (isGrand ? 780 : 300) &&
           hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
         if (inSight && wasAwake) {
           if ((enemy.attackCooldown ?? 0) > 0) {
