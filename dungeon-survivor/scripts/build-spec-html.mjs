@@ -1378,9 +1378,16 @@ export function renderHtml(
           <h3>${escapeHtml(biz.name)}</h3>
           ${renderSteps(biz.steps)}
         </div>
-        <div class="app-branch">
-          ${appCards}
-        </div>
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">${biz.linkedApps.map((a) => escapeHtml(a.id)).join(', ') || '未紐付け'} (${biz.linkedApps.length}件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            ${appCards}
+          </div>
+        </details>
       </section>`;
     })
     .join('');
@@ -1696,6 +1703,48 @@ export function renderHtml(
       background: var(--surface);
       scroll-margin-top: 84px;
     }
+    .app-accordion {
+      border-top: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.35);
+    }
+    .app-accordion-summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 18px;
+      font-size: 12.5px;
+      color: var(--muted);
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+    .app-accordion-summary::-webkit-details-marker { display: none; }
+    .app-accordion-summary:hover {
+      background: rgba(167, 139, 250, 0.08);
+      color: var(--text);
+    }
+    .app-accordion-title {
+      font-weight: 700;
+      color: var(--app);
+    }
+    .app-accordion-meta {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      color: #cbd5e1;
+      background: rgba(167, 139, 250, 0.12);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .app-accordion-hint {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .app-accordion-hint::before { content: '▶ 展開する'; }
+    .app-accordion[open] > .app-accordion-summary .app-accordion-hint::before { content: '▼ 折りたたむ'; }
     .app-branch {
       padding: 12px 18px 16px 28px;
       border-top: 1px solid var(--border);
@@ -2014,6 +2063,7 @@ export function renderHtml(
           <div class="section-eyebrow">BUSINESS &amp; APP GHERKIN / ビジネス仕様（既存）</div>
           <h2>🔗 ビジネス仕様・アプリ仕様トレーサビリティ <span class="count-pill" data-section-count="gherkin">(${stats.bizCount}件)</span></h2>
         </div>
+        <button type="button" class="tab-btn" id="toggleAllAppsBtn">⚙️ アプリ仕様をすべて開く</button>
       </div>
       <main id="specList">
         ${traceCards}
@@ -2132,7 +2182,43 @@ export function renderHtml(
       });
     });
 
-    searchBox.addEventListener('input', applyFilters);
+    searchBox.addEventListener('input', () => {
+      applyFilters();
+      const q = searchBox.value.trim().toLowerCase();
+      if (q) {
+        document.querySelectorAll('.app-accordion').forEach((acc) => {
+          const appText = (acc.querySelector('.app-branch')?.textContent || '').toLowerCase();
+          if (appText.includes(q)) acc.open = true;
+        });
+      }
+    });
+
+    const toggleAllAppsBtn = document.getElementById('toggleAllAppsBtn');
+    const appAccordions = Array.from(document.querySelectorAll('.app-accordion'));
+    let allAppsExpanded = false;
+    if (toggleAllAppsBtn) {
+      toggleAllAppsBtn.addEventListener('click', () => {
+        allAppsExpanded = !allAppsExpanded;
+        appAccordions.forEach((acc) => { acc.open = allAppsExpanded; });
+        toggleAllAppsBtn.textContent = allAppsExpanded
+          ? '⚙️ アプリ仕様をすべて折りたたむ'
+          : '⚙️ アプリ仕様をすべて開く';
+      });
+    }
+
+    function openAccordionForHash() {
+      const id = decodeURIComponent((window.location.hash || '').replace(/^#/, ''));
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (!target) return;
+      const acc = target.closest('.app-accordion');
+      if (acc) {
+        acc.open = true;
+        requestAnimationFrame(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      }
+    }
+    window.addEventListener('hashchange', openAccordionForHash);
+    openAccordionForHash();
 
     // Formula charts inside #sec-formulas only, with fallback to expression + numeric table
     (function initFormulaChartsWithFallback() {

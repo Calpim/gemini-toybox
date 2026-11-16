@@ -207,6 +207,48 @@
       background: var(--surface);
       scroll-margin-top: 84px;
     }
+    .app-accordion {
+      border-top: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.35);
+    }
+    .app-accordion-summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 18px;
+      font-size: 12.5px;
+      color: var(--muted);
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+    .app-accordion-summary::-webkit-details-marker { display: none; }
+    .app-accordion-summary:hover {
+      background: rgba(167, 139, 250, 0.08);
+      color: var(--text);
+    }
+    .app-accordion-title {
+      font-weight: 700;
+      color: var(--app);
+    }
+    .app-accordion-meta {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      color: #cbd5e1;
+      background: rgba(167, 139, 250, 0.12);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .app-accordion-hint {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .app-accordion-hint::before { content: '▶ 展開する'; }
+    .app-accordion[open] > .app-accordion-summary .app-accordion-hint::before { content: '▼ 折りたたむ'; }
     .app-branch {
       padding: 12px 18px 16px 28px;
       border-top: 1px solid var(--border);
@@ -496,7 +538,7 @@
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (7)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (12)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (13)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -510,14 +552,14 @@
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">22</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">128</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">129</div></div>
         <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">30</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">6</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">1</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 22 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 121 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 122 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -577,6 +619,7 @@
           <div class="section-eyebrow">BUSINESS &amp; APP GHERKIN / ビジネス仕様（既存）</div>
           <h2>🔗 ビジネス仕様・アプリ仕様トレーサビリティ <span class="count-pill" data-section-count="gherkin">(22件)</span></h2>
         </div>
+        <button type="button" class="tab-btn" id="toggleAllAppsBtn">⚙️ アプリ仕様をすべて開く</button>
       </div>
       <main id="specList">
         
@@ -596,8 +639,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョンのある階層にいる</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが通常階（1,2,4,5,7,8F...）で階段に到達するか、3/6/9F守護中ボス・10F毎大ボスを倒した上で上り階段に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">通常階は即座に、ボス配置階は階段封印が解除された状態で次の階層へ進み、新しいランダム構造のダンジョンが生成される</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-01 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-MAP-01" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -613,7 +662,8 @@
     <li><span class="kw">前提</span><span class="st-text">現在のフロア番号が N (N &gt;= 1) である</span></li><li><span class="kw">もし</span><span class="st-text">フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する</span></li><li><span class="kw">ならば</span><span class="st-text">複数の広めの長方形部屋（8〜13 x 7〜11 タイル・部屋間隔 4タイル以上）と互いに重なり・隣接合体せず、部屋との接続口も必ず 2タイル幅以上が確保された通路（既定幅 2タイル・80px）が連結して生成される</span></li><li><span class="kw">かつ</span><span class="st-text">通常階（1,2,4,5,7,8F...）の階段はロックなし（getStairsLockCount === 0）、3/6/9F（floor % 10 ∈ {3,6,9}）は広めの階段部屋（11×9以上）に守護中ボス GUARDIAN（プレイヤーLv連動HP 2.9倍ベース・ノックバック無効・3種弾幕＋予兆付き高速突進・確定高Lv装備ドロップ）、10F毎（10F, 20F...）は泉前室＋大部屋大ボスが配置される</span></li><li><span class="kw">かつ</span><span class="st-text">getStairsLockCount(state) が 1以上の間は階段が封印（LOCKED 表示・進行不可）され、守護中ボス／大ボス（isRoomBoss）を倒して封印解除した状態で階段に触れるとフロア番号 N+1 が生成される（増援・リポップ雑魚ではロックされない）</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-EXP-02">
@@ -631,8 +681,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが部屋または通路を移動している</span></li><li><span class="kw">もし</span><span class="st-text">部屋に入る・通路を自由移動する敵と出会う、または任意ポーズ操作（ESC等）を行う</span></li><li><span class="kw">ならば</span><span class="st-text">部屋に入ると部屋内の敵が全員迎撃状態になり、通路でも移動中の敵とシームレスに戦闘が始まり、ポーズ中は時間を止めてスキルと装備状態をゆっくり確認できる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-02 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-MAP-02" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -648,7 +704,8 @@
     <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、タッチ画面でドラッグする、または ESC / K / HUDの⏸ボタンを押下する</span></li><li><span class="kw">ならば</span><span class="st-text">移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ESC / K / ⏸押下時は時間を完全停止してスキルツリー兼ポーズ画面（装備詳細表示付き）へ切り替わる</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-EXP-03">
@@ -666,8 +723,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーのHPが最大値より減っている</span></li><li><span class="kw">もし</span><span class="st-text">戦闘や探索を続けて時間が経過する</span></li><li><span class="kw">ならば</span><span class="st-text">HPは時間経過では自動回復せず、回復アイテムを拾うことで回復する</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-03 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-MAP-03" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -683,7 +746,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーの HP が 60 / 100 であり、自動回復レートが 0 / sec に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">10秒間ダメージを受けずに移動する</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーの HP は 60 のまま変化しない</span></li><li><span class="kw">かつ</span><span class="st-text">敵ドロップまたは宝箱から出現した回復アイテム（HP +25〜等）に触れた時のみ HP が回復する（上限 100）</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-EXP-04">
@@ -701,8 +765,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが同一フロアを探索し続けて一定時間が経過する、または深い階層へ進む</span></li><li><span class="kw">もし</span><span class="st-text">フロア滞在時間が長引く、またはより上位の階層に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">狭い通路への湧き詰まりを避けつつ離れた部屋エリアへ新しい敵がリポップし、階層上昇に伴って厄介な特殊敵の出現比率が増えていく</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-04 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-MAP-04" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -718,7 +788,8 @@
     <li><span class="kw">前提</span><span class="st-text">フロア滞在時間 elapsedFloorTime が記録されている</span></li><li><span class="kw">もし</span><span class="st-text">滞在時間が初回 24秒（通常 9〜14秒、大ボス覚醒中は 7.5秒間隔）に達し、生存敵数が上限未満である</span></li><li><span class="kw">ならば</span><span class="st-text">通路タイルを除きプレイヤーから 260px（ボスアリーナは 180px・安全前室は除外）以上離れた未重複の部屋タイルに敵が 1〜2体リポップする</span></li><li><span class="kw">かつ</span><span class="st-text">1F は標準・高速・重装中心で、2F 以降は定点射撃型（shooter）が増え、スカウト（scout）は通常抽選確率を抑えつつ（4〜9%）通路巡回枠として 1〜2体配置される</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-EXP-05">
@@ -736,8 +807,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが壁や角を挟んで別の通路・部屋へ移動している</span></li><li><span class="kw">もし</span><span class="st-text">追跡状態になった敵がプレイヤーとの間に壁を挟む位置にいる</span></li><li><span class="kw">ならば</span><span class="st-text">直線移動で壁に引っかかり続けるのではなく、通路や曲がり角を通る最短経路でプレイヤーを追跡してくる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-05 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-MAP-05" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -753,7 +830,8 @@
     <li><span class="kw">前提</span><span class="st-text">敵が覚醒（awake = true）しており、自機と敵を結ぶ回廊幅（半径の0.75倍オフセット含む）に壁が干渉している</span></li><li><span class="kw">もし</span><span class="st-text">stepGame が敵の移動ベクトルを計算する</span></li><li><span class="kw">ならば</span><span class="st-text">computeBfsDistances によるプレイヤータイルからの最短歩数マップを参照し、壁角で斜め抜けせず安全に通れる隣接タイル中心へ誘導して追跡する</span></li><li><span class="kw">かつ</span><span class="st-text">障害物のない直線視界に入れば滑らかな直接追尾へ切り替わる</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-EXP-06">
@@ -771,8 +849,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内の広い部屋または狭い通路を移動している</span></li><li><span class="kw">もし</span><span class="st-text">PCやスマホなど任意の画面幅でプレイする</span></li><li><span class="kw">ならば</span><span class="st-text">画面横幅に合わせてスマホでも周囲を見渡せる倍率へ自動調整され、重なりのない通路では自機周囲の円形範囲のみ明るく、部屋に入ると部屋内全体が見渡せる視界（Fog of War）になる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-06 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-MAP-06" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -788,7 +872,8 @@
     <li><span class="kw">前提</span><span class="st-text">目標論理表示幅 TARGET_VIEW_WORLD_WIDTH が 840px（約21タイル相当）、通路視界半径 CORRIDOR_VISION_RADIUS が 210px に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">renderGame がワールドと暗がりマスクを描画する</span></li><li><span class="kw">ならば</span><span class="st-text">画面幅・高さから computeCameraZoom（0.72x〜2.4x：スマホ縦画面でも約13.5タイル幅を表示）を算出して過剰な圧迫感とマップ全透視を両立し、未探索タイルは非表示、既探索の視界外は地形・宝箱・階段のみ暗色表示（敵は非表示）、通路は円形ライト、部屋滞在時は該当部屋領域を明るく照らす</span></li><li><span class="kw">かつ</span><span class="st-text">explored 記録も部屋入室時は部屋全体＋周囲壁1マス、通路では半径約4.7タイルへ連動する</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-EXP-07">
@@ -806,8 +891,14 @@
     <li><span class="kw">前提</span><span class="st-text">フロアに通常型・固くて遅い型・柔らかくて早い型・ノックバック無効で8方向弾幕を撃つ固定砲台（シューター）・出現率を抑えた通路巡回スカウトが重複しない座標へ配置される</span></li><li><span class="kw">もし</span><span class="st-text">スカウト（偵察型）と通路等で遭遇して発見される、または経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">スカウトは発見アラート通知を出して周囲を照らしながらプレイヤーより速く迫るノーリワード（ドロップなし・出現直後の短い猶予付き）の高速敵を数匹呼び寄せ、レベルアップ時にも明確な通知が表示される</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-07 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-MAP-07" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -826,7 +917,8 @@
             </table></div></li><li><span class="kw">もし</span><span class="st-text">scout がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">周囲へ覚醒済み・isAmbush フラグ付きの高速 runner（228〜265 px/s、出現猶予 spawnDelay 0.45秒）2〜3体が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない</span></li><li><span class="kw">かつ</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-CMB-01">
@@ -849,8 +941,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備 0 個の状態、または装備・ビットを所持している</span></li><li><span class="kw">もし</span><span class="st-text">敵が自機基本攻撃または装備ごとの有効射程内に入る</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーが攻撃ボタンを押さなくても、自機の基本攻撃と所持装備による自動迎撃が発生する</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-CMB-01 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-CMB-01" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -871,7 +969,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが自機固有の基本攻撃（コアショット）、および任意の数の自動攻撃装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">射程 R 以内・視線上に敵が存在し、かつ自機基本攻撃または装備の残りクールダウンが 0 以下になる</span></li><li><span class="kw">ならば</span><span class="st-text">入力ボタン操作なしで即座に攻撃インスタンス（コアショット・弾・斬撃・電撃）を生成し、CD をリセットする</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-CMB-02">
@@ -889,8 +988,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが探索中に様々な系統の装備を入手している</span></li><li><span class="kw">もし</span><span class="st-text">敵弾も跳ね返す厚み付き扇形のパルスブレード・範囲スロー付き公転シールド・自律ドローン・単発追尾し同敵周回でも再ヒットするチャクラム・カウンター迎撃装置などを装備する</span></li><li><span class="kw">ならば</span><span class="st-text">それぞれの役割に応じた自動攻撃や防御・反射・減速支援が同時に機能する</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-CMB-02 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-CMB-02" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -909,7 +1014,8 @@
             </table></div></li><li><span class="kw">もし</span><span class="st-text">戦闘ループ（60fps固定タイムステップまたはdeltaTime更新）が進行する</span></li><li><span class="kw">ならば</span><span class="st-text">全装備のタイマーおよびビット座標が独立して更新され、同時に迎撃を実行する</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-CMB-03">
@@ -927,8 +1033,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーと敵の間に壁がある、または長い通路の先に2つ隣の部屋が見えている</span></li><li><span class="kw">もし</span><span class="st-text">自動迎撃の射線上に壁が挟まる、または索敵上限距離を超える</span></li><li><span class="kw">ならば</span><span class="st-text">壁越し攻撃が遮断されるだけでなく、2つ隣の部屋にまで届かない部屋・通路規模の索敵範囲に収まる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-CMB-03 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-CMB-03" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -944,7 +1056,8 @@
     <li><span class="kw">前提</span><span class="st-text">索敵上限定数 MAX_TARGET_RANGE が 180px（4.5タイル相当＝1部屋〜隣通路規模）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃・自機ショット・索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">壁タイルとの交差は遮断され、さらにスキル等でレンジが伸びても 180px を超える2部屋先の敵はロックオンしない</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅する</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-CMB-04">
@@ -962,8 +1075,14 @@
     <li><span class="kw">前提</span><span class="st-text">決定経緯: 先輩テストプレイによる人間確定（2026-11-14）</span></li><li><span class="kw">かつ</span><span class="st-text">プレイヤーは部屋や通路を移動し続け、敵を倒した後はすぐに次のエリアへ進む</span></li><li><span class="kw">もし</span><span class="st-text">足元固定型の設置タレット（オートタレット）の採用を評価する</span></li><li><span class="kw">ならば</span><span class="st-text">敵殲滅後に設置されて何もせず終わる問題がゲーム性に合わないため不採用とし、プレイヤー追従型の5系統のみを採用する</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-CMB-04 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-CMB-04" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -979,7 +1098,8 @@
     <li><span class="kw">前提</span><span class="st-text">決定経緯: 2026-11-14 先輩プレイバックによる人間確定</span></li><li><span class="kw">もし</span><span class="st-text">装備定義 ALL_EQUIPMENT_IDS および宝箱抽選ロジックを参照する</span></li><li><span class="kw">ならば</span><span class="st-text">出現・装着対象は pulse_blade / orbit_shield / seeker_drone / reactive_coil / ricochet_disc の5種のみとなり、固定砲台エンティティは生成されない</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-CMB-05">
@@ -997,8 +1117,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに上限Lv10の装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">同種装備の獲得やスクラップ強化によって装備レベルが上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv6まではビット数・ドローン数・連鎖数・跳弾回数・扇角などの挙動が段階進化し、Lv7〜10ではダメージ・CD短縮・射程が強化され、Lv10到達後の余剰獲得は枠5未満なら枠拡張へ自動充当・枠5到達後は回復・経験値ボーナスへ還元される</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-CMB-05 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-CMB-05" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1017,7 +1143,8 @@
             </table></div></li><li><span class="kw">もし</span><span class="st-text">装備のレベルが Lv1 から Lv6・Lv10 へと上昇する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv6まではビット数・跳弾数・扇角・厚みが進化し、Lv7〜10では威力・CD短縮（倍率下限0.55）・射程が伸び、Lv10重複時は枠5未満なら自動枠拡張・枠5到達後はオーバーフローボーナスが付与される</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-CMB-06">
@@ -1035,8 +1162,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがサブ装備とは別枠で自機固有のメイン武器（コアショット）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベルが上がっただけの場合、防御・探索スキルを取得した場合、または兵装（arms）スキルを強化した場合</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤーレベル単体や他系統へのSP投資ではメイン武器は変わらず、兵装スキルへの投資に応じて威力・発射数・連射性能が強化される（サブ装備へは乗算しない）</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-CMB-06 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-CMB-06" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1052,7 +1185,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがサブ装備とは別枠でメイン武器「コアショット」（初期射程 180px=MAX_TARGET_RANGE / 威力 14 / CD 0.58s / 1発 / 弾速 460px/s）を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベル上昇や他系統へのSP消費のみ行った場合、または兵装（arms）スキルを強化した場合</span></li><li><span class="kw">ならば</span><span class="st-text">player.level 単体や防御・探索系SP消費ではコアショット・サブ装備ともに変化せず、兵装スキル投資時のみコアショットの威力・同時発射数（最大4発）・CD・弾速・貫通が強化される</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-01">
@@ -1075,8 +1209,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">装備品ドロップを獲得し、かつ経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">装備の付け替え・強化と、スキルツリーによる能力強化の両方で強くなる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-GRW-01 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-GRW-01" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1097,7 +1237,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、スキルポイント（SP）を +1 獲得してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-02">
@@ -1115,8 +1256,14 @@
     <li><span class="kw">前提</span><span class="st-text">スキルツリー上に前提関係を持つ下位スキルと上位スキルが存在する</span></li><li><span class="kw">もし</span><span class="st-text">下位スキルにポイントを振ってスキルレベルを上げ、Lv3以上に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">レベル毎にそのスキルの性能が上昇するだけでなく、次の段階の強力な上位スキルが解放可能になる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-GRW-02 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-GRW-02" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1135,7 +1282,8 @@
             </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を Lv2 以下の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンはロック表示となり、arm_base を Lv3 まで育成した時点で arm_parallel が解放可能になる</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-03">
@@ -1153,8 +1301,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーの初期装備スロット上限（2枠）がすべて埋まっている（装備種類数に応じた実質上限は最大5枠・各装備Lv上限10）</span></li><li><span class="kw">もし</span><span class="st-text">ダンジョン内で現在未所持の新しい装備を発見する</span></li><li><span class="kw">ならば</span><span class="st-text">既存の装備と入れ替えるか、「スクラップ＆ビルド」（未カンスト所持装備1個の強化、または枠拡張への蓄積：1回 / 2回 / 3回の段階蓄積で装備枠+1・最大5枠）を選択でき、全5枠がLv10に達している場合は即時ボーナスへ還元される</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-GRW-03 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-GRW-03" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1170,7 +1324,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在装備スロット上限（初期 2枠・拡張により最大 5枠）がすべて埋まっている</span></li><li><span class="kw">もし</span><span class="st-text">未所持の新しい装備を取得する</span></li><li><span class="kw">ならば</span><span class="st-text">全5枠がすでに Lv10 に達している場合は即時ボーナス（+30HP / +40EXP）へ変換され、それ以外はゲームを一時停止して「入れ替えるスロット選択」または「スクラップ＆ビルド（Lv10未満の所持装備1個強化、または枠拡張蓄積：2→3枠は1回・3→4枠は2回・4→5枠は3回で枠+1）」モーダルを表示する</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-04">
@@ -1188,8 +1343,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが装備スロットに特定の装備を装着している</span></li><li><span class="kw">もし</span><span class="st-text">宝箱などからすでに所持している装備と同じ種類のアイテムを獲得する</span></li><li><span class="kw">ならば</span><span class="st-text">入れ替えモーダルや追加スロット消費を行わず、所持中の該当装備が上限Lv10まで自動でレベルアップし、すでにLv10の場合は枠5未満なら枠拡張へ自動充当・枠5到達後は回復＆経験値ボーナスを獲得する</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-GRW-04 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-GRW-04" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1205,7 +1366,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーの装備スロットに seeker_drone (Lv1 または Lv10) が装着されている</span></li><li><span class="kw">もし</span><span class="st-text">acquireEquipment により同種の seeker_drone（Lv1 または高レベル品）を追加取得する</span></li><li><span class="kw">ならば</span><span class="st-text">未カンスト時は既存レベルが Math.min(10, Math.max(既存Lv + 1, 拾得Lv)) へ自動更新され、すでに Lv10 の場合は maxEquipSlots &lt; 5 なら枠拡張進捗へ自動加算（コスト到達で枠+1）・maxEquipSlots === 5 到達後は +20HP / +25EXP ボーナスへ変換される</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-05">
@@ -1223,8 +1385,14 @@
     <li><span class="kw">前提</span><span class="st-text">スキルツリーの各スキルが Lv1〜5 のレベル段階を持っている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがレベルアップで獲得したスキルポイントを配分する</span></li><li><span class="kw">ならば</span><span class="st-text">Lv3までは1SPずつ手軽に横展開や前提解放を進められ、2SP・3SPを投じるLv4〜Lv5では大幅な性能ジャンプによる一点突破のリターンが得られる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-GRW-05 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-GRW-05" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1240,7 +1408,8 @@
     <li><span class="kw">前提</span><span class="st-text">getSkillUpgradeCost が現在Lvに応じて 1 / 1 / 1 / 2 / 3 SP を返すように設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが Lv3 のスキルを所持 SP 1 の状態で Lv4 へ強化しようとする</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2）のため強化不可となり、SP 2 消費で Lv4・さらに SP 3 消費で Lv5 へ到達すると上昇幅が大きく伸びる</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-06">
@@ -1258,8 +1427,14 @@
     <li><span class="kw">前提</span><span class="st-text">新しいダンジョンランを開始する</span></li><li><span class="kw">もし</span><span class="st-text">1F の開始状態を生成する</span></li><li><span class="kw">ならば</span><span class="st-text">初期装備は 0 個（ノーアイテム）で開始し、自機攻撃で戦いながら探索やドロップで装備を拾いビルドを構築する</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-GRW-06 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-GRW-06" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1275,7 +1450,8 @@
     <li><span class="kw">前提</span><span class="st-text">決定経緯: ノーアイテム開始と自機基本攻撃は人間確定（2026-11-14）</span></li><li><span class="kw">もし</span><span class="st-text">createGameState で新規ランを開始する</span></li><li><span class="kw">ならば</span><span class="st-text">player.equipment は空配列（GEAR 0/2）で初期化され、自機の基本攻撃で初戦を戦いながらダンジョン内の宝箱や敵ドロップで装備を獲得する</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-GRW-07">
@@ -1293,8 +1469,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">宝箱または敵の低確率ドロップから装備アイテムが出現する、またはトレジャー解析スキルを育成する</span></li><li><span class="kw">ならば</span><span class="st-text">敵からは希少な確率（スキルで加算可）で装備がドロップし、出現アイテムのレベルは現在の所持装備の中で一番低いレベルを基準にランダム（トレジャー解析の品質上昇で高Lv寄り）に決まる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-GRW-07 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-GRW-07" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1310,7 +1492,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーの所持装備の中で一番低いレベルが M である（0個所持時は 1）</span></li><li><span class="kw">もし</span><span class="st-text">宝箱を開封する、雑魚敵の低確率ドロップ（基礎 1.5%・トレジャー解析で +0.5/1.0/1.5/2.3/3.5%）が成立する、または守護中ボス／大ボスを撃破する</span></li><li><span class="kw">ならば</span><span class="st-text">通常抽選は M とトレジャー解析の品質Tier(0〜5)を基準に確率配分（Tier0: 20%で max(1, M-1) / 50%で M / 22%で M+1 / 8%で M+2、Tier5: 0% / 40% / 40% / 20%）で決定され、3/6/9F守護中ボスは M+1（35%でM+2）、10F毎大ボスは M+2（35%でM+3）の装備を確定ドロップする（上限Lv10）</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
         <div class="biz-card" id="BIZ-BOS-01">
@@ -1328,8 +1511,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーがボスが待ち受ける節目階層に到達している</span></li><li><span class="kw">もし</span><span class="st-text">ボスエリアの手前にある安全部屋に足を踏み入れる</span></li><li><span class="kw">ならば</span><span class="st-text">回復の泉が配置されており、回復とビルド確認を行って「この先がボス戦だ」とわかる</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-BOS-01 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-BOS-01" data-status="Confirmed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1345,7 +1534,8 @@
     <li><span class="kw">前提</span><span class="st-text">節目ボス階層が 10F 毎（floor % 10 === 0）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが節目階層へ進入する</span></li><li><span class="kw">ならば</span><span class="st-text">敵不在の 10×10 安全前室（スタート地点＋回復の泉 fountainTile）と、2タイル通路で接続された 22×22 大部屋ボスアリーナが生成される</span></li><li><span class="kw">かつ</span><span class="st-text">回復の泉に触れると 1度だけ HP を 100% 回復し（fountainUsed = true）、ポーズ画面でビルド確認を行ってからボスアリーナへ進める</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       <section class="trace-group" data-biz-status="Disputed" data-has-inferred="false" data-has-disputed="true" data-has-unknown="false">
         <div class="biz-card" id="BIZ-BOS-02">
@@ -1363,8 +1553,14 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが節目階層（10F, 20F...）の大部屋ボスアリーナに突入している</span></li><li><span class="kw">もし</span><span class="st-text">大ボスの3種弾幕とアリーナ増援をかいくぐりながら自動迎撃でHPを削り切る</span></li><li><span class="kw">ならば</span><span class="st-text">暫定版として高Lv装備確定ドロップ＋階段解放により11F以降へエンドレス進行でき、正式なクリア祝勝モーダル・続行選択仕様は継続検討（Disputed）として扱う</span></li>
   </ul>
         </div>
-        <div class="app-branch">
-          
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-BOS-02 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
               <div class="app-card" id="APP-BOS-02" data-status="Disputed" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
@@ -1380,7 +1576,8 @@
     <li><span class="kw">前提</span><span class="st-text">プレイヤーが 10F毎（10F, 20F...）の回復の泉前室を抜けて 22×22 ボスアリーナへ足を踏み入れる</span></li><li><span class="kw">もし</span><span class="st-text">大ボス（isGrandBoss）と交戦する</span></li><li><span class="kw">ならば</span><span class="st-text">大ボスはプレイヤーLv連動HP（6.8倍 × (1+0.16×(playerLv-1))）＆ノックバック無効で4種行動（12方向環状・追尾3弾・壁2回反射6弾・予兆0.65s付き高速突進345px/s）をローテーションしつつ、覚醒中は 7.5秒間隔でアリーナ内のみへ雑魚増援を呼び出す</span></li><li><span class="kw">かつ</span><span class="st-text">撃破で階段封印解除＋高Lv装備確定ドロップとなり暫定版として 11F 以降へエンドレス進行する（正式なクリア達成モーダル・続行選択 UI は Disputed / OQ-02）</span></li>
   </ul>
               </div>
-        </div>
+          </div>
+        </details>
       </section>
       </main>
       <div class="section-empty hidden" data-empty-for="gherkin">該当するシナリオはありません。</div>
@@ -2962,7 +3159,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(12件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(13件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -3106,6 +3303,17 @@
     <a class="source-link" href="../specs/decisions.md#DEC-12" data-source-file="specs/decisions.md" data-item-id="DEC-12" title="元仕様ファイル specs/decisions.md (DEC-12)">specs/decisions.md#DEC-12</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
+      </tr>
+      <tr id="DEC-13" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-13" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-13">DEC-13</a></td>
+        <td><span class="date-pill">2026-11-16</span><div class="sub-code">先輩</div></td>
+        <td><strong>仕様書と異常系・回帰テストの責務分離ルール：(1) Gherkin（<code class="inline-code">BIZ-*</code>/<code class="inline-code">APP-*</code>）は正常系＋代表境界のみとし、HTMLでは <code class="inline-code">APP-*</code> をアコーディオン表示にする (2) 異常系・エッジケースは <code class="inline-code">INV-*</code> の1行ルールへ集約する (3) 回帰テストは実事故ベースで <code class="inline-code">[INV-*]</code> / <code class="inline-code">[APP-*]</code> 参照を必須とし、境界追加前に5カテゴリ（時間・状態 / 空間・壁衝突 / 成長・上限 / 階層・ボス進行 / 敵・武装役割）を先に整理する</strong><div class="note-text">仕様書の肥大化と意図不明なカバレッジ目的テストの量産を防ぎ、契約と再発防止の追跡性を保つため</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#INV-01">INV-01</a><a class="ref-pill ref-link" href="#INV-08">INV-08</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a></div></td>
+        <td><div class="note-text">新規の境界カテゴリが必要になった時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-13" data-source-file="specs/decisions.md" data-item-id="DEC-13" title="元仕様ファイル specs/decisions.md (DEC-13)">specs/decisions.md#DEC-13</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
       </tr></tbody>
       </table>
       <div class="section-empty hidden" data-empty-for="decisions">該当する決定ログはありません。</div>
@@ -3214,7 +3422,43 @@
       });
     });
 
-    searchBox.addEventListener('input', applyFilters);
+    searchBox.addEventListener('input', () => {
+      applyFilters();
+      const q = searchBox.value.trim().toLowerCase();
+      if (q) {
+        document.querySelectorAll('.app-accordion').forEach((acc) => {
+          const appText = (acc.querySelector('.app-branch')?.textContent || '').toLowerCase();
+          if (appText.includes(q)) acc.open = true;
+        });
+      }
+    });
+
+    const toggleAllAppsBtn = document.getElementById('toggleAllAppsBtn');
+    const appAccordions = Array.from(document.querySelectorAll('.app-accordion'));
+    let allAppsExpanded = false;
+    if (toggleAllAppsBtn) {
+      toggleAllAppsBtn.addEventListener('click', () => {
+        allAppsExpanded = !allAppsExpanded;
+        appAccordions.forEach((acc) => { acc.open = allAppsExpanded; });
+        toggleAllAppsBtn.textContent = allAppsExpanded
+          ? '⚙️ アプリ仕様をすべて折りたたむ'
+          : '⚙️ アプリ仕様をすべて開く';
+      });
+    }
+
+    function openAccordionForHash() {
+      const id = decodeURIComponent((window.location.hash || '').replace(/^#/, ''));
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (!target) return;
+      const acc = target.closest('.app-accordion');
+      if (acc) {
+        acc.open = true;
+        requestAnimationFrame(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      }
+    }
+    window.addEventListener('hashchange', openAccordionForHash);
+    openAccordionForHash();
 
     // Formula charts inside #sec-formulas only, with fallback to expression + numeric table
     (function initFormulaChartsWithFallback() {
