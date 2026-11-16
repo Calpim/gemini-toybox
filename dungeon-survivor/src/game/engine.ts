@@ -460,6 +460,27 @@ function populateFloor(
     for (let k = 0; k < count; k++) {
       let wx: number;
       let wy: number;
+      if (guardianFloor && isStairsRoom && k === 0) {
+        occupiedTiles.add(tileIndex(map, map.stairsTile.tx, map.stairsTile.ty));
+        const stairsPos = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
+        wx = stairsPos.x;
+        wy = stairsPos.y;
+        const boss = createEnemyByKind(nextId++, 'tank', wx, wy, floor, 260);
+        const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.14;
+        boss.maxHp = Math.round(boss.maxHp * 2.9 * lvScale);
+        boss.hp = boss.maxHp;
+        boss.radius += 5;
+        boss.damage = Math.round(boss.damage * 1.25);
+        boss.isRoomBoss = true;
+        boss.isStairsGuard = true;
+        boss.attackCooldown = 1.15;
+        boss.mortarCooldown = 0.6;
+        boss.bossPatternIndex = 0;
+        boss.dashState = 'none';
+        enemies.push(boss);
+        continue;
+      }
+
       if (tileCursor < freeTiles.length) {
         const tile = freeTiles[tileCursor++];
         occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
@@ -473,20 +494,7 @@ function populateFloor(
         wy = fallback.y + Math.sin(angle) * 26;
       }
 
-      if (guardianFloor && isStairsRoom && k === 0) {
-        const boss = createEnemyByKind(nextId++, 'tank', wx, wy, floor, 260);
-        const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.14;
-        boss.maxHp = Math.round(boss.maxHp * 2.9 * lvScale);
-        boss.hp = boss.maxHp;
-        boss.radius += 5;
-        boss.damage = Math.round(boss.damage * 1.25);
-        boss.isRoomBoss = true;
-        boss.isStairsGuard = true;
-        boss.attackCooldown = 1.35;
-        boss.bossPatternIndex = 0;
-        boss.dashState = 'none';
-        enemies.push(boss);
-      } else {
+      {
         const kind = pickEnemyKindForFloor(floor, rng.next());
         const spawned = createEnemyByKind(nextId++, kind, wx, wy, floor, MAX_TARGET_RANGE);
         if (isStairsRoom) {
@@ -572,6 +580,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     projectiles: [],
     enemyProjectiles: [],
     mortarZones: [],
+    bossLasers: [],
     chests: populated.chests,
     pendingEquipDrop: null,
     pickups: populated.pickups,
@@ -619,6 +628,7 @@ export function advanceToNextFloor(state: GameState): void {
   state.projectiles = [];
   state.enemyProjectiles = [];
   state.mortarZones = [];
+  state.bossLasers = [];
   state.floatingTexts = [];
   state.visualFx = [];
   state.notifications = [];
@@ -1959,7 +1969,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           state.respawnTimer = Math.min(state.respawnTimer, 2.0);
         }
         if (enemy.isRoomBoss) {
-          enemy.mortarCooldown = Math.max(enemy.mortarCooldown ?? 0, enemy.isGrandBoss ? 2.2 : 2.6);
+          enemy.mortarCooldown = Math.min(enemy.mortarCooldown ?? 0.6, 0.6);
         }
       }
     }
@@ -2265,14 +2275,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if (enemy.isRoomBoss && enemy.awake) {
       const isGrand = Boolean(enemy.isGrandBoss);
       if (wasAwake && enemy.dashState !== 'dashing' && enemy.dashState !== 'windup') {
-        enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? (isGrand ? 2.4 : 2.8)) - clampedDt);
-        const enemyTx = Math.floor(enemy.x / TILE_SIZE);
-        const enemyTy = Math.floor(enemy.y / TILE_SIZE);
-        const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
+        enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? 0.6) - clampedDt);
         const canBossMortar =
-          distToPlayer > 1e-3 &&
-          ((sameRoom && distToPlayer <= (isGrand ? 520 : 400)) ||
-            (distToPlayer <= 340 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)));
+          distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 520 : 400);
         if (canBossMortar && (enemy.mortarCooldown ?? 0) <= 0) {
           const mortarDuration = 0.85;
           const leadTime = 0.55;
@@ -2308,7 +2313,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             elapsed: 0,
             duration: mortarDuration,
           });
-          enemy.mortarCooldown = isGrand ? 3.4 : 4.0;
+          enemy.mortarCooldown = isGrand ? 2.2 : 2.6;
         }
       }
 
@@ -2336,9 +2341,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const burstCount = isGrand ? 8 : 4;
           const burstSpd = isGrand ? 195 : 170;
           const baseBurstAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+          const pSlotA = rng.int(0, burstCount - 1);
+          const pSlotB = isGrand ? (pSlotA + rng.int(1, burstCount - 1)) % burstCount : -1;
           for (let k = 0; k < burstCount; k++) {
             const ba = baseBurstAngle + (k * Math.PI * 2) / burstCount;
-            const isPiercing = isGrand && k % 4 === 0;
+            const isPiercing = k === pSlotA || k === pSlotB;
             state.enemyProjectiles.push({
               id: state.nextEntityId++,
               x: enemy.x,
@@ -2370,18 +2377,24 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             if (pattern === 0) {
               const count = isGrand ? 12 : 8;
               const spd = isGrand ? 195 : 172;
+              const pierceCount = isGrand ? 3 : 2;
+              const pierceStart = rng.int(0, count - 1);
+              const pierceStep = Math.floor(count / pierceCount);
               for (let k = 0; k < count; k++) {
                 const a = aimAngle + (k * Math.PI * 2) / count;
+                const isPiercing = ((k - pierceStart + count) % pierceStep === 0) &&
+                  Math.floor(((k - pierceStart + count) % count) / pierceStep) < pierceCount;
                 state.enemyProjectiles.push({
                   id: state.nextEntityId++,
                   x: enemy.x,
                   y: enemy.y,
                   vx: Math.cos(a) * spd,
                   vy: Math.sin(a) * spd,
-                  radius: 6,
+                  radius: isPiercing ? 6.5 : 6,
                   damage: dmgVal,
                   life: 2.1,
-                  color: isGrand ? '#f43f5e' : '#fb7185',
+                  pierceDefense: isPiercing,
+                  color: isPiercing ? '#e879f9' : isGrand ? '#f43f5e' : '#fb7185',
                 });
               }
             } else if (pattern === 1) {
@@ -2408,22 +2421,76 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                 });
               }
             } else if (pattern === 2) {
-              const count = isGrand ? 6 : 4;
-              const spd = isGrand ? 190 : 168;
-              for (let k = 0; k < count; k++) {
-                const a = aimAngle + (k - (count - 1) / 2) * 0.34;
-                state.enemyProjectiles.push({
+              if (isGrand) {
+                const leadPx = player.x + (player.velX ?? 0) * 0.45;
+                const leadPy = player.y + (player.velY ?? 0) * 0.45;
+                const laserAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
+                let ldx = Math.cos(laserAngle);
+                let ldy = Math.sin(laserAngle);
+                let lx = enemy.x;
+                let ly = enemy.y;
+                const points: Vec2[] = [{ x: lx, y: ly }];
+                const stepSize = 6;
+                let bounces = 0;
+                const maxBounces = 2;
+                let traveled = 0;
+                const maxLaserDist = 1800;
+                while (traveled < maxLaserDist) {
+                  const nx = lx + ldx * stepSize;
+                  const ny = ly + ldy * stepSize;
+                  if (isWallAtWorld(map, nx, ny)) {
+                    points.push({ x: lx, y: ly });
+                    if (bounces >= maxBounces) break;
+                    const hitX = isWallAtWorld(map, nx, ly);
+                    const hitY = isWallAtWorld(map, lx, ny);
+                    if (hitX) ldx = -ldx;
+                    if (hitY) ldy = -ldy;
+                    if (!hitX && !hitY) {
+                      ldx = -ldx;
+                      ldy = -ldy;
+                    }
+                    bounces++;
+                  } else {
+                    lx = nx;
+                    ly = ny;
+                  }
+                  traveled += stepSize;
+                }
+                if (points.length === 1 || Math.hypot(lx - points[points.length - 1].x, ly - points[points.length - 1].y) > 4) {
+                  points.push({ x: lx, y: ly });
+                }
+                if (!state.bossLasers) state.bossLasers = [];
+                state.bossLasers.push({
                   id: state.nextEntityId++,
-                  x: enemy.x,
-                  y: enemy.y,
-                  vx: Math.cos(a) * spd,
-                  vy: Math.sin(a) * spd,
-                  radius: 6,
-                  damage: dmgVal,
-                  life: 2.8,
-                  bouncesLeft: isGrand ? 2 : 1,
-                  color: '#fbbf24',
+                  points,
+                  width: 11,
+                  damage: Math.round(enemy.damage * 1.15),
+                  elapsed: 0,
+                  windup: 0.65,
+                  duration: 0.92,
+                  hitPlayer: false,
                 });
+              } else {
+                const count = 4;
+                const spd = 168;
+                const pSlotA = rng.int(0, count - 1);
+                for (let k = 0; k < count; k++) {
+                  const a = aimAngle + (k - (count - 1) / 2) * 0.34;
+                  const isPiercing = k === pSlotA;
+                  state.enemyProjectiles.push({
+                    id: state.nextEntityId++,
+                    x: enemy.x,
+                    y: enemy.y,
+                    vx: Math.cos(a) * spd,
+                    vy: Math.sin(a) * spd,
+                    radius: isPiercing ? 6.5 : 6,
+                    damage: dmgVal,
+                    life: 2.8,
+                    bouncesLeft: 1,
+                    pierceDefense: isPiercing,
+                    color: isPiercing ? '#e879f9' : '#fbbf24',
+                  });
+                }
               }
             } else {
               const leadPx = player.x + (player.velX ?? 0) * 0.35;
@@ -2659,6 +2726,65 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           }
           applyTacticalStepOnHit(state, mods, zone.targetX, zone.targetY, 0.5);
         }
+      }
+    }
+  }
+
+  // 9d. Grand Boss wall-reflecting laser beams (telegraph windup -> active beam hit check)
+  if (state.bossLasers && state.bossLasers.length > 0) {
+    for (let i = state.bossLasers.length - 1; i >= 0; i--) {
+      const laser = state.bossLasers[i];
+      laser.elapsed += clampedDt;
+      if (laser.elapsed >= laser.windup && !laser.hitPlayer && player.invulnTimer <= 0) {
+        let minDist = Infinity;
+        for (let p = 0; p < laser.points.length - 1; p++) {
+          const a = laser.points[p];
+          const b = laser.points[p + 1];
+          const abx = b.x - a.x;
+          const aby = b.y - a.y;
+          const abLenSq = abx * abx + aby * aby;
+          const t =
+            abLenSq > 1e-6
+              ? Math.max(0, Math.min(1, ((player.x - a.x) * abx + (player.y - a.y) * aby) / abLenSq))
+              : 0;
+          const cx = a.x + abx * t;
+          const cy = a.y + aby * t;
+          minDist = Math.min(minDist, Math.hypot(player.x - cx, player.y - cy));
+        }
+        if (minDist <= player.radius + laser.width * 0.5) {
+          laser.hitPlayer = true;
+          if (mods.hasAegisParry && player.aegisCooldown <= 0) {
+            player.aegisCooldown = mods.aegisCooldown;
+            player.invulnTimer = 0.6;
+            state.floatingTexts.push({
+              x: player.x,
+              y: player.y - 20,
+              text: 'PARRY!',
+              color: '#34d399',
+              life: 0.7,
+              maxLife: 0.7,
+            });
+          } else {
+            player.hp = Math.max(0, player.hp - laser.damage);
+            state.floatingTexts.push({
+              x: player.x,
+              y: player.y - player.radius - 6,
+              text: `-${laser.damage}`,
+              color: '#f43f5e',
+              life: 0.7,
+              maxLife: 0.7,
+            });
+            if (player.hp <= 0) {
+              state.status = 'gameover';
+              return;
+            }
+            const origin = laser.points[0] ?? { x: player.x, y: player.y };
+            applyTacticalStepOnHit(state, mods, origin.x, origin.y, 0.5);
+          }
+        }
+      }
+      if (laser.elapsed >= laser.duration) {
+        state.bossLasers.splice(i, 1);
       }
     }
   }

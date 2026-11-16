@@ -130,6 +130,17 @@ export interface MortarZoneState {
   duration: number;
 }
 
+export interface BossLaserState {
+  id: number;
+  points: Vec2[];
+  width: number;
+  damage: number;
+  elapsed: number;
+  windup: number;
+  duration: number;
+  hitPlayer: boolean;
+}
+
 export interface ChestState {
   id: number;
   x: number;
@@ -204,6 +215,7 @@ export interface GameState {
   projectiles: ProjectileState[];
   enemyProjectiles: EnemyProjectileState[];
   mortarZones: MortarZoneState[];
+  bossLasers?: BossLaserState[];
   chests: ChestState[];
   pendingEquipDrop: PendingEquipDrop | null;
   pickups: PickupState[];

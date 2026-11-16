@@ -2062,12 +2062,12 @@
         <td><a class="id-pill id-doc" href="#PRM-14">PRM-14</a></td>
         <td><span class="cat-pill">敵・階段</span></td>
         <td><strong>守護中ボス補正・出現階層 (<code class="inline-code">GUARDIAN</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体) / HP×2.9×(1+0.14×(playerLv-1)) / 攻撃×1.25 / ノックバック無効 / CD 1.85s (8方向・拡散追尾4・壁反射4・偏差突進410px/s×0.50s+着地4方向弾) + 独立偏差迫撃砲(CD4.0s) / 最低Lv+1(+1確率35%)確定ドロップ</code></span></td>
+        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体・階段上配置) / HP×2.9×(1+0.14×(playerLv-1)) / 攻撃×1.25 / ノックバック無効 / CD 1.85s (8方向(2発貫通)・拡散追尾4(非貫通)・壁反射4(1発貫通)・偏差突進410px/s×0.50s+着地4方向弾(1発貫通)) + 独立偏差迫撃砲(CD2.6s・壁越し可) / 最低Lv+1(+1確率35%)確定ドロップ</code></span></td>
         <td><code class="inline-code">階層・倍率・秒</code></td>
-        <td><div class="note-text">中ボス耐久強化＋ノックバック無効＋強化突進・拡散追尾・独立迫撃砲により緊迫感のある節目前の腕試しを作るため（数値係数はAI仮提案）</div></td>
+        <td><div class="note-text">中ボスを階段上へ配置して通路引き撃ちを防ぎつつ、強化突進・貫通混在弾幕・高頻度迫撃砲で緊迫感のある節目前の腕試しを作るため（数値係数はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L390-L435,L2264-L2410</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L460-L490,L2264-L2435</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-14" data-source-file="specs/parameters.md" data-item-id="PRM-14" title="元仕様ファイル specs/parameters.md (PRM-14)">specs/parameters.md#PRM-14</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2286,12 +2286,12 @@
         <td><a class="id-pill id-doc" href="#PRM-30">PRM-30</a></td>
         <td><span class="cat-pill">階層・ボス</span></td>
         <td><strong>節目大ボス（<code class="inline-code">GRAND BOSS</code>）補正・4種行動・独立迫撃砲・報酬（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">HP×6.8×(1+0.16×(playerLv-1)) / 速度×1.15(下限58) / 攻撃×1.35 / 索敵380px / ノックバック無効 / CD 1.35s (12方向環状・拡散追尾6(防壁貫通なし)・壁2回反射6・予兆0.52s偏差突進460px/s×0.55s+着地8方向弾) + 独立偏差迫撃砲(CD3.4s) / 最低Lv+2(+1確率35%)装備確定・120EXP・60HP</code></span></td>
+        <td><span class="param-val"><code class="inline-code">HP×6.8×(1+0.16×(playerLv-1)) / 速度×1.15(下限58) / 攻撃×1.35 / 索敵380px / ノックバック無効 / CD 1.35s (12方向環状(3発貫通)・拡散追尾6(非貫通)・壁2回反射偏差レーザー(予兆0.65s+照射0.27s)・予兆0.52s偏差突進460px/s×0.55s+着地8方向弾(2発貫通)) + 独立偏差迫撃砲(CD2.2s・壁越し可) / 最低Lv+2(+1確率35%)装備確定・120EXP・60HP</code></span></td>
         <td><code class="inline-code">倍率・px・秒・Lv</code></td>
-        <td><div class="note-text">大ボスが雑魚の強み（偏差迫撃砲・高頻度増援）と高速偏差突進・広域拡散追尾を併せ持ち、雑魚弾幕に負けないボス戦の手応えを作るため（AI仮数値）</div></td>
+        <td><div class="note-text">大ボスが雑魚の強み（偏差迫撃砲・高頻度増援・一部貫通弾）と壁反射偏差レーザー・高速偏差突進・広域拡散追尾を併せ持ち、雑魚弾幕に負けないボス戦の手応えを作るため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L336-L360,L2264-L2410</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L336-L360,L2264-L2480</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-30" data-source-file="specs/parameters.md" data-item-id="PRM-30" title="元仕様ファイル specs/parameters.md (PRM-30)">specs/parameters.md#PRM-30</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>

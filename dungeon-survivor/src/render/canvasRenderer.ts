@@ -625,6 +625,39 @@ export function renderGame(
     ctx.restore();
   }
 
+  // 5.6. Grand Boss wall-reflecting laser beams (telegraph -> high-energy beam)
+  for (const laser of state.bossLasers ?? []) {
+    if (laser.points.length < 2) continue;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(laser.points[0].x, laser.points[0].y);
+    for (let p = 1; p < laser.points.length; p++) {
+      ctx.lineTo(laser.points[p].x, laser.points[p].y);
+    }
+    if (laser.elapsed < laser.windup) {
+      const progress = Math.max(0, Math.min(1, laser.elapsed / Math.max(0.01, laser.windup)));
+      ctx.strokeStyle = `rgba(244, 63, 94, ${0.35 + progress * 0.5})`;
+      ctx.lineWidth = 1.8 + progress * 2.2;
+      ctx.setLineDash([8, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      const activeSpan = Math.max(0.01, laser.duration - laser.windup);
+      const fade = Math.max(0, 1 - (laser.elapsed - laser.windup) / activeSpan);
+      ctx.globalAlpha = 0.35 + fade * 0.65;
+      ctx.strokeStyle = '#e879f9';
+      ctx.lineWidth = laser.width * 1.9;
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fdf4ff';
+      ctx.lineWidth = laser.width * 0.65;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // 6. Visual FX (Thick crescent Slash / Lightning / Pulse)
   for (const fx of state.visualFx) {
     const alpha = Math.max(0, fx.life / fx.maxLife);

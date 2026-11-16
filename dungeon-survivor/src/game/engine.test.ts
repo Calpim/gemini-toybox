@@ -1138,8 +1138,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     state.player.y = grandBoss!.y;
     grandBoss!.awake = true;
     grandBoss!.attackCooldown = 0.01;
-    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 0: 12-way ring
+    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 0: 12-way ring (with piercing shots)
     expect(state.enemyProjectiles.length).toBeGreaterThanOrEqual(12);
+    expect(state.enemyProjectiles.some((p) => p.pierceDefense)).toBe(true);
 
     state.enemyProjectiles = [];
     grandBoss!.attackCooldown = 0.01;
@@ -1149,9 +1150,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(homingOrbs.every((p) => !p.pierceDefense)).toBe(true);
 
     state.enemyProjectiles = [];
+    state.bossLasers = [];
     grandBoss!.attackCooldown = 0.01;
-    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 2: wall-bouncing shots
-    expect(state.enemyProjectiles.some((p) => (p.bouncesLeft ?? 0) >= 2)).toBe(true);
+    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 2: wall-reflecting lead laser
+    expect((state.bossLasers ?? []).length).toBeGreaterThanOrEqual(1);
+    expect(state.bossLasers![0].points.length).toBeGreaterThanOrEqual(3);
 
     // pattern 3: high-speed dash (windup -> dashing movement -> landing burst) + independent mortar
     state.enemyProjectiles = [];
@@ -1201,6 +1204,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const guardian = floor3.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss);
     expect(guardian).toBeDefined();
     expect(guardian!.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.9));
+    const guardianStairs = tileCenterWorld(floor3.map.stairsTile.tx, floor3.map.stairsTile.ty);
+    expect(guardian!.x).toBeCloseTo(guardianStairs.x, 1);
+    expect(guardian!.y).toBeCloseTo(guardianStairs.y, 1);
 
     const kbState = createGameState({ seed: 961 });
     kbState.chests = [];
