@@ -2,7 +2,7 @@ import type { DungeonMap } from '../core/dungeon';
 import type { EquipmentId, EquippedItem } from './equipment';
 import type { SkillNodeId } from './skillTree';
 
-export type GameStatus = 'playing' | 'skill_tree' | 'equip_choice' | 'gameover';
+export type GameStatus = 'title' | 'playing' | 'skill_tree' | 'equip_choice' | 'gameover';
 
 export interface Vec2 {
   x: number;

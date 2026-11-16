@@ -54,6 +54,7 @@ import type {
   EnemyState,
   GameNotification,
   GameState,
+  GameStatus,
   MainWeaponId,
   PickupState,
   PlayerState,
@@ -89,6 +90,7 @@ export function getNormalEnemyShotStats(playerLevel: number): NormalEnemyShotSta
 export interface CreateGameOptions {
   seed?: number;
   startFloor?: number;
+  initialStatus?: GameStatus;
 }
 
 export function isPointInPlayerVision(
@@ -523,6 +525,7 @@ function populateFloor(
 export function createGameState(options: CreateGameOptions = {}): GameState {
   const seed = options.seed ?? Date.now();
   const floor = options.startFloor ?? 1;
+  const status = options.initialStatus ?? 'playing';
   const map = generateDungeon({ floor, seed });
   const startPos = tileCenterWorld(map.startTile.tx, map.startTile.ty);
   const explored = new Uint8Array(map.width * map.height);
@@ -533,7 +536,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
   return {
     seed,
     floor,
-    status: 'playing',
+    status,
     map,
     explored,
     player: {
@@ -580,7 +583,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     stairsNoticeCooldown: 0,
     fountainUsed: false,
     nextEntityId: populated.nextId,
-    floorBannerTimer: 2.2,
+    floorBannerTimer: status === 'playing' ? 2.2 : 0,
     stats: {
       kills: 0,
       floorsCleared: 0,
@@ -660,6 +663,13 @@ export function openSkillTree(state: GameState): void {
 export function closeSkillTree(state: GameState): void {
   if (state.status === 'skill_tree') {
     state.status = 'playing';
+  }
+}
+
+export function startGame(state: GameState): void {
+  if (state.status === 'title') {
+    state.status = 'playing';
+    state.floorBannerTimer = 2.2;
   }
 }
 

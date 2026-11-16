@@ -492,7 +492,7 @@
       <a class="nav-pill" href="#sec-glossary">📖 用語集 (15)</a>
       <a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (32)</a>
       <a class="nav-pill" href="#sec-formulas">🧮 計算式 (13)</a>
-      <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (11)</a>
+      <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (12)</a>
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (7)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
@@ -510,14 +510,14 @@
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">22</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">119</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">120</div></div>
         <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">30</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">6</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">1</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 22 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 112 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 113 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -2305,7 +2305,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">STATE TRANSITIONS / 状態遷移図</div>
-        <h2>🔀 状態遷移図 <span class="count-pill" data-section-count="transitions">(11件)</span></h2>
+        <h2>🔀 状態遷移図 <span class="count-pill" data-section-count="transitions">(12件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md" data-source-file="specs/state-transitions.md" data-item-id="" title="元仕様ファイル specs/state-transitions.md ()">specs/state-transitions.md</a>
@@ -2320,7 +2320,8 @@
             </div>
             <div id="mermaidDiagram" class="mermaid-diagram hidden"></div>
             <pre id="mermaidSource" class="mermaid-source"><code>stateDiagram-v2
-  [*] --&gt; playing : createGameState() (1F開始)
+  [*] --&gt; title : createGameState({ initialStatus: &#39;title&#39; }) (タイトル待機)
+  title --&gt; playing : STARTボタン / Enter / Space (1F開始)
   playing --&gt; skill_tree : ESC / K / ⏸・スキルボタン (時間停止)
   skill_tree --&gt; playing : ESC / K / 閉じるボタン
   playing --&gt; equip_choice : 現在上限（初期2/2〜最大5/5）満杯時に未所持装備取得
@@ -2465,6 +2466,18 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a></div></td>
         <td><div class="note-text">初期2枠→最大5枠。5枠到達後のLv10重複はHP/EXPボーナスへ還元</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-11" data-source-file="specs/state-transitions.md" data-item-id="ST-11" title="元仕様ファイル specs/state-transitions.md (ST-11)">specs/state-transitions.md#ST-11</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="ST-12" class="spec-row " data-section="transitions" data-status="Confirmed" data-undefined="false" data-item-id="ST-12" data-source-file="specs/state-transitions.md">
+        <td><a class="id-pill id-doc" href="#ST-12">ST-12</a></td>
+        <td><code class="inline-code">title</code></td>
+        <td>STARTボタン押下、または <code class="inline-code">Enter</code> / <code class="inline-code">Space</code> キー入力</td>
+        <td><code class="inline-code">playing（1F開始）</code></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a></div></td>
+        <td><div class="note-text"><code class="inline-code">startGame()</code> で待機状態を解除し、FLOOR 1F バナーを表示</div><div class="source-cell">
+    <a class="source-link" href="../specs/state-transitions.md#ST-12" data-source-file="specs/state-transitions.md" data-item-id="ST-12" title="元仕様ファイル specs/state-transitions.md (ST-12)">specs/state-transitions.md#ST-12</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>

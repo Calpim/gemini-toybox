@@ -23,6 +23,7 @@ import {
   SHOOTER_AGGRO_RANGE,
   acquireEquipment,
   createEnemyByKind,
+  startGame,
   createGameState,
   getNormalEnemyShotStats,
   getOrbitBitPositions,
@@ -1253,6 +1254,25 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(aegisMods.aegisCooldown).toBeGreaterThanOrEqual(4.5);
     expect(aegisMods.aegisDamage).toBe(46);
     expect(aegisMods.repulsorDamage).toBe(10);
+  });
+
+  it('freezes simulation in title status until startGame transitions to playing and shows floor banner', () => {
+    const state = createGameState({ seed: 42, initialStatus: 'title' });
+    expect(state.status).toBe('title');
+    expect(state.floorBannerTimer).toBe(0);
+
+    const startX = state.player.x;
+    stepGame(state, { x: 1, y: 0 }, 0.05);
+    expect(state.player.x).toBe(startX);
+    expect(state.elapsedFloorTime).toBe(0);
+
+    startGame(state);
+    expect(state.status).toBe('playing');
+    expect(state.floorBannerTimer).toBeGreaterThan(2.0);
+
+    stepGame(state, { x: 1, y: 0 }, 0.05);
+    expect(state.player.x).toBeGreaterThan(startX);
+    expect(state.elapsedFloorTime).toBeGreaterThan(0);
   });
 });
 

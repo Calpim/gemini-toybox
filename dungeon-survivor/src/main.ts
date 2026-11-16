@@ -2,6 +2,7 @@ import {
   closeSkillTree,
   createGameState,
   resolveEquipChoice,
+  startGame,
   stepGame,
   toggleSkillTree,
   unlockSkillNode,
@@ -25,6 +26,8 @@ const pauseBtn = document.getElementById('pauseBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
 const gearCountText = document.getElementById('gearCountText')!;
 const killsText = document.getElementById('killsText')!;
+const startModal = document.getElementById('startModal')!;
+const startBtn = document.getElementById('startBtn')!;
 const gameOverModal = document.getElementById('gameOverModal')!;
 const gameOverSummary = document.getElementById('gameOverSummary')!;
 const retryBtn = document.getElementById('retryBtn')!;
@@ -42,7 +45,7 @@ const modalEls = {
 const closeSkillBtn = document.getElementById('closeSkillBtn')!;
 const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
 
-let state: GameState = createGameState();
+let state: GameState = createGameState({ initialStatus: 'title' });
 const controller = new InputController(canvas);
 let lastRenderedModalKey = '';
 const safeInsets: { hudBottom?: number; hintTop?: number } = {};
@@ -95,6 +98,8 @@ function syncUi(forceModals = false): void {
   gearCountText.textContent = `GEAR ${player.equipment.length}/${player.maxEquipSlots}`;
   killsText.textContent = `KILLS ${stats.kills}`;
 
+  startModal.classList.toggle('hidden', state.status !== 'title');
+
   if (state.status === 'gameover') {
     gameOverModal.classList.remove('hidden');
     gameOverSummary.textContent = `到達階層: ${floor}F / 撃破数: ${stats.kills} / LV: ${player.level}`;
@@ -122,6 +127,11 @@ function syncUi(forceModals = false): void {
   }
 }
 
+startBtn.addEventListener('click', () => {
+  startGame(state);
+  syncUi(true);
+});
+
 pauseBtn.addEventListener('click', () => {
   toggleSkillTree(state);
   syncUi(true);
@@ -143,6 +153,12 @@ scrapEquipBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('keydown', (e) => {
+  if (state.status === 'title' && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    startGame(state);
+    syncUi(true);
+    return;
+  }
   if (e.key === 'Escape' || e.key.toLowerCase() === 'k') {
     if (state.status === 'playing' || state.status === 'skill_tree') {
       if (e.key === 'Escape') e.preventDefault();
