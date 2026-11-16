@@ -18,10 +18,57 @@ import type { VirtualStickState } from '../input/controller';
 
 export const TARGET_VIEW_WORLD_WIDTH = 840; // ~21 tiles across on desktop/web
 
+export interface HudSafeInsets {
+  /** Bottom Y coordinate (in CSS px) of the top HUD bar */
+  hudBottom?: number;
+  /** Top Y coordinate (in CSS px) of the bottom hint bar */
+  hintTop?: number;
+}
+
+export interface NotificationLayout {
+  isCompact: boolean;
+  boxHeight: number;
+  gap: number;
+  fontSize: number;
+  minWidth: number;
+  maxWidth: number;
+  bottomAnchorY: number;
+}
+
 export function computeCameraZoom(viewportWidth: number, viewportHeight: number): number {
   const widthZoom = Math.max(0.72, viewportWidth / TARGET_VIEW_WORLD_WIDTH);
   const heightMaxZoom = Math.max(0.72, viewportHeight / 480);
   return Math.min(2.4, widthZoom, heightMaxZoom);
+}
+
+export function computeTopSafeY(canvasWidth: number, hudBottom?: number): number {
+  if (typeof hudBottom === 'number' && Number.isFinite(hudBottom) && hudBottom > 0) {
+    return Math.ceil(hudBottom + 10);
+  }
+  return canvasWidth < 540 ? 104 : 74;
+}
+
+export function computeNotificationLayout(
+  canvasWidth: number,
+  canvasHeight: number,
+  hintTop?: number
+): NotificationLayout {
+  const isCompact = canvasWidth < 540;
+  const defaultHintTop = canvasHeight - 38;
+  const safeHintTop =
+    typeof hintTop === 'number' && Number.isFinite(hintTop) && hintTop > 0
+      ? Math.min(hintTop, canvasHeight)
+      : defaultHintTop;
+  const bottomAnchorY = Math.max(80, Math.floor(safeHintTop - 10));
+  return {
+    isCompact,
+    boxHeight: isCompact ? 22 : 26,
+    gap: isCompact ? 4 : 5,
+    fontSize: isCompact ? 11 : 12,
+    minWidth: isCompact ? 140 : 190,
+    maxWidth: Math.max(120, canvasWidth - (isCompact ? 36 : 48)),
+    bottomAnchorY,
+  };
 }
 
 let fogCanvas: HTMLCanvasElement | null = null;
@@ -273,11 +320,13 @@ export function renderGame(
   height: number,
   state: GameState,
   stick: VirtualStickState,
-  nowSec: number
+  nowSec: number,
+  insets: HudSafeInsets = {}
 ): void {
   const { map, player, explored } = state;
   const mods = computeSkillModifiers(player.skillLevels);
   const stairsLockCount = getStairsLockCount(state);
+  const topSafeY = computeTopSafeY(width, insets.hudBottom);
 
   ctx.fillStyle = '#050811';
   ctx.fillRect(0, 0, width, height);
@@ -717,8 +766,8 @@ export function renderGame(
   // 10.5. Fog of War overlay (corridor circular light vs lit room)
   renderFogOverlay(ctx, width, height, zoom, camX, camY, state);
 
-  // 11. Mini-map (top-right, responsive for smartphone portrait)
-  renderMinimap(ctx, width, state);
+  // 11. Mini-map (top-right, below HUD)
+  renderMinimap(ctx, width, state, topSafeY);
 
   // 12. Virtual joystick indicator (if active)
   if (stick.active) {
@@ -741,8 +790,8 @@ export function renderGame(
     ctx.fill();
   }
 
-  // 13. Toast Notifications (Level-up & Scout Alert) & Floor entry banner
-  renderNotifications(ctx, width, state);
+  // 13. Toast Notifications (bottom, compact on narrow screens) & Floor entry banner (top, below HUD)
+  renderNotifications(ctx, width, height, state, insets.hintTop);
 
   if (state.floorBannerTimer > 0) {
     const isBoss = map.floorType === 'boss';
@@ -753,17 +802,20 @@ export function renderGame(
       ? `GUARDIAN ${state.floor}F`
       : `FLOOR ${state.floor}F`;
     const borderColor = isBoss ? '#f43f5e' : isGuardian ? '#facc15' : '#38bdf8';
+    const bannerW = Math.min(270, Math.max(180, width - 32));
+    const bannerX = width / 2 - bannerW / 2;
+    const bannerY = topSafeY;
 
     ctx.save();
     ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    ctx.fillRect(width / 2 - 135, 74, 270, 42);
+    ctx.fillRect(bannerX, bannerY, bannerW, 42);
     ctx.strokeStyle = borderColor;
-    ctx.strokeRect(width / 2 - 135, 74, 270, 42);
+    ctx.strokeRect(bannerX, bannerY, bannerW, 42);
     ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 18px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(bannerText, width / 2, 101);
+    ctx.fillText(bannerText, width / 2, bannerY + 27);
     ctx.restore();
   }
 }
@@ -854,36 +906,51 @@ function renderFogOverlay(
 function renderNotifications(
   ctx: CanvasRenderingContext2D,
   width: number,
-  state: GameState
+  height: number,
+  state: GameState,
+  hintTop?: number
 ): void {
   if (state.notifications.length === 0) return;
 
+  const layout = computeNotificationLayout(width, height, hintTop);
   ctx.save();
-  let y = state.floorBannerTimer > 0 ? 126 : 74;
-  ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.font = `bold ${layout.fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-  for (let i = state.notifications.length - 1; i >= 0; i--) {
+  let bottomY = layout.bottomAnchorY;
+  const startIdx = state.notifications.length - 1;
+  const minIdx = Math.max(0, state.notifications.length - 3);
+
+  for (let i = startIdx; i >= minIdx; i--) {
     const n = state.notifications[i];
-    const alpha = Math.min(1, n.life * 2);
-    const tw = Math.min(width - 28, Math.max(210, ctx.measureText(n.text).width + 28));
+    const alpha = Math.min(1, n.life * 2.5);
+    const padX = layout.isCompact ? 18 : 24;
+    const tw = Math.min(layout.maxWidth, Math.max(layout.minWidth, ctx.measureText(n.text).width + padX));
     const x = width / 2 - tw / 2;
+    const boxY = bottomY - layout.boxHeight;
+    if (boxY < 0) break;
 
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = n.kind === 'alert' ? 'rgba(69, 10, 10, 0.9)' : 'rgba(15, 23, 42, 0.9)';
-    ctx.fillRect(x, y, tw, 30);
+    ctx.fillStyle = n.kind === 'alert' ? 'rgba(69, 10, 10, 0.82)' : 'rgba(15, 23, 42, 0.78)';
+    ctx.fillRect(x, boxY, tw, layout.boxHeight);
     ctx.strokeStyle = n.color;
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(x, y, tw, 30);
+    ctx.lineWidth = layout.isCompact ? 1.25 : 1.5;
+    ctx.strokeRect(x, boxY, tw, layout.boxHeight);
 
     ctx.fillStyle = n.kind === 'alert' ? '#fed7aa' : '#f8fafc';
-    ctx.fillText(n.text, width / 2, y + 19);
-    y += 36;
+    ctx.fillText(n.text, width / 2, boxY + layout.boxHeight / 2 + 0.5, tw - 12);
+    bottomY -= layout.boxHeight + layout.gap;
   }
   ctx.restore();
 }
 
-function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state: GameState): void {
+function renderMinimap(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  state: GameState,
+  topSafeY: number
+): void {
   const { map, explored, player } = state;
   const stairsLocked = getStairsLockCount(state) > 0;
   const isNarrow = canvasWidth < 540;
@@ -891,7 +958,7 @@ function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state
   const mapW = map.width * cell;
   const mapH = map.height * cell;
   const ox = canvasWidth - mapW - 12;
-  const oy = isNarrow ? 94 : 64;
+  const oy = topSafeY;
 
   ctx.save();
   ctx.fillStyle = 'rgba(7, 11, 20, 0.78)';

@@ -129,7 +129,7 @@ export function pushNotification(
   kind: GameNotification['kind'],
   text: string,
   color: string,
-  life = 2.6
+  life = 2.0
 ): void {
   if (kind === 'alert') {
     const existingAlert = state.notifications.find((n) => n.kind === 'alert' && n.life > 1.2);

@@ -14,6 +14,8 @@ import { renderModals } from './ui/modals';
 
 const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+const hudEl = document.querySelector('.hud') as HTMLElement | null;
+const hintEl = document.querySelector('.hint') as HTMLElement | null;
 const hpText = document.getElementById('hpText')!;
 const hpFill = document.getElementById('hpFill')!;
 const expText = document.getElementById('expText')!;
@@ -43,6 +45,18 @@ const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
 let state: GameState = createGameState();
 const controller = new InputController(canvas);
 let lastRenderedModalKey = '';
+const safeInsets: { hudBottom?: number; hintTop?: number } = {};
+
+function updateSafeInsets(): void {
+  if (hudEl) safeInsets.hudBottom = hudEl.getBoundingClientRect().bottom;
+  if (hintEl) safeInsets.hintTop = hintEl.getBoundingClientRect().top;
+}
+
+if (typeof ResizeObserver !== 'undefined') {
+  const observer = new ResizeObserver(updateSafeInsets);
+  if (hudEl) observer.observe(hudEl);
+  if (hintEl) observer.observe(hintEl);
+}
 
 function resizeCanvas(): void {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -53,6 +67,7 @@ function resizeCanvas(): void {
   canvas.style.width = `${w}px`;
   canvas.style.height = `${h}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  updateSafeInsets();
 }
 
 function getModalKey(): string {
@@ -151,7 +166,7 @@ function loop(now: number): void {
   lastTime = now;
 
   stepGame(state, controller.getMoveVector(), dt);
-  renderGame(ctx, window.innerWidth, window.innerHeight, state, controller.stick, now / 1000);
+  renderGame(ctx, window.innerWidth, window.innerHeight, state, controller.stick, now / 1000, safeInsets);
   syncUi();
 
   requestAnimationFrame(loop);
