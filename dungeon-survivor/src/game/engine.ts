@@ -1414,6 +1414,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         let reflectedCount = 0;
         for (let bIdx = state.enemyProjectiles.length - 1; bIdx >= 0; bIdx--) {
           const ep = state.enemyProjectiles[bIdx];
+          if (ep.pierceDefense) continue;
           if (Math.hypot(ep.x - player.x, ep.y - player.y) > cappedRange + ep.radius) continue;
           if (!hasLineOfSight(player.x, player.y, ep.x, ep.y, map)) continue;
           const ba = Math.atan2(ep.y - player.y, ep.x - player.x);
@@ -1528,6 +1529,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           speed: discStats.speed,
           homingTurnRate: discStats.homingTurnRate,
           spinAngle: 0,
+          traveledDist: 0,
+          maxDistance: Math.min(480, Math.round(range * 2.6)),
           hitEnemyIds: [],
           color: def.color,
         });
@@ -1590,9 +1593,13 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       state.enemyProjectiles.splice(i, 1);
       continue;
     }
-    const blockedByBit = bits.some((bit) => Math.hypot(bit.x - ep.x, bit.y - ep.y) <= ep.radius + 10);
-    if (blockedByBit) {
-      state.enemyProjectiles.splice(i, 1);
+    if (!ep.pierceDefense) {
+      const blockedByBit = bits.some(
+        (bit) => Math.hypot(bit.x - ep.x, bit.y - ep.y) <= ep.radius + 10
+      );
+      if (blockedByBit) {
+        state.enemyProjectiles.splice(i, 1);
+      }
     }
   }
 
@@ -1683,6 +1690,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             proj.wallBouncesLeft = (proj.wallBouncesLeft ?? 0) - 1;
           }
         }
+        proj.traveledDist = (proj.traveledDist ?? 0) + Math.hypot(nx - proj.x, ny - proj.y);
         proj.x = nx;
         proj.y = ny;
       }
@@ -1691,7 +1699,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       proj.y += proj.vy * clampedDt;
     }
 
-    if (proj.life <= 0 || isWallAtWorld(map, proj.x, proj.y)) {
+    const exceededDist =
+      proj.maxDistance !== undefined && (proj.traveledDist ?? 0) >= proj.maxDistance;
+    if (proj.life <= 0 || exceededDist || isWallAtWorld(map, proj.x, proj.y)) {
       state.projectiles.splice(i, 1);
       continue;
     }
@@ -2191,15 +2201,18 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const baseOffset = shotIdx * angleStep;
           for (let k = 0; k < dirCount; k++) {
             const angle = baseOffset + (k * Math.PI * 2) / dirCount;
+            const isPiercing = dirCount >= 6 ? k % 3 === 0 : k === 0;
             state.enemyProjectiles.push({
               id: state.nextEntityId++,
               x: enemy.x,
               y: enemy.y,
               vx: Math.cos(angle) * projSpeed,
               vy: Math.sin(angle) * projSpeed,
-              radius: 5,
+              radius: isPiercing ? 5.5 : 5,
               damage: enemy.damage,
               life: 1.85,
+              pierceDefense: isPiercing,
+              color: isPiercing ? '#e879f9' : undefined,
             });
           }
           enemy.bossPatternIndex = (shotIdx + 1) % 16;
@@ -2339,6 +2352,19 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const steerDist = Math.hypot(sdx, sdy);
       let moveX = steerDist > 1e-3 ? (sdx / steerDist) * effectiveSpeed : 0;
       let moveY = steerDist > 1e-3 ? (sdy / steerDist) * effectiveSpeed : 0;
+
+      if (enemy.kind === 'tank' && !enemy.isRoomBoss) {
+        if (distToPlayer < 125) {
+          const rdx = enemy.x - player.x;
+          const rdy = enemy.y - player.y;
+          const rDist = Math.hypot(rdx, rdy);
+          moveX = rDist > 1e-3 ? (rdx / rDist) * effectiveSpeed : 0;
+          moveY = rDist > 1e-3 ? (rdy / rDist) * effectiveSpeed : 0;
+        } else if (distToPlayer <= 175 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)) {
+          moveX = 0;
+          moveY = 0;
+        }
+      }
 
       for (let j = 0; j < state.enemies.length; j++) {
         if (i === j) continue;

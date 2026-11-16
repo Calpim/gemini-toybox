@@ -1324,6 +1324,84 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.x).toBeGreaterThan(startX);
     expect(state.elapsedFloorTime).toBeGreaterThan(0);
   });
+
+  it('expires ricochet_disc after maxDistance, makes tank retreat at close range, and mixes pierceDefense shots in shooter', () => {
+    // 1. Disc expires when traveledDist reaches maxDistance
+    const distState = createGameState({ seed: 981 });
+    distState.chests = [];
+    distState.pickups = [];
+    distState.enemies = [];
+    distState.map.tiles.fill('floor');
+    distState.player.baseAttackCooldown = 999;
+    distState.projectiles.push({
+      id: 9901,
+      kind: 'disc',
+      x: distState.player.x,
+      y: distState.player.y,
+      vx: 360,
+      vy: 0,
+      radius: 7,
+      damage: 18,
+      life: 3.0,
+      pierce: false,
+      bouncesLeft: 3,
+      wallBouncesLeft: 3,
+      speed: 360,
+      traveledDist: 0,
+      maxDistance: 120,
+      hitEnemyIds: [],
+      color: '#facc15',
+    });
+    for (let f = 0; f < 25; f++) {
+      stepGame(distState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(distState.projectiles.some((p) => p.id === 9901)).toBe(false);
+
+    // 2. Tank retreats when player is closer than 125px
+    const tankState = createGameState({ seed: 982 });
+    tankState.chests = [];
+    tankState.pickups = [];
+    tankState.map.tiles.fill('floor');
+    tankState.player.baseAttackCooldown = 999;
+    const tank = createEnemyByKind(9902, 'tank', tankState.player.x + 80, tankState.player.y, 2);
+    tank.awake = true;
+    tank.attackCooldown = 5;
+    tankState.enemies = [tank];
+    const startTankX = tank.x;
+    for (let f = 0; f < 20; f++) {
+      stepGame(tankState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(tank.x).toBeGreaterThan(startTankX);
+
+    // 3. Shooter emits pierceDefense shots that bypass pulse_blade reflection and orbit_shield clearing
+    const pierceState = createGameState({ seed: 983, startFloor: 2 });
+    pierceState.chests = [];
+    pierceState.pickups = [];
+    pierceState.map.tiles.fill('floor');
+    pierceState.player.baseAttackCooldown = 999;
+    pierceState.player.equipment = [
+      createEquippedItem('pulse_blade', 3),
+      createEquippedItem('orbit_shield', 4),
+    ];
+    const shooter = createEnemyByKind(9903, 'shooter', pierceState.player.x + 150, pierceState.player.y, 2);
+    shooter.awake = true;
+    shooter.attackCooldown = 0.01;
+    pierceState.enemies = [shooter];
+    stepGame(pierceState, { x: 0, y: 0 }, 0.02);
+    const piercingShots = pierceState.enemyProjectiles.filter((ep) => ep.pierceDefense);
+    expect(piercingShots.length).toBeGreaterThanOrEqual(1);
+
+    // Move a piercing shot directly onto player's blade & orbit shield radius; it must NOT be reflected or cleared
+    const pShot = piercingShots[0];
+    pShot.x = pierceState.player.x + 40;
+    pShot.y = pierceState.player.y;
+    pShot.vx = -50;
+    pShot.vy = 0;
+    pierceState.player.equipment[0].cooldown = 0;
+    stepGame(pierceState, { x: 0, y: 0 }, 0.016);
+    expect(pierceState.enemyProjectiles.some((ep) => ep.id === pShot.id)).toBe(true);
+    expect(pierceState.projectiles.some((p) => p.kind === 'reflected')).toBe(false);
+  });
 });
 
 

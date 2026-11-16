@@ -690,8 +690,21 @@ export function renderGame(
   // 8. Projectiles
   for (const proj of state.projectiles) {
     if (proj.kind === 'disc') {
+      const glow = 0.65 + 0.35 * Math.sin(nowSec * 14);
       ctx.save();
       ctx.translate(proj.x, proj.y);
+
+      ctx.fillStyle = `rgba(250, 204, 21, ${0.22 * glow})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, proj.radius + 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(254, 240, 138, ${0.72 * glow})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, proj.radius + 4 + glow * 2.5, 0, Math.PI * 2);
+      ctx.stroke();
+
       ctx.rotate(proj.spinAngle ?? nowSec * 14);
       ctx.strokeStyle = proj.color;
       ctx.lineWidth = 2.5;
@@ -725,12 +738,18 @@ export function renderGame(
 
   for (const ep of state.enemyProjectiles) {
     if (!isPointInPlayerVision(map, player.x, player.y, ep.x, ep.y)) continue;
+    if (ep.pierceDefense) {
+      ctx.fillStyle = 'rgba(232, 121, 249, 0.28)';
+      ctx.beginPath();
+      ctx.arc(ep.x, ep.y, ep.radius + 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.fillStyle = ep.color ?? '#fb7185';
     ctx.beginPath();
     ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#ffe4e6';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = ep.pierceDefense ? '#fdf4ff' : '#ffe4e6';
+    ctx.lineWidth = ep.pierceDefense ? 1.8 : 1.2;
     ctx.stroke();
   }
 
@@ -903,6 +922,22 @@ function renderFogOverlay(
     fCtx.fillStyle = ambGrad;
     fCtx.beginPath();
     fCtx.arc(esx, esy, ambR, 0, Math.PI * 2);
+    fCtx.fill();
+  }
+
+  // Illuminate surroundings of glowing ricochet discs
+  for (const proj of state.projectiles) {
+    if (proj.kind !== 'disc') continue;
+    const dsx = (proj.x - camX) * zoom;
+    const dsy = (proj.y - camY) * zoom;
+    const discR = 46 * zoom;
+    const discGrad = fCtx.createRadialGradient(dsx, dsy, discR * 0.25, dsx, dsy, discR);
+    discGrad.addColorStop(0, 'rgba(0, 0, 0, 0.92)');
+    discGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.65)');
+    discGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    fCtx.fillStyle = discGrad;
+    fCtx.beginPath();
+    fCtx.arc(dsx, dsy, discR, 0, Math.PI * 2);
     fCtx.fill();
   }
 

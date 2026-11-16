@@ -94,6 +94,8 @@ export interface ProjectileState {
   orbitTargetId?: number;
   orbitAngle?: number;
   orbitProgress?: number;
+  traveledDist?: number;
+  maxDistance?: number;
   hitEnemyIds: number[];
   color: string;
 }
@@ -109,6 +111,7 @@ export interface EnemyProjectileState {
   life: number;
   bouncesLeft?: number;
   homingRate?: number;
+  pierceDefense?: boolean;
   color?: string;
 }
 
