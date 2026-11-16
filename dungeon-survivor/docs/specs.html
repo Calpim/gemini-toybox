@@ -2062,12 +2062,12 @@
         <td><a class="id-pill id-doc" href="#PRM-14">PRM-14</a></td>
         <td><span class="cat-pill">敵・階段</span></td>
         <td><strong>守護中ボス補正・出現階層 (<code class="inline-code">GUARDIAN</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体) / HP×2.9×(1+0.14×(playerLv-1)) / 攻撃×1.25 / ノックバック無効 / CD 2.15s (8方向・追尾2・壁反射4・予兆0.72s高速突進315px/s×0.42s) / 最低Lv+1(+1確率35%)確定ドロップ</code></span></td>
+        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体) / HP×2.9×(1+0.14×(playerLv-1)) / 攻撃×1.25 / ノックバック無効 / CD 1.85s (8方向・拡散追尾4・壁反射4・偏差突進410px/s×0.50s+着地4方向弾) + 独立偏差迫撃砲(CD4.0s) / 最低Lv+1(+1確率35%)確定ドロップ</code></span></td>
         <td><code class="inline-code">階層・倍率・秒</code></td>
-        <td><div class="note-text">中ボス耐久強化＋ノックバック無効＋高速突進追加により緊迫感のある節目前の腕試しを作るため（数値係数はAI仮提案）</div></td>
+        <td><div class="note-text">中ボス耐久強化＋ノックバック無効＋強化突進・拡散追尾・独立迫撃砲により緊迫感のある節目前の腕試しを作るため（数値係数はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L390-L435,L2123-L2227</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L390-L435,L2264-L2410</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-14" data-source-file="specs/parameters.md" data-item-id="PRM-14" title="元仕様ファイル specs/parameters.md (PRM-14)">specs/parameters.md#PRM-14</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2076,12 +2076,12 @@
         <td><a class="id-pill id-doc" href="#PRM-15">PRM-15</a></td>
         <td><span class="cat-pill">敵・時間</span></td>
         <td><strong>滞在リポップ遅延・部屋限定・砲台予兆</strong></td>
-        <td><span class="param-val"><code class="inline-code">初回24s (通常 max(9, 14-(F-1)×0.8)s / ボス戦中 7.5s) / 部屋タイル限定（通路リポップ禁止） / 砲台初撃 0.95s (遮蔽後 0.75s)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">初回24s (大ボス覚醒時2.0sへ短縮 / 通常 max(9, 14-(F-1)×0.8)s / ボス戦中 5.0s・2〜3体・上限10) / 部屋タイル限定（通路リポップ禁止） / 砲台初撃 0.95s (遮蔽後 0.75s)</code></span></td>
         <td><code class="inline-code">秒・条件</code></td>
-        <td><div class="note-text">通路への固定砲台湧き詰まりを構造的に防ぎつつ、長期滞在とボス戦の緊張感を保つため（秒数はAI仮提案）</div></td>
+        <td><div class="note-text">通路への固定砲台湧き詰まりを構造的に防ぎつつ、長期滞在と大ボス戦の継続的な増援圧力を保つため（秒数はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-04">BIZ-EXP-04</a><a class="ref-pill ref-link" href="#APP-MAP-04">APP-MAP-04</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#INV-07">INV-07</a><a class="ref-pill ref-link" href="#NG-11">NG-11</a><a class="ref-pill ref-link" href="#FML-10">FML-10</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L63,L1500-L1545,L1848,L1675</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L63,L1760-L1815,L1955-L1965</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-15" data-source-file="specs/parameters.md" data-item-id="PRM-15" title="元仕様ファイル specs/parameters.md (PRM-15)">specs/parameters.md#PRM-15</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2285,13 +2285,13 @@
       <tr id="PRM-30" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-30" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-30">PRM-30</a></td>
         <td><span class="cat-pill">階層・ボス</span></td>
-        <td><strong>節目大ボス（<code class="inline-code">GRAND BOSS</code>）補正・4種行動・報酬（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">HP×6.8×(1+0.16×(playerLv-1)) / 速度×1.15(下限58) / 攻撃×1.35 / 索敵380px / ノックバック無効 / CD 1.55s (12方向環状・追尾3・壁2回反射6・予兆0.65s高速突進345px/s×0.48s) / 最低Lv+2(+1確率35%)装備確定・120EXP・60HP</code></span></td>
+        <td><strong>節目大ボス（<code class="inline-code">GRAND BOSS</code>）補正・4種行動・独立迫撃砲・報酬（AI仮数値）</strong></td>
+        <td><span class="param-val"><code class="inline-code">HP×6.8×(1+0.16×(playerLv-1)) / 速度×1.15(下限58) / 攻撃×1.35 / 索敵380px / ノックバック無効 / CD 1.35s (12方向環状・拡散追尾6(防壁貫通なし)・壁2回反射6・予兆0.52s偏差突進460px/s×0.55s+着地8方向弾) + 独立偏差迫撃砲(CD3.4s) / 最低Lv+2(+1確率35%)装備確定・120EXP・60HP</code></span></td>
         <td><code class="inline-code">倍率・px・秒・Lv</code></td>
-        <td><div class="note-text">大ボス耐久引き上げ＋高速突進追加により、弾幕回避とボス本体の接近回避を両立させるため（AI仮数値）</div></td>
+        <td><div class="note-text">大ボスが雑魚の強み（偏差迫撃砲・高頻度増援）と高速偏差突進・広域拡散追尾を併せ持ち、雑魚弾幕に負けないボス戦の手応えを作るため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L336-L360,L2123-L2227</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L336-L360,L2264-L2410</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-30" data-source-file="specs/parameters.md" data-item-id="PRM-30" title="元仕様ファイル specs/parameters.md (PRM-30)">specs/parameters.md#PRM-30</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>

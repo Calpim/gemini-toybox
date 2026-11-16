@@ -1766,8 +1766,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss && activeGrandBoss.awake);
 
   if (state.respawnTimer <= 0) {
-    state.respawnTimer = isBossArenaFloor ? 7.5 : Math.max(9, 14 - (state.floor - 1) * 0.8);
-    if (canRespawnOnFloor && state.enemies.length < maxAlive) {
+    state.respawnTimer = isBossArenaFloor ? 5.0 : Math.max(9, 14 - (state.floor - 1) * 0.8);
+    const nonBossAlive = isBossArenaFloor
+      ? state.enemies.filter((e) => !e.isRoomBoss && !e.isGrandBoss).length
+      : state.enemies.length;
+    const arenaCap = isBossArenaFloor ? 10 : maxAlive;
+    if (canRespawnOnFloor && state.enemies.length < maxAlive && (!isBossArenaFloor || nonBossAlive < arenaCap)) {
       const occupied = new Set<number>();
       for (const e of state.enemies) {
         occupied.add(tileIndex(map, Math.floor(e.x / TILE_SIZE), Math.floor(e.y / TILE_SIZE)));
@@ -1791,7 +1795,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         }
       }
       if (candidates.length > 0) {
-        const spawnCount = Math.min(candidates.length, maxAlive - state.enemies.length, rng.next() < 0.45 ? 2 : 1);
+        const desiredCount = isBossArenaFloor
+          ? Math.min(arenaCap - nonBossAlive, rng.next() < 0.5 ? 3 : 2)
+          : rng.next() < 0.45
+            ? 2
+            : 1;
+        const spawnCount = Math.min(candidates.length, maxAlive - state.enemies.length, desiredCount);
         for (let s = 0; s < spawnCount; s++) {
           const pickIdx = rng.int(0, candidates.length - 1);
           const picked = candidates.splice(pickIdx, 1)[0];
@@ -1945,6 +1954,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         enemy.awake = true;
         if (enemy.kind === 'shooter') {
           enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.95);
+        }
+        if (enemy.isGrandBoss) {
+          state.respawnTimer = Math.min(state.respawnTimer, 2.0);
+        }
+        if (enemy.isRoomBoss) {
+          enemy.mortarCooldown = Math.max(enemy.mortarCooldown ?? 0, enemy.isGrandBoss ? 2.2 : 2.6);
         }
       }
     }
@@ -2246,16 +2261,65 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Guardian / Grand Boss rotating patterns (ring, homing orbs, wall-bouncing shots, high-speed dash)
+    // Guardian / Grand Boss rotating patterns (ring, spread homing orbs, wall-bouncing shots, lead dash + burst) + independent mortar
     if (enemy.isRoomBoss && enemy.awake) {
+      const isGrand = Boolean(enemy.isGrandBoss);
+      if (wasAwake && enemy.dashState !== 'dashing' && enemy.dashState !== 'windup') {
+        enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? (isGrand ? 2.4 : 2.8)) - clampedDt);
+        const enemyTx = Math.floor(enemy.x / TILE_SIZE);
+        const enemyTy = Math.floor(enemy.y / TILE_SIZE);
+        const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
+        const canBossMortar =
+          distToPlayer > 1e-3 &&
+          ((sameRoom && distToPlayer <= (isGrand ? 520 : 400)) ||
+            (distToPlayer <= 340 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)));
+        if (canBossMortar && (enemy.mortarCooldown ?? 0) <= 0) {
+          const mortarDuration = 0.85;
+          const leadTime = 0.55;
+          const maxLeadDist = 115;
+          let leadDx = (player.velX ?? 0) * leadTime;
+          let leadDy = (player.velY ?? 0) * leadTime;
+          const leadLen = Math.hypot(leadDx, leadDy);
+          if (leadLen > maxLeadDist) {
+            leadDx = (leadDx / leadLen) * maxLeadDist;
+            leadDy = (leadDy / leadLen) * maxLeadDist;
+          }
+          let tx = player.x;
+          let ty = player.y;
+          const steps = 5;
+          for (let s = 0; s < steps; s++) {
+            const stepped = resolveCircleGridCollision(
+              tx + leadDx / steps,
+              ty + leadDy / steps,
+              player.radius,
+              map
+            );
+            tx = stepped.x;
+            ty = stepped.y;
+          }
+          state.mortarZones.push({
+            id: state.nextEntityId++,
+            startX: enemy.x,
+            startY: enemy.y,
+            targetX: tx,
+            targetY: ty,
+            radius: 52,
+            damage: Math.round(enemy.damage * 1.2),
+            elapsed: 0,
+            duration: mortarDuration,
+          });
+          enemy.mortarCooldown = isGrand ? 3.4 : 4.0;
+        }
+      }
+
       if (enemy.dashState === 'windup') {
         enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
         if ((enemy.dashTimer ?? 0) <= 0) {
           enemy.dashState = 'dashing';
-          enemy.dashTimer = enemy.isGrandBoss ? 0.48 : 0.42;
+          enemy.dashTimer = isGrand ? 0.55 : 0.50;
         }
       } else if (enemy.dashState === 'dashing' && enemy.dashDir) {
-        const dashSpd = enemy.dashSpeed ?? (enemy.isGrandBoss ? 345 : 315);
+        const dashSpd = enemy.dashSpeed ?? (isGrand ? 460 : 410);
         const stepDist = dashSpd * clampedDt;
         const resolvedDash = resolveCircleGridCollision(
           enemy.x + enemy.dashDir.x * stepDist,
@@ -2269,11 +2333,30 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
         if ((enemy.dashTimer ?? 0) <= 0 || moved < stepDist * 0.45) {
           enemy.dashState = 'none';
+          const burstCount = isGrand ? 8 : 4;
+          const burstSpd = isGrand ? 195 : 170;
+          const baseBurstAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+          for (let k = 0; k < burstCount; k++) {
+            const ba = baseBurstAngle + (k * Math.PI * 2) / burstCount;
+            const isPiercing = isGrand && k % 4 === 0;
+            state.enemyProjectiles.push({
+              id: state.nextEntityId++,
+              x: enemy.x,
+              y: enemy.y,
+              vx: Math.cos(ba) * burstSpd,
+              vy: Math.sin(ba) * burstSpd,
+              radius: isPiercing ? 6 : 5.5,
+              damage: Math.round(enemy.damage * 0.78),
+              life: 1.7,
+              pierceDefense: isPiercing,
+              color: isPiercing ? '#e879f9' : '#f97316',
+            });
+          }
         }
       } else {
         const inSight =
           distToPlayer > 1e-3 &&
-          distToPlayer <= (enemy.isGrandBoss ? 380 : 280) &&
+          distToPlayer <= (isGrand ? 420 : 300) &&
           hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
         if (inSight && wasAwake) {
           if ((enemy.attackCooldown ?? 0) > 0) {
@@ -2282,12 +2365,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           if ((enemy.attackCooldown ?? 0) <= 0) {
             const pattern = enemy.bossPatternIndex ?? 0;
             const aimAngle = Math.atan2(dy, dx);
-            const isGrand = Boolean(enemy.isGrandBoss);
             const dmgVal = Math.round(enemy.damage * 0.8);
 
             if (pattern === 0) {
               const count = isGrand ? 12 : 8;
-              const spd = isGrand ? 190 : 168;
+              const spd = isGrand ? 195 : 172;
               for (let k = 0; k < count; k++) {
                 const a = aimAngle + (k * Math.PI * 2) / count;
                 state.enemyProjectiles.push({
@@ -2303,27 +2385,31 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                 });
               }
             } else if (pattern === 1) {
-              const count = isGrand ? 3 : 2;
-              const spd = isGrand ? 148 : 132;
+              const count = isGrand ? 6 : 4;
+              const spread = isGrand ? 1.85 : 1.45;
+              const baseSpd = isGrand ? 168 : 148;
               for (let k = 0; k < count; k++) {
-                const offset = (k - (count - 1) / 2) * 0.42;
-                const a = aimAngle + offset;
+                const t = count > 1 ? k / (count - 1) - 0.5 : 0; // -0.5 .. +0.5
+                const edgeFactor = Math.abs(t) * 2; // 0 (center) .. 1 (outer)
+                const a = aimAngle + t * spread;
+                const spd = baseSpd - edgeFactor * 36;
+                const homingRate = (isGrand ? 1.55 : 1.3) + edgeFactor * (isGrand ? 1.05 : 0.85);
                 state.enemyProjectiles.push({
                   id: state.nextEntityId++,
                   x: enemy.x,
                   y: enemy.y,
                   vx: Math.cos(a) * spd,
                   vy: Math.sin(a) * spd,
-                  radius: 7,
+                  radius: 6.5,
                   damage: dmgVal,
-                  life: 2.5,
-                  homingRate: isGrand ? 2.1 : 1.75,
+                  life: 2.6,
+                  homingRate,
                   color: '#c084fc',
                 });
               }
             } else if (pattern === 2) {
               const count = isGrand ? 6 : 4;
-              const spd = isGrand ? 185 : 165;
+              const spd = isGrand ? 190 : 168;
               for (let k = 0; k < count; k++) {
                 const a = aimAngle + (k - (count - 1) / 2) * 0.34;
                 state.enemyProjectiles.push({
@@ -2340,13 +2426,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                 });
               }
             } else {
+              const leadPx = player.x + (player.velX ?? 0) * 0.35;
+              const leadPy = player.y + (player.velY ?? 0) * 0.35;
+              const dashAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
               enemy.dashState = 'windup';
-              enemy.dashTimer = isGrand ? 0.65 : 0.72;
-              enemy.dashDir = { x: Math.cos(aimAngle), y: Math.sin(aimAngle) };
-              enemy.dashSpeed = isGrand ? 345 : 315;
+              enemy.dashTimer = isGrand ? 0.52 : 0.58;
+              enemy.dashDir = { x: Math.cos(dashAngle), y: Math.sin(dashAngle) };
+              enemy.dashSpeed = isGrand ? 460 : 410;
             }
             enemy.bossPatternIndex = (pattern + 1) % 4;
-            enemy.attackCooldown = isGrand ? 1.55 : 2.15;
+            enemy.attackCooldown = isGrand ? 1.35 : 1.85;
           }
         }
       }

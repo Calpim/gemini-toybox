@@ -1143,24 +1143,31 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
 
     state.enemyProjectiles = [];
     grandBoss!.attackCooldown = 0.01;
-    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 1: homing orbs
-    expect(state.enemyProjectiles.some((p) => (p.homingRate ?? 0) > 0)).toBe(true);
+    stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 1: 6 spread homing orbs (non-piercing)
+    const homingOrbs = state.enemyProjectiles.filter((p) => (p.homingRate ?? 0) > 0);
+    expect(homingOrbs.length).toBe(6);
+    expect(homingOrbs.every((p) => !p.pierceDefense)).toBe(true);
 
     state.enemyProjectiles = [];
     grandBoss!.attackCooldown = 0.01;
     stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 2: wall-bouncing shots
     expect(state.enemyProjectiles.some((p) => (p.bouncesLeft ?? 0) >= 2)).toBe(true);
 
-    // pattern 3: high-speed dash (windup -> dashing movement toward locked target vector)
+    // pattern 3: high-speed dash (windup -> dashing movement -> landing burst) + independent mortar
+    state.enemyProjectiles = [];
+    state.mortarZones = [];
+    grandBoss!.mortarCooldown = 0.01;
     grandBoss!.attackCooldown = 0.01;
     state.player.invulnTimer = 3.0;
     stepGame(state, { x: 0, y: 0 }, 0.02);
+    expect(state.mortarZones.length).toBeGreaterThanOrEqual(1);
     expect(grandBoss!.dashState).toBe('windup');
     const preDashX = grandBoss!.x;
-    for (let f = 0; f < 50; f++) {
+    for (let f = 0; f < 60; f++) {
       stepGame(state, { x: 0, y: 0 }, 0.02);
     }
-    expect(Math.abs(grandBoss!.x - preDashX)).toBeGreaterThan(30);
+    expect(Math.abs(grandBoss!.x - preDashX)).toBeGreaterThan(50);
+    expect(state.enemyProjectiles.length).toBeGreaterThanOrEqual(8);
 
     // Defeating Grand Boss unlocks stairs, drops high-level gear, and advances endlessly to 11F
     state.player.equipment = [createEquippedItem('orbit_shield', 4)];

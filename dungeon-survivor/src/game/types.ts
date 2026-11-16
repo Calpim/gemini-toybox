@@ -75,6 +75,7 @@ export interface EnemyState {
   dashTimer?: number;
   dashDir?: Vec2;
   dashSpeed?: number;
+  mortarCooldown?: number;
 }
 
 export interface ProjectileState {
