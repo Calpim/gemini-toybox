@@ -40,6 +40,8 @@ export interface PlayerState {
   tacticalStepCooldown: number;
   tacticalSpeedTimer?: number;
   tacticalSpeedBonus?: number;
+  velX?: number;
+  velY?: number;
 }
 
 export type EnemyKind = 'normal' | 'tank' | 'runner' | 'shooter' | 'scout';

@@ -1210,6 +1210,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   }
 
   // 1. Player movement & smooth wall collision (APP-MAP-02)
+  const prevPlayerX = player.x;
+  const prevPlayerY = player.y;
   const activeSpeedBonus =
     (player.tacticalSpeedTimer ?? 0) > 0 ? (player.tacticalSpeedBonus ?? 0) : 0;
   const moveSpeed = player.baseSpeed * (1 + activeSpeedBonus);
@@ -1229,6 +1231,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     player.facingAngle = Math.atan2(vy, vx);
     revealAroundPlayer(map, state.explored, player.x, player.y);
   }
+  const actualVx = (player.x - prevPlayerX) / clampedDt;
+  const actualVy = (player.y - prevPlayerY) / clampedDt;
+  const velAlpha = 1 - Math.exp(-clampedDt * 10);
+  player.velX = (player.velX ?? 0) + (actualVx - (player.velX ?? 0)) * velAlpha;
+  player.velY = (player.velY ?? 0) + (actualVy - (player.velY ?? 0)) * velAlpha;
 
   // 2. Fountain check (Boss floor safe anteroom 100% heal once)
   if (map.fountainTile && !state.fountainUsed) {
@@ -2156,16 +2163,27 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         }
         if ((enemy.attackCooldown ?? 0) <= 0) {
           const mortarDuration = 0.85;
-          const inputLen = Math.hypot(rawInput.x, rawInput.y);
-          const speedMult =
-            (player.tacticalSpeedTimer ?? 0) > 0 ? 1 + (player.tacticalSpeedBonus ?? 0) : 1;
-          const playerSpeed = player.baseSpeed * speedMult;
-          const leadDist = inputLen > 1e-3 ? playerSpeed * mortarDuration * 0.8 : 0;
-          let tx = player.x + (inputLen > 1e-3 ? (rawInput.x / inputLen) * leadDist : 0);
-          let ty = player.y + (inputLen > 1e-3 ? (rawInput.y / inputLen) * leadDist : 0);
-          if (isWallAtWorld(map, tx, ty)) {
-            tx = player.x;
-            ty = player.y;
+          const leadTime = 0.55;
+          const maxLeadDist = 115;
+          let leadDx = (player.velX ?? 0) * leadTime;
+          let leadDy = (player.velY ?? 0) * leadTime;
+          const leadLen = Math.hypot(leadDx, leadDy);
+          if (leadLen > maxLeadDist) {
+            leadDx = (leadDx / leadLen) * maxLeadDist;
+            leadDy = (leadDy / leadLen) * maxLeadDist;
+          }
+          let tx = player.x;
+          let ty = player.y;
+          const steps = 5;
+          for (let s = 0; s < steps; s++) {
+            const stepped = resolveCircleGridCollision(
+              tx + leadDx / steps,
+              ty + leadDy / steps,
+              player.radius,
+              map
+            );
+            tx = stepped.x;
+            ty = stepped.y;
           }
 
           state.mortarZones.push({

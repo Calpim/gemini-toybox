@@ -489,7 +489,7 @@
     <nav class="section-nav" aria-label="仕様セクション移動">
       <a class="nav-pill" href="#sec-overview">📊 概要</a>
       <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (22/22)</a>
-      <a class="nav-pill" href="#sec-glossary">📖 用語集 (15)</a>
+      <a class="nav-pill" href="#sec-glossary">📖 用語集 (23)</a>
       <a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (32)</a>
       <a class="nav-pill" href="#sec-formulas">🧮 計算式 (13)</a>
       <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (12)</a>
@@ -510,14 +510,14 @@
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">22</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">120</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">128</div></div>
         <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">30</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">6</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">1</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 22 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 113 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 121 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -1391,7 +1391,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">GLOSSARY / 用語集</div>
-        <h2>📖 用語集 <span class="count-pill" data-section-count="glossary">(15件)</span></h2>
+        <h2>📖 用語集 <span class="count-pill" data-section-count="glossary">(23件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/glossary.md" data-source-file="specs/glossary.md" data-item-id="" title="元仕様ファイル specs/glossary.md ()">specs/glossary.md</a>
@@ -1566,6 +1566,94 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/core/dungeon.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-15" data-source-file="specs/glossary.md" data-item-id="GLS-15" title="元仕様ファイル specs/glossary.md (GLS-15)">specs/glossary.md#GLS-15</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-16" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-16" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-16">GLS-16</a></td>
+        <td><strong>EMA（指数移動平均）</strong><div class="sub-code"><code class="inline-code">velX</code> / <code class="inline-code">velY</code> (<code class="inline-code">1 - exp(-dt * 10)</code>)</div></td>
+        <td>直近の値ほど重く、過去の値ほど指数的に減衰させて平均を取る平滑化手法（Exponential Moving Average）。プレイヤーの実移動速度の追跡に使われ、一瞬の切り返しや壁引っかかりによる急激なノイズを抑えつつ、移動方向への自然な偏差射撃を実現する。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-16" data-source-file="specs/glossary.md" data-item-id="GLS-16" title="元仕様ファイル specs/glossary.md (GLS-16)">specs/glossary.md#GLS-16</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-17" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-17" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-17">GLS-17</a></td>
+        <td><strong>AABB・円対グリッド衝突判定</strong><div class="sub-code"><code class="inline-code">resolveCircleGridCollision</code></div></td>
+        <td>軸並行境界ボックス（Axis-Aligned Bounding Box: 回転しない四角形＝タイル壁）と円形キャラクターとの当たり判定。壁へめり込まずに斜め入力で壁沿いに滑る（スライド移動）ことや、偏差射撃の着弾点を壁の手前で止めるクランプ処理に使われる。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/core/dungeon.ts</code>, <code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-17" data-source-file="specs/glossary.md" data-item-id="GLS-17" title="元仕様ファイル specs/glossary.md (GLS-17)">specs/glossary.md#GLS-17</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-18" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-18" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-18">GLS-18</a></td>
+        <td><strong>BFS（幅優先探索）</strong><div class="sub-code"><code class="inline-code">computeBfsDistanceField</code></div></td>
+        <td>「スタートから1歩ずつ波紋のように距離を書き込む」探索方法（Breadth-First Search）。プレイヤーの位置を距離0として床マスに <code class="inline-code">1, 2, 3...</code> と歩数を記録しておくことで、敵は今いるマスの隣から「数字が小さいマス」へ進むだけで、壁や曲がり角があっても迷わず最短ルートで回り込める。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-05">APP-MAP-05</a><a class="ref-pill ref-link" href="#BIZ-EXP-05">BIZ-EXP-05</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/core/dungeon.ts</code>, <code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-18" data-source-file="specs/glossary.md" data-item-id="GLS-18" title="元仕様ファイル specs/glossary.md (GLS-18)">specs/glossary.md#GLS-18</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-19" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-19" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-19">GLS-19</a></td>
+        <td><strong>LoS（射線・視線判定）</strong><div class="sub-code"><code class="inline-code">hasLineOfSight</code></div></td>
+        <td>2点間を線分で結んだとき、途中に壁タイルがないか調べる判定（Line of Sight）。敵の初期覚醒や通常弾・メイン武器の壁越し貫通防止に使われる（一方、覚醒後のタンク迫撃砲やシューターは同部屋・近距離なら LoS 遮蔽時も攻撃を継続する）。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#APP-MAP-06">APP-MAP-06</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/core/dungeon.ts</code>, <code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-19" data-source-file="specs/glossary.md" data-item-id="GLS-19" title="元仕様ファイル specs/glossary.md (GLS-19)">specs/glossary.md#GLS-19</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-20" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-20" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-20">GLS-20</a></td>
+        <td><strong>ノックバック無効・防壁貫通</strong><div class="sub-code"><code class="inline-code">isRoomBoss</code> / <code class="inline-code">pierceDefense</code></div></td>
+        <td>ボス・シューターが衝撃波等で押し戻されない性質（ノックバック無効）、および迫撃砲やシューターの一部弾が <code class="inline-code">pulse_blade</code> 反射や <code class="inline-code">orbit_shield</code> 消去をすり抜けて届く性質（防壁貫通）。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-20" data-source-file="specs/glossary.md" data-item-id="GLS-20" title="元仕様ファイル specs/glossary.md (GLS-20)">specs/glossary.md#GLS-20</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-21" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-21" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-21">GLS-21</a></td>
+        <td><strong>Prim法（最小全域木 / MST）</strong><div class="sub-code"><code class="inline-code">connectedIds</code></div></td>
+        <td>すべての部屋を「一番距離が近い部屋同士から順につないでいく」ことで、無駄な長距離通路や孤立部屋を作らずに全室を1つのネットワークに結ぶ手法（Minimum Spanning Tree）。ダンジョン生成で全部屋へ必ず到達できる保証を作るために使用。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#PRM-11">PRM-11</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/core/dungeon.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-21" data-source-file="specs/glossary.md" data-item-id="GLS-21" title="元仕様ファイル specs/glossary.md (GLS-21)">specs/glossary.md#GLS-21</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-22" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-22" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-22">GLS-22</a></td>
+        <td><strong>ダイクストラ法（重み付き経路探索）</strong><div class="sub-code"><code class="inline-code">carveWideCorridor</code></div></td>
+        <td>マスごとに「通りやすさ／通りにくさ（コスト）」を設定して一番コストの低いルートを探す手法。ダンジョン通路を掘る際、「既存の通路や部屋をギリギリかすめるルート」に高いコストを付けることで、通路同士が重なって変な大穴になるのを防いでいる。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#PRM-11">PRM-11</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/core/dungeon.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-22" data-source-file="specs/glossary.md" data-item-id="GLS-22" title="元仕様ファイル specs/glossary.md (GLS-22)">specs/glossary.md#GLS-22</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-23" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-23" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-23">GLS-23</a></td>
+        <td><strong>シード付き乱数（PRNG）</strong><div class="sub-code"><code class="inline-code">createSeededRng</code></div></td>
+        <td>同じシード値（種）を渡せば毎回まったく同じ順番で乱数が出る擬似乱数生成器（Pseudo-Random Number Generator）。テストの再現性や、同じシードで同じダンジョン・ドロップを検証できるようにするために使用。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/core/rng.ts</code>, <code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-23" data-source-file="specs/glossary.md" data-item-id="GLS-23" title="元仕様ファイル specs/glossary.md (GLS-23)">specs/glossary.md#GLS-23</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>
@@ -1959,12 +2047,12 @@
         <td><a class="id-pill id-doc" href="#PRM-27">PRM-27</a></td>
         <td><span class="cat-pill">敵</span></td>
         <td><strong><code class="inline-code">tank</code>（放物線迫撃砲）/ <code class="inline-code">runner</code> 主要種別倍率 (<code class="inline-code">APP-MAP-07</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45, 索敵280px+, 距離維持125〜175px・近接時後退, 放物線迫撃砲:同部屋380px以内(遮蔽可)または視線あり280px以内・偏差射撃(進行方向0.8×0.85s先読み)・着弾半径52px・予兆0.85s・CD2.4s・DMG×1.45・防壁貫通) / runner(HP×0.55, 速度×1.55, 上限195)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45, 索敵280px+, 距離維持125〜175px・近接時後退, 放物線迫撃砲:同部屋380px以内(遮蔽可)または視線あり280px以内・偏差射撃(実移動速度EMA×0.55s先読み・上限115px・壁沿いクランプ)・着弾半径52px・予兆0.85s・CD2.4s・DMG×1.45・防壁貫通) / runner(HP×0.55, 速度×1.55, 上限195)</code></span></td>
         <td><code class="inline-code">倍率・px・秒</code></td>
-        <td><div class="note-text">重戦車タンクが距離維持・後退しながら、覚醒後は同部屋内であれば遮蔽を問わず偏差放物線迫撃砲を撃つ駆け引きを作るため（迫撃砲係数はAI仮提案）</div></td>
+        <td><div class="note-text">重戦車タンクが距離維持・後退しながら、実速度ベースの自然な偏差放物線迫撃砲を撃つ駆け引きを作るため（迫撃砲係数はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L195-L240,L2142-L2185</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L195-L240,L1212-L1238,L2142-L2195</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-27" data-source-file="specs/parameters.md" data-item-id="PRM-27" title="元仕様ファイル specs/parameters.md (PRM-27)">specs/parameters.md#PRM-27</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>

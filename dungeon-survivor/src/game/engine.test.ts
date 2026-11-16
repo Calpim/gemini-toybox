@@ -1233,14 +1233,18 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(mortarState.mortarZones.length).toBe(0);
     expect(mortarState.player.hp).toBeLessThan(hpBeforeImpact);
 
-    // Tank predicts player movement (lead-target mortar) when player is moving
+    // Tank predicts smoothed actual player movement (lead-target mortar) without overshooting through walls
+    tank.attackCooldown = 0.5;
+    for (let f = 0; f < 15; f++) {
+      stepGame(mortarState, { x: 0, y: 1 }, 0.02);
+    }
+    const playerBeforeShotY = mortarState.player.y;
     tank.attackCooldown = 0.01;
-    const playerStartY = mortarState.player.y;
     stepGame(mortarState, { x: 0, y: 1 }, 0.02);
     expect(mortarState.mortarZones.length).toBe(1);
     expect(mortarState.mortarZones[0].radius).toBe(52);
     expect(mortarState.mortarZones[0].duration).toBeCloseTo(0.85, 2);
-    expect(mortarState.mortarZones[0].targetY).toBeGreaterThan(playerStartY + 80);
+    expect(mortarState.mortarZones[0].targetY).toBeGreaterThan(playerBeforeShotY + 70);
 
     // Normal enemy fires level-scaled spread shots when awake & in sight
     const normState = createGameState({ seed: 963 });
