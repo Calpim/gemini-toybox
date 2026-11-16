@@ -1611,8 +1611,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           proj.orbitTargetId = undefined;
           proj.orbitProgress = 0;
         } else {
-          const orbitRadius = orbitTarget.radius + 22;
-          const angularStep = Math.max(11.5, spd / orbitRadius) * clampedDt;
+          const orbitRadius = orbitTarget.radius * 1.8 + 18;
+          const angularStep = (spd / orbitRadius) * clampedDt;
           const nextOrbitAngle = (proj.orbitAngle ?? 0) + angularStep;
           const nextProgress = (proj.orbitProgress ?? 0) + angularStep;
           const ox = orbitTarget.x + Math.cos(nextOrbitAngle) * orbitRadius;
@@ -2129,7 +2129,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    // Tank archetype: parabolic mortar lobbing ground AoE zones with clear impact timing
+    // Tank archetype: predictive parabolic mortar lobbing ground AoE zones with clear impact timing
     if (enemy.kind === 'tank' && !enemy.isRoomBoss && enemy.awake) {
       const inSight =
         distToPlayer > 1e-3 &&
@@ -2142,23 +2142,36 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
         }
         if ((enemy.attackCooldown ?? 0) <= 0) {
+          const mortarDuration = 0.85;
+          const inputLen = Math.hypot(rawInput.x, rawInput.y);
+          const speedMult =
+            (player.tacticalSpeedTimer ?? 0) > 0 ? 1 + (player.tacticalSpeedBonus ?? 0) : 1;
+          const playerSpeed = player.baseSpeed * speedMult;
+          const leadDist = inputLen > 1e-3 ? playerSpeed * mortarDuration * 0.8 : 0;
+          let tx = player.x + (inputLen > 1e-3 ? (rawInput.x / inputLen) * leadDist : 0);
+          let ty = player.y + (inputLen > 1e-3 ? (rawInput.y / inputLen) * leadDist : 0);
+          if (isWallAtWorld(map, tx, ty)) {
+            tx = player.x;
+            ty = player.y;
+          }
+
           state.mortarZones.push({
             id: state.nextEntityId++,
             startX: enemy.x,
             startY: enemy.y,
-            targetX: player.x,
-            targetY: player.y,
-            radius: 34,
-            damage: Math.round(enemy.damage * 1.15),
+            targetX: tx,
+            targetY: ty,
+            radius: 52,
+            damage: Math.round(enemy.damage * 1.45),
             elapsed: 0,
-            duration: 1.15,
+            duration: mortarDuration,
           });
-          enemy.attackCooldown = 3.2;
+          enemy.attackCooldown = 2.4;
         }
       }
     }
 
-    // Shooter archetype: stationary knockback-immune turret firing 8-way periodic barrage within expanded aggroRange
+    // Shooter archetype: stationary knockback-immune turret firing continuous rotating radial barrage
     if (enemy.kind === 'shooter' && enemy.awake) {
       const inSight =
         distToPlayer > 1e-3 &&
@@ -2172,10 +2185,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         }
         if ((enemy.attackCooldown ?? 0) <= 0) {
           const projSpeed = 152 + Math.min(55, (state.floor - 1) * 7);
+          const dirCount = state.floor >= 6 ? 6 : 4;
+          const angleStep = Math.PI / (dirCount * 2);
           const shotIdx = enemy.bossPatternIndex ?? 0;
-          const baseOffset = (shotIdx % 2) * (Math.PI / 8);
-          for (let k = 0; k < 8; k++) {
-            const angle = baseOffset + (k * Math.PI) / 4;
+          const baseOffset = shotIdx * angleStep;
+          for (let k = 0; k < dirCount; k++) {
+            const angle = baseOffset + (k * Math.PI * 2) / dirCount;
             state.enemyProjectiles.push({
               id: state.nextEntityId++,
               x: enemy.x,
@@ -2187,8 +2202,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
               life: 1.85,
             });
           }
-          enemy.bossPatternIndex = (shotIdx + 1) % 2;
-          enemy.attackCooldown = Math.max(0.85, 1.45 - (state.floor - 1) * 0.08);
+          enemy.bossPatternIndex = (shotIdx + 1) % 16;
+          enemy.attackCooldown = Math.max(0.28, 0.38 - (state.floor - 1) * 0.015);
         }
       }
     }

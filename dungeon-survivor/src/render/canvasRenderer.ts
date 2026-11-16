@@ -240,8 +240,8 @@ function drawEnemyBody(
       ctx.stroke();
     }
 
-    // 8 radial barrage nozzles
-    const rotOffset = ((enemy.bossPatternIndex ?? 0) % 2) * (Math.PI / 8);
+    // Rotating radial barrage nozzles
+    const rotOffset = (enemy.bossPatternIndex ?? 0) * (Math.PI / 8);
     ctx.fillStyle = '#fdf2f8';
     for (let k = 0; k < 8; k++) {
       ctx.save();

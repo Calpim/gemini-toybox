@@ -453,10 +453,51 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
 
     // Keep item on cooldown so only the orbiting disc can re-hit after completing 1 revolution
     soloDiscState.player.equipment[0].cooldown = 5;
-    for (let f = 0; f < 45; f++) {
+    for (let f = 0; f < 60; f++) {
       stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
     }
     expect(soloDiscState.enemies[0].hp).toBeLessThan(hpAfterFirstHit);
+
+    // Large boss (radius 26): orbit radius scales with enemy radius and maintains constant linear speed (no 11.5 rad/s clamp)
+    const bossDiscState = createGameState({ seed: 4541 });
+    bossDiscState.chests = [];
+    bossDiscState.pickups = [];
+    bossDiscState.player.baseAttackCooldown = 999;
+    bossDiscState.map.tiles.fill('floor');
+    bossDiscState.player.equipment = [createEquippedItem('ricochet_disc', 1)];
+    bossDiscState.enemies = [
+      {
+        id: 904,
+        x: bossDiscState.player.x + 80,
+        y: bossDiscState.player.y,
+        radius: 26,
+        speed: 0,
+        hp: 500,
+        maxHp: 500,
+        damage: 0,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+        isRoomBoss: true,
+        isGrandBoss: true,
+      },
+    ];
+    for (let f = 0; f < 20; f++) {
+      stepGame(bossDiscState, { x: 0, y: 0 }, 1 / 60);
+    }
+    const bossOrbitDisc = bossDiscState.projectiles.find(
+      (p) => p.kind === 'disc' && p.orbitTargetId === 904
+    );
+    expect(bossOrbitDisc).toBeDefined();
+    const distFromBossCenter = Math.hypot(
+      bossOrbitDisc!.x - bossDiscState.enemies[0].x,
+      bossOrbitDisc!.y - bossDiscState.enemies[0].y
+    );
+    // orbitRadius = 26 * 1.8 + 18 = 64.8px (far wider than old 48px)
+    expect(distFromBossCenter).toBeCloseTo(64.8, 1);
+    const orbitTangentialSpeed = Math.hypot(bossOrbitDisc!.vx, bossOrbitDisc!.vy);
+    expect(orbitTangentialSpeed).toBeLessThan(400);
 
     // 6. Pulse blade triggers on incoming enemy projectiles even with no enemy in range and reflects them
     const reflectState = createGameState({ seed: 455 });
@@ -914,9 +955,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(shootState.enemyProjectiles.length).toBe(0);
     expect(dormantTurret.attackCooldown).toBeGreaterThanOrEqual(0.95);
 
-    // Once wind-up finishes (~1.2s), it fires 8 radial projectiles while staying stationary
+    // Once wind-up finishes (~1.0s), it fires continuous rotating waves while staying stationary
     const turretStartX = dormantTurret.x;
-    for (let f = 0; f < 75; f++) {
+    for (let f = 0; f < 100; f++) {
       stepGame(shootState, { x: 0, y: 0 }, 1 / 60);
     }
     expect(dormantTurret.x).toBe(turretStartX);
@@ -1185,6 +1226,15 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     expect(mortarState.mortarZones.length).toBe(0);
     expect(mortarState.player.hp).toBeLessThan(hpBeforeImpact);
+
+    // Tank predicts player movement (lead-target mortar) when player is moving
+    tank.attackCooldown = 0.01;
+    const playerStartY = mortarState.player.y;
+    stepGame(mortarState, { x: 0, y: 1 }, 0.02);
+    expect(mortarState.mortarZones.length).toBe(1);
+    expect(mortarState.mortarZones[0].radius).toBe(52);
+    expect(mortarState.mortarZones[0].duration).toBeCloseTo(0.85, 2);
+    expect(mortarState.mortarZones[0].targetY).toBeGreaterThan(playerStartY + 80);
 
     // Normal enemy fires level-scaled spread shots when awake & in sight
     const normState = createGameState({ seed: 963 });
