@@ -71,6 +71,18 @@ export function computeNotificationLayout(
   };
 }
 
+export function computeFloorBannerRect(
+  canvasWidth: number,
+  canvasHeight: number,
+  topSafeY: number
+): { x: number; y: number; width: number; height: number } {
+  const width = Math.min(270, Math.max(180, canvasWidth - 32));
+  const height = 42;
+  const x = canvasWidth / 2 - width / 2;
+  const y = Math.max(topSafeY, Math.round(canvasHeight / 2 - height / 2));
+  return { x, y, width, height };
+}
+
 let fogCanvas: HTMLCanvasElement | null = null;
 
 function getFogCanvas(w: number, h: number): HTMLCanvasElement | null {
@@ -790,7 +802,7 @@ export function renderGame(
     ctx.fill();
   }
 
-  // 13. Toast Notifications (bottom, compact on narrow screens) & Floor entry banner (top, below HUD)
+  // 13. Toast Notifications (bottom, compact on narrow screens) & Floor entry banner (centered)
   renderNotifications(ctx, width, height, state, insets.hintTop);
 
   if (state.floorBannerTimer > 0) {
@@ -802,20 +814,18 @@ export function renderGame(
       ? `GUARDIAN ${state.floor}F`
       : `FLOOR ${state.floor}F`;
     const borderColor = isBoss ? '#f43f5e' : isGuardian ? '#facc15' : '#38bdf8';
-    const bannerW = Math.min(270, Math.max(180, width - 32));
-    const bannerX = width / 2 - bannerW / 2;
-    const bannerY = topSafeY;
+    const banner = computeFloorBannerRect(width, height, topSafeY);
 
     ctx.save();
     ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    ctx.fillRect(bannerX, bannerY, bannerW, 42);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+    ctx.fillRect(banner.x, banner.y, banner.width, banner.height);
     ctx.strokeStyle = borderColor;
-    ctx.strokeRect(bannerX, bannerY, bannerW, 42);
+    ctx.strokeRect(banner.x, banner.y, banner.width, banner.height);
     ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 18px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(bannerText, width / 2, bannerY + 27);
+    ctx.fillText(bannerText, width / 2, banner.y + 27);
     ctx.restore();
   }
 }

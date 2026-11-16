@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../game/engine';
 import {
+  computeFloorBannerRect,
   computeNotificationLayout,
   computeTopSafeY,
   renderGame,
@@ -58,6 +59,15 @@ describe('canvasRenderer HUD safe layout', () => {
     expect(computeTopSafeY(1280)).toBe(74);
   });
 
+  it('centers floor banner vertically while respecting topSafeY', () => {
+    const mobile = computeFloorBannerRect(375, 812, 118);
+    expect(mobile.y).toBe(385);
+    expect(mobile.width).toBe(270);
+
+    const shortLandscape = computeFloorBannerRect(667, 200, 118);
+    expect(shortLandscape.y).toBe(118);
+  });
+
   it('computes compact bottom notification layout on narrow screens and avoids hintTop', () => {
     const mobile = computeNotificationLayout(375, 812, 770);
     expect(mobile.isCompact).toBe(true);
@@ -72,7 +82,7 @@ describe('canvasRenderer HUD safe layout', () => {
     expect(desktop.bottomAnchorY).toBe(670);
   });
 
-  it('renders floor banner below HUD and stacks up to 3 latest notifications above hint bar', () => {
+  it('renders floor banner centered away from minimap/HUD and stacks up to 3 latest notifications above hint bar', () => {
     const state = createGameState({ seed: 101 });
     state.floorBannerTimer = 2.0;
     state.notifications = [
@@ -98,7 +108,8 @@ describe('canvasRenderer HUD safe layout', () => {
 
     const bannerText = fillTextCalls.find((c) => c.text.includes('FLOOR 1F'));
     expect(bannerText).toBeDefined();
-    expect(bannerText!.y).toBeGreaterThan(hudBottom);
+    expect(bannerText!.y).toBeGreaterThan(350);
+    expect(bannerText!.y).toBeLessThan(460);
 
     const renderedTexts = fillTextCalls.map((c) => c.text);
     expect(renderedTexts).not.toContain('OLDEST');
