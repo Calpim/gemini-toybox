@@ -28,7 +28,7 @@ export const MAX_EQUIP_SLOTS = 2;
 export const MAX_EQUIP_SLOTS_CAP = 5;
 export const SCRAP_EXPAND_COSTS = [1, 2, 3] as const;
 export const MAX_TARGET_RANGE = 180;
-export const MAX_EQUIPMENT_LEVEL = 10;
+export const MAX_EQUIPMENT_LEVEL = 8;
 export const MAX_EQUIPMENT_COUNT_EVO_LEVEL = 6;
 export const ORBIT_SHIELD_INNER_SLOW = 0.86;
 
@@ -50,7 +50,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     baseCooldown: 0.88,
     baseRange: 88,
     baseDamage: 25,
-    description: '厚みある扇形斬撃で敵弾を反射！Lv6まで斬撃角拡大、Lv7〜10は威力・射程・CD強化',
+    description: '厚みある扇形斬撃で敵弾を反射！Lv6まで斬撃角拡大、Lv7〜8は威力・射程・CD強化',
   },
   orbit_shield: {
     id: 'orbit_shield',
@@ -70,7 +70,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     baseCooldown: 0.48,
     baseRange: 155,
     baseDamage: 15,
-    description: 'Lv6まで展開数増加（最大4機）、Lv7〜10は射程・威力・CD・弾速を強化',
+    description: 'Lv6まで展開数増加（最大4機）、Lv7〜8は射程・威力・CD・弾速を強化',
   },
   reactive_coil: {
     id: 'reactive_coil',
@@ -80,7 +80,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     baseCooldown: 1.45,
     baseRange: 78,
     baseDamage: 18,
-    description: 'Lv6まで連鎖数増加（最大8連鎖）、Lv7〜10は放電レンジ・威力・CD強化',
+    description: 'Lv6まで連鎖数増加（最大8連鎖）、Lv7〜8は放電レンジ・威力・CD強化',
   },
   ricochet_disc: {
     id: 'ricochet_disc',

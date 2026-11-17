@@ -286,8 +286,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.visualFx.some((fx) => fx.kind === 'lightning')).toBe(true);
   });
 
-  it('[APP-CMB-05] evolves equipment in two phases (Lv1-6 count/arc max, Lv7-10 power/CD/range), keeps pulse_blade directional, and slows enemies inside orbit_shield', () => {
-    // 1. Orbit bit count & seeker drone count cap at Lv6; Lv7-10 boost radius/power/CD
+  it('[APP-CMB-05] evolves equipment in two phases (Lv1-6 count/arc max, Lv7-8 power/CD/range), keeps pulse_blade directional, and slows enemies inside orbit_shield', () => {
+    // 1. Orbit bit count & seeker drone count cap at Lv6; Lv7-8 boost radius/power/CD
     const state = createGameState({ seed: 450 });
     state.chests = [];
     state.pickups = [];
@@ -298,16 +298,16 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ];
     expect(getOrbitBitPositions(state).length).toBe(6);
     expect(getSeekerDronePositions(state).length).toBe(4);
-    state.player.equipment[0].level = 10;
-    state.player.equipment[1].level = 10;
+    state.player.equipment[0].level = MAX_EQUIPMENT_LEVEL;
+    state.player.equipment[1].level = MAX_EQUIPMENT_LEVEL;
     expect(getOrbitBitPositions(state).length).toBe(6);
     expect(getSeekerDronePositions(state).length).toBe(4);
-    expect(getOrbitShieldRadius(10, 1)).toBeGreaterThan(getOrbitShieldRadius(6, 1));
+    expect(getOrbitShieldRadius(MAX_EQUIPMENT_LEVEL, 1)).toBeGreaterThan(getOrbitShieldRadius(6, 1));
     expect(getOrbitShieldAngularSpeed(1)).toBeGreaterThan(getOrbitShieldAngularSpeed(6));
-    expect(getEquipmentCooldownMultiplier(10)).toBeLessThan(getEquipmentCooldownMultiplier(6));
+    expect(getEquipmentCooldownMultiplier(MAX_EQUIPMENT_LEVEL)).toBeLessThan(getEquipmentCooldownMultiplier(6));
 
-    // 2. Pulse blade stays directional fan (never 360°) even at Lv3 and Lv10
-    expect(getPulseBladeStats(10, 84, 1).fullCircle).toBe(false);
+    // 2. Pulse blade stays directional fan (never 360°) even at Lv3 and Lv8
+    expect(getPulseBladeStats(MAX_EQUIPMENT_LEVEL, 84, 1).fullCircle).toBe(false);
     const bladeState = createGameState({ seed: 451 });
     bladeState.chests = [];
     bladeState.pickups = [];
@@ -915,7 +915,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ).toBe(false);
   });
 
-  it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter (8-way barrage + knockback immunity)/scout archetypes', () => {
+  it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter (4/6/8-way rotating barrage + knockback immunity)/scout archetypes', () => {
     // Verify no duplicate exact spawn positions across multiple seeds
     for (const seed of [101, 202, 303]) {
       const s = createGameState({ seed, startFloor: 3 });
@@ -932,7 +932,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(runner.hp).toBeLessThan(normal.hp);
     expect(runner.speed).toBeGreaterThan(normal.speed);
 
-    // Shooter stays stationary (speed 0), immune to player knockback, never pre-arms while dormant, and fires 8-way barrage
+    // Shooter stays stationary (speed 0), immune to player knockback, never pre-arms while dormant, and fires 4/6/8-way rotating barrage
     const shootState = createGameState({ seed: 930, startFloor: 2 });
     shootState.chests = [];
     shootState.pickups = [];
@@ -968,6 +968,25 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     expect(dormantTurret.x).toBe(turretStartX);
     expect(shootState.enemyProjectiles.length).toBeGreaterThanOrEqual(8);
+
+    // Verify per-wave direction count by floor: 1-5F => 4, 6-10F => 6, 11F+ => 8
+    for (const [floorNum, expectedDirs] of [
+      [2, 4],
+      [6, 6],
+      [11, 8],
+    ] as const) {
+      const floorState = createGameState({ seed: 931, startFloor: floorNum });
+      floorState.chests = [];
+      floorState.pickups = [];
+      floorState.player.baseAttackCooldown = 999;
+      floorState.map.tiles.fill('floor');
+      const turret = createEnemyByKind(9001, 'shooter', floorState.player.x + 160, floorState.player.y, floorNum);
+      turret.awake = true;
+      turret.attackCooldown = 0.01;
+      floorState.enemies = [turret];
+      stepGame(floorState, { x: 0, y: 0 }, 1 / 60);
+      expect(floorState.enemyProjectiles.length).toBe(expectedDirs);
+    }
 
     // Shooter is immune to Repulsor Pulse knockback (takes damage, stays put)
     shootState.player.skillLevels = { def_pulse: 1 };
@@ -1051,43 +1070,43 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(scoutState.pickups.length).toBe(0);
   });
 
-  it('[APP-GRW-08] enforces MAX_EQUIPMENT_LEVEL=10 cap, auto-expands slots on Lv10 duplicates when maxEquipSlots < 5, and grants overflow bonus at cap', () => {
-    expect(MAX_EQUIPMENT_LEVEL).toBe(10);
+  it('[APP-GRW-08] enforces MAX_EQUIPMENT_LEVEL=8 cap, auto-expands slots on Lv8 duplicates when maxEquipSlots < 5, and grants overflow bonus at cap', () => {
+    expect(MAX_EQUIPMENT_LEVEL).toBe(8);
     const state = createGameState({ seed: 940 });
 
-    // Lv10 duplicate pickup auto-allocates into slot expansion when maxEquipSlots < MAX_EQUIP_SLOTS_CAP
+    // Lv8 duplicate pickup auto-allocates into slot expansion when maxEquipSlots < MAX_EQUIP_SLOTS_CAP
     state.player.maxEquipSlots = 2;
     state.player.scrapExpandProgress = 0;
     state.player.equipment = [
-      createEquippedItem('pulse_blade', 10),
+      createEquippedItem('pulse_blade', 8),
       createEquippedItem('orbit_shield', 5),
     ];
-    acquireEquipment(state, createEquippedItem('pulse_blade', 10));
+    acquireEquipment(state, createEquippedItem('pulse_blade', 8));
     expect(state.player.maxEquipSlots).toBe(3); // cost 2->3 is 1 scrap
     expect(state.player.scrapExpandProgress).toBe(0);
-    // Next Lv10 duplicate advances 3->4 progress (cost 2)
-    acquireEquipment(state, createEquippedItem('pulse_blade', 10));
+    // Next Lv8 duplicate advances 3->4 progress (cost 2)
+    acquireEquipment(state, createEquippedItem('pulse_blade', 8));
     expect(state.player.maxEquipSlots).toBe(3);
     expect(state.player.scrapExpandProgress).toBe(1);
 
-    // Once maxEquipSlots reaches 5, Lv10 duplicate grants +20HP / +25EXP overflow bonus
+    // Once maxEquipSlots reaches 5, Lv8 duplicate grants +20HP / +25EXP overflow bonus
     state.player.maxEquipSlots = MAX_EQUIP_SLOTS_CAP;
-    state.player.equipment = ALL_EQUIPMENT_IDS.map((id) => createEquippedItem(id, 10));
+    state.player.equipment = ALL_EQUIPMENT_IDS.map((id) => createEquippedItem(id, 8));
     state.player.hp = 50;
     const expBefore = state.stats.totalExp;
-    acquireEquipment(state, createEquippedItem('pulse_blade', 10));
-    expect(state.player.equipment[0].level).toBe(10);
+    acquireEquipment(state, createEquippedItem('pulse_blade', 8));
+    expect(state.player.equipment[0].level).toBe(8);
     expect(state.player.hp).toBe(70);
     expect(state.stats.totalExp).toBe(expBefore + 25);
 
-    // scrap_upgrade rejects Lv10 slot
-    state.player.equipment[0].level = 9;
+    // scrap_upgrade rejects Lv8 slot
+    state.player.equipment[0].level = 7;
     acquireEquipment(state, createEquippedItem('pulse_blade', 1));
-    expect(state.player.equipment[0].level).toBe(10);
+    expect(state.player.equipment[0].level).toBe(8);
 
     state.player.maxEquipSlots = 2;
     state.player.equipment = [
-      createEquippedItem('pulse_blade', 10),
+      createEquippedItem('pulse_blade', 8),
       createEquippedItem('orbit_shield', 5),
     ];
     acquireEquipment(state, createEquippedItem('seeker_drone', 1));

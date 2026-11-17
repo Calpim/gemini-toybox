@@ -1760,7 +1760,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
-  // 9. Update enemies (with BFS corridor pathfinding, scout wander/alert, shooter 8-way barrage, boss patterns, room-only repop)
+  // 9. Update enemies (with BFS corridor pathfinding, scout wander/alert, shooter 4/6/8-way rotating barrage, boss patterns, room-only repop)
   const rng = createRng(
     (state.seed ^ (state.stats.kills * 7919) ^ (state.floor * 131) ^ Math.floor(state.elapsedFloorTime * 10)) >>> 0
   );
@@ -2242,7 +2242,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         }
         if ((enemy.attackCooldown ?? 0) <= 0) {
           const projSpeed = 152 + Math.min(55, (state.floor - 1) * 7);
-          const dirCount = state.floor >= 6 ? 6 : 4;
+          const dirCount = state.floor >= 11 ? 8 : state.floor >= 6 ? 6 : 4;
           const angleStep = Math.PI / (dirCount * 2);
           const shotIdx = enemy.bossPatternIndex ?? 0;
           const baseOffset = shotIdx * angleStep;
