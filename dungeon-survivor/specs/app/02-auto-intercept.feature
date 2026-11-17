@@ -25,7 +25,7 @@
     もし 戦闘ループ（60fps固定タイムステップまたはdeltaTime更新）が進行する
     ならば 全装備のタイマーおよびビット座標が独立して更新され、同時に迎撃を実行する
 
-  @APP-CMB-03 @ref:BIZ-CMB-03 @Confirmed @AIProposed
+  @APP-CMB-03 @ref:BIZ-CMB-03 @ref:BIZ-CMB-07 @Confirmed @AIProposed
   シナリオ: レイキャストによる壁遮蔽と最大索敵上限 MAX_TARGET_RANGE（180px）を適用する
     前提 索敵上限定数 MAX_TARGET_RANGE が 180px（4.5タイル相当＝1部屋〜隣通路規模）に設定されている
     もし 通常属性の自動攻撃・自機ショット・索敵AIがターゲット判定を行う

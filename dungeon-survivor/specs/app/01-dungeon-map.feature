@@ -3,7 +3,7 @@
 機能: ダンジョン生成・移動・フロア遷移エンジン（アプリ仕様）
   2Dグリッドベースのランダムダンジョン生成、壁衝突判定、アイテム回復、滞在ペナルティの具体仕様を定義する。
 
-  @APP-MAP-01 @ref:BIZ-EXP-01 @Confirmed @AIProposed
+  @APP-MAP-01 @ref:BIZ-EXP-01 @ref:BIZ-EXP-08 @ref:BIZ-EXP-09 @Confirmed @AIProposed
   シナリオ: シード値に基づき広い部屋・2タイル幅接続の非重複通路・3/6/9F守護中ボス＆10F大ボスを生成する
     前提 現在のフロア番号が N (N >= 1) である
     もし フロア生成エンジンが空間配置と最小全域木（Prim MST + 重み付きダイクストラ）でマップを構築する
@@ -11,7 +11,7 @@
     かつ 通常階（1,2,4,5,7,8F...）の階段はロックなし（getStairsLockCount === 0）、3/6/9F（floor % 10 ∈ {3,6,9}）は広めの階段部屋（11×9以上）に守護中ボス GUARDIAN（プレイヤーLv連動HP 2.9倍ベース・ノックバック無効・3種弾幕＋予兆付き高速突進・確定高Lv装備ドロップ）、10F毎（10F, 20F...）は泉前室＋大部屋大ボスが配置される
     かつ getStairsLockCount(state) が 1以上の間は階段が封印（LOCKED 表示・進行不可）され、守護中ボス／大ボス（isRoomBoss）を倒して封印解除した状態で階段に触れるとフロア番号 N+1 が生成される（増援・リポップ雑魚ではロックされない）
 
-  @APP-MAP-02 @ref:BIZ-EXP-02 @Confirmed @AIProposed
+  @APP-MAP-02 @ref:BIZ-EXP-02 @ref:BIZ-EXP-11 @Confirmed @AIProposed
   シナリオ: PCキーボードとスマホ片手ジョイスティックで移動し、入室覚醒とESC/K/⏸任意ポーズを実行する
     前提 ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している
     かつ 標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている
@@ -25,7 +25,7 @@
     ならば プレイヤーの HP は 60 のまま変化しない
     かつ 敵ドロップまたは宝箱から出現した回復アイテム（HP +25〜等）に触れた時のみ HP が回復する（上限 100）
 
-  @APP-MAP-04 @ref:BIZ-EXP-04 @Confirmed @AIProposed
+  @APP-MAP-04 @ref:BIZ-EXP-04 @ref:BIZ-EXP-12 @Confirmed @AIProposed
   シナリオ: 通路を除いた部屋エリアへの時間経過リポップと階層に応じた敵テーブル変化を行う
     前提 フロア滞在時間 elapsedFloorTime が記録されている
     もし 滞在時間が初回 24秒（通常 9〜14秒、大ボス覚醒中は 7.5秒間隔）に達し、生存敵数が上限未満である
@@ -39,14 +39,14 @@
     ならば computeBfsDistances によるプレイヤータイルからの最短歩数マップを参照し、壁角で斜め抜けせず安全に通れる隣接タイル中心へ誘導して追跡する
     かつ 障害物のない直線視界に入れば滑らかな直接追尾へ切り替わる
 
-  @APP-MAP-06 @ref:BIZ-EXP-06 @Confirmed @AIProposed
+  @APP-MAP-06 @ref:BIZ-EXP-06 @ref:BIZ-EXP-13 @ref:BIZ-EXP-14 @Confirmed @AIProposed
   シナリオ: スマホ対応の引いたズームと部屋全体点灯・通路円形ライトによるFog of Warを描画する
     前提 目標論理表示幅 TARGET_VIEW_WORLD_WIDTH が 840px（約21タイル相当）、通路視界半径 CORRIDOR_VISION_RADIUS が 210px に設定されている
     もし renderGame がワールドと暗がりマスクを描画する
     ならば 画面幅・高さから computeCameraZoom（0.72x〜2.4x：スマホ縦画面でも約13.5タイル幅を表示）を算出して過剰な圧迫感とマップ全透視を両立し、未探索タイルは非表示、既探索の視界外は地形・宝箱・階段のみ暗色表示（敵は非表示）、通路は円形ライト、部屋滞在時は該当部屋領域を明るく照らす
     かつ explored 記録も部屋入室時は部屋全体＋周囲壁1マス、通路では半径約4.7タイルへ連動する
 
-  @APP-MAP-07 @ref:BIZ-EXP-07 @Confirmed @AIProposed
+  @APP-MAP-07 @ref:BIZ-EXP-07 @ref:BIZ-GRW-08 @Confirmed @AIProposed
   シナリオ: 5種の敵タイプ・通路巡回スカウト・高速追撃ランナー（出現猶予付き）を実行する
     前提 populateFloor が部屋内および通路巡回枠（scout 1〜2体）に敵・宝箱・回復オーブを重複タイルなしで配置する
       | 敵種別 | 性質 | 移動・攻撃・視認時の振る舞い |

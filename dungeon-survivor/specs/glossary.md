@@ -27,3 +27,7 @@ Dungeon Survivor のドメイン用語・コード表記・仕様ステータス
 | GLS-21 | Prim法（最小全域木 / MST） | `connectedIds` | すべての部屋を「一番距離が近い部屋同士から順につないでいく」ことで、無駄な長距離通路や孤立部屋を作らずに全室を1つのネットワークに結ぶ手法（Minimum Spanning Tree）。ダンジョン生成で全部屋へ必ず到達できる保証を作るために使用。 | Confirmed | APP-MAP-01, PRM-11 | `src/core/dungeon.ts` |
 | GLS-22 | ダイクストラ法（重み付き経路探索） | `carveWideCorridor` | マスごとに「通りやすさ／通りにくさ（コスト）」を設定して一番コストの低いルートを探す手法。ダンジョン通路を掘る際、「既存の通路や部屋をギリギリかすめるルート」に高いコストを付けることで、通路同士が重なって変な大穴になるのを防いでいる。 | Confirmed | APP-MAP-01, PRM-11 | `src/core/dungeon.ts` |
 | GLS-23 | シード付き乱数（PRNG） | `createSeededRng` | 同じシード値（種）を渡せば毎回まったく同じ順番で乱数が出る擬似乱数生成器（Pseudo-Random Number Generator）。テストの再現性や、同じシードで同じダンジョン・ドロップを検証できるようにするために使用。 | Confirmed | APP-MAP-01, BIZ-EXP-01 | `src/core/rng.ts`, `src/game/engine.ts` |
+| GLS-24 | 通常追跡敵（ノーマル） | `normal` | 標準的なHP・移動速度でプレイヤーを追跡する基本敵種別（`BIZ-EXP-07` から定義を移管）。詳細数値・Lv連動弱砲撃は `PRM-26`（`Inferred`）参照。 | Confirmed | BIZ-EXP-07, APP-MAP-07, PRM-26 | `src/game/engine.ts` |
+| GLS-25 | 重装迫撃敵（タンク） | `tank` | 固くて遅い（高HP・低速）重装型の敵種別（`BIZ-EXP-07` から定義を移管）。放物線迫撃砲などの詳細数値は `PRM-27`（`Inferred`）参照。 | Confirmed | BIZ-EXP-07, APP-MAP-07, PRM-27 | `src/game/engine.ts` |
+| GLS-26 | 高速敵（ランナー） | `runner` | 柔らかくて速い（低HP・高速）小型の敵種別（`BIZ-EXP-07` から定義を移管）。スカウトから召喚される追撃発光個体は `GLS-06` を参照。 | Confirmed | BIZ-EXP-07, APP-MAP-07, GLS-06, PRM-27 | `src/game/engine.ts` |
+| GLS-27 | 固定砲台（シューター） | `shooter` | 移動せずノックバック無効の固定砲台型の敵種別（`BIZ-EXP-07` から定義を移管）。弾幕方向数（`BIZ-EXP-07`/`DEC-10` の8方向 vs `PRM-26` の回転放射4/6方向）は `OQ-09` にて `Disputed`。 | Disputed | BIZ-EXP-07, APP-MAP-07, INV-10, PRM-26, DEC-10, OQ-09 | `src/game/engine.ts` |
