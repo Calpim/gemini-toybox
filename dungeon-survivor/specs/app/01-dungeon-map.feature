@@ -60,14 +60,14 @@
     ならば プレイヤー周囲（130〜320px）へ覚醒済み・isAmbush フラグ付きの高速 runner（228〜265 px/s、出現猶予 spawnDelay 0.45秒）2〜3体（1スカウトあたり生存上限3体）が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない
     かつ state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される
 
-  @APP-MAP-08 @ref:BIZ-EXP-15 @Confirmed
+  @APP-MAP-08 @ref:BIZ-EXP-15 @Confirmed @AIProposed
   シナリオ: プレイ時間をHUD/リザルトに表示し、10Fクリア記録と角丸ガラス風トースト通知を行う
     前提 stats.elapsedPlayTime が 0 で初期化され、formatPlayTime が MM:SS 形式へ整形する
     もし stepGame が status = 'playing' で実行される（skill_tree 等のポーズ中は加算しない）
     ならば stats.elapsedPlayTime のみが加算されて HUD 左側（#playTimeText）に MM:SS で表示され、10F から 11F へ進んだ瞬間に stats.clearTime10F へ記録して「10F CLEAR! タイム MM:SS」を通知する
     かつ 敗北時（gameover）には最終フロア・10Fクリア時間（未達成時は --:--）・最終レベル・プレイ時間・撃破数を縦リスト形式で表示し、下部トースト（computeNotificationLayout）は角丸ガラスカード＋左カラーアクセントバーで視認性よく描画する
 
-  @APP-MAP-09 @ref:BIZ-EXP-16 @Confirmed
+  @APP-MAP-09 @ref:BIZ-EXP-16 @Confirmed @AIProposed
   シナリオ: プロシージャル Web Audio SE とパーティクル・画面シェイク VFX を再生・制御する
     前提 SoundManager が localStorage によるミュート状態を保持し、engine.ts が state.soundEvents・particles・shakeTimer を管理している
     もし 攻撃（shot/blade/coil）・命中・撃破・ボス撃破・被弾・パリィ・取得・LvUP・警告・階段解放・ボス突進・階層クリアが発生する
