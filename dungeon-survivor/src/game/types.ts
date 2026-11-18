@@ -206,6 +206,35 @@ export interface GameStats {
   chestsOpened: number;
 }
 
+export type SoundEventKind =
+  | 'shot'
+  | 'blade'
+  | 'coil'
+  | 'hit'
+  | 'kill'
+  | 'boss_kill'
+  | 'player_hit'
+  | 'parry'
+  | 'pickup_exp'
+  | 'pickup_heal'
+  | 'pickup_equip'
+  | 'level_up'
+  | 'alert'
+  | 'stairs_unlock'
+  | 'boss_dash'
+  | 'floor_clear';
+
+export interface ParticleState {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  life: number;
+  maxLife: number;
+}
+
 export interface GameState {
   seed: number;
   floor: number;
@@ -223,6 +252,10 @@ export interface GameState {
   pickups: PickupState[];
   floatingTexts: FloatingText[];
   visualFx: VisualFx[];
+  particles?: ParticleState[];
+  soundEvents?: SoundEventKind[];
+  shakeTimer?: number;
+  shakeIntensity?: number;
   notifications: GameNotification[];
   elapsedFloorTime: number;
   respawnTimer: number;

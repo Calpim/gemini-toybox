@@ -1,3 +1,4 @@
+import { SoundManager } from './audio/soundManager';
 import {
   closeSkillTree,
   createGameState,
@@ -22,6 +23,7 @@ const hpFill = document.getElementById('hpFill')!;
 const expText = document.getElementById('expText')!;
 const expFill = document.getElementById('expFill')!;
 const floorText = document.getElementById('floorText')!;
+const muteBtn = document.getElementById('muteBtn')!;
 const pauseBtn = document.getElementById('pauseBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
 const gearCountText = document.getElementById('gearCountText')!;
@@ -47,8 +49,22 @@ const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
 
 let state: GameState = createGameState({ initialStatus: 'title' });
 const controller = new InputController(canvas);
+const soundManager = new SoundManager();
 let lastRenderedModalKey = '';
 const safeInsets: { hudBottom?: number; hintTop?: number } = {};
+
+function syncMuteBtn(): void {
+  const muted = soundManager.isMuted();
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+  muteBtn.title = muted ? 'サウンド OFF（タップでON）' : 'サウンド ON（タップでOFF）';
+}
+syncMuteBtn();
+
+const unlockAudioOnce = (): void => {
+  soundManager.unlock();
+};
+window.addEventListener('pointerdown', unlockAudioOnce, { passive: true });
+window.addEventListener('keydown', unlockAudioOnce, { passive: true });
 
 function updateSafeInsets(): void {
   if (hudEl) safeInsets.hudBottom = hudEl.getBoundingClientRect().bottom;
@@ -128,8 +144,14 @@ function syncUi(forceModals = false): void {
 }
 
 startBtn.addEventListener('click', () => {
+  soundManager.unlock();
   startGame(state);
   syncUi(true);
+});
+
+muteBtn.addEventListener('click', () => {
+  soundManager.toggleMute();
+  syncMuteBtn();
 });
 
 pauseBtn.addEventListener('click', () => {
@@ -182,6 +204,7 @@ function loop(now: number): void {
   lastTime = now;
 
   stepGame(state, controller.getMoveVector(), dt);
+  soundManager.playBatch(state.soundEvents);
   renderGame(ctx, window.innerWidth, window.innerHeight, state, controller.stick, now / 1000, safeInsets);
   syncUi();
 

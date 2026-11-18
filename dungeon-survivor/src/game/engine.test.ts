@@ -1589,6 +1589,52 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(losBlockedState.mortarZones.length).toBeGreaterThanOrEqual(1);
     expect(losBlockedState.enemyProjectiles.length).toBeGreaterThanOrEqual(4);
   });
+
+  it('emits soundEvents, spawns particles, and triggers screen shake on combat and level-up events', () => {
+    const state = createGameState({ seed: 999, startFloor: 2 });
+    state.chests = [];
+    state.pickups = [];
+    state.map.tiles.fill('floor');
+    state.player.baseAttackCooldown = 0;
+
+    // 1. Firing core shot emits 'shot'; killing enemy emits 'kill' and spawns particles
+    const weakEnemy = createEnemyByKind(9950, 'runner', state.player.x + 80, state.player.y, 2);
+    weakEnemy.hp = 1;
+    state.enemies = [weakEnemy];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.soundEvents).toContain('shot');
+
+    for (let f = 0; f < 20; f++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(state.soundEvents).toContain('kill');
+    expect((state.particles ?? []).length).toBeGreaterThan(0);
+
+    // 2. Player hit emits 'player_hit' and activates screen shake
+    state.soundEvents = [];
+    state.shakeTimer = 0;
+    const contactEnemy = createEnemyByKind(9951, 'normal', state.player.x, state.player.y, 2);
+    state.enemies = [contactEnemy];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.soundEvents).toContain('player_hit');
+    expect(state.shakeTimer ?? 0).toBeGreaterThan(0);
+
+    // 3. Picking up enough EXP for level up emits 'pickup_exp' and 'level_up'
+    state.soundEvents = [];
+    state.enemies = [];
+    state.pickups = [
+      {
+        id: 9952,
+        kind: 'exp',
+        x: state.player.x,
+        y: state.player.y,
+        value: state.player.expToNext,
+      },
+    ];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.soundEvents).toContain('pickup_exp');
+    expect(state.soundEvents).toContain('level_up');
+  });
 });
 
 

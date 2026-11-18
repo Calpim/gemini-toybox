@@ -346,8 +346,13 @@ export function renderGame(
   const zoom = computeCameraZoom(width, height);
   const viewW = width / zoom;
   const viewH = height / zoom;
-  const camX = player.x - viewW / 2;
-  const camY = player.y - viewH / 2;
+  let camX = player.x - viewW / 2;
+  let camY = player.y - viewH / 2;
+  if ((state.shakeTimer ?? 0) > 0 && (state.shakeIntensity ?? 0) > 0) {
+    const amp = (state.shakeIntensity ?? 0) * Math.min(1, (state.shakeTimer ?? 0) * 6);
+    camX += Math.sin(nowSec * 97) * amp;
+    camY += Math.cos(nowSec * 113) * amp;
+  }
 
   ctx.save();
   ctx.scale(zoom, zoom);
@@ -711,6 +716,20 @@ export function renderGame(
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  // 6.5. Particles (hit sparks, death bursts, pickup sparkles)
+  if (state.particles && state.particles.length > 0) {
+    for (const pt of state.particles) {
+      const alpha = Math.max(0, Math.min(1, pt.life / Math.max(0.01, pt.maxLife)));
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = pt.color;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, pt.radius * (0.45 + alpha * 0.55), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   // 7. Enemies (rendered when inside player's vision, or glowing ambush runners summoned by scout)

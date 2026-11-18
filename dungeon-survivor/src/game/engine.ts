@@ -58,8 +58,53 @@ import type {
   MainWeaponId,
   PickupState,
   PlayerState,
+  SoundEventKind,
   Vec2,
 } from './types';
+
+const MAX_PARTICLES = 140;
+
+function emitSound(state: GameState, kind: SoundEventKind): void {
+  if (!state.soundEvents) state.soundEvents = [];
+  if (state.soundEvents.length < 32) {
+    state.soundEvents.push(kind);
+  }
+}
+
+function triggerShake(state: GameState, intensity: number, duration: number): void {
+  state.shakeIntensity = Math.max(state.shakeIntensity ?? 0, intensity);
+  state.shakeTimer = Math.max(state.shakeTimer ?? 0, duration);
+}
+
+function spawnParticles(
+  state: GameState,
+  x: number,
+  y: number,
+  color: string,
+  count: number,
+  speedMin: number,
+  speedMax: number,
+  radius: number,
+  life: number
+): void {
+  if (!state.particles) state.particles = [];
+  const available = MAX_PARTICLES - state.particles.length;
+  const n = Math.min(count, available);
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i) / Math.max(1, n) + ((state.nextEntityId + i * 7) % 10) * 0.09;
+    const spd = speedMin + ((i * 37 + state.nextEntityId * 13) % 100) * 0.01 * (speedMax - speedMin);
+    state.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      radius,
+      color,
+      life,
+      maxLife: life,
+    });
+  }
+}
 
 export const CORRIDOR_VISION_RADIUS = 210;
 export const SCOUT_KEEP_DIST = 155;
@@ -633,6 +678,10 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
     pickups: populated.pickups,
     floatingTexts: [],
     visualFx: [],
+    particles: [],
+    soundEvents: [],
+    shakeTimer: 0,
+    shakeIntensity: 0,
     notifications: [],
     elapsedFloorTime: 0,
     respawnTimer: INITIAL_RESPAWN_DELAY,
@@ -678,6 +727,9 @@ export function advanceToNextFloor(state: GameState): void {
   state.bossLasers = [];
   state.floatingTexts = [];
   state.visualFx = [];
+  state.particles = [];
+  state.shakeTimer = 0;
+  state.shakeIntensity = 0;
   state.notifications = [];
   state.elapsedFloorTime = 0;
   state.respawnTimer = INITIAL_RESPAWN_DELAY;
@@ -685,6 +737,7 @@ export function advanceToNextFloor(state: GameState): void {
   state.fountainUsed = false;
   state.nextEntityId = populated.nextId;
   state.floorBannerTimer = 2.2;
+  emitSound(state, 'floor_clear');
 }
 
 export function upgradeSkillNode(state: GameState, nodeId: SkillNodeId): boolean {
@@ -747,6 +800,8 @@ function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
     player.level += 1;
     player.skillPoints += 1;
     player.expToNext = Math.round(player.expToNext * 1.22);
+    emitSound(state, 'level_up');
+    spawnParticles(state, player.x, player.y, '#38bdf8', 14, 55, 165, 3.0, 0.45);
     state.floatingTexts.push({
       x: player.x,
       y: player.y - 24,
@@ -996,6 +1051,8 @@ function damageEnemy(state: GameState, enemy: EnemyState, amount: number): void 
   enemy.hp -= amount;
   enemy.hitFlash = 0.14;
   enemy.awake = true;
+  emitSound(state, 'hit');
+  spawnParticles(state, enemy.x, enemy.y, '#fef08a', 3, 35, 110, 2.0, 0.2);
   state.floatingTexts.push({
     x: enemy.x,
     y: enemy.y - enemy.radius - 4,
@@ -1064,6 +1121,7 @@ function triggerChainLightning(
     curr = nextTarget;
   }
 
+  emitSound(state, 'coil');
   state.visualFx.push({
     kind: 'lightning',
     x: sourceX,
@@ -1477,6 +1535,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         }
         damageEnemy(state, e, mods.repulsorDamage);
       }
+      emitSound(state, 'parry');
       state.visualFx.push({
         kind: 'pulse',
         x: player.x,
@@ -1515,6 +1574,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           color: baseStats.pierce ? '#2dd4bf' : '#34d399',
         });
       }
+      emitSound(state, 'shot');
       player.baseAttackCooldown = baseStats.cooldown;
     }
   }
@@ -1618,6 +1678,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           });
         }
 
+        emitSound(state, 'blade');
         state.visualFx.push({
           kind: 'slash',
           x: player.x,
@@ -2043,6 +2104,28 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       state.stats.kills += 1;
       const wasRoomBoss = Boolean(enemy.isRoomBoss);
       const wasGrandBoss = Boolean(enemy.isGrandBoss);
+      const deathColor =
+        wasGrandBoss
+          ? '#fbbf24'
+          : wasRoomBoss
+            ? '#f43f5e'
+            : enemy.kind === 'runner'
+              ? '#fde047'
+              : enemy.kind === 'tank'
+                ? '#c084fc'
+                : enemy.kind === 'shooter'
+                  ? '#38bdf8'
+                  : enemy.kind === 'scout'
+                    ? '#fb923c'
+                    : '#fb7185';
+      if (wasRoomBoss || wasGrandBoss) {
+        emitSound(state, 'boss_kill');
+        triggerShake(state, wasGrandBoss ? 10 : 7.5, wasGrandBoss ? 0.38 : 0.28);
+        spawnParticles(state, enemy.x, enemy.y, deathColor, wasGrandBoss ? 24 : 18, 60, 210, 3.6, 0.55);
+      } else {
+        emitSound(state, 'kill');
+        spawnParticles(state, enemy.x, enemy.y, deathColor, 8, 45, 145, 2.6, 0.34);
+      }
 
       // Scout-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
       if (!enemy.isAmbush) {
@@ -2106,6 +2189,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       state.enemies.splice(i, 1);
       if (wasRoomBoss && getStairsLockCount(state) === 0) {
         const stairsWorld = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
+        emitSound(state, 'stairs_unlock');
         pushNotification(
           state,
           'info',
@@ -2250,6 +2334,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                 life: 1.0,
                 maxLife: 1.0,
               });
+              emitSound(state, 'alert');
               pushNotification(
                 state,
                 'alert',
@@ -2510,6 +2595,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         if ((enemy.dashTimer ?? 0) <= 0) {
           enemy.dashState = 'dashing';
           enemy.dashTimer = isGrand ? 0.55 : 0.50;
+          emitSound(state, 'boss_dash');
         }
       } else if (enemy.dashState === 'dashing' && enemy.dashDir) {
         const dashSpd = enemy.dashSpeed ?? (isGrand ? 460 : 410);
@@ -2523,6 +2609,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         const moved = Math.hypot(resolvedDash.x - enemy.x, resolvedDash.y - enemy.y);
         enemy.x = resolvedDash.x;
         enemy.y = resolvedDash.y;
+        spawnParticles(state, enemy.x, enemy.y, isGrand ? '#fbbf24' : '#f43f5e', 1, 10, 40, 2.6, 0.22);
         enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
         if ((enemy.dashTimer ?? 0) <= 0 || moved < stepDist * 0.45) {
           enemy.dashState = 'none';
@@ -2824,6 +2911,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
 
       player.hp = Math.max(0, player.hp - enemy.damage);
+      emitSound(state, 'player_hit');
+      triggerShake(state, 6, 0.18);
+      spawnParticles(state, player.x, player.y, '#f87171', 7, 50, 140, 2.5, 0.3);
 
       // Trigger reactive coil counter immediately on hit if equipped
       const coil = player.equipment.find((e) => e.id === 'reactive_coil');
@@ -2875,6 +2965,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       if (mods.hasAegisParry && player.aegisCooldown <= 0) {
         player.aegisCooldown = mods.aegisCooldown;
         player.invulnTimer = 0.6;
+        emitSound(state, 'parry');
+        triggerShake(state, 3.5, 0.12);
+        spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
         state.floatingTexts.push({
           x: player.x,
           y: player.y - 20,
@@ -2885,6 +2978,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         });
       } else {
         player.hp = Math.max(0, player.hp - ep.damage);
+        emitSound(state, 'player_hit');
+        triggerShake(state, 5.5, 0.16);
+        spawnParticles(state, player.x, player.y, '#f87171', 6, 45, 125, 2.4, 0.28);
         state.floatingTexts.push({
           x: player.x,
           y: player.y - player.radius - 6,
@@ -2908,6 +3004,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     zone.elapsed += clampedDt;
     if (zone.elapsed >= zone.duration) {
       state.mortarZones.splice(i, 1);
+      spawnParticles(state, zone.targetX, zone.targetY, '#c084fc', 10, 55, 160, 2.8, 0.36);
+      if (Math.hypot(player.x - zone.targetX, player.y - zone.targetY) <= 260) {
+        triggerShake(state, 2.8, 0.11);
+      }
       state.visualFx.push({
         kind: 'pulse',
         x: zone.targetX,
@@ -2925,6 +3025,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         if (mods.hasAegisParry && player.aegisCooldown <= 0) {
           player.aegisCooldown = mods.aegisCooldown;
           player.invulnTimer = 0.6;
+          emitSound(state, 'parry');
+          triggerShake(state, 3.5, 0.12);
+          spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
           state.floatingTexts.push({
             x: player.x,
             y: player.y - 20,
@@ -2935,6 +3038,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           });
         } else {
           player.hp = Math.max(0, player.hp - zone.damage);
+          emitSound(state, 'player_hit');
+          triggerShake(state, 6.5, 0.2);
+          spawnParticles(state, player.x, player.y, '#f87171', 7, 50, 140, 2.5, 0.3);
           state.floatingTexts.push({
             x: player.x,
             y: player.y - player.radius - 6,
@@ -2979,6 +3085,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           if (mods.hasAegisParry && player.aegisCooldown <= 0) {
             player.aegisCooldown = mods.aegisCooldown;
             player.invulnTimer = 0.6;
+            emitSound(state, 'parry');
+            triggerShake(state, 3.5, 0.12);
+            spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
             state.floatingTexts.push({
               x: player.x,
               y: player.y - 20,
@@ -2989,6 +3098,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             });
           } else {
             player.hp = Math.max(0, player.hp - laser.damage);
+            emitSound(state, 'player_hit');
+            triggerShake(state, 7, 0.22);
+            spawnParticles(state, player.x, player.y, '#f43f5e', 8, 55, 150, 2.5, 0.3);
             state.floatingTexts.push({
               x: player.x,
               y: player.y - player.radius - 6,
@@ -3030,9 +3142,13 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if (Math.hypot(player.x - p.x, player.y - p.y) <= pickupRadius) {
       state.pickups.splice(i, 1);
       if (p.kind === 'equip' && p.equipmentId) {
+        emitSound(state, 'pickup_equip');
+        spawnParticles(state, p.x, p.y, '#fbbf24', 10, 45, 130, 2.8, 0.42);
         acquireEquipment(state, createEquippedItem(p.equipmentId, p.itemLevel ?? 1));
         if (state.status !== 'playing') return;
       } else if (p.kind === 'heal') {
+        emitSound(state, 'pickup_heal');
+        spawnParticles(state, p.x, p.y, '#34d399', 8, 35, 105, 2.5, 0.35);
         const before = player.hp;
         const healAmount = Math.round(p.value * mods.healBonusMult);
         player.hp = Math.min(player.maxHp, player.hp + healAmount);
@@ -3046,13 +3162,31 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           maxLife: 0.7,
         });
       } else {
+        emitSound(state, 'pickup_exp');
         const gainedExp = Math.round(p.value * mods.expMult);
         grantExpAndCheckLevelUp(state, gainedExp);
       }
     }
   }
 
-  // 11. Floating texts, Visual FX, and Toast Notifications lifetimes
+  // 11. Floating texts, Visual FX, Particles, Screen Shake, and Toast Notifications lifetimes
+  if ((state.shakeTimer ?? 0) > 0) {
+    state.shakeTimer = Math.max(0, (state.shakeTimer ?? 0) - clampedDt);
+    if (state.shakeTimer <= 0) state.shakeIntensity = 0;
+  }
+
+  if (state.particles) {
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+      const pt = state.particles[i];
+      pt.x += pt.vx * clampedDt;
+      pt.y += pt.vy * clampedDt;
+      pt.vx *= 0.92;
+      pt.vy *= 0.92;
+      pt.life -= clampedDt;
+      if (pt.life <= 0) state.particles.splice(i, 1);
+    }
+  }
+
   for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
     const ft = state.floatingTexts[i];
     ft.y -= 26 * clampedDt;
