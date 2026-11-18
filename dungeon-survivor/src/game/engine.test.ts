@@ -1115,7 +1115,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     const closeDistAfter = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
     expect(closeDistAfter).toBeGreaterThan(closeDistBefore);
-    expect(closeDistAfter - closeDistBefore).toBeGreaterThan(35);
+    expect(closeDistAfter - closeDistBefore).toBeGreaterThan(25);
 
     // In sweet spot (between SCOUT_KEEP_DIST and SCOUT_CHASE_DIST), scout strafes tangentially rather than standing still
     kiteScout.x = scoutState.player.x + Math.round((SCOUT_KEEP_DIST + SCOUT_CHASE_DIST) / 2);

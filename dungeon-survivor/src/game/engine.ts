@@ -62,11 +62,11 @@ import type {
 } from './types';
 
 export const CORRIDOR_VISION_RADIUS = 210;
-export const SCOUT_KEEP_DIST = 220;
-export const SCOUT_CHASE_DIST = 280;
+export const SCOUT_KEEP_DIST = 155;
+export const SCOUT_CHASE_DIST = 185;
 export const SCOUT_ALERT_COOLDOWN = 5.0;
-export const SCOUT_ALERT_SPEED_MULT = 1.75;
-export const SCOUT_MAX_ALERT_SPEED = 195;
+export const SCOUT_ALERT_SPEED_MULT = 1.45;
+export const SCOUT_MAX_ALERT_SPEED = 165;
 export const SCOUT_SUMMON_CAP_PER_SCOUT = 3;
 export const SCOUT_SUMMON_MAX_PLAYER_DIST = 420;
 export const SHOOTER_AGGRO_RANGE = 320;
