@@ -530,15 +530,15 @@
     
     <nav class="section-nav" aria-label="仕様セクション移動">
       <a class="nav-pill" href="#sec-overview">📊 概要</a>
-      <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (32/22)</a>
-      <a class="nav-pill" href="#sec-glossary">📖 用語集 (27)</a>
+      <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (34/24)</a>
+      <a class="nav-pill" href="#sec-glossary">📖 用語集 (29)</a>
       <a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (32)</a>
       <a class="nav-pill" href="#sec-formulas">🧮 計算式 (13)</a>
       <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (12)</a>
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (9)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (17)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (18)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -550,16 +550,16 @@
       </div>
 
       <div class="stats">
-        <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">32</div></div>
-        <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">22</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">147</div></div>
+        <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">34</div></div>
+        <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">24</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">154</div></div>
         <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">30</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">7</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">2</div></div>
       </div>
 
-      <div class="ok-banner">✅ トレーサビリティチェック OK：全 32 件のビジネス仕様と 22 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 132 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ トレーサビリティチェック OK：全 34 件のビジネス仕様と 24 件のアプリ仕様が ID 紐付けされています</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 135 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -617,7 +617,7 @@
       <div class="section-head">
         <div>
           <div class="section-eyebrow">BUSINESS &amp; APP GHERKIN / ビジネス仕様（既存）</div>
-          <h2>🔗 ビジネス仕様・アプリ仕様トレーサビリティ <span class="count-pill" data-section-count="gherkin">(32件)</span></h2>
+          <h2>🔗 ビジネス仕様・アプリ仕様トレーサビリティ <span class="count-pill" data-section-count="gherkin">(34件)</span></h2>
         </div>
         <button type="button" class="tab-btn" id="toggleAllAppsBtn">⚙️ アプリ仕様をすべて開く</button>
       </div>
@@ -785,7 +785,7 @@
                 
                 <h4>PCキーボードとスマホ片手ジョイスティックで移動し、入室覚醒とESC/K/⏸任意ポーズを実行する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、タッチ画面でドラッグする、または ESC / K / HUDの⏸ボタンを押下する</span></li><li><span class="kw">ならば</span><span class="st-text">移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ESC / K / ⏸押下時は時間を完全停止してスキルツリー兼ポーズ画面（装備詳細表示付き）へ切り替わる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、タッチ画面でドラッグする、または ESC / K / HUDの⏸ボタンを押下する</span></li><li><span class="kw">ならば</span><span class="st-text">移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ESC / K / ⏸押下時は時間を完全停止してスキルツリー兼ポーズ画面（仕様書リンク・装備詳細表示・右上端固定の✕閉じるボタン付き）へ切り替わる</span></li><li><span class="kw">かつ</span><span class="st-text">プレイ中HUDは左側（階層の下）にプレイ時間（MM:SS）、右端にミュートボタン（🔊/🔇）を配置し、仕様書リンクはスタート画面とポーズ画面内に集約する</span></li>
   </ul>
               </div>
           </div>
@@ -827,7 +827,7 @@
                 
                 <h4>PCキーボードとスマホ片手ジョイスティックで移動し、入室覚醒とESC/K/⏸任意ポーズを実行する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、タッチ画面でドラッグする、または ESC / K / HUDの⏸ボタンを押下する</span></li><li><span class="kw">ならば</span><span class="st-text">移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ESC / K / ⏸押下時は時間を完全停止してスキルツリー兼ポーズ画面（装備詳細表示付き）へ切り替わる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、タッチ画面でドラッグする、または ESC / K / HUDの⏸ボタンを押下する</span></li><li><span class="kw">ならば</span><span class="st-text">移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ESC / K / ⏸押下時は時間を完全停止してスキルツリー兼ポーズ画面（仕様書リンク・装備詳細表示・右上端固定の✕閉じるボタン付き）へ切り替わる</span></li><li><span class="kw">かつ</span><span class="st-text">プレイ中HUDは左側（階層の下）にプレイ時間（MM:SS）、右端にミュートボタン（🔊/🔇）を配置し、仕様書リンクはスタート画面とポーズ画面内に集約する</span></li>
   </ul>
               </div>
           </div>
@@ -1167,6 +1167,90 @@
               <thead><tr><th>敵種別</th><th>性質</th><th>移動・攻撃・視認時の振る舞い</th></tr></thead>
               <tbody><tr><td>normal</td><td>標準追跡＋Lv連動弱砲撃</td><td>標準HP・標準速度で追跡し、射程190px・視線内からプレイヤーLvに応じた弱砲撃（Lv1-2:1発/3.2s〜Lv9+:3発/2.1s）を行う</td></tr><tr><td>tank</td><td>放物線迫撃砲＋重装</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）で、射程215px内から着弾範囲とタイミング円を予告する放物線迫撃砲（防壁貫通）を撃つ</td></tr><tr><td>runner</td><td>柔らかくて早い（階層連動群れ湧き）</td><td>低HP（0.55倍）・高速（1.55倍）・小型。通常スポーン／リポップ時は階層に応じた群れ（1〜2F:1〜2体・3〜5F:2〜3体・6F+:3〜4体）で出現（追加個体はEXP・ドロップ抑制）</td></tr><tr><td>shooter</td><td>定点射撃型（固定砲台）</td><td>速度 0・ノックバック無効・2F以降出現・索敵320px・1.0秒予兆後に回転放射4/6/8方向弾幕（1-5F: 4方向 / 6-10F: 6方向 / 11F+: 8方向、ランダム1〜2方向が防御貫通）を発射</td></tr><tr><td>scout</td><td>スカウト（通路巡回型）</td><td>2F以降に出現。未発見時は低速巡回し、発見後は周辺敵を覚醒させず加速（最大165px/s）して距離155〜185px（射程強化Lv3で届く位置）を横移動で保ちつつ近接時は通路出口方向へ逃走し、420px以内で5.0s毎に1体あたり最大3体まで追撃ランナーをプレイヤー周囲へ召喚・再補充＋警告通知</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">scout がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤー周囲（130〜320px）へ覚醒済み・isAmbush フラグ付きの高速 runner（228〜265 px/s、出現猶予 spawnDelay 0.45秒）2〜3体（1スカウトあたり生存上限3体）が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない</span></li><li><span class="kw">かつ</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
+  </ul>
+              </div>
+          </div>
+        </details>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
+        <div class="biz-card" id="BIZ-EXP-15">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-15</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>プレイ時間を常時確認でき、10F突破タイムと敗北時リザルトを縦リストで振り返れる</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョンを探索している</span></li><li><span class="kw">もし</span><span class="st-text">探索を進めて 10F を突破するか、HPが 0 になって敗北する</span></li><li><span class="kw">ならば</span><span class="st-text">探索中はアクティブなプレイ時間（MM:SS）がHUDに表示され（ポーズ中は停止）、10F突破時にはクリアタイムが通知・記録され、敗北時には最終フロア・10Fクリア時間・最終レベル・プレイ時間・撃破数が縦リスト形式のリザルトで確認できる</span></li>
+  </ul>
+        </div>
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-08 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
+              <div class="app-card" id="APP-MAP-08" data-status="Confirmed" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-08</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-15</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+                </div>
+                
+                <h4>プレイ時間をHUD/リザルトに表示し、10Fクリア記録と角丸ガラス風トースト通知を行う</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">stats.elapsedPlayTime が 0 で初期化され、formatPlayTime が MM:SS 形式へ整形する</span></li><li><span class="kw">もし</span><span class="st-text">stepGame が status = &#39;playing&#39; で実行される（skill_tree 等のポーズ中は加算しない）</span></li><li><span class="kw">ならば</span><span class="st-text">stats.elapsedPlayTime のみが加算されて HUD 左側（#playTimeText）に MM:SS で表示され、10F から 11F へ進んだ瞬間に stats.clearTime10F へ記録して「10F CLEAR! タイム MM:SS」を通知する</span></li><li><span class="kw">かつ</span><span class="st-text">敗北時（gameover）には最終フロア・10Fクリア時間（未達成時は --:--）・最終レベル・プレイ時間・撃破数を縦リスト形式で表示し、下部トースト（computeNotificationLayout）は角丸ガラスカード＋左カラーアクセントバーで視認性よく描画する</span></li>
+  </ul>
+              </div>
+          </div>
+        </details>
+      </section>
+      <section class="trace-group" data-biz-status="Confirmed" data-has-inferred="false" data-has-disputed="false" data-has-unknown="false">
+        <div class="biz-card" id="BIZ-EXP-16">
+          <div class="card-head">
+            <div class="id-group">
+              <span class="id-pill id-biz">BIZ-EXP-16</span>
+              <span class="file-pill">01-exploration.feature</span>
+              <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
+            </div>
+            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+          </div>
+          
+          <h3>戦闘や成長に応じた効果音（SE）と視覚演出（VFX）が発生し、いつでもミュートできる</h3>
+          <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョンで戦闘・探索を行っている</span></li><li><span class="kw">もし</span><span class="st-text">攻撃・命中・撃破・被弾・パリィ・レベルアップ・アイテム獲得・階段解放などのイベントが発生する、またはミュートボタンを押す</span></li><li><span class="kw">ならば</span><span class="st-text">状況に応じた効果音とパーティクル／画面シェイク演出が発生し、HUD右端のミュートボタンからいつでも音声のON/OFFを切り替えられる</span></li>
+  </ul>
+        </div>
+        <details class="app-accordion">
+          <summary class="app-accordion-summary">
+            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-meta">APP-MAP-09 (1件)</span>
+            <span class="app-accordion-hint"></span>
+          </summary>
+          <div class="app-branch">
+            
+              <div class="app-card" id="APP-MAP-09" data-status="Confirmed" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-09</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-16</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+                </div>
+                
+                <h4>プロシージャル Web Audio SE とパーティクル・画面シェイク VFX を再生・制御する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">SoundManager が localStorage によるミュート状態を保持し、engine.ts が state.soundEvents・particles・shakeTimer を管理している</span></li><li><span class="kw">もし</span><span class="st-text">攻撃（shot/blade/coil）・命中・撃破・ボス撃破・被弾・パリィ・取得・LvUP・警告・階段解放・ボス突進・階層クリアが発生する</span></li><li><span class="kw">ならば</span><span class="st-text">16種の SoundEventKind が種別ごとのスロットル付きで Web Audio API 合成再生され、同時に最大140個のパーティクル（spawnParticles）と決定論的カメラシェイク（triggerShake）が描画される</span></li><li><span class="kw">かつ</span><span class="st-text">HUD 右端のミュートボタン（#muteBtn）でいつでもサウンド ON/OFF を切り替えられる</span></li>
   </ul>
               </div>
           </div>
@@ -2049,7 +2133,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">GLOSSARY / 用語集</div>
-        <h2>📖 用語集 <span class="count-pill" data-section-count="glossary">(27件)</span></h2>
+        <h2>📖 用語集 <span class="count-pill" data-section-count="glossary">(29件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/glossary.md" data-source-file="specs/glossary.md" data-item-id="" title="元仕様ファイル specs/glossary.md ()">specs/glossary.md</a>
@@ -2208,10 +2292,10 @@
       <tr id="GLS-14" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-14" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-14">GLS-14</a></td>
         <td><strong>任意ポーズ＆装備詳細画面</strong><div class="sub-code"><code class="inline-code">toggleSkillTree</code> (<code class="inline-code">ESC</code> / <code class="inline-code">K</code> / <code class="inline-code">⏸</code>)</div></td>
-        <td>探索中いつでも <code class="inline-code">ESC</code> キー・<code class="inline-code">K</code> キー・HUDの <code class="inline-code">⏸</code> ボタンで時間を完全停止して開閉でき、スキルツリー配分に加えて自機コアショット・全装備スロットの詳細スペックを落ち着いて確認できる画面。</td>
+        <td>探索中いつでも <code class="inline-code">ESC</code> キー・<code class="inline-code">K</code> キー・HUDの <code class="inline-code">⏸</code> ボタンで時間を完全停止して開閉でき、スキルツリー配分・仕様書リンク・自機コアショット・全装備スロットの詳細スペックを落ち着いて確認できる画面。モーダル右上端（<code class="inline-code">position: absolute</code>）に <code class="inline-code">✕</code> 閉じるボタン、下部に「戦闘に戻る」ボタンを備える。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#ST-01">ST-01</a><a class="ref-pill ref-link" href="#ST-02">ST-02</a><a class="ref-pill ref-link" href="#ST-08">ST-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
-        <td><div class="note-text"><code class="inline-code">src/main.ts</code>, <code class="inline-code">src/ui/modals.ts</code></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#ST-01">ST-01</a><a class="ref-pill ref-link" href="#ST-02">ST-02</a><a class="ref-pill ref-link" href="#ST-08">ST-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/main.ts</code>, <code class="inline-code">src/ui/modals.ts</code>, <code class="inline-code">index.html</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-14" data-source-file="specs/glossary.md" data-item-id="GLS-14" title="元仕様ファイル specs/glossary.md (GLS-14)">specs/glossary.md#GLS-14</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2356,6 +2440,28 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#INV-10">INV-10</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-15">DEC-15</a><a class="ref-pill ref-link" href="#OQ-09">OQ-09</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-27" data-source-file="specs/glossary.md" data-item-id="GLS-27" title="元仕様ファイル specs/glossary.md (GLS-27)">specs/glossary.md#GLS-27</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-28" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-28" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-28">GLS-28</a></td>
+        <td><strong>プロシージャルSE＆VFX</strong><div class="sub-code"><code class="inline-code">SoundManager</code> / <code class="inline-code">particles</code> / <code class="inline-code">shakeTimer</code></div></td>
+        <td>Web Audio API による16種のプロシージャル効果音（種別スロットル・<code class="inline-code">localStorage</code> ミュート永続化・初回ジェスチャーアンロック）と、最大140個のパーティクル・決定論的画面シェイクの総称。エンジン層は <code class="inline-code">soundEvents</code> イベントキューを積む純粋設計。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/audio/soundManager.ts</code>, <code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/render/canvasRenderer.ts</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-28" data-source-file="specs/glossary.md" data-item-id="GLS-28" title="元仕様ファイル specs/glossary.md (GLS-28)">specs/glossary.md#GLS-28</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="GLS-29" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-29" data-source-file="specs/glossary.md">
+        <td><a class="id-pill id-doc" href="#GLS-29">GLS-29</a></td>
+        <td><strong>プレイ時間・リザルト・トーストUI</strong><div class="sub-code"><code class="inline-code">elapsedPlayTime</code> / <code class="inline-code">clearTime10F</code> / <code class="inline-code">computeNotificationLayout</code></div></td>
+        <td>探索中（<code class="inline-code">playing</code> 時のみ加算）の経過時間 <code class="inline-code">MM:SS</code> と 10F 到達時のクリアタイム記録、敗北時の5項目縦リストリザルト（最終フロア・10Fクリア時間・最終レベル・プレイ時間・撃破数）、および角丸ガラスカード＋左アクセントバーの下部トースト通知UI。</td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a></div></td>
+        <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/main.ts</code>, <code class="inline-code">src/render/canvasRenderer.ts</code>, <code class="inline-code">index.html</code></div><div class="source-cell">
+    <a class="source-link" href="../specs/glossary.md#GLS-29" data-source-file="specs/glossary.md" data-item-id="GLS-29" title="元仕様ファイル specs/glossary.md (GLS-29)">specs/glossary.md#GLS-29</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>
@@ -3686,7 +3792,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(17件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(18件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -3883,6 +3989,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#ST-11">ST-11</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#OQ-03">OQ-03</a></div></td>
         <td><div class="note-text">プレイテストでLv8カンスト到達テンポと枠拡張の選択バランスを再評価する時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-16" data-source-file="specs/decisions.md" data-item-id="DEC-16" title="元仕様ファイル specs/decisions.md (DEC-16)">specs/decisions.md#DEC-16</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-17" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-17" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-17">DEC-17</a></td>
+        <td><span class="date-pill">2026-11-18</span><div class="sub-code">先輩</div></td>
+        <td><strong>UI/UX・オーディオ・演出刷新（Issue #15 / #16 / #19）：(1) プロシージャル Web Audio SE 16種＋HUD右端ミュートトグル (<code class="inline-code">localStorage</code> 永続化) (2) パーティクル（上限140）＋画面シェイクVFX (3) プレイ中HUDから仕様書リンクを外してスタート／ポーズ画面へ集約・ポーズ右上端固定 <code class="inline-code">✕</code> ボタン追加 (4) プレイ時間 <code class="inline-code">MM:SS</code> HUD常時表示・10Fクリア時タイム記録＆通知・敗北リザルト縦リスト化 (5) 下部トーストを角丸ガラスカード＋左アクセントバーへ刷新</strong><div class="note-text">スマホ実機プレイテストでの視認性・誤タップ防止・操作性向上、および戦闘・成長の手触り強化のため（10Fクリア約10分前後のテンポを確認済み）</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#GLS-28">GLS-28</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a></div></td>
+        <td><div class="note-text">BGM追加（#17）や豪華SE差し替え、PlaywrightモバイルUI自動検知（#20）の導入時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-17" data-source-file="specs/decisions.md" data-item-id="DEC-17" title="元仕様ファイル specs/decisions.md (DEC-17)">specs/decisions.md#DEC-17</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>

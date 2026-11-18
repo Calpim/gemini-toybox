@@ -16,7 +16,8 @@
     前提 ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している
     かつ 標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている
     もし PCで WASD / 矢印キーを入力する、タッチ画面でドラッグする、または ESC / K / HUDの⏸ボタンを押下する
-    ならば 移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ESC / K / ⏸押下時は時間を完全停止してスキルツリー兼ポーズ画面（装備詳細表示付き）へ切り替わる
+    ならば 移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ESC / K / ⏸押下時は時間を完全停止してスキルツリー兼ポーズ画面（仕様書リンク・装備詳細表示・右上端固定の✕閉じるボタン付き）へ切り替わる
+    かつ プレイ中HUDは左側（階層の下）にプレイ時間（MM:SS）、右端にミュートボタン（🔊/🔇）を配置し、仕様書リンクはスタート画面とポーズ画面内に集約する
 
   @APP-MAP-03 @ref:BIZ-EXP-03 @Confirmed
   シナリオ: 時間経過による自然回復を行わず回復オーブ取得時のみHPを回復する
@@ -58,3 +59,18 @@
     もし scout がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする
     ならば プレイヤー周囲（130〜320px）へ覚醒済み・isAmbush フラグ付きの高速 runner（228〜265 px/s、出現猶予 spawnDelay 0.45秒）2〜3体（1スカウトあたり生存上限3体）が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない
     かつ state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される
+
+  @APP-MAP-08 @ref:BIZ-EXP-15 @Confirmed
+  シナリオ: プレイ時間をHUD/リザルトに表示し、10Fクリア記録と角丸ガラス風トースト通知を行う
+    前提 stats.elapsedPlayTime が 0 で初期化され、formatPlayTime が MM:SS 形式へ整形する
+    もし stepGame が status = 'playing' で実行される（skill_tree 等のポーズ中は加算しない）
+    ならば stats.elapsedPlayTime のみが加算されて HUD 左側（#playTimeText）に MM:SS で表示され、10F から 11F へ進んだ瞬間に stats.clearTime10F へ記録して「10F CLEAR! タイム MM:SS」を通知する
+    かつ 敗北時（gameover）には最終フロア・10Fクリア時間（未達成時は --:--）・最終レベル・プレイ時間・撃破数を縦リスト形式で表示し、下部トースト（computeNotificationLayout）は角丸ガラスカード＋左カラーアクセントバーで視認性よく描画する
+
+  @APP-MAP-09 @ref:BIZ-EXP-16 @Confirmed
+  シナリオ: プロシージャル Web Audio SE とパーティクル・画面シェイク VFX を再生・制御する
+    前提 SoundManager が localStorage によるミュート状態を保持し、engine.ts が state.soundEvents・particles・shakeTimer を管理している
+    もし 攻撃（shot/blade/coil）・命中・撃破・ボス撃破・被弾・パリィ・取得・LvUP・警告・階段解放・ボス突進・階層クリアが発生する
+    ならば 16種の SoundEventKind が種別ごとのスロットル付きで Web Audio API 合成再生され、同時に最大140個のパーティクル（spawnParticles）と決定論的カメラシェイク（triggerShake）が描画される
+    かつ HUD 右端のミュートボタン（#muteBtn）でいつでもサウンド ON/OFF を切り替えられる
+
