@@ -204,6 +204,8 @@ export interface GameStats {
   floorsCleared: number;
   totalExp: number;
   chestsOpened: number;
+  elapsedPlayTime: number;
+  clearTime10F?: number;
 }
 
 export type SoundEventKind =

@@ -26,9 +26,11 @@ import {
   SCOUT_SUMMON_MAX_PLAYER_DIST,
   SHOOTER_AGGRO_RANGE,
   acquireEquipment,
+  advanceToNextFloor,
   createEnemyByKind,
   startGame,
   createGameState,
+  formatPlayTime,
   getNormalEnemyShotStats,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
@@ -1634,6 +1636,36 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.soundEvents).toContain('pickup_exp');
     expect(state.soundEvents).toContain('level_up');
+  });
+
+  it('tracks elapsedPlayTime only while playing, formats MM:SS, and records clearTime10F upon clearing 10F', () => {
+    expect(formatPlayTime(0)).toBe('00:00');
+    expect(formatPlayTime(65.9)).toBe('01:05');
+    expect(formatPlayTime(-5)).toBe('00:00');
+
+    const state = createGameState({ seed: 777, startFloor: 10 });
+    expect(state.stats.elapsedPlayTime).toBe(0);
+    expect(state.stats.clearTime10F).toBeUndefined();
+
+    for (let i = 0; i < 40; i++) {
+      stepGame(state, { x: 0, y: 0 }, 0.05);
+    }
+    expect(state.stats.elapsedPlayTime).toBeCloseTo(2.0, 5);
+
+    // Paused state should not advance elapsedPlayTime
+    toggleSkillTree(state);
+    expect(state.status).toBe('skill_tree');
+    stepGame(state, { x: 0, y: 0 }, 0.05);
+    expect(state.stats.elapsedPlayTime).toBeCloseTo(2.0, 5);
+
+    toggleSkillTree(state);
+    expect(state.status).toBe('playing');
+
+    // Advancing from 10F to 11F records 10F clear time and pushes notification
+    advanceToNextFloor(state);
+    expect(state.floor).toBe(11);
+    expect(state.stats.clearTime10F).toBeCloseTo(2.0, 5);
+    expect(state.notifications.some((n) => n.text.includes('10F CLEAR!') && n.text.includes('00:02'))).toBe(true);
   });
 });
 

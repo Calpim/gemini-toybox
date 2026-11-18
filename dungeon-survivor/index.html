@@ -362,7 +362,10 @@
 <body>
   <div class="hud">
     <div class="hud-group">
-      <strong id="floorText" style="color:#22d3ee">1F</strong>
+      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15;">
+        <strong id="floorText" style="color:#22d3ee">1F</strong>
+        <span id="playTimeText" style="font-size:10px;color:#94a3b8;">00:00</span>
+      </div>
       <div class="hud-bars">
         <div class="hud-row">
           <div class="hp-bar"><div id="hpFill" class="hp-fill" style="width:100%"></div></div>
@@ -393,6 +396,7 @@
         <div style="display:flex;align-items:center;gap:8px;">
           <a class="spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書</a>
           <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
+          <button id="closeSkillTopBtn" type="button" class="skill-btn" title="閉じる (ESC)">✕ 閉じる</button>
         </div>
       </div>
       <div id="skillColumns" class="tree-grid"></div>

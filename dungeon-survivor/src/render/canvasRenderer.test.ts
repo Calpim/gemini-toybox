@@ -71,14 +71,14 @@ describe('canvasRenderer HUD safe layout', () => {
   it('computes compact bottom notification layout on narrow screens and avoids hintTop', () => {
     const mobile = computeNotificationLayout(375, 812, 770);
     expect(mobile.isCompact).toBe(true);
-    expect(mobile.boxHeight).toBe(22);
-    expect(mobile.fontSize).toBe(11);
+    expect(mobile.boxHeight).toBe(32);
+    expect(mobile.fontSize).toBe(14);
     expect(mobile.bottomAnchorY).toBe(760);
 
     const desktop = computeNotificationLayout(1280, 720, 680);
     expect(desktop.isCompact).toBe(false);
-    expect(desktop.boxHeight).toBe(26);
-    expect(desktop.fontSize).toBe(12);
+    expect(desktop.boxHeight).toBe(38);
+    expect(desktop.fontSize).toBe(16);
     expect(desktop.bottomAnchorY).toBe(670);
   });
 

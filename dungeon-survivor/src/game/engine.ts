@@ -694,8 +694,16 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       floorsCleared: 0,
       totalExp: 0,
       chestsOpened: 0,
+      elapsedPlayTime: 0,
     },
   };
+}
+
+export function formatPlayTime(seconds: number): string {
+  const safeSec = Math.max(0, Math.floor((Number.isFinite(seconds) ? seconds : 0) + 1e-6));
+  const mins = Math.floor(safeSec / 60);
+  const secs = safeSec % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
 export function advanceToNextFloor(state: GameState): void {
@@ -738,6 +746,17 @@ export function advanceToNextFloor(state: GameState): void {
   state.nextEntityId = populated.nextId;
   state.floorBannerTimer = 2.2;
   emitSound(state, 'floor_clear');
+
+  if (state.floor === 11 && state.stats.clearTime10F === undefined) {
+    state.stats.clearTime10F = state.stats.elapsedPlayTime ?? 0;
+    pushNotification(
+      state,
+      'levelup',
+      `10F CLEAR! タイム ${formatPlayTime(state.stats.clearTime10F)}`,
+      '#fde047',
+      4.5
+    );
+  }
 }
 
 export function upgradeSkillNode(state: GameState, nodeId: SkillNodeId): boolean {
@@ -1393,6 +1412,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   if (state.status !== 'playing' || dt <= 0) return;
 
   const clampedDt = Math.min(dt, 0.05);
+  state.stats.elapsedPlayTime = (state.stats.elapsedPlayTime ?? 0) + clampedDt;
   const { player, map } = state;
   const mods = computeSkillModifiers(player.skillLevels);
 

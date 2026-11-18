@@ -62,11 +62,11 @@ export function computeNotificationLayout(
   const bottomAnchorY = Math.max(80, Math.floor(safeHintTop - 10));
   return {
     isCompact,
-    boxHeight: isCompact ? 22 : 26,
-    gap: isCompact ? 4 : 5,
-    fontSize: isCompact ? 11 : 12,
-    minWidth: isCompact ? 140 : 190,
-    maxWidth: Math.max(120, canvasWidth - (isCompact ? 36 : 48)),
+    boxHeight: isCompact ? 32 : 38,
+    gap: isCompact ? 6 : 8,
+    fontSize: isCompact ? 14 : 16,
+    minWidth: isCompact ? 180 : 240,
+    maxWidth: Math.max(120, canvasWidth - (isCompact ? 28 : 48)),
     bottomAnchorY,
   };
 }
@@ -1023,21 +1023,21 @@ function renderNotifications(
   for (let i = startIdx; i >= minIdx; i--) {
     const n = state.notifications[i];
     const alpha = Math.min(1, n.life * 2.5);
-    const padX = layout.isCompact ? 18 : 24;
+    const padX = layout.isCompact ? 24 : 32;
     const tw = Math.min(layout.maxWidth, Math.max(layout.minWidth, ctx.measureText(n.text).width + padX));
     const x = width / 2 - tw / 2;
     const boxY = bottomY - layout.boxHeight;
     if (boxY < 0) break;
 
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = n.kind === 'alert' ? 'rgba(69, 10, 10, 0.82)' : 'rgba(15, 23, 42, 0.78)';
+    ctx.fillStyle = n.kind === 'alert' ? 'rgba(69, 10, 10, 0.9)' : 'rgba(15, 23, 42, 0.88)';
     ctx.fillRect(x, boxY, tw, layout.boxHeight);
     ctx.strokeStyle = n.color;
-    ctx.lineWidth = layout.isCompact ? 1.25 : 1.5;
+    ctx.lineWidth = layout.isCompact ? 1.5 : 2;
     ctx.strokeRect(x, boxY, tw, layout.boxHeight);
 
     ctx.fillStyle = n.kind === 'alert' ? '#fed7aa' : '#f8fafc';
-    ctx.fillText(n.text, width / 2, boxY + layout.boxHeight / 2 + 0.5, tw - 12);
+    ctx.fillText(n.text, width / 2, boxY + layout.boxHeight / 2 + 0.5, tw - 16);
     bottomY -= layout.boxHeight + layout.gap;
   }
   ctx.restore();

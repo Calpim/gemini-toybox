@@ -2,6 +2,7 @@ import { SoundManager } from './audio/soundManager';
 import {
   closeSkillTree,
   createGameState,
+  formatPlayTime,
   resolveEquipChoice,
   startGame,
   stepGame,
@@ -23,6 +24,7 @@ const hpFill = document.getElementById('hpFill')!;
 const expText = document.getElementById('expText')!;
 const expFill = document.getElementById('expFill')!;
 const floorText = document.getElementById('floorText')!;
+const playTimeText = document.getElementById('playTimeText')!;
 const muteBtn = document.getElementById('muteBtn')!;
 const pauseBtn = document.getElementById('pauseBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
@@ -45,6 +47,7 @@ const modalEls = {
 };
 
 const closeSkillBtn = document.getElementById('closeSkillBtn')!;
+const closeSkillTopBtn = document.getElementById('closeSkillTopBtn')!;
 const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
 
 let state: GameState = createGameState({ initialStatus: 'title' });
@@ -105,6 +108,7 @@ function syncUi(forceModals = false): void {
   expText.textContent = `EXP ${player.exp}/${player.expToNext}`;
   expFill.style.width = `${expPct}%`;
   floorText.textContent = `${floor}F`;
+  playTimeText.textContent = formatPlayTime(stats.elapsedPlayTime ?? 0);
   skillBtn.textContent = `🌳 LV${player.level} (SP ${player.skillPoints})`;
   const canUnlockAny = SKILL_TREE_NODES.some((n) =>
     canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
@@ -118,7 +122,9 @@ function syncUi(forceModals = false): void {
 
   if (state.status === 'gameover') {
     gameOverModal.classList.remove('hidden');
-    gameOverSummary.textContent = `到達階層: ${floor}F / 撃破数: ${stats.kills} / LV: ${player.level}`;
+    const clear10FInfo =
+      stats.clearTime10F !== undefined ? `（10Fクリア: ${formatPlayTime(stats.clearTime10F)}）` : '';
+    gameOverSummary.textContent = `到達階層: ${floor}F / プレイ時間: ${formatPlayTime(stats.elapsedPlayTime ?? 0)}${clear10FInfo} / 撃破数: ${stats.kills} / LV: ${player.level}`;
   } else {
     gameOverModal.classList.add('hidden');
   }
@@ -165,6 +171,11 @@ skillBtn.addEventListener('click', () => {
 });
 
 closeSkillBtn.addEventListener('click', () => {
+  closeSkillTree(state);
+  syncUi(true);
+});
+
+closeSkillTopBtn.addEventListener('click', () => {
   closeSkillTree(state);
   syncUi(true);
 });
