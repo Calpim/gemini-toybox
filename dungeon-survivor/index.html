@@ -282,13 +282,58 @@
       background: #0f172a;
       border: 1px solid rgba(248, 113, 113, 0.45);
       border-radius: 16px;
-      padding: 24px 28px;
+      padding: 24px 24px;
       text-align: center;
-      max-width: 340px;
-      width: 90%;
+      max-width: 360px;
+      width: 92%;
     }
-    .modal-card h2 { margin: 0 0 8px; color: #fca5a5; }
+    .modal-card h2 { margin: 0 0 14px; color: #fca5a5; }
     .modal-card p { color: #cbd5e1; font-size: 14px; margin: 0 0 18px; }
+    .modal-close-icon {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.9);
+      color: #cbd5e1;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #090f1d;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.7);
+    }
+    .result-row:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .result-label { color: #94a3b8; }
+    .result-value {
+      color: #f8fafc;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
     .btn {
       background: linear-gradient(90deg, #0284c7, #6366f1);
       color: #fff;
@@ -393,10 +438,10 @@
     <div class="modal-panel">
       <div class="modal-head">
         <h2>⏸ ポーズ / 🌳 スキルツリー</h2>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
           <a class="spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書</a>
           <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
-          <button id="closeSkillTopBtn" type="button" class="skill-btn" title="閉じる (ESC)">✕ 閉じる</button>
+          <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる">✕</button>
         </div>
       </div>
       <div id="skillColumns" class="tree-grid"></div>
@@ -421,7 +466,7 @@
   <div id="gameOverModal" class="modal hidden">
     <div class="modal-card">
       <h2>SIGNAL LOST</h2>
-      <p id="gameOverSummary"></p>
+      <div id="gameOverSummary" class="result-list"></div>
       <button id="retryBtn" class="btn">リトライ</button>
     </div>
   </div>

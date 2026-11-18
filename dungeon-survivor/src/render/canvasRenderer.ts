@@ -1023,21 +1023,43 @@ function renderNotifications(
   for (let i = startIdx; i >= minIdx; i--) {
     const n = state.notifications[i];
     const alpha = Math.min(1, n.life * 2.5);
-    const padX = layout.isCompact ? 24 : 32;
+    const padX = layout.isCompact ? 28 : 34;
     const tw = Math.min(layout.maxWidth, Math.max(layout.minWidth, ctx.measureText(n.text).width + padX));
     const x = width / 2 - tw / 2;
     const boxY = bottomY - layout.boxHeight;
     if (boxY < 0) break;
 
+    const radius = Math.min(10, layout.boxHeight / 2);
+    ctx.save();
     ctx.globalAlpha = alpha;
+    ctx.shadowColor = 'rgba(2, 6, 23, 0.55)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
     ctx.fillStyle = n.kind === 'alert' ? 'rgba(69, 10, 10, 0.9)' : 'rgba(15, 23, 42, 0.88)';
-    ctx.fillRect(x, boxY, tw, layout.boxHeight);
-    ctx.strokeStyle = n.color;
-    ctx.lineWidth = layout.isCompact ? 1.5 : 2;
-    ctx.strokeRect(x, boxY, tw, layout.boxHeight);
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x, boxY, tw, layout.boxHeight, radius);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = n.kind === 'alert' ? 'rgba(248, 113, 113, 0.45)' : 'rgba(148, 163, 184, 0.28)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Left accent bar inside rounded card
+      ctx.fillStyle = n.color;
+      ctx.beginPath();
+      ctx.roundRect(x + 6, boxY + 6, 3.5, layout.boxHeight - 12, 2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(x, boxY, tw, layout.boxHeight);
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = n.color;
+      ctx.fillRect(x + 5, boxY + 5, 3, layout.boxHeight - 10);
+    }
 
     ctx.fillStyle = n.kind === 'alert' ? '#fed7aa' : '#f8fafc';
-    ctx.fillText(n.text, width / 2, boxY + layout.boxHeight / 2 + 0.5, tw - 16);
+    ctx.fillText(n.text, width / 2 + 2, boxY + layout.boxHeight / 2 + 0.5, tw - 22);
+    ctx.restore();
     bottomY -= layout.boxHeight + layout.gap;
   }
   ctx.restore();

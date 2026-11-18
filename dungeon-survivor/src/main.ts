@@ -122,9 +122,27 @@ function syncUi(forceModals = false): void {
 
   if (state.status === 'gameover') {
     gameOverModal.classList.remove('hidden');
-    const clear10FInfo =
-      stats.clearTime10F !== undefined ? `（10Fクリア: ${formatPlayTime(stats.clearTime10F)}）` : '';
-    gameOverSummary.textContent = `到達階層: ${floor}F / プレイ時間: ${formatPlayTime(stats.elapsedPlayTime ?? 0)}${clear10FInfo} / 撃破数: ${stats.kills} / LV: ${player.level}`;
+    const rows: Array<[string, string]> = [
+      ['最終フロア', `${floor}F`],
+      ['10Fクリア時間', stats.clearTime10F !== undefined ? formatPlayTime(stats.clearTime10F) : '--:--'],
+      ['最終レベル', `LV ${player.level}`],
+      ['プレイ時間', formatPlayTime(stats.elapsedPlayTime ?? 0)],
+      ['撃破数', `${stats.kills}`],
+    ];
+    gameOverSummary.replaceChildren(
+      ...rows.map(([label, value]) => {
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        const l = document.createElement('span');
+        l.className = 'result-label';
+        l.textContent = label;
+        const v = document.createElement('span');
+        v.className = 'result-value';
+        v.textContent = value;
+        row.append(l, v);
+        return row;
+      })
+    );
   } else {
     gameOverModal.classList.add('hidden');
   }
