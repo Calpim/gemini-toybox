@@ -29,5 +29,5 @@ Dungeon Survivor のドメイン用語・コード表記・仕様ステータス
 | GLS-23 | シード付き乱数（PRNG） | `createSeededRng` | 同じシード値（種）を渡せば毎回まったく同じ順番で乱数が出る擬似乱数生成器（Pseudo-Random Number Generator）。テストの再現性や、同じシードで同じダンジョン・ドロップを検証できるようにするために使用。 | Confirmed | APP-MAP-01, BIZ-EXP-01 | `src/core/rng.ts`, `src/game/engine.ts` |
 | GLS-24 | 通常追跡敵（ノーマル） | `normal` | 標準的なHP・移動速度でプレイヤーを追跡する基本敵種別（`BIZ-EXP-07` から定義を移管）。詳細数値・Lv連動弱砲撃は `PRM-26`（`Inferred`）参照。 | Confirmed | BIZ-EXP-07, APP-MAP-07, PRM-26 | `src/game/engine.ts` |
 | GLS-25 | 重装迫撃敵（タンク） | `tank` | 固くて遅い（高HP・低速）重装型の敵種別（`BIZ-EXP-07` から定義を移管）。放物線迫撃砲などの詳細数値は `PRM-27`（`Inferred`）参照。 | Confirmed | BIZ-EXP-07, APP-MAP-07, PRM-27 | `src/game/engine.ts` |
-| GLS-26 | 高速敵（ランナー） | `runner` | 柔らかくて速い（低HP・高速）小型の敵種別（`BIZ-EXP-07` から定義を移管）。スカウトから召喚される追撃発光個体は `GLS-06` を参照。 | Confirmed | BIZ-EXP-07, APP-MAP-07, GLS-06, PRM-27 | `src/game/engine.ts` |
+| GLS-26 | 高速敵（ランナー） | `runner` | 柔らかくて速い（低HP・高速）小型の敵種別（`BIZ-EXP-07` から定義を移管）。通常スポーン・リポップ時は階層に応じた群れ（1〜2F:1〜2体 / 3〜5F:2〜3体 / 6F+:3〜4体、追加個体はEXP4・ドロップ率0.4倍）で出現し、スカウトから召喚される追撃発光個体は `GLS-06` を参照。 | Confirmed | BIZ-EXP-07, APP-MAP-07, GLS-06, PRM-27 | `src/game/engine.ts` |
 | GLS-27 | 固定砲台（シューター） | `shooter` | 移動せずノックバック無効の固定砲台型の敵種別（`BIZ-EXP-07` から定義を移管）。1-5F は4方向、6-10F は6方向、11F+ は8方向の回転放射弾幕を発射する（`DEC-15`）。 | Confirmed | BIZ-EXP-07, APP-MAP-07, INV-10, PRM-26, DEC-10, DEC-15, OQ-09 | `src/game/engine.ts` |

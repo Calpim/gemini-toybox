@@ -19,6 +19,7 @@ import {
 } from './equipment';
 import {
   CORRIDOR_VISION_RADIUS,
+  SCOUT_ALERT_COOLDOWN,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
   SCOUT_SUMMON_CAP_PER_SCOUT,
@@ -31,6 +32,7 @@ import {
   getNormalEnemyShotStats,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
+  getRunnerPackSize,
   getSeekerDronePositions,
   getStairsLockCount,
   isPointInPlayerVision,
@@ -1099,18 +1101,30 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
     expect(scoutState.enemies.some((e) => e.isAmbush && e.summonerId === farScout.id)).toBe(false);
 
-    // Scout kites away when player is inside SCOUT_KEEP_DIST and closes in if player is beyond SCOUT_CHASE_DIST
+    // Scout kites away faster when awake, strafes in sweet spot (220-280px), and closes in beyond SCOUT_CHASE_DIST
     const kiteScout = createEnemyByKind(9015, 'scout', scoutState.player.x + 120, scoutState.player.y, 2);
     kiteScout.awake = true;
-    kiteScout.alertCooldown = 99;
+    kiteScout.alertCooldown = 0;
     scoutState.enemies = [kiteScout];
+    stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    expect(kiteScout.alertCooldown).toBeCloseTo(SCOUT_ALERT_COOLDOWN, 2);
+
     const closeDistBefore = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
     for (let f = 0; f < 20; f++) {
       stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
     }
     const closeDistAfter = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
     expect(closeDistAfter).toBeGreaterThan(closeDistBefore);
-    expect(closeDistAfter).toBeLessThan(SCOUT_KEEP_DIST + 30);
+    expect(closeDistAfter - closeDistBefore).toBeGreaterThan(35);
+
+    // In sweet spot (between SCOUT_KEEP_DIST and SCOUT_CHASE_DIST), scout strafes tangentially rather than standing still
+    kiteScout.x = scoutState.player.x + Math.round((SCOUT_KEEP_DIST + SCOUT_CHASE_DIST) / 2);
+    kiteScout.y = scoutState.player.y;
+    const strafeStartY = kiteScout.y;
+    for (let f = 0; f < 15; f++) {
+      stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(Math.abs(kiteScout.y - strafeStartY)).toBeGreaterThan(10);
 
     kiteScout.x = scoutState.player.x + SCOUT_CHASE_DIST + 80;
     kiteScout.y = scoutState.player.y;
@@ -1120,6 +1134,23 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     const farDistAfter = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
     expect(farDistAfter).toBeLessThan(farDistBefore);
+
+    // Wild runner pack scaling by floor and scaled-down EXP drop on pack extras
+    expect(getRunnerPackSize(1, 0.9)).toBe(1);
+    expect(getRunnerPackSize(2, 0.1)).toBe(2);
+    expect(getRunnerPackSize(4, 0.1)).toBe(3);
+    expect(getRunnerPackSize(6, 0.1)).toBe(4);
+    const highFloor = createGameState({ seed: 935, startFloor: 6 });
+    expect(highFloor.enemies.some((e) => e.kind === 'runner' && e.isPackFollower === true)).toBe(true);
+
+    const packExtra = createEnemyByKind(9020, 'runner', scoutState.player.x + 80, scoutState.player.y, 6);
+    packExtra.isPackFollower = true;
+    packExtra.hp = 0;
+    scoutState.pickups = [];
+    scoutState.enemies = [packExtra];
+    stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    const expPickup = scoutState.pickups.find((p) => p.kind === 'exp');
+    expect(expPickup?.value).toBe(4);
 
     // Cornered room scout steers toward a corridor exit instead of getting pinned in the corner
     const cornerState = createGameState({ seed: 932, startFloor: 2 });

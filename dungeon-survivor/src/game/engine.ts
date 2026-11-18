@@ -62,8 +62,11 @@ import type {
 } from './types';
 
 export const CORRIDOR_VISION_RADIUS = 210;
-export const SCOUT_KEEP_DIST = 250;
-export const SCOUT_CHASE_DIST = 340;
+export const SCOUT_KEEP_DIST = 220;
+export const SCOUT_CHASE_DIST = 280;
+export const SCOUT_ALERT_COOLDOWN = 5.0;
+export const SCOUT_ALERT_SPEED_MULT = 1.75;
+export const SCOUT_MAX_ALERT_SPEED = 195;
 export const SCOUT_SUMMON_CAP_PER_SCOUT = 3;
 export const SCOUT_SUMMON_MAX_PLAYER_DIST = 420;
 export const SHOOTER_AGGRO_RANGE = 320;
@@ -320,6 +323,16 @@ export function pickEnemyKindForFloor(floor: number, roll: number): EnemyKind {
   return 'normal';
 }
 
+export function getRunnerPackSize(floor: number, roll: number): number {
+  if (floor <= 2) {
+    return roll < 0.45 ? 2 : 1;
+  }
+  if (floor <= 5) {
+    return roll < 0.55 ? 3 : 2;
+  }
+  return roll < 0.55 ? 4 : 3;
+}
+
 function populateFloor(
   map: DungeonMap,
   floor: number,
@@ -504,6 +517,37 @@ function populateFloor(
           spawned.isStairsGuard = true;
         }
         enemies.push(spawned);
+
+        if (kind === 'runner') {
+          const packSize = getRunnerPackSize(floor, rng.next());
+          for (let p = 1; p < packSize; p++) {
+            let px: number;
+            let py: number;
+            if (tileCursor < freeTiles.length) {
+              const pTile = freeTiles[tileCursor++];
+              occupiedTiles.add(tileIndex(map, pTile.tx, pTile.ty));
+              const pPos = tileCenterWorld(pTile.tx, pTile.ty);
+              px = pPos.x;
+              py = pPos.y;
+            } else {
+              const pAngle = (p * Math.PI * 2) / Math.max(1, packSize);
+              const resolved = resolveCircleGridCollision(
+                wx + Math.cos(pAngle) * 24,
+                wy + Math.sin(pAngle) * 24,
+                spawned.radius,
+                map
+              );
+              px = resolved.x;
+              py = resolved.y;
+            }
+            const follower = createEnemyByKind(nextId++, 'runner', px, py, floor, MAX_TARGET_RANGE);
+            follower.isPackFollower = true;
+            if (isStairsRoom) {
+              follower.isStairsGuard = true;
+            }
+            enemies.push(follower);
+          }
+        }
       }
     }
   }
@@ -1913,6 +1957,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             : 1;
         const spawnCount = Math.min(candidates.length, maxAlive - state.enemies.length, desiredCount);
         for (let s = 0; s < spawnCount; s++) {
+          if (candidates.length === 0) break;
           const pickIdx = rng.int(0, candidates.length - 1);
           const picked = candidates.splice(pickIdx, 1)[0];
           const pos = tileCenterWorld(picked.tx, picked.ty);
@@ -1920,6 +1965,37 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const spawned = createEnemyByKind(state.nextEntityId++, kind, pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
           if (bossArena) spawned.awake = true;
           state.enemies.push(spawned);
+
+          if (kind === 'runner') {
+            const packSize = getRunnerPackSize(state.floor, rng.next());
+            for (let p = 1; p < packSize; p++) {
+              if (candidates.length === 0 || state.enemies.length >= maxAlive) break;
+              // Prefer nearby candidate tiles in the same room for pack cohesion
+              let bestCandIdx = 0;
+              let bestDist = Infinity;
+              for (let cIdx = 0; cIdx < candidates.length; cIdx++) {
+                const c = candidates[cIdx];
+                const d = Math.hypot(c.tx - picked.tx, c.ty - picked.ty);
+                if (d < bestDist) {
+                  bestDist = d;
+                  bestCandIdx = cIdx;
+                }
+              }
+              const extraTile = candidates.splice(bestCandIdx, 1)[0];
+              const extraPos = tileCenterWorld(extraTile.tx, extraTile.ty);
+              const follower = createEnemyByKind(
+                state.nextEntityId++,
+                'runner',
+                extraPos.x,
+                extraPos.y,
+                state.floor,
+                MAX_TARGET_RANGE
+              );
+              follower.isPackFollower = true;
+              if (bossArena) follower.awake = true;
+              state.enemies.push(follower);
+            }
+          }
         }
         pushNotification(
           state,
@@ -1970,14 +2046,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
       // Scout-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
       if (!enemy.isAmbush) {
+        const isPackExtra = Boolean(enemy.isPackFollower);
+        const dropRateScale = isPackExtra ? 0.4 : 1.0;
         state.pickups.push({
           id: state.nextEntityId++,
           kind: 'exp',
           x: enemy.x,
           y: enemy.y,
-          value: wasGrandBoss ? 120 : wasRoomBoss ? 45 : 10,
+          value: wasGrandBoss ? 120 : wasRoomBoss ? 45 : isPackExtra ? 4 : 10,
         });
-        if (wasRoomBoss || rng.next() < 0.22 + mods.lootBonusRate * 0.4) {
+        if (wasRoomBoss || rng.next() < (0.22 + mods.lootBonusRate * 0.4) * dropRateScale) {
           state.pickups.push({
             id: state.nextEntityId++,
             kind: 'heal',
@@ -2005,7 +2083,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           });
         } else {
           // Low-probability enemy equipment drop (1.5% base + mob_loot bonus) scaled to player's lowest equipment level & drop quality (APP-GRW-07)
-          const equipDropChance = 0.015 + mods.equipDropBonus;
+          const equipDropChance = (0.015 + mods.equipDropBonus) * dropRateScale;
           if (rng.next() < equipDropChance) {
             const eqId = rng.pick(ALL_EQUIPMENT_IDS);
             const itemLevel = rollDropEquipmentLevel(
@@ -2089,7 +2167,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             alertSpawns.filter((e) => e.isAmbush && e.summonerId === enemy.id).length;
           const remainingCap = SCOUT_SUMMON_CAP_PER_SCOUT - activeSummons;
           if (remainingCap > 0) {
-            enemy.alertCooldown = 7.5;
+            enemy.alertCooldown = SCOUT_ALERT_COOLDOWN;
 
             // Spawn up to 2-3 fast awake runners nearby (130-320px away) that outpace player baseSpeed
             const spawnCandidates: { tx: number; ty: number }[] = [];
@@ -2633,10 +2711,14 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         steerY = waypoint.y;
       }
 
+      const baseMoveSpeed =
+        enemy.kind === 'scout'
+          ? Math.min(SCOUT_MAX_ALERT_SPEED, Math.round(enemy.speed * SCOUT_ALERT_SPEED_MULT))
+          : enemy.speed;
       const effectiveSpeed =
         orbitItem && distToPlayer <= player.orbitRadius
-          ? enemy.speed * ORBIT_SHIELD_INNER_SLOW
-          : enemy.speed;
+          ? baseMoveSpeed * ORBIT_SHIELD_INNER_SLOW
+          : baseMoveSpeed;
 
       const sdx = steerX - enemy.x;
       const sdy = steerY - enemy.y;
@@ -2667,8 +2749,24 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           moveX = fDist > 1e-3 ? (fdx / fDist) * effectiveSpeed : 0;
           moveY = fDist > 1e-3 ? (fdy / fDist) * effectiveSpeed : 0;
         } else if (distToPlayer <= SCOUT_CHASE_DIST) {
-          moveX = 0;
-          moveY = 0;
+          // Strafe tangentially around the player to stay annoying just outside weapon range
+          const invDist = distToPlayer > 1e-3 ? 1 / distToPlayer : 0;
+          const nx = (enemy.x - player.x) * invDist;
+          const ny = (enemy.y - player.y) * invDist;
+          let dirSign = (enemy.wanderDir?.x ?? (enemy.id % 2 === 0 ? 1 : -1)) >= 0 ? 1 : -1;
+          let tx = -ny * dirSign;
+          let ty = nx * dirSign;
+          const probeTx = Math.floor((enemy.x + tx * (TILE_SIZE * 0.7)) / TILE_SIZE);
+          const probeTy = Math.floor((enemy.y + ty * (TILE_SIZE * 0.7)) / TILE_SIZE);
+          if (isWallTile(map, probeTx, probeTy)) {
+            dirSign = -dirSign;
+            tx = -ny * dirSign;
+            ty = nx * dirSign;
+          }
+          enemy.wanderDir = { x: dirSign, y: 0 };
+          const strafeSpeed = effectiveSpeed * 0.65;
+          moveX = tx * strafeSpeed;
+          moveY = ty * strafeSpeed;
         }
       }
 

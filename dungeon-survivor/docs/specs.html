@@ -1165,7 +1165,7 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">populateFloor が部屋内および 2F以降の通路巡回枠（scout 1〜2体）に敵・宝箱・回復オーブを重複タイルなしで配置する</span><div class="table-wrap"><table>
               <thead><tr><th>敵種別</th><th>性質</th><th>移動・攻撃・視認時の振る舞い</th></tr></thead>
-              <tbody><tr><td>normal</td><td>標準追跡＋Lv連動弱砲撃</td><td>標準HP・標準速度で追跡し、射程190px・視線内からプレイヤーLvに応じた弱砲撃（Lv1-2:1発/3.2s〜Lv9+:3発/2.1s）を行う</td></tr><tr><td>tank</td><td>放物線迫撃砲＋重装</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）で、射程215px内から着弾範囲とタイミング円を予告する放物線迫撃砲（防壁貫通）を撃つ</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型（固定砲台）</td><td>速度 0・ノックバック無効・2F以降出現・索敵320px・1.0秒予兆後に回転放射4/6/8方向弾幕（1-5F: 4方向 / 6-10F: 6方向 / 11F+: 8方向、ランダム1〜2方向が防御貫通）を発射</td></tr><tr><td>scout</td><td>スカウト（通路巡回型）</td><td>2F以降に出現。通路・部屋を自由巡回し、発見後は周辺敵を覚醒させず距離250〜340pxを保ちつつ近接時は通路出口方向へ逃走し、420px以内で1体あたり最大3体まで追撃ランナーをプレイヤー周囲へ召喚・再補充＋警告通知</td></tr></tbody>
+              <tbody><tr><td>normal</td><td>標準追跡＋Lv連動弱砲撃</td><td>標準HP・標準速度で追跡し、射程190px・視線内からプレイヤーLvに応じた弱砲撃（Lv1-2:1発/3.2s〜Lv9+:3発/2.1s）を行う</td></tr><tr><td>tank</td><td>放物線迫撃砲＋重装</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）で、射程215px内から着弾範囲とタイミング円を予告する放物線迫撃砲（防壁貫通）を撃つ</td></tr><tr><td>runner</td><td>柔らかくて早い（階層連動群れ湧き）</td><td>低HP（0.55倍）・高速（1.55倍）・小型。通常スポーン／リポップ時は階層に応じた群れ（1〜2F:1〜2体・3〜5F:2〜3体・6F+:3〜4体）で出現（追加個体はEXP・ドロップ抑制）</td></tr><tr><td>shooter</td><td>定点射撃型（固定砲台）</td><td>速度 0・ノックバック無効・2F以降出現・索敵320px・1.0秒予兆後に回転放射4/6/8方向弾幕（1-5F: 4方向 / 6-10F: 6方向 / 11F+: 8方向、ランダム1〜2方向が防御貫通）を発射</td></tr><tr><td>scout</td><td>スカウト（通路巡回型）</td><td>2F以降に出現。未発見時は低速巡回し、発見後は周辺敵を覚醒させず高速化（最大195px/s）して距離220〜280pxを横移動で保ちつつ近接時は通路出口方向へ逃走し、420px以内で5.0s毎に1体あたり最大3体まで追撃ランナーをプレイヤー周囲へ召喚・再補充＋警告通知</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">scout がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤー周囲（130〜320px）へ覚醒済み・isAmbush フラグ付きの高速 runner（228〜265 px/s、出現猶予 spawnDelay 0.45秒）2〜3体（1スカウトあたり生存上限3体）が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない</span></li><li><span class="kw">かつ</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
   </ul>
               </div>
@@ -1887,7 +1887,7 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">populateFloor が部屋内および 2F以降の通路巡回枠（scout 1〜2体）に敵・宝箱・回復オーブを重複タイルなしで配置する</span><div class="table-wrap"><table>
               <thead><tr><th>敵種別</th><th>性質</th><th>移動・攻撃・視認時の振る舞い</th></tr></thead>
-              <tbody><tr><td>normal</td><td>標準追跡＋Lv連動弱砲撃</td><td>標準HP・標準速度で追跡し、射程190px・視線内からプレイヤーLvに応じた弱砲撃（Lv1-2:1発/3.2s〜Lv9+:3発/2.1s）を行う</td></tr><tr><td>tank</td><td>放物線迫撃砲＋重装</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）で、射程215px内から着弾範囲とタイミング円を予告する放物線迫撃砲（防壁貫通）を撃つ</td></tr><tr><td>runner</td><td>柔らかくて早い</td><td>低HP（0.55倍）・高速（1.55倍）・小型</td></tr><tr><td>shooter</td><td>定点射撃型（固定砲台）</td><td>速度 0・ノックバック無効・2F以降出現・索敵320px・1.0秒予兆後に回転放射4/6/8方向弾幕（1-5F: 4方向 / 6-10F: 6方向 / 11F+: 8方向、ランダム1〜2方向が防御貫通）を発射</td></tr><tr><td>scout</td><td>スカウト（通路巡回型）</td><td>2F以降に出現。通路・部屋を自由巡回し、発見後は周辺敵を覚醒させず距離250〜340pxを保ちつつ近接時は通路出口方向へ逃走し、420px以内で1体あたり最大3体まで追撃ランナーをプレイヤー周囲へ召喚・再補充＋警告通知</td></tr></tbody>
+              <tbody><tr><td>normal</td><td>標準追跡＋Lv連動弱砲撃</td><td>標準HP・標準速度で追跡し、射程190px・視線内からプレイヤーLvに応じた弱砲撃（Lv1-2:1発/3.2s〜Lv9+:3発/2.1s）を行う</td></tr><tr><td>tank</td><td>放物線迫撃砲＋重装</td><td>高HP（2.4倍）・低速（0.56倍）・高ダメ（1.45倍）で、射程215px内から着弾範囲とタイミング円を予告する放物線迫撃砲（防壁貫通）を撃つ</td></tr><tr><td>runner</td><td>柔らかくて早い（階層連動群れ湧き）</td><td>低HP（0.55倍）・高速（1.55倍）・小型。通常スポーン／リポップ時は階層に応じた群れ（1〜2F:1〜2体・3〜5F:2〜3体・6F+:3〜4体）で出現（追加個体はEXP・ドロップ抑制）</td></tr><tr><td>shooter</td><td>定点射撃型（固定砲台）</td><td>速度 0・ノックバック無効・2F以降出現・索敵320px・1.0秒予兆後に回転放射4/6/8方向弾幕（1-5F: 4方向 / 6-10F: 6方向 / 11F+: 8方向、ランダム1〜2方向が防御貫通）を発射</td></tr><tr><td>scout</td><td>スカウト（通路巡回型）</td><td>2F以降に出現。未発見時は低速巡回し、発見後は周辺敵を覚醒させず高速化（最大195px/s）して距離220〜280pxを横移動で保ちつつ近接時は通路出口方向へ逃走し、420px以内で5.0s毎に1体あたり最大3体まで追撃ランナーをプレイヤー周囲へ召喚・再補充＋警告通知</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">scout がプレイヤーを発見して覚醒する（通路遭遇時は遭遇通知）、またはプレイヤーがレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">プレイヤー周囲（130〜320px）へ覚醒済み・isAmbush フラグ付きの高速 runner（228〜265 px/s、出現猶予 spawnDelay 0.45秒）2〜3体（1スカウトあたり生存上限3体）が出現して暗闇内でも視認可能な半径64pxの光輪（Fog 切り抜き＋オレンジ発光）を纏って突撃し、これらを倒しても経験値・回復・装備のドロップは一切発生しない</span></li><li><span class="kw">かつ</span><span class="st-text">state.notifications に警告アラート通知またはレベルアップ通知がトースト表示される</span></li>
   </ul>
               </div>
@@ -2340,7 +2340,7 @@
       <tr id="GLS-26" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-26" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-26">GLS-26</a></td>
         <td><strong>高速敵（ランナー）</strong><div class="sub-code"><code class="inline-code">runner</code></div></td>
-        <td>柔らかくて速い（低HP・高速）小型の敵種別（<code class="inline-code">BIZ-EXP-07</code> から定義を移管）。スカウトから召喚される追撃発光個体は <code class="inline-code">GLS-06</code> を参照。</td>
+        <td>柔らかくて速い（低HP・高速）小型の敵種別（<code class="inline-code">BIZ-EXP-07</code> から定義を移管）。通常スポーン・リポップ時は階層に応じた群れ（1〜2F:1〜2体 / 3〜5F:2〜3体 / 6F+:3〜4体、追加個体はEXP4・ドロップ率0.4倍）で出現し、スカウトから召喚される追撃発光個体は <code class="inline-code">GLS-06</code> を参照。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-06">GLS-06</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
@@ -2749,12 +2749,12 @@
         <td><a class="id-pill id-doc" href="#PRM-27">PRM-27</a></td>
         <td><span class="cat-pill">敵</span></td>
         <td><strong><code class="inline-code">tank</code>（放物線迫撃砲）/ <code class="inline-code">runner</code> 主要種別倍率 (<code class="inline-code">APP-MAP-07</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45, 索敵280px+, 距離維持125〜175px・近接時後退, 放物線迫撃砲:同部屋380px以内(遮蔽可)または視線あり280px以内・偏差射撃(実移動速度EMA×0.55s先読み・上限115px・壁沿いクランプ)・着弾半径52px・予兆0.85s・CD2.4s・DMG×1.45・防壁貫通) / runner(HP×0.55, 速度×1.55, 上限195)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">tank(HP×2.4, 速度×0.56, 攻撃×1.45, 索敵280px+, 距離維持125〜175px・近接時後退, 放物線迫撃砲:同部屋380px以内(遮蔽可)または視線あり280px以内・偏差射撃(実移動速度EMA×0.55s先読み・上限115px・壁沿いクランプ)・着弾半径52px・予兆0.85s・CD2.4s・DMG×1.45・防壁貫通) / runner(HP×0.55, 速度×1.55, 上限195, 野良群れ:1-2F=1-2体/3-5F=2-3体/6F+=3-4体, 追加個体EXP4・ドロップ率×0.4)</code></span></td>
         <td><code class="inline-code">倍率・px・秒</code></td>
-        <td><div class="note-text">重戦車タンクが距離維持・後退しながら、実速度ベースの自然な偏差放物線迫撃砲を撃つ駆け引きを作るため（迫撃砲係数はAI仮提案）</div></td>
+        <td><div class="note-text">重戦車タンクが距離維持・後退しながら、実速度ベースの自然な偏差放物線迫撃砲を撃つ駆け引きと、後半でランナーが群れで押し寄せる脅威（経験値過多抑制付き）を作るため（AI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L195-L240,L1212-L1238,L2142-L2195</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L195-L240,L326-L335,L520-L550</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-27" data-source-file="specs/parameters.md" data-item-id="PRM-27" title="元仕様ファイル specs/parameters.md (PRM-27)">specs/parameters.md#PRM-27</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -2805,12 +2805,12 @@
         <td><a class="id-pill id-doc" href="#PRM-31">PRM-31</a></td>
         <td><span class="cat-pill">敵</span></td>
         <td><strong>スカウト追撃ランナー（<code class="inline-code">isAmbush</code>）速度・出現猶予・スカウト維持距離（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">速度 max(228, min(265, 224+(F-1)×4)) px/s / spawnDelay 0.45s / 出現距離 130〜320px / 1スカウトあたり生存上限 3体 / 再召喚CD 7.5s / 召喚停止距離 420px超 / スカウト距離維持 250〜340px</code></span></td>
+        <td><span class="param-val"><code class="inline-code">速度 max(228, min(265, 224+(F-1)×4)) px/s / spawnDelay 0.45s / 出現距離 130〜320px / 1スカウトあたり生存上限 3体 / 再召喚CD 5.0s / 召喚停止距離 420px超 / スカウト距離維持 220〜280px（横移動）・覚醒時速度 min(195, base×1.75)</code></span></td>
         <td><code class="inline-code">px/s・秒・px・体</code></td>
-        <td><div class="note-text">プレイヤー標準速度(210px/s)を上回りつつ、1F出現禁止・他敵覚醒廃止・距離維持逃走＆上限付き再召喚で初見殺しを防ぎ斥候らしいウザさを維持するため（AI仮数値）</div></td>
+        <td><div class="note-text">プレイヤー標準速度(210px/s)を上回りつつ、1F出現禁止・他敵覚醒廃止・高速距離維持＆横移動＆高回転再召喚で斥候らしいウザさを維持するため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#GLS-06">GLS-06</a><a class="ref-pill ref-link" href="#INV-05">INV-05</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L64-L68,L2083-L2185</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L64-L72,L2128-L2215</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-31" data-source-file="specs/parameters.md" data-item-id="PRM-31" title="元仕様ファイル specs/parameters.md (PRM-31)">specs/parameters.md#PRM-31</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>

@@ -67,6 +67,7 @@ export interface EnemyState {
   wanderTimer?: number;
   wanderDir?: Vec2 | null;
   isAmbush?: boolean;
+  isPackFollower?: boolean;
   summonerId?: number;
   isStairsGuard?: boolean;
   isRoomBoss?: boolean;
