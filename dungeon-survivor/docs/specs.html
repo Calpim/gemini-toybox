@@ -536,7 +536,7 @@
       <a class="nav-pill" href="#sec-formulas">🧮 計算式 (13)</a>
       <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (12)</a>
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
-      <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (9)</a>
+      <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (10)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
       <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (18)</a>
     </nav>
@@ -553,13 +553,13 @@
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">34</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">24</div></div>
         <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">154</div></div>
-        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">30</div></div>
+        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">31</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">7</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">2</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 34 件のビジネス仕様と 24 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 135 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 136 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -1180,7 +1180,7 @@
               <span class="file-pill">01-exploration.feature</span>
               <span class="feature-pill">ダンジョン探索と進行ルール（ビジネス仕様）</span>
             </div>
-            <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+            <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
           </div>
           
           <h3>プレイ時間を常時確認でき、10F突破タイムと敗北時リザルトを縦リストで振り返れる</h3>
@@ -3528,7 +3528,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">OPEN QUESTIONS / 未決事項リスト</div>
-        <h2>❓ 未決事項リスト <span class="count-pill" data-section-count="open-questions">(9件)</span></h2>
+        <h2>❓ 未決事項リスト <span class="count-pill" data-section-count="open-questions">(10件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md" data-source-file="specs/open-questions.md" data-item-id="" title="元仕様ファイル specs/open-questions.md ()">specs/open-questions.md</a>
@@ -3637,6 +3637,17 @@
         <td><div class="note-text">APP層整備フェーズで <code class="inline-code">specs/app/01-dungeon-map.feature</code> に通路遭遇戦闘のシナリオを追加する時</div></td>
         <td><div class="note-text"><code class="inline-code">BIZ-EXP-02</code> は <code class="inline-code">02-a</code>（入室覚醒）と <code class="inline-code">02-b</code> が同居した「既知の混在」状態のまま残る</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-10" data-source-file="specs/open-questions.md" data-item-id="OQ-10" title="元仕様ファイル specs/open-questions.md (OQ-10)">specs/open-questions.md#OQ-10</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/open-questions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="OQ-11" class="spec-row" data-section="open-questions" data-status="Inferred" data-item-id="OQ-11" data-source-file="specs/open-questions.md">
+        <td><a class="id-pill id-doc" href="#OQ-11">OQ-11</a></td>
+        <td><strong>SE（16種の割り当て・音色・スロットル）／パーティクル・画面シェイク／ミュート永続化／10Fクリア記録の詳細仕様の再決定</strong></td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#GLS-28">GLS-28</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a></div></td>
+        <td><div class="note-text">SE/VFX詳細仕様決定Issue（#22）、またはプレイテストで詳細を確定・変更する時</div></td>
+        <td><div class="note-text">現行のAI提案の割り当て・数値のまま動作する</div><div class="source-cell">
+    <a class="source-link" href="../specs/open-questions.md#OQ-11" data-source-file="specs/open-questions.md" data-item-id="OQ-11" title="元仕様ファイル specs/open-questions.md (OQ-11)">specs/open-questions.md#OQ-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/open-questions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>
@@ -3997,7 +4008,7 @@
         <td><span class="date-pill">2026-11-18</span><div class="sub-code">先輩</div></td>
         <td><strong>UI/UX・オーディオ・演出刷新（Issue #15 / #16 / #19）：(1) プロシージャル Web Audio SE 16種＋HUD右端ミュートトグル (<code class="inline-code">localStorage</code> 永続化・AI提案) (2) パーティクル（上限140）＋画面シェイクVFX（AI提案） (3) プレイ中HUDから仕様書リンクを外してスタート／ポーズ画面へ集約・ポーズ右上端固定 <code class="inline-code">✕</code> ボタン追加 (4) プレイ時間 <code class="inline-code">MM:SS</code> HUD常時表示・10Fクリア時タイム記録＆通知（AI提案を承認）・敗北リザルト縦リスト化 (5) 下部トーストを角丸ガラスカード＋左アクセントバーへ刷新</strong><div class="note-text">スマホ実機プレイテストでの視認性・誤タップ防止・操作性向上、および戦闘・成長の手触り強化のため（10Fクリア約10分前後のテンポを確認済み。SE/VFX・ミュート詳細は暫定AI提案として承認し、別Issueで詳細仕様を再決定）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed（SE/VFX・ミュート・10F記録はAI提案承認）</div></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#GLS-28">GLS-28</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#GLS-28">GLS-28</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a><a class="ref-pill ref-link" href="#OQ-11">OQ-11</a></div></td>
         <td><div class="note-text">SE/VFX詳細仕様決定Issue・BGM追加（#17）・PlaywrightモバイルUI自動検知（#20）の導入時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-17" data-source-file="specs/decisions.md" data-item-id="DEC-17" title="元仕様ファイル specs/decisions.md (DEC-17)">specs/decisions.md#DEC-17</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
