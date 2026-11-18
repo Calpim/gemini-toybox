@@ -146,6 +146,7 @@
     }
     .modal.hidden { display: none; }
     .modal-panel {
+      position: relative;
       background: #0f172a;
       border: 1px solid rgba(56, 189, 248, 0.45);
       border-radius: 16px;
@@ -290,17 +291,20 @@
     .modal-card h2 { margin: 0 0 14px; color: #fca5a5; }
     .modal-card p { color: #cbd5e1; font-size: 14px; margin: 0 0 18px; }
     .modal-close-icon {
+      position: absolute;
+      top: 14px;
+      right: 14px;
       pointer-events: auto;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 8px;
       border: 1px solid rgba(148, 163, 184, 0.35);
       background: rgba(15, 23, 42, 0.9);
       color: #cbd5e1;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       line-height: 1;
       cursor: pointer;
@@ -436,12 +440,12 @@
 
   <div id="skillModal" class="modal hidden">
     <div class="modal-panel">
-      <div class="modal-head">
+      <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる">✕</button>
+      <div class="modal-head" style="padding-right:40px;">
         <h2>⏸ ポーズ / 🌳 スキルツリー</h2>
-        <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+        <div style="display:flex;align-items:center;gap:8px;">
           <a class="spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書</a>
           <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
-          <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる">✕</button>
         </div>
       </div>
       <div id="skillColumns" class="tree-grid"></div>
