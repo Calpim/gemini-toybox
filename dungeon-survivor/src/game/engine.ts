@@ -62,7 +62,10 @@ import type {
 } from './types';
 
 export const CORRIDOR_VISION_RADIUS = 210;
-export const SCOUT_ALERT_RADIUS = 300;
+export const SCOUT_KEEP_DIST = 250;
+export const SCOUT_CHASE_DIST = 340;
+export const SCOUT_SUMMON_CAP_PER_SCOUT = 3;
+export const SCOUT_SUMMON_MAX_PLAYER_DIST = 420;
 export const SHOOTER_AGGRO_RANGE = 320;
 export const INITIAL_RESPAWN_DELAY = 24;
 
@@ -518,7 +521,7 @@ function populateFloor(
       }
     }
   }
-  const targetPatrols = Math.min(corridorTiles.length, floor >= 3 ? 2 : 1);
+  const targetPatrols = Math.min(corridorTiles.length, floor <= 1 ? 0 : floor >= 3 ? 2 : 1);
   for (let p = 0; p < targetPatrols; p++) {
     const pickIdx = rng.int(0, corridorTiles.length - 1);
     const picked = corridorTiles.splice(pickIdx, 1)[0];
@@ -1105,6 +1108,104 @@ function findBfsSteerTarget(
     return { x: player.x, y: player.y };
   }
   return tileCenterWorld(bestTx, bestTy);
+}
+
+function findScoutFleeTarget(
+  enemy: EnemyState,
+  player: PlayerState,
+  map: DungeonMap,
+  bfsDist: Int32Array
+): Vec2 {
+  const etx = Math.floor(enemy.x / TILE_SIZE);
+  const ety = Math.floor(enemy.y / TILE_SIZE);
+  const currIdx = ety * map.width + etx;
+  const currBfs =
+    etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? bfsDist[currIdx] : 0;
+
+  // If scout is inside a room, look for nearby corridor exits that lead away from (or not closer to) the player
+  const scoutRoom = findRoomAtTile(map, etx, ety);
+  let preferredExit: Vec2 | null = null;
+  if (scoutRoom) {
+    const exitCandidates: { tx: number; ty: number }[] = [];
+    for (let tx = scoutRoom.x; tx < scoutRoom.x + scoutRoom.w; tx++) {
+      exitCandidates.push({ tx, ty: scoutRoom.y - 1 });
+      exitCandidates.push({ tx, ty: scoutRoom.y + scoutRoom.h });
+    }
+    for (let ty = scoutRoom.y; ty < scoutRoom.y + scoutRoom.h; ty++) {
+      exitCandidates.push({ tx: scoutRoom.x - 1, ty });
+      exitCandidates.push({ tx: scoutRoom.x + scoutRoom.w, ty });
+    }
+
+    let bestExitScore = -Infinity;
+    for (const c of exitCandidates) {
+      if (c.tx <= 0 || c.ty <= 0 || c.tx >= map.width - 1 || c.ty >= map.height - 1) continue;
+      if (isWallTile(map, c.tx, c.ty)) continue;
+      const exitWorld = tileCenterWorld(c.tx, c.ty);
+      const exitBfs = bfsDist[c.ty * map.width + c.tx];
+      const distFromScout = Math.hypot(exitWorld.x - enemy.x, exitWorld.y - enemy.y);
+      const distFromPlayer = Math.hypot(exitWorld.x - player.x, exitWorld.y - player.y);
+      const bfsGain = exitBfs >= 0 && currBfs >= 0 ? exitBfs - currBfs : 0;
+      const score = distFromPlayer * 1.1 + bfsGain * TILE_SIZE * 0.8 - distFromScout * 0.7;
+      if (score > bestExitScore) {
+        bestExitScore = score;
+        preferredExit = exitWorld;
+      }
+    }
+  }
+
+  // Check if direct away vector is blocked by an adjacent wall (cornered)
+  const awayDx = enemy.x - player.x;
+  const awayDy = enemy.y - player.y;
+  const awayLen = Math.hypot(awayDx, awayDy);
+  let directBlocked = false;
+  if (awayLen > 1e-3) {
+    const probeX = enemy.x + (awayDx / awayLen) * (TILE_SIZE * 0.85);
+    const probeY = enemy.y + (awayDy / awayLen) * (TILE_SIZE * 0.85);
+    const probeTx = Math.floor(probeX / TILE_SIZE);
+    const probeTy = Math.floor(probeY / TILE_SIZE);
+    directBlocked = isWallTile(map, probeTx, probeTy);
+  }
+
+  let bestScore = -Infinity;
+  let bestTarget: Vec2 | null = null;
+  const exitWeight = directBlocked ? 0.95 : 0.45;
+
+  for (const [dx, dy] of BFS_NEIGHBORS) {
+    const nx = etx + dx;
+    const ny = ety + dy;
+    if (nx <= 0 || ny <= 0 || nx >= map.width - 1 || ny >= map.height - 1) continue;
+    if (isWallTile(map, nx, ny)) continue;
+    if (dx !== 0 && dy !== 0) {
+      if (isWallTile(map, etx + dx, ety) || isWallTile(map, etx, ety + dy)) continue;
+    }
+    const nw = tileCenterWorld(nx, ny);
+    const nd = bfsDist[ny * map.width + nx];
+    const bfsScore = nd >= 0 ? nd * TILE_SIZE : 0;
+    const distScore = Math.hypot(nw.x - player.x, nw.y - player.y);
+    const exitBonus = preferredExit
+      ? -Math.hypot(nw.x - preferredExit.x, nw.y - preferredExit.y) * exitWeight
+      : 0;
+    const momentumBonus =
+      enemy.wanderDir && enemy.wanderDir.x === dx && enemy.wanderDir.y === dy ? 14 : 0;
+
+    const total = bfsScore * 0.65 + distScore * 0.85 + exitBonus + momentumBonus;
+    if (total > bestScore) {
+      bestScore = total;
+      bestTarget = nw;
+      enemy.wanderDir = { x: dx, y: dy };
+    }
+  }
+
+  if (bestTarget) {
+    return bestTarget;
+  }
+  if (awayLen > 1e-3) {
+    return {
+      x: enemy.x + (awayDx / awayLen) * TILE_SIZE,
+      y: enemy.y + (awayDy / awayLen) * TILE_SIZE,
+    };
+  }
+  return { x: enemy.x + TILE_SIZE, y: enemy.y };
 }
 
 export interface PlayerBaseAttackStats {
@@ -1979,104 +2080,109 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       continue;
     }
 
-    // Scout archetype: patrol corridors/rooms freely while unalerted; on alert wake allies & ambush with fast runners
+    // Scout archetype: patrol corridors/rooms freely while unalerted; on alert summon fast runners up to per-scout cap while in range
     if (enemy.kind === 'scout') {
       if (enemy.awake) {
-        if ((enemy.alertCooldown ?? 0) <= 0) {
-          enemy.alertCooldown = 7.5;
-          for (const ally of state.enemies) {
-            if (ally.id !== enemy.id && Math.hypot(ally.x - enemy.x, ally.y - enemy.y) <= SCOUT_ALERT_RADIUS) {
-              if (!ally.awake && ally.kind === 'shooter') {
-                ally.attackCooldown = Math.max(ally.attackCooldown ?? 0, 0.95);
-              }
-              ally.awake = true;
-            }
-          }
+        if ((enemy.alertCooldown ?? 0) <= 0 && distToPlayer <= SCOUT_SUMMON_MAX_PLAYER_DIST) {
+          const activeSummons =
+            state.enemies.filter((e) => e.isAmbush && e.summonerId === enemy.id).length +
+            alertSpawns.filter((e) => e.isAmbush && e.summonerId === enemy.id).length;
+          const remainingCap = SCOUT_SUMMON_CAP_PER_SCOUT - activeSummons;
+          if (remainingCap > 0) {
+            enemy.alertCooldown = 7.5;
 
-          // Spawn 2-3 fast awake runners nearby (130-320px away) that outpace player baseSpeed
-          const spawnCandidates: { tx: number; ty: number }[] = [];
-          const occupied = new Set<number>();
-          for (const existing of state.enemies) {
-            occupied.add(tileIndex(map, Math.floor(existing.x / TILE_SIZE), Math.floor(existing.y / TILE_SIZE)));
-          }
-          for (const spawned of alertSpawns) {
-            occupied.add(tileIndex(map, Math.floor(spawned.x / TILE_SIZE), Math.floor(spawned.y / TILE_SIZE)));
-          }
-          const minSy = Math.max(1, pty - 9);
-          const maxSy = Math.min(map.height - 2, pty + 9);
-          const minSx = Math.max(1, ptx - 9);
-          const maxSx = Math.min(map.width - 2, ptx + 9);
-          for (let ty = minSy; ty <= maxSy; ty++) {
-            for (let tx = minSx; tx <= maxSx; tx++) {
-              if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
-              const c = tileCenterWorld(tx, ty);
-              const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
-              if (dPlayer >= 130 && dPlayer <= 320) {
-                spawnCandidates.push({ tx, ty });
-              }
+            // Spawn up to 2-3 fast awake runners nearby (130-320px away) that outpace player baseSpeed
+            const spawnCandidates: { tx: number; ty: number }[] = [];
+            const occupied = new Set<number>();
+            for (const existing of state.enemies) {
+              occupied.add(tileIndex(map, Math.floor(existing.x / TILE_SIZE), Math.floor(existing.y / TILE_SIZE)));
             }
-          }
-          if (spawnCandidates.length === 0) {
-            for (let ty = 1; ty < map.height - 1; ty++) {
-              for (let tx = 1; tx < map.width - 1; tx++) {
+            for (const spawned of alertSpawns) {
+              occupied.add(tileIndex(map, Math.floor(spawned.x / TILE_SIZE), Math.floor(spawned.y / TILE_SIZE)));
+            }
+            const minSy = Math.max(1, pty - 9);
+            const maxSy = Math.min(map.height - 2, pty + 9);
+            const minSx = Math.max(1, ptx - 9);
+            const maxSx = Math.min(map.width - 2, ptx + 9);
+            for (let ty = minSy; ty <= maxSy; ty++) {
+              for (let tx = minSx; tx <= maxSx; tx++) {
                 if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
                 const c = tileCenterWorld(tx, ty);
                 const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
-                if (dPlayer >= 90 && dPlayer <= 380) {
+                if (dPlayer >= 130 && dPlayer <= 320) {
                   spawnCandidates.push({ tx, ty });
                 }
               }
             }
-          }
-          const ambushCount = Math.min(spawnCandidates.length, state.floor >= 3 ? 3 : 2);
-          for (let s = 0; s < ambushCount; s++) {
-            const pickIdx = rng.int(0, spawnCandidates.length - 1);
-            const picked = spawnCandidates.splice(pickIdx, 1)[0];
-            const pos = tileCenterWorld(picked.tx, picked.ty);
-            const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
-            runner.speed = Math.max(228, Math.min(265, Math.round(224 + (state.floor - 1) * 4)));
-            runner.spawnDelay = 0.45;
-            runner.awake = true;
-            runner.isAmbush = true;
-            alertSpawns.push(runner);
-            state.visualFx.push({
-              kind: 'pulse',
-              x: pos.x,
-              y: pos.y,
-              radius: 36,
-              color: '#f59e0b',
-              life: 0.35,
-              maxLife: 0.35,
-            });
-          }
+            if (spawnCandidates.length === 0) {
+              for (let ty = 1; ty < map.height - 1; ty++) {
+                for (let tx = 1; tx < map.width - 1; tx++) {
+                  if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+                  const c = tileCenterWorld(tx, ty);
+                  const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
+                  if (dPlayer >= 90 && dPlayer <= 380) {
+                    spawnCandidates.push({ tx, ty });
+                  }
+                }
+              }
+            }
+            const ambushCount = Math.min(
+              spawnCandidates.length,
+              remainingCap,
+              state.floor >= 3 ? 3 : 2
+            );
+            for (let s = 0; s < ambushCount; s++) {
+              const pickIdx = rng.int(0, spawnCandidates.length - 1);
+              const picked = spawnCandidates.splice(pickIdx, 1)[0];
+              const pos = tileCenterWorld(picked.tx, picked.ty);
+              const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
+              runner.speed = Math.max(228, Math.min(265, Math.round(224 + (state.floor - 1) * 4)));
+              runner.spawnDelay = 0.45;
+              runner.awake = true;
+              runner.isAmbush = true;
+              runner.summonerId = enemy.id;
+              alertSpawns.push(runner);
+              state.visualFx.push({
+                kind: 'pulse',
+                x: pos.x,
+                y: pos.y,
+                radius: 36,
+                color: '#f59e0b',
+                life: 0.35,
+                maxLife: 0.35,
+              });
+            }
 
-          const inCorridorEncounter = playerRoom === null;
-          state.visualFx.push({
-            kind: 'pulse',
-            x: enemy.x,
-            y: enemy.y,
-            radius: 130,
-            color: '#f97316',
-            life: 0.45,
-            maxLife: 0.45,
-          });
-          state.floatingTexts.push({
-            x: enemy.x,
-            y: enemy.y - enemy.radius - 10,
-            text: inCorridorEncounter ? 'ENCOUNTER!!' : 'ALERT!!',
-            color: '#fb923c',
-            life: 1.0,
-            maxLife: 1.0,
-          });
-          pushNotification(
-            state,
-            'alert',
-            inCorridorEncounter
-              ? '⚠️ 通路でスカウトと遭遇！高速の敵が迫る！'
-              : '⚠️ スカウトに発見された！高速の敵が迫る！',
-            '#f97316',
-            2.8
-          );
+            if (ambushCount > 0) {
+              const inCorridorEncounter = playerRoom === null;
+              state.visualFx.push({
+                kind: 'pulse',
+                x: enemy.x,
+                y: enemy.y,
+                radius: 130,
+                color: '#f97316',
+                life: 0.45,
+                maxLife: 0.45,
+              });
+              state.floatingTexts.push({
+                x: enemy.x,
+                y: enemy.y - enemy.radius - 10,
+                text: inCorridorEncounter ? 'ENCOUNTER!!' : 'ALERT!!',
+                color: '#fb923c',
+                life: 1.0,
+                maxLife: 1.0,
+              });
+              pushNotification(
+                state,
+                'alert',
+                inCorridorEncounter
+                  ? '⚠️ 通路でスカウトと遭遇！高速の敵が迫る！'
+                  : '⚠️ スカウトに発見された！高速の敵が迫る！',
+                '#f97316',
+                2.8
+              );
+            }
+          }
         }
       } else if (enemy.speed > 0) {
         enemy.wanderTimer = (enemy.wanderTimer ?? 0) - clampedDt;
@@ -2546,6 +2652,21 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           moveX = rDist > 1e-3 ? (rdx / rDist) * effectiveSpeed : 0;
           moveY = rDist > 1e-3 ? (rdy / rDist) * effectiveSpeed : 0;
         } else if (distToPlayer <= 175 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)) {
+          moveX = 0;
+          moveY = 0;
+        }
+      } else if (enemy.kind === 'scout') {
+        if (distToPlayer < SCOUT_KEEP_DIST) {
+          if (!bfsDist) {
+            bfsDist = computeBfsDistances(map.width, map.height, map.tiles, ptx, pty);
+          }
+          const fleeTarget = findScoutFleeTarget(enemy, player, map, bfsDist);
+          const fdx = fleeTarget.x - enemy.x;
+          const fdy = fleeTarget.y - enemy.y;
+          const fDist = Math.hypot(fdx, fdy);
+          moveX = fDist > 1e-3 ? (fdx / fDist) * effectiveSpeed : 0;
+          moveY = fDist > 1e-3 ? (fdy / fDist) * effectiveSpeed : 0;
+        } else if (distToPlayer <= SCOUT_CHASE_DIST) {
           moveX = 0;
           moveY = 0;
         }

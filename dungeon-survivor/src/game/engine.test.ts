@@ -19,7 +19,10 @@ import {
 } from './equipment';
 import {
   CORRIDOR_VISION_RADIUS,
-  SCOUT_ALERT_RADIUS,
+  SCOUT_CHASE_DIST,
+  SCOUT_KEEP_DIST,
+  SCOUT_SUMMON_CAP_PER_SCOUT,
+  SCOUT_SUMMON_MAX_PLAYER_DIST,
   SHOOTER_AGGRO_RANGE,
   acquireEquipment,
   createEnemyByKind,
@@ -887,6 +890,17 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       expect(r).not.toBeNull();
     }
     expect(state.notifications.some((n) => n.kind === 'info')).toBe(true);
+
+    // 1F must never spawn scouts during initial population or timed respawns
+    const f1State = createGameState({ seed: 911, startFloor: 1 });
+    expect(f1State.enemies.some((e) => e.kind === 'scout')).toBe(false);
+    f1State.enemies = [];
+    for (let t = 0; t < 15; t++) {
+      f1State.respawnTimer = 0.01;
+      stepGame(f1State, { x: 0, y: 0 }, 0.02);
+    }
+    expect(f1State.enemies.length).toBeGreaterThanOrEqual(1);
+    expect(f1State.enemies.some((e) => e.kind === 'scout')).toBe(false);
   });
 
   it('[APP-MAP-06] scales camera zoom by viewport width (including zoomed-out mobile) and switches between room illumination and corridor circular vision', () => {
@@ -1012,7 +1026,10 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(farTurret.awake).toBe(true);
     expect(roomWakeState.enemyProjectiles.length).toBe(0);
 
-    // Floor spawns a free-roaming patrol scout in corridors
+    // 1F never places patrol scouts; 2F+ places free-roaming patrol scouts in corridors
+    const f1PatrolFloor = createGameState({ seed: 933, startFloor: 1 });
+    expect(f1PatrolFloor.enemies.some((e) => e.kind === 'scout')).toBe(false);
+
     const patrolFloor = createGameState({ seed: 933, startFloor: 2 });
     const corridorScouts = patrolFloor.enemies.filter(
       (e) =>
@@ -1027,7 +1044,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     );
     expect(corridorScouts.length).toBeGreaterThanOrEqual(1);
 
-    // Scout wanders while unawakened, and on spotting player wakes allies, spawns fast ambush runners (> player baseSpeed) with spawnDelay
+    // Scout wanders while unawakened, does NOT wake nearby allies, and summons fast ambush runners up to per-scout cap
     const scoutState = createGameState({ seed: 931, startFloor: 2 });
     scoutState.chests = [];
     scoutState.pickups = [];
@@ -1046,20 +1063,91 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const nearbyAlly = createEnemyByKind(
       9012,
       'normal',
-      spotScout.x + SCOUT_ALERT_RADIUS - 30,
+      spotScout.x + 180,
       spotScout.y,
       2
     );
     scoutState.enemies = [spotScout, nearbyAlly];
     stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
     expect(spotScout.awake).toBe(true);
-    expect(nearbyAlly.awake).toBe(true);
+    expect(nearbyAlly.awake).toBe(false);
     const ambushRunners = scoutState.enemies.filter((e) => e.kind === 'runner' && e.awake);
     expect(ambushRunners.length).toBeGreaterThanOrEqual(2);
     expect(ambushRunners.every((e) => e.isAmbush === true)).toBe(true);
+    expect(ambushRunners.every((e) => e.summonerId === spotScout.id)).toBe(true);
     expect(ambushRunners.every((e) => e.speed > scoutState.player.baseSpeed)).toBe(true);
     expect(ambushRunners.every((e) => (e.spawnDelay ?? 0) > 0.3)).toBe(true);
     expect(scoutState.notifications.some((n) => n.kind === 'alert' && n.text.includes('スカウト'))).toBe(true);
+
+    // Per-scout summon cap prevents infinite runner stacking while allowing a second scout its own quota
+    spotScout.alertCooldown = 0;
+    stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    const afterSecondAlert = scoutState.enemies.filter((e) => e.isAmbush && e.summonerId === spotScout.id);
+    expect(afterSecondAlert.length).toBeLessThanOrEqual(SCOUT_SUMMON_CAP_PER_SCOUT);
+
+    const secondScout = createEnemyByKind(9013, 'scout', scoutState.player.x - 100, scoutState.player.y, 2);
+    scoutState.enemies.push(secondScout);
+    stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    const secondScoutRunners = scoutState.enemies.filter((e) => e.isAmbush && e.summonerId === secondScout.id);
+    expect(secondScoutRunners.length).toBeGreaterThanOrEqual(2);
+
+    // Stop summoning if player runs beyond SCOUT_SUMMON_MAX_PLAYER_DIST
+    const farScout = createEnemyByKind(9014, 'scout', scoutState.player.x + SCOUT_SUMMON_MAX_PLAYER_DIST + 60, scoutState.player.y, 2);
+    farScout.awake = true;
+    farScout.alertCooldown = 0;
+    scoutState.enemies = [farScout];
+    stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    expect(scoutState.enemies.some((e) => e.isAmbush && e.summonerId === farScout.id)).toBe(false);
+
+    // Scout kites away when player is inside SCOUT_KEEP_DIST and closes in if player is beyond SCOUT_CHASE_DIST
+    const kiteScout = createEnemyByKind(9015, 'scout', scoutState.player.x + 120, scoutState.player.y, 2);
+    kiteScout.awake = true;
+    kiteScout.alertCooldown = 99;
+    scoutState.enemies = [kiteScout];
+    const closeDistBefore = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
+    for (let f = 0; f < 20; f++) {
+      stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    }
+    const closeDistAfter = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
+    expect(closeDistAfter).toBeGreaterThan(closeDistBefore);
+    expect(closeDistAfter).toBeLessThan(SCOUT_KEEP_DIST + 30);
+
+    kiteScout.x = scoutState.player.x + SCOUT_CHASE_DIST + 80;
+    kiteScout.y = scoutState.player.y;
+    const farDistBefore = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
+    for (let f = 0; f < 20; f++) {
+      stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
+    }
+    const farDistAfter = Math.hypot(kiteScout.x - scoutState.player.x, kiteScout.y - scoutState.player.y);
+    expect(farDistAfter).toBeLessThan(farDistBefore);
+
+    // Cornered room scout steers toward a corridor exit instead of getting pinned in the corner
+    const cornerState = createGameState({ seed: 932, startFloor: 2 });
+    cornerState.chests = [];
+    cornerState.pickups = [];
+    cornerState.player.baseAttackCooldown = 999;
+    cornerState.map.tiles.fill('wall');
+    const testRoom = { id: 0, x: 2, y: 2, w: 6, h: 6, cx: 5, cy: 5 };
+    cornerState.map.rooms = [testRoom];
+    for (let ty = testRoom.y; ty < testRoom.y + testRoom.h; ty++) {
+      for (let tx = testRoom.x; tx < testRoom.x + testRoom.w; tx++) {
+        cornerState.map.tiles[ty * cornerState.map.width + tx] = 'floor';
+      }
+    }
+    // Corridor exit on the top edge (tx=6, ty=1)
+    cornerState.map.tiles[1 * cornerState.map.width + 6] = 'floor';
+    cornerState.map.tiles[0 * cornerState.map.width + 6] = 'floor';
+    cornerState.player.x = 4 * 40 + 20;
+    cornerState.player.y = 4 * 40 + 20;
+    const cornerScout = createEnemyByKind(9016, 'scout', 6 * 40 + 20, 3 * 40 + 20, 2);
+    cornerScout.awake = true;
+    cornerScout.alertCooldown = 99;
+    cornerState.enemies = [cornerScout];
+    const startY = cornerScout.y;
+    for (let f = 0; f < 30; f++) {
+      stepGame(cornerState, { x: 0, y: 0 }, 1 / 60);
+    }
+    expect(cornerScout.y).toBeLessThan(startY);
 
     // Defeating a scout-spawned ambush runner yields zero EXP/heal/equip drops
     scoutState.pickups = [];
