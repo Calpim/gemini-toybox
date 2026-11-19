@@ -38,6 +38,7 @@ export interface PlayerState {
   repulsorCooldown: number;
   aegisCooldown: number;
   tacticalStepCooldown: number;
+  tacticalStepCharges?: number;
   tacticalSpeedTimer?: number;
   tacticalSpeedBonus?: number;
   velX?: number;

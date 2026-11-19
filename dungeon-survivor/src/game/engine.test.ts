@@ -609,6 +609,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(MAX_SKILL_LEVEL).toBe(5);
     expect(SKILL_PREREQ_LEVEL).toBe(3);
     expect([0, 1, 2, 3, 4].map((lv) => getSkillUpgradeCost(lv))).toEqual([1, 1, 1, 2, 3]);
+    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'def_aegis'))).toEqual([1, 2, Infinity]);
+    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'mob_dash'))).toEqual([1, 2, Infinity]);
 
     const state = createGameState({ seed: 505 });
     state.enemies = [];
@@ -1425,13 +1427,45 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     // At tier 5, r=0.85 enters the top 20% bracket (M+2 = 4)
     expect(rollDropEquipmentLevel(minLv2, () => 0.85, 5)).toBe(4);
 
-    // mob_dash triggers tactical step + speed boost on enemy projectile hit
+    // Base hit invulnerability is 1.0s without mob_dash (prevents rapid multi-hits)
+    const baseHitState = createGameState({ seed: 969 });
+    baseHitState.chests = [];
+    baseHitState.pickups = [];
+    baseHitState.enemies = [];
+    baseHitState.map.tiles.fill('floor');
+    baseHitState.enemyProjectiles = [
+      {
+        id: 8800,
+        x: baseHitState.player.x + 6,
+        y: baseHitState.player.y,
+        vx: -100,
+        vy: 0,
+        radius: 6,
+        damage: 10,
+        life: 1.0,
+      },
+      {
+        id: 8809,
+        x: baseHitState.player.x + 6,
+        y: baseHitState.player.y,
+        vx: -100,
+        vy: 0,
+        radius: 6,
+        damage: 10,
+        life: 1.0,
+      },
+    ];
+    stepGame(baseHitState, { x: 0, y: 0 }, 0.02);
+    expect(baseHitState.player.hp).toBe(90); // second projectile ignored by invulnTimer
+    expect(baseHitState.player.invulnTimer).toBeCloseTo(1.0, 2);
+
+    // mob_dash triggers charge-based invuln extension + speed boost without forced movement
     const dashState = createGameState({ seed: 970 });
     dashState.chests = [];
     dashState.pickups = [];
     dashState.enemies = [];
     dashState.map.tiles.fill('floor');
-    dashState.player.skillLevels = { mob_magnet: 3, mob_loot: 3, mob_dash: 5 };
+    dashState.player.skillLevels = { mob_magnet: 3, mob_loot: 3, mob_dash: 2 };
     const startX = dashState.player.x;
     dashState.enemyProjectiles = [
       {
@@ -1447,7 +1481,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ];
     stepGame(dashState, { x: 0, y: 0 }, 0.02);
     expect(dashState.player.hp).toBe(90);
-    expect(dashState.player.x).toBeLessThan(startX - 50); // stepped left away from projectile
+    expect(dashState.player.x).toBe(startX); // no forced teleport/step into walls
+    expect(dashState.player.invulnTimer).toBeCloseTo(1.6, 2);
+    expect(dashState.player.tacticalStepCharges).toBe(1);
     expect(dashState.player.tacticalSpeedTimer).toBeGreaterThan(2.0);
     expect(dashState.player.tacticalSpeedBonus).toBeCloseTo(0.38, 4);
 
@@ -1457,7 +1493,42 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const movedDist = boostedStartX - dashState.player.x;
     expect(movedDist).toBeGreaterThan(210 * 0.05 * 1.3);
 
-    // def_aegis parry damage does not scale with arms skills and uses restrained cooldown (>= 4.5s)
+    // Consume 2nd charge after invuln expires, then fallback to 1.0s base invuln when out of charges
+    dashState.player.invulnTimer = 0;
+    dashState.enemyProjectiles = [
+      {
+        id: 8802,
+        x: dashState.player.x,
+        y: dashState.player.y,
+        vx: 0,
+        vy: 0,
+        radius: 6,
+        damage: 10,
+        life: 1.0,
+      },
+    ];
+    stepGame(dashState, { x: 0, y: 0 }, 0.02);
+    expect(dashState.player.tacticalStepCharges).toBe(0);
+    expect(dashState.player.invulnTimer).toBeCloseTo(1.6, 2);
+
+    dashState.player.invulnTimer = 0;
+    dashState.enemyProjectiles = [
+      {
+        id: 8803,
+        x: dashState.player.x,
+        y: dashState.player.y,
+        vx: 0,
+        vy: 0,
+        radius: 6,
+        damage: 10,
+        life: 1.0,
+      },
+    ];
+    stepGame(dashState, { x: 0, y: 0 }, 0.02);
+    expect(dashState.player.tacticalStepCharges).toBe(0);
+    expect(dashState.player.invulnTimer).toBeCloseTo(1.0, 2);
+
+    // def_aegis parry damage is capped at Lv2, does not scale with arms skills, and uses 4.5s cooldown
     const aegisMods = computeSkillModifiers({
       arm_base: 5,
       def_sensor: 3,
@@ -1465,7 +1536,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       def_aegis: 5,
     });
     expect(aegisMods.aegisCooldown).toBeGreaterThanOrEqual(4.5);
-    expect(aegisMods.aegisDamage).toBe(46);
+    expect(aegisMods.aegisDamage).toBe(42);
     expect(aegisMods.repulsorDamage).toBe(10);
   });
 

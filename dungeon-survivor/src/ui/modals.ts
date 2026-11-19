@@ -16,13 +16,14 @@ import {
   type EquippedItem,
 } from '../game/equipment';
 import {
-  MAX_SKILL_LEVEL,
   SKILL_PREREQ_LEVEL,
   SKILL_TREE_NODES,
+  TIER3_SUPPORT_MAX_LEVEL,
   canUpgradeSkill,
   computeSkillModifiers,
   getSkillEffectSummary,
   getSkillLevel,
+  getSkillMaxLevel,
   getSkillNode,
   getSkillUpgradeCost,
   type SkillBranch,
@@ -113,8 +114,9 @@ export function renderModals(
         }
 
         const currLv = getSkillLevel(state.player.skillLevels, node.id);
-        const isMax = currLv >= MAX_SKILL_LEVEL;
-        const nextCost = getSkillUpgradeCost(currLv);
+        const maxLv = getSkillMaxLevel(node.id);
+        const isMax = currLv >= maxLv;
+        const nextCost = getSkillUpgradeCost(currLv, node.id);
         const isAvailable = canUpgradeSkill(
           state.player.skillLevels,
           state.player.skillPoints,
@@ -131,13 +133,17 @@ export function renderModals(
         }`;
         btn.disabled = !isAvailable;
 
-        const costLabel = isMax ? 'MAX' : `次Lv必要 ${nextCost} SP（Lv1-3:1 / Lv4:2 / Lv5:3）`;
+        const costPattern =
+          maxLv === TIER3_SUPPORT_MAX_LEVEL
+            ? 'Lv1:1 / Lv2:2'
+            : 'Lv1-3:1 / Lv4:2 / Lv5:3';
+        const costLabel = isMax ? 'MAX' : `次Lv必要 ${nextCost} SP（${costPattern}）`;
         const reqLabel = node.requires
           ? `Tier ${node.tier} · ${costLabel} · 前提: ${getSkillNode(node.requires).name} Lv${SKILL_PREREQ_LEVEL}+`
           : `Tier ${node.tier} · ${costLabel} · 基本ノード`;
 
         const stateLabel = isMax
-          ? `MAX (${currLv}/${MAX_SKILL_LEVEL})`
+          ? `MAX (${currLv}/${maxLv})`
           : isAvailable
           ? currLv === 0
             ? `習得 (-${nextCost} SP)`
@@ -153,7 +159,7 @@ export function renderModals(
 
         btn.innerHTML = `
           <div class="node-top">
-            <strong>${node.name} <span style="opacity:0.8;font-size:11px">Lv${currLv}/${MAX_SKILL_LEVEL}</span></strong>
+            <strong>${node.name} <span style="opacity:0.8;font-size:11px">Lv${currLv}/${maxLv}</span></strong>
             <span class="node-state">${stateLabel}</span>
           </div>
           <div class="node-desc">${effectText}</div>

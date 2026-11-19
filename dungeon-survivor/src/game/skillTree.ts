@@ -12,7 +12,9 @@ export type SkillNodeId =
   | 'mob_loot';
 
 export const MAX_SKILL_LEVEL = 5;
+export const TIER3_SUPPORT_MAX_LEVEL = 2;
 export const SKILL_PREREQ_LEVEL = 3;
+export const BASE_HIT_INVULN_DURATION = 1.0;
 
 export type SkillLevelMap = Partial<Record<SkillNodeId, number>>;
 
@@ -25,12 +27,24 @@ export interface SkillNodeDef {
   description: string;
 }
 
+export function getSkillMaxLevel(nodeId: SkillNodeId): number {
+  if (nodeId === 'def_aegis' || nodeId === 'mob_dash') {
+    return TIER3_SUPPORT_MAX_LEVEL;
+  }
+  return MAX_SKILL_LEVEL;
+}
+
 /**
  * Required SP to upgrade from `currentLevel` to `currentLevel + 1`:
- * Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 3
+ * - Standard (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 3
+ * - Defense/Mobility Tier 3 (max Lv2): Lv0->1: 1, Lv1->2: 2
  */
-export function getSkillUpgradeCost(currentLevel: number): number {
-  if (currentLevel >= MAX_SKILL_LEVEL) return Infinity;
+export function getSkillUpgradeCost(currentLevel: number, nodeId?: SkillNodeId): number {
+  const maxLv = nodeId ? getSkillMaxLevel(nodeId) : MAX_SKILL_LEVEL;
+  if (currentLevel >= maxLv) return Infinity;
+  if (maxLv === TIER3_SUPPORT_MAX_LEVEL) {
+    return currentLevel === 0 ? 1 : 2;
+  }
   if (currentLevel <= 2) return 1;
   if (currentLevel === 3) return 2;
   return 3;
@@ -83,7 +97,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オートパリィ盾',
     requires: 'def_pulse',
-    description: '被弾無効パリィ＋小反撃（CD 8.0s→4.5s、保険の緊急防御）',
+    description: '被弾無効パリィ＋小反撃＆無敵1.0s（Lv1: CD7.0s/反撃22 → Lv2: CD4.5s/反撃42）',
   },
   {
     id: 'mob_magnet',
@@ -105,9 +119,9 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     id: 'mob_dash',
     branch: 'mobility',
     tier: 3,
-    name: '戦術ステップ',
+    name: '緊急回避ブースト',
     requires: 'mob_loot',
-    description: '全被弾時の緊急ステップ＆無敵延長 + 発動後2.5秒間の移動加速（最大+38%）',
+    description: '被弾時にチャージ消費で無敵延長＆2.5s移動加速（Lv1: 1回/1.30s/+24% → Lv2: 2回/1.60s/+38%）',
   },
 ] as const;
 
@@ -120,7 +134,7 @@ export function getSkillNode(id: SkillNodeId): SkillNodeDef {
 }
 
 export function getSkillLevel(levels: SkillLevelMap, nodeId: SkillNodeId): number {
-  return Math.max(0, Math.min(MAX_SKILL_LEVEL, levels[nodeId] ?? 0));
+  return Math.max(0, Math.min(getSkillMaxLevel(nodeId), levels[nodeId] ?? 0));
 }
 
 export function canUpgradeSkill(
@@ -129,9 +143,10 @@ export function canUpgradeSkill(
   nodeId: SkillNodeId
 ): boolean {
   const currLevel = getSkillLevel(levels, nodeId);
-  if (currLevel >= MAX_SKILL_LEVEL) return false;
+  const maxLevel = getSkillMaxLevel(nodeId);
+  if (currLevel >= maxLevel) return false;
   const node = getSkillNode(nodeId);
-  const cost = getSkillUpgradeCost(currLevel);
+  const cost = getSkillUpgradeCost(currLevel, nodeId);
   if (skillPoints < cost) return false;
   if (node.requires === null) return true;
   return getSkillLevel(levels, node.requires) >= SKILL_PREREQ_LEVEL;
@@ -147,25 +162,25 @@ const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.06, 0.06, 0.14, 0.2] as const;
 const ARM_MAIN_CD_REDUCTION = [0, 0.06, 0.12, 0.18, 0.26, 0.35] as const;
 const ARM_MAIN_SPEED_BONUS = [0, 25, 50, 80, 115, 155] as const;
 
-// Defense: Sensor range + controlled emergency defense
+// Defense: Sensor range + controlled emergency defense (def_aegis capped at Lv2)
 const DEF_RANGE_PCT = [0, 0.08, 0.16, 0.24, 0.38, 0.55] as const;
 const DEF_PULSE_DMG = [0, 6, 8, 10, 14, 18] as const;
 const DEF_PULSE_CD = [0, 4.2, 3.9, 3.6, 3.2, 2.8] as const;
 const DEF_PULSE_RANGE = [0, 100, 108, 116, 132, 150] as const;
-const DEF_AEGIS_DMG = [0, 16, 20, 24, 34, 46] as const;
-const DEF_AEGIS_CD = [0, 8.0, 7.2, 6.5, 5.5, 4.5] as const;
+const DEF_AEGIS_DMG = [0, 22, 42] as const;
+const DEF_AEGIS_CD = [0, 7.0, 4.5] as const;
 
-// Mobility: Magnet (Tier 1) -> Treasure/Drop Quality & Rate (Tier 2) -> Tactical Mobility (Tier 3)
+// Mobility: Magnet (Tier 1) -> Treasure/Drop Quality & Rate (Tier 2) -> Evasion Boost (Tier 3, capped at Lv2)
 const MOB_MAGNET_PCT = [0, 0.22, 0.44, 0.66, 1.05, 1.6] as const;
 const MOB_HEAL_PCT = [0, 0.1, 0.2, 0.3, 0.5, 0.75] as const;
 const MOB_LOOT_PCT = [0, 0.1, 0.2, 0.3, 0.45, 0.65] as const;
 const MOB_DROP_BONUS = [0, 0.005, 0.01, 0.015, 0.023, 0.035] as const;
 const MOB_DROP_QUALITY = [0, 1, 2, 3, 4, 5] as const;
 const MOB_EXP_PCT = [0, 0.08, 0.16, 0.24, 0.42, 0.68] as const;
-const MOB_DASH_INVULN = [0.55, 0.85, 0.95, 1.05, 1.25, 1.5] as const;
-const MOB_DASH_DIST = [0, 44, 52, 60, 74, 90] as const;
-const MOB_DASH_CD = [0, 6.0, 5.4, 4.8, 3.8, 3.0] as const;
-const MOB_DASH_SPEED_BOOST = [0, 0.16, 0.2, 0.24, 0.3, 0.38] as const;
+const MOB_DASH_INVULN = [BASE_HIT_INVULN_DURATION, 1.3, 1.6] as const;
+const MOB_DASH_CHARGES = [0, 1, 2] as const;
+const MOB_DASH_CD = [0, 4.5, 3.5] as const;
+const MOB_DASH_SPEED_BOOST = [0, 0.24, 0.38] as const;
 export const TACTICAL_SPEED_BOOST_DURATION = 2.5;
 
 export interface ComputedSkillModifiers {
@@ -192,7 +207,7 @@ export interface ComputedSkillModifiers {
   expMult: number;
   hasTacticalStep: boolean;
   tacticalInvulnDuration: number;
-  tacticalStepDist: number;
+  tacticalMaxCharges: number;
   tacticalStepCooldown: number;
   tacticalSpeedBonus: number;
 }
@@ -243,14 +258,14 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     expMult: 1 + MOB_EXP_PCT[mobLootLv],
     hasTacticalStep: mobDashLv >= 1,
     tacticalInvulnDuration: MOB_DASH_INVULN[mobDashLv],
-    tacticalStepDist: MOB_DASH_DIST[mobDashLv],
+    tacticalMaxCharges: MOB_DASH_CHARGES[mobDashLv],
     tacticalStepCooldown: MOB_DASH_CD[mobDashLv],
     tacticalSpeedBonus: MOB_DASH_SPEED_BOOST[mobDashLv],
   };
 }
 
 export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): string {
-  const lv = Math.max(0, Math.min(MAX_SKILL_LEVEL, level));
+  const lv = Math.max(0, Math.min(getSkillMaxLevel(nodeId), level));
   if (lv <= 0) return '未習得';
   switch (nodeId) {
     case 'arm_base':
@@ -274,6 +289,6 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
     case 'mob_loot':
       return `品質+${MOB_DROP_QUALITY[lv]} / 装備率+${(MOB_DROP_BONUS[lv] * 100).toFixed(1)}% / EXP+${Math.round(MOB_EXP_PCT[lv] * 100)}%`;
     case 'mob_dash':
-      return `無敵${MOB_DASH_INVULN[lv].toFixed(2)}s / 回避${MOB_DASH_DIST[lv]}px / 加速+${Math.round(MOB_DASH_SPEED_BOOST[lv] * 100)}%`;
+      return `連続${MOB_DASH_CHARGES[lv]}回 / 無敵${MOB_DASH_INVULN[lv].toFixed(2)}s / 加速+${Math.round(MOB_DASH_SPEED_BOOST[lv] * 100)}% / 回復${MOB_DASH_CD[lv].toFixed(1)}s`;
   }
 }

@@ -39,10 +39,12 @@ import {
   type EquippedItem,
 } from './equipment';
 import {
+  BASE_HIT_INVULN_DURATION,
   TACTICAL_SPEED_BOOST_DURATION,
   canUpgradeSkill,
   computeSkillModifiers,
   getSkillLevel,
+  getSkillMaxLevel,
   getSkillNode,
   getSkillUpgradeCost,
   type ComputedSkillModifiers,
@@ -765,11 +767,16 @@ export function upgradeSkillNode(state: GameState, nodeId: SkillNodeId): boolean
   }
   const node = getSkillNode(nodeId);
   const currLv = getSkillLevel(state.player.skillLevels, nodeId);
-  const cost = getSkillUpgradeCost(currLv);
+  const cost = getSkillUpgradeCost(currLv, nodeId);
   const nextLv = currLv + 1;
   state.player.skillPoints -= cost;
   state.player.spentSkillPoints += cost;
   state.player.skillLevels[nodeId] = nextLv;
+  if (nodeId === 'mob_dash') {
+    const maxCharges = getSkillMaxLevel('mob_dash');
+    const currentCharges = state.player.tacticalStepCharges ?? currLv;
+    state.player.tacticalStepCharges = Math.min(maxCharges, Math.min(nextLv, currentCharges + 1));
+  }
   state.floatingTexts.push({
     x: state.player.x,
     y: state.player.y - 24,
@@ -1368,33 +1375,22 @@ export const getMainWeaponStats = getPlayerBaseAttackStats;
 function applyTacticalStepOnHit(
   state: GameState,
   mods: ComputedSkillModifiers,
-  sourceX: number,
-  sourceY: number,
-  defaultInvuln = 0.5
+  defaultInvuln = BASE_HIT_INVULN_DURATION
 ): void {
-  const { player, map } = state;
-  if (mods.hasTacticalStep && player.tacticalStepCooldown <= 0) {
-    player.tacticalStepCooldown = mods.tacticalStepCooldown;
+  const { player } = state;
+  const charges = player.tacticalStepCharges ?? mods.tacticalMaxCharges;
+  if (mods.hasTacticalStep && charges > 0) {
+    player.tacticalStepCharges = charges - 1;
+    if (player.tacticalStepCooldown <= 0) {
+      player.tacticalStepCooldown = mods.tacticalStepCooldown;
+    }
     player.invulnTimer = mods.tacticalInvulnDuration;
     player.tacticalSpeedTimer = TACTICAL_SPEED_BOOST_DURATION;
     player.tacticalSpeedBonus = mods.tacticalSpeedBonus;
-    const dx = player.x - sourceX;
-    const dy = player.y - sourceY;
-    const awayLen = Math.hypot(dx, dy);
-    const dirX = awayLen > 1e-4 ? dx / awayLen : -Math.cos(player.facingAngle);
-    const dirY = awayLen > 1e-4 ? dy / awayLen : -Math.sin(player.facingAngle);
-    const stepped = resolveCircleGridCollision(
-      player.x + dirX * mods.tacticalStepDist,
-      player.y + dirY * mods.tacticalStepDist,
-      player.radius,
-      map
-    );
-    player.x = stepped.x;
-    player.y = stepped.y;
     state.floatingTexts.push({
       x: player.x,
       y: player.y - 22,
-      text: 'STEP!',
+      text: 'EVADE!',
       color: '#38bdf8',
       life: 0.65,
       maxLife: 0.65,
@@ -1431,7 +1427,31 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   }
   if (player.repulsorCooldown > 0) player.repulsorCooldown = Math.max(0, player.repulsorCooldown - clampedDt);
   if (player.aegisCooldown > 0) player.aegisCooldown = Math.max(0, player.aegisCooldown - clampedDt);
-  if (player.tacticalStepCooldown > 0) player.tacticalStepCooldown = Math.max(0, player.tacticalStepCooldown - clampedDt);
+  if (mods.hasTacticalStep) {
+    const charges = player.tacticalStepCharges ?? mods.tacticalMaxCharges;
+    if (charges < mods.tacticalMaxCharges) {
+      if (player.tacticalStepCooldown <= 0) {
+        player.tacticalStepCooldown = mods.tacticalStepCooldown;
+      }
+      player.tacticalStepCooldown -= clampedDt;
+      while (
+        player.tacticalStepCooldown <= 0 &&
+        (player.tacticalStepCharges ?? charges) < mods.tacticalMaxCharges
+      ) {
+        const updated = (player.tacticalStepCharges ?? charges) + 1;
+        player.tacticalStepCharges = updated;
+        if (updated < mods.tacticalMaxCharges) {
+          player.tacticalStepCooldown += mods.tacticalStepCooldown;
+        } else {
+          player.tacticalStepCooldown = 0;
+        }
+      }
+    } else {
+      player.tacticalStepCooldown = 0;
+    }
+  } else {
+    player.tacticalStepCooldown = 0;
+  }
   if ((player.tacticalSpeedTimer ?? 0) > 0) {
     player.tacticalSpeedTimer = Math.max(0, (player.tacticalSpeedTimer ?? 0) - clampedDt);
     if (player.tacticalSpeedTimer <= 0) {
@@ -2908,7 +2928,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     ) {
       if (mods.hasAegisParry && player.aegisCooldown <= 0) {
         player.aegisCooldown = mods.aegisCooldown;
-        player.invulnTimer = 0.6;
+        player.invulnTimer = BASE_HIT_INVULN_DURATION;
         damageEnemy(state, enemy, mods.aegisDamage);
         state.visualFx.push({
           kind: 'pulse',
@@ -2966,7 +2986,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         state.status = 'gameover';
         return;
       }
-      applyTacticalStepOnHit(state, mods, enemy.x, enemy.y, 0.55);
+      applyTacticalStepOnHit(state, mods);
     }
   }
 
@@ -2984,7 +3004,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       state.enemyProjectiles.splice(i, 1);
       if (mods.hasAegisParry && player.aegisCooldown <= 0) {
         player.aegisCooldown = mods.aegisCooldown;
-        player.invulnTimer = 0.6;
+        player.invulnTimer = BASE_HIT_INVULN_DURATION;
         emitSound(state, 'parry');
         triggerShake(state, 3.5, 0.12);
         spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
@@ -3013,7 +3033,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           state.status = 'gameover';
           return;
         }
-        applyTacticalStepOnHit(state, mods, ep.x, ep.y, 0.5);
+        applyTacticalStepOnHit(state, mods);
       }
     }
   }
@@ -3044,7 +3064,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       ) {
         if (mods.hasAegisParry && player.aegisCooldown <= 0) {
           player.aegisCooldown = mods.aegisCooldown;
-          player.invulnTimer = 0.6;
+          player.invulnTimer = BASE_HIT_INVULN_DURATION;
           emitSound(state, 'parry');
           triggerShake(state, 3.5, 0.12);
           spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
@@ -3073,7 +3093,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             state.status = 'gameover';
             return;
           }
-          applyTacticalStepOnHit(state, mods, zone.targetX, zone.targetY, 0.5);
+          applyTacticalStepOnHit(state, mods);
         }
       }
     }
@@ -3104,7 +3124,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           laser.hitPlayer = true;
           if (mods.hasAegisParry && player.aegisCooldown <= 0) {
             player.aegisCooldown = mods.aegisCooldown;
-            player.invulnTimer = 0.6;
+            player.invulnTimer = BASE_HIT_INVULN_DURATION;
             emitSound(state, 'parry');
             triggerShake(state, 3.5, 0.12);
             spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
@@ -3133,8 +3153,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
               state.status = 'gameover';
               return;
             }
-            const origin = laser.points[0] ?? { x: player.x, y: player.y };
-            applyTacticalStepOnHit(state, mods, origin.x, origin.y, 0.5);
+            applyTacticalStepOnHit(state, mods);
           }
         }
       }
