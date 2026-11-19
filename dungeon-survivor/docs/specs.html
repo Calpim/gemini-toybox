@@ -1781,9 +1781,9 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 
-                <h4>スキルレベル段階別の必要SP（通常Lv1〜3=1/Lv4=2/Lv5=3、防衛・探索Tier3はLv1=1/Lv2=2）で消費制御する</h4>
+                <h4>スキルレベル段階別の必要SP（通常Lv1〜3=1/Lv4=2/Lv5=3、防衛・探索Tier3はLv1=2/Lv2=3）で消費制御する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">getSkillUpgradeCost が通常ノードで 1 / 1 / 1 / 2 / 3 SP、防衛/探索 Tier 3（def_aegis / mob_dash）で 1 / 2 SP を返すように設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが Lv3 の通常スキルまたは Lv1 の防衛/探索 Tier 3 スキルを所持 SP 1 の状態で強化しようとする</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2）のため強化不可となり、SP 2 消費で次レベルへ強化できる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">getSkillUpgradeCost が通常ノードで 1 / 1 / 1 / 2 / 3 SP、防衛/探索 Tier 3（def_aegis / mob_dash）で 2 / 3 SP を返すように設定されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが Lv3 の通常スキルを所持 SP 1 の状態で強化、または Lv1 の防衛/探索 Tier 3 スキルを所持 SP 2 の状態で強化しようとする</span></li><li><span class="kw">ならば</span><span class="st-text">必要SP不足（1 &lt; 2 または 2 &lt; 3）のため強化不可となり、必要SPを満たすと次レベルへ強化できる</span></li>
   </ul>
               </div>
           </div>
@@ -2603,9 +2603,9 @@
         <td><a class="id-pill id-doc" href="#PRM-09">PRM-09</a></td>
         <td><span class="cat-pill">スキル</span></td>
         <td><strong>スキル強化SPコスト (<code class="inline-code">getSkillUpgradeCost</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">通常 Lv1-3: 1 / Lv4: 2 / Lv5: 3（防衛・機動力Tier3 Lv1: 1 / Lv2: 2）</code></span></td>
+        <td><span class="param-val"><code class="inline-code">通常 Lv1-3: 1 / Lv4: 2 / Lv5: 3（防衛・機動力Tier3 Lv1: 2 / Lv2: 3）</code></span></td>
         <td><code class="inline-code">SP</code></td>
-        <td><div class="note-text">Lv3までは1SPずつ横展開しやすくし、Lv4〜5および防衛・機動力Tier3 Lv2は高コストと引き換えにリターンを得る選択を際立たせるため（DEC-03, DEC-18, BIZ-GRW-05）</div></td>
+        <td><div class="note-text">Lv3までは1SPずつ横展開しやすくし、Lv4〜5および防衛・機動力Tier3（Lv1:2/Lv2:3）は高コストと引き換えにリターンを得る選択を際立たせるため（DEC-03, DEC-18, BIZ-GRW-05）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L32-L46</code></div><div class="source-cell">
@@ -4017,7 +4017,7 @@
       <tr id="DEC-18" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-18" data-source-file="specs/decisions.md">
         <td><a class="id-pill id-doc" href="#DEC-18">DEC-18</a></td>
         <td><span class="date-pill">2026-11-19</span><div class="sub-code">先輩</div></td>
-        <td><strong>被弾時無敵・回避スキル・索敵/機動力Tier3再調整：(1) 全被弾時（パリィ含む）の基本無敵時間（点滅）を <code class="inline-code">1.0s</code> へ統一・延長して連続ヒットを防止 (2) <code class="inline-code">mob_dash</code> を「戦術ステップ」から「緊急回避ブースト」へ改称し、壁めり込みを防ぐため強制移動ワープを廃止してチャージ制の無敵延長（1.30s/1.60s）＋2.5s移動加速（+24/+38%）へ変更 (3) 迎撃/索敵Tier3（<code class="inline-code">def_aegis</code>）と機動力Tier3（<code class="inline-code">mob_dash</code>）の2スキルを最大 <code class="inline-code">Lv2</code>・必要SP <code class="inline-code">1 / 2</code>（計3SP）へ凝縮し、兵装Tier3（<code class="inline-code">arm_overclock</code>）は <code class="inline-code">Lv5</code> を維持</strong><div class="note-text">連続ヒットの理不尽さと強制ステップによる壁めり込みリスクを解消しつつ、防衛・機動力のTier3を3SPで取り切りやすくしてビルドの完成テンポを整えるため</div></td>
+        <td><strong>被弾時無敵・回避スキル・索敵/機動力Tier3再調整：(1) 全被弾時（パリィ含む）の基本無敵時間（点滅）を <code class="inline-code">1.0s</code> へ統一・延長して連続ヒットを防止 (2) <code class="inline-code">mob_dash</code> を「戦術ステップ」から「緊急回避ブースト」へ改称し、壁めり込みを防ぐため強制移動ワープを廃止してチャージ制の無敵延長（1.30s/1.60s）＋2.5s移動加速（+24/+38%）へ変更 (3) 迎撃/索敵Tier3（<code class="inline-code">def_aegis</code>）と機動力Tier3（<code class="inline-code">mob_dash</code>）の2スキルを最大 <code class="inline-code">Lv2</code>・必要SP <code class="inline-code">2 / 3</code>（計5SP）へ凝縮し、兵装Tier3（<code class="inline-code">arm_overclock</code>）は <code class="inline-code">Lv5</code> を維持</strong><div class="note-text">連続ヒットの理不尽さと強制ステップによる壁めり込みリスクを解消しつつ、防衛・機動力のTier3を2段階（2/3SP）に凝縮してビルドの選択肢と投資重みを整えるため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed (`DEC-12`) → Confirmed</div></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a></div></td>
         <td><div class="note-text">プレイテストでチャージ回復CDや無敵時間のバランスを再評価する時</div><div class="source-cell">

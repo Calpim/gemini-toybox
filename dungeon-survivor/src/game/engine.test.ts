@@ -609,8 +609,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(MAX_SKILL_LEVEL).toBe(5);
     expect(SKILL_PREREQ_LEVEL).toBe(3);
     expect([0, 1, 2, 3, 4].map((lv) => getSkillUpgradeCost(lv))).toEqual([1, 1, 1, 2, 3]);
-    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'def_aegis'))).toEqual([1, 2, Infinity]);
-    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'mob_dash'))).toEqual([1, 2, Infinity]);
+    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'def_aegis'))).toEqual([2, 3, Infinity]);
+    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'mob_dash'))).toEqual([2, 3, Infinity]);
 
     const state = createGameState({ seed: 505 });
     state.enemies = [];

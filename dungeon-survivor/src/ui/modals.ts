@@ -135,7 +135,7 @@ export function renderModals(
 
         const costPattern =
           maxLv === TIER3_SUPPORT_MAX_LEVEL
-            ? 'Lv1:1 / Lv2:2'
+            ? 'Lv1:2 / Lv2:3'
             : 'Lv1-3:1 / Lv4:2 / Lv5:3';
         const costLabel = isMax ? 'MAX' : `次Lv必要 ${nextCost} SP（${costPattern}）`;
         const reqLabel = node.requires

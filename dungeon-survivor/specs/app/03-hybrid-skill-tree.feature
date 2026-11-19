@@ -42,10 +42,10 @@
     ならば 未カンスト時は既存レベルが Math.min(8, Math.max(既存Lv + 1, 拾得Lv)) へ自動更新され、すでに Lv8 の場合は maxEquipSlots < 5 なら枠拡張進捗へ自動加算（コスト到達で枠+1）・maxEquipSlots === 5 到達後は +20HP / +25EXP ボーナスへ変換される
 
   @APP-GRW-05 @ref:BIZ-GRW-05 @Confirmed @AIProposed
-  シナリオ: スキルレベル段階別の必要SP（通常Lv1〜3=1/Lv4=2/Lv5=3、防衛・探索Tier3はLv1=1/Lv2=2）で消費制御する
-    前提 getSkillUpgradeCost が通常ノードで 1 / 1 / 1 / 2 / 3 SP、防衛/探索 Tier 3（def_aegis / mob_dash）で 1 / 2 SP を返すように設定されている
-    もし プレイヤーが Lv3 の通常スキルまたは Lv1 の防衛/探索 Tier 3 スキルを所持 SP 1 の状態で強化しようとする
-    ならば 必要SP不足（1 < 2）のため強化不可となり、SP 2 消費で次レベルへ強化できる
+  シナリオ: スキルレベル段階別の必要SP（通常Lv1〜3=1/Lv4=2/Lv5=3、防衛・探索Tier3はLv1=2/Lv2=3）で消費制御する
+    前提 getSkillUpgradeCost が通常ノードで 1 / 1 / 1 / 2 / 3 SP、防衛/探索 Tier 3（def_aegis / mob_dash）で 2 / 3 SP を返すように設定されている
+    もし プレイヤーが Lv3 の通常スキルを所持 SP 1 の状態で強化、または Lv1 の防衛/探索 Tier 3 スキルを所持 SP 2 の状態で強化しようとする
+    ならば 必要SP不足（1 < 2 または 2 < 3）のため強化不可となり、必要SPを満たすと次レベルへ強化できる
 
   @APP-GRW-06 @ref:BIZ-GRW-06 @Confirmed @AIProposed
   シナリオ: 初期装備 0 個（GEAR 0/2）で開始し、自機基本攻撃で戦いながら探索で装備を集める

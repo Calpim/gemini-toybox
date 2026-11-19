@@ -37,13 +37,13 @@ export function getSkillMaxLevel(nodeId: SkillNodeId): number {
 /**
  * Required SP to upgrade from `currentLevel` to `currentLevel + 1`:
  * - Standard (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 3
- * - Defense/Mobility Tier 3 (max Lv2): Lv0->1: 1, Lv1->2: 2
+ * - Defense/Mobility Tier 3 (max Lv2): Lv0->1: 2, Lv1->2: 3
  */
 export function getSkillUpgradeCost(currentLevel: number, nodeId?: SkillNodeId): number {
   const maxLv = nodeId ? getSkillMaxLevel(nodeId) : MAX_SKILL_LEVEL;
   if (currentLevel >= maxLv) return Infinity;
   if (maxLv === TIER3_SUPPORT_MAX_LEVEL) {
-    return currentLevel === 0 ? 1 : 2;
+    return currentLevel === 0 ? 2 : 3;
   }
   if (currentLevel <= 2) return 1;
   if (currentLevel === 3) return 2;
