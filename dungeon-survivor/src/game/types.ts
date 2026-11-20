@@ -83,7 +83,7 @@ export interface EnemyState {
 
 export interface ProjectileState {
   id: number;
-  kind?: 'base' | 'drone' | 'disc' | 'reflected';
+  kind?: 'base' | 'base_homing' | 'drone' | 'disc' | 'reflected';
   x: number;
   y: number;
   vx: number;
@@ -97,6 +97,10 @@ export interface ProjectileState {
   speed?: number;
   spinAngle?: number;
   homingTurnRate?: number;
+  homingRange?: number;
+  baseLevel?: number;
+  overclockLevel?: number;
+  visualTier?: number;
   orbitTargetId?: number;
   orbitAngle?: number;
   orbitProgress?: number;

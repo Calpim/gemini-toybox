@@ -183,7 +183,8 @@ export function renderModals(
     const baseStats = getPlayerBaseAttackStats(state.player);
     const slotPill = `<span class="gear-pill" style="border-color:#94a3b855;color:#cbd5e1">サブ装備枠 ${state.player.equipment.length}/${state.player.maxEquipSlots} (上限${MAX_EQUIP_SLOTS_CAP} / ${expandProgressLabel})</span>`;
     const pierceTag = baseStats.pierce ? ' / 貫通' : '';
-    const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">メイン武器 (コアショット): 威力${baseStats.damage} / ${baseStats.shotCount}発 / ${baseStats.cooldown.toFixed(2)}s / 射程${baseStats.range}px${pierceTag}</span>`;
+    const homingTag = baseStats.homingShots > 0 ? ` + 誘導${baseStats.homingShots}発` : '';
+    const basePill = `<span class="gear-pill" style="border-color:#34d39988;color:#6ee7b7">メイン武器 (コアショット): 威力${baseStats.damage} / ${baseStats.shotCount}発${homingTag} / ${baseStats.cooldown.toFixed(2)}s / 射程${baseStats.range}px${pierceTag}</span>`;
     const gearPills =
       state.player.equipment.length === 0
         ? `<span style="font-size:12px;color:#94a3b8;">（宝箱や敵ドロップでサブ装備を追加可能）</span>`

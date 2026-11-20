@@ -573,8 +573,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
 
     const skilledStats = getPlayerBaseAttackStats(state.player);
     expect(skilledStats.damage).toBeGreaterThan(initialStats.damage);
-    expect(skilledStats.range).toBe(MAX_TARGET_RANGE);
+    expect(skilledStats.range).toBe(MAX_TARGET_RANGE + 60);
     expect(skilledStats.shotCount).toBe(2);
+    expect(skilledStats.homingShots).toBe(1);
 
     // Sub-equipment counts/damage/cooldown stay purely determined by equipment level (not arms skills)
     state.player.equipment = [
@@ -584,7 +585,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(getOrbitBitPositions(state).length).toBe(1);
     expect(getSeekerDronePositions(state).length).toBe(1);
 
-    // Fires 2 base shots simultaneously at a visible enemy
+    // Fires 2 parallel base shots + 1 homing scatter shot simultaneously at a visible enemy
     state.enemies = [
       {
         id: 910,
@@ -603,6 +604,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(2);
+    expect(state.projectiles.filter((p) => p.kind === 'base_homing')).toHaveLength(1);
   });
 
   it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Lv1-3=1SP / Lv4=2SP / Lv5=3SP, Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
@@ -646,13 +648,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 2 SP for Lv4
     state.player.skillPoints = 2;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4 (cost 2)
-    expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(1.45, 4);
+    expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(2.2, 4);
 
     state.player.skillPoints = 2;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 3 SP for Lv5
     state.player.skillPoints = 3;
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv5 (cost 3)
-    expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(1.65, 4);
+    expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(2.7, 4);
     expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // capped at Lv5
 
     // Tier 2 also costs 1 SP up to Lv3, increases Main Weapon shots (not sub-gear bits/drones)
@@ -1737,6 +1739,94 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.floor).toBe(11);
     expect(state.stats.clearTime10F).toBeCloseTo(2.0, 5);
     expect(state.notifications.some((n) => n.text.includes('10F CLEAR!') && n.text.includes('00:02'))).toBe(true);
+  });
+
+  it('[APP-CMB-03 & APP-CMB-06] supports DEC-19 parallel main shots, homing scatter shots (35% dmg, 220px), 290px LoS-only range, and overclock min CD 0.20s', () => {
+    const state = createGameState({ seed: 1919 });
+    state.chests = [];
+    state.pickups = [];
+    state.player.equipment = [];
+    state.player.skillLevels = {
+      arm_base: 5,
+      arm_parallel: 5,
+      arm_overclock: 5,
+      def_sensor: 5,
+    };
+
+    const stats = getPlayerBaseAttackStats(state.player);
+    // 14 * (1 + 1.70) * (1 + 0.25) = 14 * 2.7 * 1.25 = 47.25 -> 47
+    expect(stats.damage).toBe(47);
+    expect(stats.shotCount).toBe(4);
+    expect(stats.homingShots).toBe(3);
+    expect(stats.homingDamage).toBe(Math.round(47 * 0.35)); // 16
+    // min(180, round(180 * 1.55)) + 110 = 180 + 110 = 290
+    expect(stats.range).toBe(290);
+    // 0.58 * 0.55 = 0.319 >= 0.20
+    expect(stats.cooldown).toBeCloseTo(0.319, 4);
+    expect(stats.speed).toBe(460 + 200);
+    expect(stats.pierce).toBe(true);
+    expect(stats.armBaseLevel).toBe(5);
+    expect(stats.armOverclockLevel).toBe(5);
+
+    // Clear a large open area around the player so 270px LoS is guaranteed unobstructed
+    const pTileX = Math.floor(state.player.x / TILE_SIZE);
+    const pTileY = Math.floor(state.player.y / TILE_SIZE);
+    const dir = pTileX < state.map.width / 2 ? 1 : -1;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let step = -1; step <= 8; step++) {
+        const tx = pTileX + dir * step;
+        const ty = pTileY + dy;
+        if (tx > 0 && tx < state.map.width - 1 && ty > 0 && ty < state.map.height - 1) {
+          state.map.tiles[ty * state.map.width + tx] = 'floor';
+        }
+      }
+    }
+
+    // Enemy at 270px (within 290px, beyond MAX_TARGET_RANGE 180px) with LoS
+    state.enemies = [
+      {
+        id: 9901,
+        x: state.player.x + dir * 270,
+        y: state.player.y,
+        radius: 14,
+        speed: 0,
+        hp: 500,
+        maxHp: 500,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+
+    const baseProjs = state.projectiles.filter((p) => p.kind === 'base');
+    const homingProjs = state.projectiles.filter((p) => p.kind === 'base_homing');
+    expect(baseProjs).toHaveLength(4);
+    expect(homingProjs).toHaveLength(3);
+
+    // Parallel shots share the exact same velocity vector and are offset perpendicularly
+    for (const bp of baseProjs) {
+      expect(bp.vx).toBeCloseTo(dir * stats.speed, 3);
+      expect(bp.vy).toBeCloseTo(0, 3);
+      expect(bp.pierce).toBe(true);
+      expect(bp.overclockLevel).toBe(5);
+      expect(bp.baseLevel).toBe(5);
+    }
+    const yCoords = baseProjs.map((p) => p.y).sort((a, b) => a - b);
+    expect(yCoords[3] - yCoords[0]).toBeGreaterThan(15);
+
+    // Homing shots have 35% damage and curve toward an enemy within 220px
+    expect(homingProjs[0].damage).toBe(stats.homingDamage);
+
+    // Wall blocks LoS even within 290px (no sniping through walls)
+    state.projectiles = [];
+    state.player.baseAttackCooldown = 0;
+    const wallTx = pTileX + dir * 2;
+    state.map.tiles[pTileY * state.map.width + wallTx] = 'wall';
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(0);
   });
 });
 

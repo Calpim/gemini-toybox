@@ -771,14 +771,94 @@ export function renderGame(
       ctx.lineTo(0, proj.radius + 2);
       ctx.stroke();
       ctx.restore();
-    } else if (proj.kind === 'base' || proj.kind === 'reflected') {
+    } else if (proj.kind === 'base') {
+      const ocLv = proj.overclockLevel ?? 0;
+      const baseLv = proj.baseLevel ?? 0;
+      const angle = Math.atan2(proj.vy, proj.vx);
+
+      if (ocLv >= 1) {
+        const beamLen = 20 + ocLv * 4 + (baseLv >= 3 ? 4 : 0);
+        const halfW = Math.max(2.2, proj.radius * 0.45);
+        ctx.save();
+        ctx.translate(proj.x, proj.y);
+        ctx.rotate(angle);
+
+        ctx.strokeStyle = 'rgba(45, 212, 191, 0.35)';
+        ctx.lineWidth = halfW * 3.2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(-beamLen, 0);
+        ctx.lineTo(2, 0);
+        ctx.stroke();
+
+        ctx.strokeStyle = proj.color;
+        ctx.lineWidth = halfW * 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-beamLen * 0.85, 0);
+        ctx.lineTo(3, 0);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ecfeff';
+        ctx.lineWidth = Math.max(1.4, halfW * 0.85);
+        ctx.beginPath();
+        ctx.moveTo(-beamLen * 0.65, 0);
+        ctx.lineTo(4, 0);
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        ctx.save();
+        if (baseLv >= 3) {
+          const tailLen = baseLv >= 5 ? 18 : 13;
+          ctx.save();
+          ctx.translate(proj.x, proj.y);
+          ctx.rotate(angle);
+          ctx.strokeStyle = 'rgba(110, 231, 183, 0.42)';
+          ctx.lineWidth = proj.radius * 1.35;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-tailLen, 0);
+          ctx.lineTo(0, 0);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.fillStyle = proj.color;
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ecfdf5';
+        ctx.lineWidth = baseLv >= 3 ? 2 : 1.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else if (proj.kind === 'base_homing') {
+      const angle = Math.atan2(proj.vy, proj.vx);
+      ctx.save();
+      ctx.translate(proj.x, proj.y);
+      ctx.rotate(angle);
+      ctx.strokeStyle = 'rgba(167, 243, 208, 0.55)';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(0, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = proj.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, proj.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ecfdf5';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+    } else if (proj.kind === 'reflected') {
       ctx.save();
       ctx.fillStyle = proj.color;
       ctx.beginPath();
       ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = proj.kind === 'reflected' ? '#ecfeff' : '#ecfdf5';
-      ctx.lineWidth = proj.kind === 'reflected' ? 2 : 1.5;
+      ctx.strokeStyle = '#ecfeff';
+      ctx.lineWidth = 2;
       ctx.stroke();
       ctx.restore();
     } else {

@@ -1094,10 +1094,11 @@ function findNearestVisibleEnemy(
   originY: number,
   range: number,
   state: GameState,
-  excludeIds: readonly number[] = []
+  excludeIds: readonly number[] = [],
+  allowExceedMaxRange = false
 ): EnemyState | null {
   let bestEnemy: EnemyState | null = null;
-  let bestDist = Math.min(range, MAX_TARGET_RANGE);
+  let bestDist = allowExceedMaxRange ? range : Math.min(range, MAX_TARGET_RANGE);
   for (const enemy of state.enemies) {
     if (enemy.hp <= 0 || excludeIds.includes(enemy.id)) continue;
     const d = Math.hypot(enemy.x - originX, enemy.y - originY);
@@ -1342,8 +1343,12 @@ export interface PlayerBaseAttackStats {
   cooldown: number;
   range: number;
   shotCount: number;
+  homingShots: number;
+  homingDamage: number;
   speed: number;
   pierce: boolean;
+  armBaseLevel: number;
+  armOverclockLevel: number;
   spentSp: number;
 }
 
@@ -1354,9 +1359,11 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
   const baseCooldown = 0.58;
   const baseSpeed = 460;
   const damage = Math.round(baseDamage * mods.mainDamageMult * mods.mainParallelDamageMult);
-  const cooldown = Math.max(0.24, baseCooldown * mods.mainCooldownMult);
-  const range = Math.min(MAX_TARGET_RANGE, Math.round(MAX_TARGET_RANGE * mods.rangeMult));
+  const cooldown = Math.max(0.2, baseCooldown * mods.mainCooldownMult);
+  const range = Math.min(MAX_TARGET_RANGE, Math.round(MAX_TARGET_RANGE * mods.rangeMult)) + mods.mainRangeBonus;
   const shotCount = 1 + mods.mainExtraShots;
+  const homingShots = mods.mainHomingShots;
+  const homingDamage = homingShots > 0 ? Math.max(1, Math.round(damage * 0.35)) : 0;
   const speed = baseSpeed + mods.mainSpeedBonus;
   return {
     weaponId,
@@ -1364,8 +1371,12 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
     cooldown,
     range,
     shotCount,
+    homingShots,
+    homingDamage,
     speed,
     pierce: mods.piercingMainShot,
+    armBaseLevel: mods.armBaseLevel,
+    armOverclockLevel: mods.armOverclockLevel,
     spentSp: player.spentSkillPoints,
   };
 }
@@ -1592,28 +1603,83 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   // 4.5. Player intrinsic Main Weapon auto-attack (Core Shot; scales via arms skills, APP-CMB-01, APP-CMB-06)
   if (player.baseAttackCooldown <= 0 && state.enemies.length > 0) {
     const baseStats = getPlayerBaseAttackStats(player);
-    const target = findNearestVisibleEnemy(player.x, player.y, baseStats.range, state);
+    const target = findNearestVisibleEnemy(player.x, player.y, baseStats.range, state, [], true);
     if (target) {
       const centerAngle = Math.atan2(target.y - player.y, target.x - player.x);
-      const spreadStep = 0.14;
+      const dirX = Math.cos(centerAngle);
+      const dirY = Math.sin(centerAngle);
+      const perpX = -dirY;
+      const perpY = dirX;
+      const laneSpacing = 7;
+      const mainLife = Math.max(0.75, (baseStats.range + 60) / baseStats.speed);
+      const baseRadius =
+        (baseStats.pierce ? 6 : 5) +
+        (baseStats.armBaseLevel >= 5 ? 2.5 : baseStats.armBaseLevel >= 3 ? 1.5 : 0);
+      const mainColor = baseStats.pierce
+        ? '#2dd4bf'
+        : baseStats.armBaseLevel >= 3
+          ? '#6ee7b7'
+          : '#34d399';
+
       for (let s = 0; s < baseStats.shotCount; s++) {
-        const offset = (s - (baseStats.shotCount - 1) / 2) * spreadStep;
-        const angle = centerAngle + offset;
+        const laneOffset = (s - (baseStats.shotCount - 1) / 2) * laneSpacing;
+        let spawnX = player.x + perpX * laneOffset;
+        let spawnY = player.y + perpY * laneOffset;
+        if (isWallAtWorld(map, spawnX, spawnY)) {
+          spawnX = player.x;
+          spawnY = player.y;
+        }
         state.projectiles.push({
           id: state.nextEntityId++,
           kind: 'base',
-          x: player.x,
-          y: player.y,
-          vx: Math.cos(angle) * baseStats.speed,
-          vy: Math.sin(angle) * baseStats.speed,
-          radius: baseStats.pierce ? 6 : 5,
+          x: spawnX,
+          y: spawnY,
+          vx: dirX * baseStats.speed,
+          vy: dirY * baseStats.speed,
+          radius: baseRadius,
           damage: baseStats.damage,
-          life: 0.75,
+          life: mainLife,
           pierce: baseStats.pierce,
+          baseLevel: baseStats.armBaseLevel,
+          overclockLevel: baseStats.armOverclockLevel,
+          visualTier: Math.max(
+            baseStats.armBaseLevel >= 3 ? 1 : 0,
+            baseStats.armOverclockLevel
+          ),
           hitEnemyIds: [],
-          color: baseStats.pierce ? '#2dd4bf' : '#34d399',
+          color: mainColor,
         });
       }
+
+      if (baseStats.homingShots > 0) {
+        const homingSpeed = Math.max(300, Math.round(baseStats.speed * 0.72));
+        for (let h = 0; h < baseStats.homingShots; h++) {
+          const scatterOffset =
+            baseStats.homingShots === 1
+              ? (state.nextEntityId % 2 === 0 ? 1 : -1) * 0.36
+              : (h - (baseStats.homingShots - 1) / 2) * 0.45;
+          const hAngle = centerAngle + scatterOffset;
+          state.projectiles.push({
+            id: state.nextEntityId++,
+            kind: 'base_homing',
+            x: player.x,
+            y: player.y,
+            vx: Math.cos(hAngle) * homingSpeed,
+            vy: Math.sin(hAngle) * homingSpeed,
+            speed: homingSpeed,
+            radius: 4,
+            damage: baseStats.homingDamage,
+            life: 0.95,
+            pierce: false,
+            homingTurnRate: 5.2,
+            homingRange: 220,
+            maxDistance: 280,
+            hitEnemyIds: [],
+            color: '#a7f3d0',
+          });
+        }
+      }
+
       emitSound(state, 'shot');
       player.baseAttackCooldown = baseStats.cooldown;
     }
@@ -1957,6 +2023,32 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         proj.x = nx;
         proj.y = ny;
       }
+    } else if (proj.kind === 'base_homing') {
+      const spd = proj.speed ?? Math.max(1, Math.hypot(proj.vx, proj.vy));
+      const homingTarget = findNearestVisibleEnemy(
+        proj.x,
+        proj.y,
+        proj.homingRange ?? 220,
+        state,
+        proj.hitEnemyIds,
+        true
+      );
+      if (homingTarget) {
+        const currAngle = Math.atan2(proj.vy, proj.vx);
+        const desiredAngle = Math.atan2(homingTarget.y - proj.y, homingTarget.x - proj.x);
+        let diff = desiredAngle - currAngle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const maxTurn = (proj.homingTurnRate ?? 5.2) * clampedDt;
+        const nextAngle = currAngle + Math.max(-maxTurn, Math.min(maxTurn, diff));
+        proj.vx = Math.cos(nextAngle) * spd;
+        proj.vy = Math.sin(nextAngle) * spd;
+      }
+      const nx = proj.x + proj.vx * clampedDt;
+      const ny = proj.y + proj.vy * clampedDt;
+      proj.traveledDist = (proj.traveledDist ?? 0) + Math.hypot(nx - proj.x, ny - proj.y);
+      proj.x = nx;
+      proj.y = ny;
     } else {
       proj.x += proj.vx * clampedDt;
       proj.y += proj.vy * clampedDt;
@@ -1975,6 +2067,9 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       if (Math.hypot(enemy.x - proj.x, enemy.y - proj.y) <= enemy.radius + proj.radius) {
         damageEnemy(state, enemy, proj.damage);
         proj.hitEnemyIds.push(enemy.id);
+        if (proj.kind === 'base' && (proj.overclockLevel ?? 0) >= 1) {
+          spawnParticles(state, proj.x, proj.y, '#2dd4bf', 4, 45, 130, 2.2, 0.22);
+        }
 
         if (proj.kind === 'disc' && (proj.bouncesLeft ?? 0) > 0) {
           proj.bouncesLeft = (proj.bouncesLeft ?? 0) - 1;

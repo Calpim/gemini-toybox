@@ -57,7 +57,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '出力強化',
     requires: null,
-    description: 'メイン武器ダメージ強化（Lv1〜3: +10%/Lv → Lv4: +45% / Lv5: +65%）',
+    description: 'メイン武器ダメ大幅UP & 主兵装射程延長（Lv3+で弾拡大・残像強化 / 最大射程+110px）',
   },
   {
     id: 'arm_parallel',
@@ -65,7 +65,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 2,
     name: '並列射出',
     requires: 'arm_base',
-    description: 'メイン武器の同時発射数増 & 威力補正（Lv1:+1発 → Lv3:+2発 → Lv5:+3発 & +20%）',
+    description: 'メイン弾を平行射出（+1〜3発 & 威力UP）+ 近距離へ飛ぶ小型誘導バラマキ弾を同時射出',
   },
   {
     id: 'arm_overclock',
@@ -73,7 +73,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    description: 'メイン武器CD短縮 & 弾速UP + 貫通（Lv4: CD-26% / Lv5: CD-35%）',
+    description: 'メイン武器CD短縮(-8〜45%) & 弾速UP + 貫通レーザー化（Lvに応じて光線VFX強化）',
   },
   {
     id: 'def_sensor',
@@ -155,12 +155,14 @@ export function canUpgradeSkill(
 export const canUnlockSkill = canUpgradeSkill;
 
 // Per-level scaling curves [Lv0, Lv1, Lv2, Lv3, Lv4, Lv5]
-// Arms: Main Weapon dedicated scaling
-const ARM_MAIN_DAMAGE_PCT = [0, 0.1, 0.2, 0.3, 0.45, 0.65] as const;
+// Arms: Main Weapon dedicated scaling (DEC-19 / PRM-18 / PRM-23)
+const ARM_MAIN_DAMAGE_PCT = [0, 0.25, 0.5, 0.8, 1.2, 1.7] as const;
+const ARM_MAIN_RANGE_BONUS = [0, 20, 40, 60, 85, 110] as const;
 const ARM_MAIN_EXTRA_SHOTS = [0, 1, 1, 2, 2, 3] as const;
-const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.06, 0.06, 0.14, 0.2] as const;
-const ARM_MAIN_CD_REDUCTION = [0, 0.06, 0.12, 0.18, 0.26, 0.35] as const;
-const ARM_MAIN_SPEED_BONUS = [0, 25, 50, 80, 115, 155] as const;
+const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.08, 0.08, 0.16, 0.25] as const;
+const ARM_MAIN_HOMING_SHOTS = [0, 1, 1, 2, 2, 3] as const;
+const ARM_MAIN_CD_REDUCTION = [0, 0.08, 0.16, 0.24, 0.34, 0.45] as const;
+const ARM_MAIN_SPEED_BONUS = [0, 40, 80, 120, 160, 200] as const;
 
 // Defense: Sensor range + controlled emergency defense (def_aegis capped at Lv2)
 const DEF_RANGE_PCT = [0, 0.08, 0.16, 0.24, 0.38, 0.55] as const;
@@ -185,9 +187,13 @@ export const TACTICAL_SPEED_BOOST_DURATION = 2.5;
 
 export interface ComputedSkillModifiers {
   totalSkillLevels: number;
+  armBaseLevel: number;
+  armOverclockLevel: number;
   mainDamageMult: number;
+  mainRangeBonus: number;
   mainExtraShots: number;
   mainParallelDamageMult: number;
+  mainHomingShots: number;
   mainCooldownMult: number;
   piercingMainShot: boolean;
   mainSpeedBonus: number;
@@ -236,10 +242,14 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
 
   return {
     totalSkillLevels,
+    armBaseLevel: armBaseLv,
+    armOverclockLevel: armOverclockLv,
     mainDamageMult: 1 + ARM_MAIN_DAMAGE_PCT[armBaseLv],
+    mainRangeBonus: ARM_MAIN_RANGE_BONUS[armBaseLv],
     mainExtraShots: ARM_MAIN_EXTRA_SHOTS[armParallelLv],
     mainParallelDamageMult: 1 + ARM_MAIN_PARALLEL_DMG_PCT[armParallelLv],
-    mainCooldownMult: Math.max(0.6, 1 - ARM_MAIN_CD_REDUCTION[armOverclockLv]),
+    mainHomingShots: ARM_MAIN_HOMING_SHOTS[armParallelLv],
+    mainCooldownMult: Math.max(0.55, 1 - ARM_MAIN_CD_REDUCTION[armOverclockLv]),
     piercingMainShot: armOverclockLv >= 1,
     mainSpeedBonus: ARM_MAIN_SPEED_BONUS[armOverclockLv],
     rangeMult: 1 + DEF_RANGE_PCT[defSensorLv],
@@ -269,15 +279,16 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
   if (lv <= 0) return '未習得';
   switch (nodeId) {
     case 'arm_base':
-      return `メイン威力 +${Math.round(ARM_MAIN_DAMAGE_PCT[lv] * 100)}%`;
+      return `メイン威力 +${Math.round(ARM_MAIN_DAMAGE_PCT[lv] * 100)}% / 射程+${ARM_MAIN_RANGE_BONUS[lv]}px`;
     case 'arm_parallel': {
       const dmgPct = Math.round(ARM_MAIN_PARALLEL_DMG_PCT[lv] * 100);
+      const homing = ARM_MAIN_HOMING_SHOTS[lv];
       return dmgPct > 0
-        ? `同時 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 威力 +${dmgPct}%`
-        : `同時 +${ARM_MAIN_EXTRA_SHOTS[lv]}発`;
+        ? `平行 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 威力 +${dmgPct}% / 誘導弾${homing}発`
+        : `平行 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 誘導弾${homing}発`;
     }
     case 'arm_overclock':
-      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / 貫通`;
+      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / 貫通レーザー`;
     case 'def_sensor':
       return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
     case 'def_pulse':
