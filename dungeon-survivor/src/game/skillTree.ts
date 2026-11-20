@@ -80,7 +80,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通レーザー化（Lv2で貫通・光線さらに強化）',
+    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通レーザー化（最低3本 / Lv2で5本・光線強化）',
   },
   {
     id: 'def_sensor',
@@ -295,7 +295,7 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
         : `平行 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 誘導弾${homing}発`;
     }
     case 'arm_overclock':
-      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '貫通レーザー強化' : '貫通レーザー'}`;
+      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '5本貫通レーザー強化' : '最低3本貫通レーザー'}`;
     case 'def_sensor':
       return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
     case 'def_pulse':

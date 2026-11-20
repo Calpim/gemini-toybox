@@ -1361,7 +1361,13 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
   const damage = Math.round(baseDamage * mods.mainDamageMult * mods.mainParallelDamageMult);
   const cooldown = Math.max(0.2, baseCooldown * mods.mainCooldownMult);
   const range = Math.min(MAX_TARGET_RANGE, Math.round(MAX_TARGET_RANGE * mods.rangeMult)) + mods.mainRangeBonus;
-  const shotCount = 1 + mods.mainExtraShots;
+  const baseShots = 1 + mods.mainExtraShots;
+  const shotCount =
+    mods.armOverclockLevel >= 2
+      ? Math.max(5, baseShots)
+      : mods.armOverclockLevel === 1
+        ? Math.max(3, baseShots)
+        : baseShots;
   const homingShots = mods.mainHomingShots;
   const homingDamage = homingShots > 0 ? Math.max(1, Math.round(damage * 0.35)) : 0;
   const speed = baseSpeed + mods.mainSpeedBonus;

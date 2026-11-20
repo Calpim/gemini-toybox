@@ -176,7 +176,7 @@ describe('Balance Baseline Report', () => {
         floor: 10,
         skills: { arm_base: 5, arm_parallel: 5, arm_overclock: 2 },
         equipment: [],
-        mainHitRatio: 1.0, // 平行4発が単体ターゲットへ全弾ヒット
+        mainHitRatio: 1.0, // 平行・貫通レーザー5発が単体ターゲットへ全弾ヒット
       },
       {
         name: '10F [B] 主兵装特化・サブ3枠Lv4 (19SP)',
