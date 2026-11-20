@@ -532,13 +532,13 @@
       <a class="nav-pill" href="#sec-overview">📊 概要</a>
       <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (34/24)</a>
       <a class="nav-pill" href="#sec-glossary">📖 用語集 (29)</a>
-      <a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (33)</a>
+      <a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (34)</a>
       <a class="nav-pill" href="#sec-formulas">🧮 計算式 (13)</a>
       <a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (12)</a>
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (10)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (21)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (22)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -552,14 +552,14 @@
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">34</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">24</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">154</div></div>
-        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">35</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">155</div></div>
+        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">36</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">7</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">2</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 34 件のビジネス仕様と 24 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 140 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 142 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -1560,7 +1560,7 @@
                 
                 <h4>自機メイン武器のコアショットは兵装スキル投資でのみ強化され、サブ装備へは乗算しない</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーがサブ装備とは別枠でメイン武器「コアショット」（初期射程 180px=MAX_TARGET_RANGE / 威力 14 / CD 0.58s / 1発 / 弾速 460px/s）を持っている（方針は DEC-19 / DEC-20 で Confirmed、具体数値・計算式は PRM-18 / PRM-23 / OQ-06 にて Inferred）</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベル上昇や他系統へのSP消費のみ行った場合、または兵装（arms）スキルを強化した場合</span></li><li><span class="kw">ならば</span><span class="st-text">player.level 単体や防御・探索系SP消費ではコアショット・サブ装備ともに変化せず、兵装スキル投資時のみコアショットの威力・主兵装専用射程（要LoS・最大290px）・平行ショット発射数（最大4発）・小型誘導バラマキ弾（発射直後にドローン28pxやシールド78px+と干渉しない半径48pxを0.36s・約1周2π周回して接敵を迎撃後、索敵220px・要LoSへホーミング・威力35%）・CD（最小0.20s・下限倍率0.55）・弾速・貫通および貫通レーザー（長さ44〜56px相当・arm_base強化によるサイズ成長を太さ・グロー径に段階継承）が強化される</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーがサブ装備とは別枠でメイン武器「コアショット」（初期射程 180px=MAX_TARGET_RANGE / 威力 14 / CD 0.58s / 1発 / 弾速 460px/s）を持っている（方針は DEC-19 / DEC-20 / DEC-21 で Confirmed、具体数値・計算式は PRM-18 / PRM-23 / OQ-06 にて Inferred）</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーレベル上昇や他系統へのSP消費のみ行った場合、または兵装（arms）スキルを強化した場合</span></li><li><span class="kw">ならば</span><span class="st-text">player.level 単体や防御・探索系SP消費ではコアショット・サブ装備ともに変化せず、兵装スキル投資時のみコアショットの威力・主兵装専用射程（要LoS・最大290px）・平行ショット発射数（最大4発・レーン間隔：通常弾7px / レーザー時 14+min(4, baseLv)px相当・壁めり込みガード付き）・小型誘導バラマキ弾（3フェーズ軌道：Phase1 半径48pxを0.34s・約1周2π周回して接敵迎撃 → Phase2 0.18sかけて半径48→90px付近へ放射膨張[壁手前ガード付き] → Phase3 弾自身の座標(p.x,p.y)基準で索敵220px・要LoSの最近接敵へホーミング・威力35%）・CD（最小0.20s・下限倍率0.55）・弾速・貫通および貫通レーザー（長さ 42+(ocLv&gt;=2?10:0)+baseLv*6 px・最大82px、arm_base強化によるサイズ成長を太さ・グロー径・長さへ段階継承）が強化される</span></li>
   </ul>
               </div>
           </div>
@@ -1579,12 +1579,12 @@
           <div class="bg-box">
     <div class="bg-title">📋 背景: ハイブリッド成長ルールの決定経緯</div>
     <ul class="bg-steps">
-      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット初期2枠（5種から選択・最大5枠まで拡張可）」「重複装備の自動レベルアップ」「スキル毎の最大Lv5・Lv3で次解放・Lv1-3=1SP / Lv4=2SP / Lv5=3SP ＆ Lv4以降の大幅成長」「初期ノーアイテム開始（自機ショットあり）」「敵からの低確率ドロップ（頻度抑えめ）」「所持装備の中で最低レベル基準のドロップLv変動」を確定（2026-11-19 DEC-20 により Tier1=6SP・Tier2=8SP・全Tier3最大Lv2=5SP の計19SPへ再調整）</li>
+      <li>決定経緯: 2026-11-14 先輩プレイバックにより「装備スロット初期2枠（5種から選択・最大5枠まで拡張可）」「重複装備の自動レベルアップ」「スキル毎の最大Lv5・Lv3で次解放・Lv1-3=1SP / Lv4=2SP / Lv5=3SP ＆ Lv4以降の大幅成長」「初期ノーアイテム開始（自機ショットあり）」「敵からの低確率ドロップ（頻度抑えめ）」「所持装備の中で最低レベル基準のドロップLv変動」を確定（2026-11-19 DEC-20 により Tier1=6SP・Tier2=8SP・全Tier3最大Lv2=5SP の計19SPへ再調整、DEC-21 により Lv1 開始時初期スキルポイント暫定 3SP [PRM-34 / OQ-06] を付与）</li>
     </ul>
   </div>
           <h3>探索で拾った装備とレベルアップ成長を組み合わせて強化する</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーがダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">装備品ドロップを獲得し、かつ経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">装備の付け替え・強化と、スキルツリーによる能力強化の両方で強くなる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが初期スキルポイント（暫定 3SP: PRM-34 / OQ-06）を持ってダンジョン内で敵を倒したり宝箱を開けたりしている</span></li><li><span class="kw">もし</span><span class="st-text">装備品ドロップを獲得し、かつ経験値でレベルアップする</span></li><li><span class="kw">ならば</span><span class="st-text">装備の付け替え・強化と、初期SPおよびレベルアップ獲得SPを使ったスキルツリーによる能力強化の両方で強くなる</span></li>
   </ul>
         </div>
         <details class="app-accordion">
@@ -1607,12 +1607,12 @@
                 <div class="bg-box">
     <div class="bg-title">📋 背景: 初期2スロット制（最大5枠）・重複強化・段階SPコスト・スキルレベル制のアプリ仕様</div>
     <ul class="bg-steps">
-      <li>決定経緯: Tier1(Lv1-4=1SP/Lv5=2SP, 計6SP)・Tier2(Lv1-3=1SP/Lv4=2SP/Lv5=3SP, 計8SP)・全Tier3統一(Lv1=2SP/Lv2=3SP, 最大Lv2, 計5SP; 1ブランチ計19SP)・強制移動廃止のチャージ制緊急回避ブースト・被弾時無敵点滅の枠組みは先輩確定（@Confirmed: DEC-03, DEC-12, DEC-18, DEC-20）、各スキルの効果量・SP数値と基礎無敵秒数（PRM-09, PRM-10, PRM-23, PRM-24, PRM-33）はプレイテスト評価待ちのAI仮数値（@Inferred: OQ-06）</li>
+      <li>決定経緯: Tier1(Lv1-4=1SP/Lv5=2SP, 計6SP)・Tier2(Lv1-3=1SP/Lv4=2SP/Lv5=3SP, 計8SP)・全Tier3統一(Lv1=2SP/Lv2=3SP, 最大Lv2, 計5SP; 1ブランチ計19SP)・初期SP付与・強制移動廃止のチャージ制緊急回避ブースト・被弾時無敵点滅の枠組みは先輩確定（@Confirmed: DEC-03, DEC-12, DEC-18, DEC-20, DEC-21）、各スキルの効果量・SP数値（初期3SP: PRM-34）と基礎無敵秒数（PRM-09, PRM-10, PRM-23, PRM-24, PRM-33, PRM-34）はプレイテスト評価待ちのAI仮数値（@Inferred: OQ-06）</li>
     </ul>
   </div>
                 <h4>経験値ジェム回収でHUD経験値バーが進みスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、スキルポイント（SP）を +1 獲得してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、初期スキルポイントが 3（暫定値 PRM-34 / Inferred）であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、スキルポイント（SP）を +1 獲得（累計 4SP）してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
   </ul>
               </div>
           </div>
@@ -1656,7 +1656,7 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">各スキルが Tier1・Tier2 は最大レベル 5、全 Tier3 は最大レベル 2・前提ノード Lv3 以上で次Tier解放として定義されている（※表中の具体効果量・秒数は PRM-23 / PRM-33 の Inferred 仮数値）</span><div class="table-wrap"><table>
               <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>前提(Lv3+)</th><th>Lv1→3 / Lv4 / Lv5（全Tier3は Lv1 / Lv2）の主な累積成長効果 [数値: Inferred]</th></tr></thead>
-              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>なし</td><td>メイン武器ダメ +25/50/80% → Lv4:+120% → Lv5:+170%・主兵装射程 +20/40/60/85/110px（最大290px・要視線）・Lv3+弾拡大＆残像強化</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>並列射出</td><td>2</td><td>arm_base</td><td>メイン平行 +1/1/2発(+0/8/8%) → Lv4:+2発(+16%) → Lv5:+3発(+25%) ＋ 誘導バラマキ弾 1/1/2/2/3発（半径48px・0.36s周回後220px要LoSホーミング・威力35%）</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>arm_parallel</td><td>最大Lv2(Confirmed): メインCD -22% → Lv2:-45%（最小0.20s・下限0.55、Lv1+貫通・Lv2貫通強化・弾速+100/200px/s・レーザー長44〜56px＆arm_base太さ継承）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>なし</td><td>レンジ +8/16/24% → Lv4:+38% → Lv5:+55%（上限180px・サブ装備含む）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>def_sensor</td><td>緊急ノックバック 威力 6/8/10(CD4.2/3.9/3.6s) → Lv4:14(3.2s) → Lv5:18(2.8s)</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>def_pulse</td><td>最大Lv2(Confirmed): 被弾無効パリィ＋無敵[1.0s]・反撃[22(CD7.0s) → Lv2:42(CD4.5s)]</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>なし</td><td>吸引 +22/44/66%・回復 +10/20/30% → Lv4:+50% → Lv5:+75%</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>2</td><td>mob_magnet</td><td>品質Tier+1..5・装備率+0.5..3.5%・宝+10..65%・EXP+8/16/24% → Lv4:+42% → Lv5:+68%</td></tr><tr><td>mob_dash</td><td>探索</td><td>緊急回避ブースト</td><td>3</td><td>mob_loot</td><td>最大Lv2・強制移動なしチャージ制(Confirmed): 無敵延長＆[2.5s]加速（Lv1:[1回/1.30s/+24%/回復4.5s] → Lv2:[2回/1.60s/+38%/順次回復3.5s]、基礎被弾無敵[1.0s: PRM-33]）</td></tr></tbody>
+              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>なし</td><td>メイン武器ダメ +25/50/80% → Lv4:+120% → Lv5:+170%・主兵装射程 +20/40/60/85/110px（最大290px・要視線）・Lv3+弾拡大＆残像強化</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>並列射出</td><td>2</td><td>arm_base</td><td>メイン平行 +1/1/2発(+0/8/8%) → Lv4:+2発(+16%) → Lv5:+3発(+25%, レーン間隔7px/レーザー14+min(4,baseLv)px) ＋ 誘導バラマキ弾 1/1/2/2/3発（周回48px/0.34s→膨張0.18s[90px]→弾自身基準220px要LoSホーミング・威力35%）</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>arm_parallel</td><td>最大Lv2(Confirmed): メインCD -22% → Lv2:-45%（最小0.20s・下限0.55、Lv1+貫通・Lv2貫通強化・弾速+100/200px/s・レーザー長42〜82px＆arm_base太さ・長さ連動）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>なし</td><td>レンジ +8/16/24% → Lv4:+38% → Lv5:+55%（上限180px・サブ装備含む）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>def_sensor</td><td>緊急ノックバック 威力 6/8/10(CD4.2/3.9/3.6s) → Lv4:14(3.2s) → Lv5:18(2.8s)</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>def_pulse</td><td>最大Lv2(Confirmed): 被弾無効パリィ＋無敵[1.0s]・反撃[22(CD7.0s) → Lv2:42(CD4.5s)]</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>なし</td><td>吸引 +22/44/66%・回復 +10/20/30% → Lv4:+50% → Lv5:+75%</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>2</td><td>mob_magnet</td><td>品質Tier+1..5・装備率+0.5..3.5%・宝+10..65%・EXP+8/16/24% → Lv4:+42% → Lv5:+68%</td></tr><tr><td>mob_dash</td><td>探索</td><td>緊急回避ブースト</td><td>3</td><td>mob_loot</td><td>最大Lv2・強制移動なしチャージ制(Confirmed): 無敵延長＆[2.5s]加速（Lv1:[1回/1.30s/+24%/回復4.5s] → Lv2:[2回/1.60s/+38%/順次回復3.5s]、基礎被弾無敵[1.0s: PRM-33]）</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を Lv2 以下の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンはロック表示となり、arm_base を Lv3 まで育成した時点で arm_parallel が解放可能になる</span></li>
   </ul>
               </div>
@@ -1911,7 +1911,7 @@
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">各スキルが Tier1・Tier2 は最大レベル 5、全 Tier3 は最大レベル 2・前提ノード Lv3 以上で次Tier解放として定義されている（※表中の具体効果量・秒数は PRM-23 / PRM-33 の Inferred 仮数値）</span><div class="table-wrap"><table>
               <thead><tr><th>ノードID</th><th>系統</th><th>表示名</th><th>Tier</th><th>前提(Lv3+)</th><th>Lv1→3 / Lv4 / Lv5（全Tier3は Lv1 / Lv2）の主な累積成長効果 [数値: Inferred]</th></tr></thead>
-              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>なし</td><td>メイン武器ダメ +25/50/80% → Lv4:+120% → Lv5:+170%・主兵装射程 +20/40/60/85/110px（最大290px・要視線）・Lv3+弾拡大＆残像強化</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>並列射出</td><td>2</td><td>arm_base</td><td>メイン平行 +1/1/2発(+0/8/8%) → Lv4:+2発(+16%) → Lv5:+3発(+25%) ＋ 誘導バラマキ弾 1/1/2/2/3発（半径48px・0.36s周回後220px要LoSホーミング・威力35%）</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>arm_parallel</td><td>最大Lv2(Confirmed): メインCD -22% → Lv2:-45%（最小0.20s・下限0.55、Lv1+貫通・Lv2貫通強化・弾速+100/200px/s・レーザー長44〜56px＆arm_base太さ継承）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>なし</td><td>レンジ +8/16/24% → Lv4:+38% → Lv5:+55%（上限180px・サブ装備含む）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>def_sensor</td><td>緊急ノックバック 威力 6/8/10(CD4.2/3.9/3.6s) → Lv4:14(3.2s) → Lv5:18(2.8s)</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>def_pulse</td><td>最大Lv2(Confirmed): 被弾無効パリィ＋無敵[1.0s]・反撃[22(CD7.0s) → Lv2:42(CD4.5s)]</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>なし</td><td>吸引 +22/44/66%・回復 +10/20/30% → Lv4:+50% → Lv5:+75%</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>2</td><td>mob_magnet</td><td>品質Tier+1..5・装備率+0.5..3.5%・宝+10..65%・EXP+8/16/24% → Lv4:+42% → Lv5:+68%</td></tr><tr><td>mob_dash</td><td>探索</td><td>緊急回避ブースト</td><td>3</td><td>mob_loot</td><td>最大Lv2・強制移動なしチャージ制(Confirmed): 無敵延長＆[2.5s]加速（Lv1:[1回/1.30s/+24%/回復4.5s] → Lv2:[2回/1.60s/+38%/順次回復3.5s]、基礎被弾無敵[1.0s: PRM-33]）</td></tr></tbody>
+              <tbody><tr><td>arm_base</td><td>兵装</td><td>出力強化</td><td>1</td><td>なし</td><td>メイン武器ダメ +25/50/80% → Lv4:+120% → Lv5:+170%・主兵装射程 +20/40/60/85/110px（最大290px・要視線）・Lv3+弾拡大＆残像強化</td></tr><tr><td>arm_parallel</td><td>兵装</td><td>並列射出</td><td>2</td><td>arm_base</td><td>メイン平行 +1/1/2発(+0/8/8%) → Lv4:+2発(+16%) → Lv5:+3発(+25%, レーン間隔7px/レーザー14+min(4,baseLv)px) ＋ 誘導バラマキ弾 1/1/2/2/3発（周回48px/0.34s→膨張0.18s[90px]→弾自身基準220px要LoSホーミング・威力35%）</td></tr><tr><td>arm_overclock</td><td>兵装</td><td>オーバークロック</td><td>3</td><td>arm_parallel</td><td>最大Lv2(Confirmed): メインCD -22% → Lv2:-45%（最小0.20s・下限0.55、Lv1+貫通・Lv2貫通強化・弾速+100/200px/s・レーザー長42〜82px＆arm_base太さ・長さ連動）</td></tr><tr><td>def_sensor</td><td>迎撃</td><td>広域索敵</td><td>1</td><td>なし</td><td>レンジ +8/16/24% → Lv4:+38% → Lv5:+55%（上限180px・サブ装備含む）</td></tr><tr><td>def_pulse</td><td>迎撃</td><td>電磁リパルサー</td><td>2</td><td>def_sensor</td><td>緊急ノックバック 威力 6/8/10(CD4.2/3.9/3.6s) → Lv4:14(3.2s) → Lv5:18(2.8s)</td></tr><tr><td>def_aegis</td><td>迎撃</td><td>オートパリィ盾</td><td>3</td><td>def_pulse</td><td>最大Lv2(Confirmed): 被弾無効パリィ＋無敵[1.0s]・反撃[22(CD7.0s) → Lv2:42(CD4.5s)]</td></tr><tr><td>mob_magnet</td><td>探索</td><td>磁力回収フレーム</td><td>1</td><td>なし</td><td>吸引 +22/44/66%・回復 +10/20/30% → Lv4:+50% → Lv5:+75%</td></tr><tr><td>mob_loot</td><td>探索</td><td>トレジャー解析</td><td>2</td><td>mob_magnet</td><td>品質Tier+1..5・装備率+0.5..3.5%・宝+10..65%・EXP+8/16/24% → Lv4:+42% → Lv5:+68%</td></tr><tr><td>mob_dash</td><td>探索</td><td>緊急回避ブースト</td><td>3</td><td>mob_loot</td><td>最大Lv2・強制移動なしチャージ制(Confirmed): 無敵延長＆[2.5s]加速（Lv1:[1回/1.30s/+24%/回復4.5s] → Lv2:[2回/1.60s/+38%/順次回復3.5s]、基礎被弾無敵[1.0s: PRM-33]）</td></tr></tbody>
             </table></div></li><li><span class="kw">もし</span><span class="st-text">プレイヤーが前提ノード arm_base を Lv2 以下の状態で arm_parallel を選択する</span></li><li><span class="kw">ならば</span><span class="st-text">習得ボタンはロック表示となり、arm_base を Lv3 まで育成した時点で arm_parallel が解放可能になる</span></li>
   </ul>
               </div>
@@ -1987,12 +1987,12 @@
                 <div class="bg-box">
     <div class="bg-title">📋 背景: 初期2スロット制（最大5枠）・重複強化・段階SPコスト・スキルレベル制のアプリ仕様</div>
     <ul class="bg-steps">
-      <li>決定経緯: Tier1(Lv1-4=1SP/Lv5=2SP, 計6SP)・Tier2(Lv1-3=1SP/Lv4=2SP/Lv5=3SP, 計8SP)・全Tier3統一(Lv1=2SP/Lv2=3SP, 最大Lv2, 計5SP; 1ブランチ計19SP)・強制移動廃止のチャージ制緊急回避ブースト・被弾時無敵点滅の枠組みは先輩確定（@Confirmed: DEC-03, DEC-12, DEC-18, DEC-20）、各スキルの効果量・SP数値と基礎無敵秒数（PRM-09, PRM-10, PRM-23, PRM-24, PRM-33）はプレイテスト評価待ちのAI仮数値（@Inferred: OQ-06）</li>
+      <li>決定経緯: Tier1(Lv1-4=1SP/Lv5=2SP, 計6SP)・Tier2(Lv1-3=1SP/Lv4=2SP/Lv5=3SP, 計8SP)・全Tier3統一(Lv1=2SP/Lv2=3SP, 最大Lv2, 計5SP; 1ブランチ計19SP)・初期SP付与・強制移動廃止のチャージ制緊急回避ブースト・被弾時無敵点滅の枠組みは先輩確定（@Confirmed: DEC-03, DEC-12, DEC-18, DEC-20, DEC-21）、各スキルの効果量・SP数値（初期3SP: PRM-34）と基礎無敵秒数（PRM-09, PRM-10, PRM-23, PRM-24, PRM-33, PRM-34）はプレイテスト評価待ちのAI仮数値（@Inferred: OQ-06）</li>
     </ul>
   </div>
                 <h4>経験値ジェム回収でHUD経験値バーが進みスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、スキルポイントが 0 であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、スキルポイント（SP）を +1 獲得してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、初期スキルポイントが 3（暫定値 PRM-34 / Inferred）であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、スキルポイント（SP）を +1 獲得（累計 4SP）してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で自動装着・自動強化または選択モーダルへ遷移する</span></li>
   </ul>
               </div>
           </div>
@@ -2474,7 +2474,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">PARAMETERS / パラメータ表</div>
-        <h2>🎛️ パラメータ表 <span class="count-pill" data-section-count="parameters">(33件)</span></h2>
+        <h2>🎛️ パラメータ表 <span class="count-pill" data-section-count="parameters">(34件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/parameters.md" data-source-file="specs/parameters.md" data-item-id="" title="元仕様ファイル specs/parameters.md ()">specs/parameters.md</a>
@@ -2729,11 +2729,11 @@
         <td><a class="id-pill id-doc" href="#PRM-18">PRM-18</a></td>
         <td><span class="cat-pill">戦闘</span></td>
         <td><strong>メイン武器 <code class="inline-code">arms</code> 専用スケーリング・最小CD（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">総SP連動廃止（0） / 最小CD 0.20s / arm_base主兵装射程加算(+20/+40/+60/+85/+110px・最大290px・要視線) / arm_parallel平行追加弾数(+1/+1/+2/+2/+3発)・威力補正(+0/+8/+8/+16/+25%)・誘導バラマキ弾(1/1/2/2/3発・周回半径48px・周回0.36s[約1周2π]後に索敵220px[要LoS]へホーミング・威力35%) / arm_overclock最小CD倍率 0.55・弾速+100/+200px/s・Lv1+貫通・レーザー長44〜56px(arm_baseで太さ/グロー拡大)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">総SP連動廃止（0） / 最小CD 0.20s / arm_base主兵装射程加算(+20/+40/+60/+85/+110px・最大290px・要視線) / arm_parallel平行追加弾数(+1/+1/+2/+2/+3発)・レーン間隔(通常弾 7px / レーザー時 14+min(4, baseLv) px相当・壁めり込みガード付き)・威力補正(+0/+8/+8/+16/+25%)・誘導バラマキ弾(1/1/2/2/3発・Phase1周回48px/0.34s[約1周2π] → Phase2膨張0.18s[48→90px付近・壁手前ガード] → Phase3弾自身座標(p.x,p.y)基準索敵220px[要LoS]ホーミング・威力35%) / arm_overclock最小CD倍率 0.55・弾速+100/+200px/s・Lv1+貫通・レーザー長 42+(ocLv&gt;=2?10:0)+baseLv*6 px(最大82px・arm_baseで太さ/グロー拡大)</code></span></td>
         <td><code class="inline-code">秒・px・発・%・px/s</code></td>
-        <td><div class="note-text">総SPとの二重乗算インフレを排し、10F（Lv20前後）基準でサブ装備全体バフなしでも兵装特化でボス・雑魚を攻略でき、かつバラマキ弾の接敵迎撃とレーザー視認性・サイズ成長を両立させるため（プレイテスト後にConfirmed昇格検討）</div></td>
+        <td><div class="note-text">総SPとの二重乗算インフレを排し、10F（Lv20前後）基準でサブ装備全体バフなしでも兵装特化でボス・雑魚を攻略でき、レーザーの面制圧感とバラマキ弾の3フェーズ迎撃・追尾を両立させるため（プレイテスト後にConfirmed昇格検討）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L136-L141</code>, <code class="inline-code">src/game/engine.ts#L1097-L1122</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-18" data-source-file="specs/parameters.md" data-item-id="PRM-18" title="元仕様ファイル specs/parameters.md (PRM-18)">specs/parameters.md#PRM-18</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2799,11 +2799,11 @@
         <td><a class="id-pill id-doc" href="#PRM-23">PRM-23</a></td>
         <td><span class="cat-pill">スキル</span></td>
         <td><strong>各スキルノード効果量（AI仮数値・<code class="inline-code">APP-GRW-02</code>）</strong></td>
-        <td><span class="param-val"><code class="inline-code">arm_base(+25/50/80/120/170%, 射程+20/40/60/85/110px) / arm_parallel(+1/1/2/2/3発平行, +0/8/8/16/25%, 誘導弾1/1/2/2/3発[周回48px・0.36s→220px/35%]) / arm_overclock(-22/45%, 弾速+100/200px/s, Lv1+貫通, Lv2貫通強化, レーザー長44〜56px) / def_sensor(+8/16/24/38/55%) / def_pulse(6/8/10/14/18, CD4.2/3.9/3.6/3.2/2.8s) / def_aegis(Lv1-2: 反撃22/42, CD7.0/4.5s) / mob_magnet(吸引+22/44/66/105/160%, 回復+10/20/30/50/75%) / mob_loot(宝+10/20/30/45/65%, 品質+1..5, EXP+8/16/24/42/68%) / mob_dash(Lv1-2: 1/2チャージ, 無敵1.30/1.60s, 2.5s加速+24/38%, 回復CD4.5/3.5s)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">arm_base(+25/50/80/120/170%, 射程+20/40/60/85/110px) / arm_parallel(+1/1/2/2/3発平行[通常7px・レーザー14+min(4,baseLv)px], +0/8/8/16/25%, 誘導弾1/1/2/2/3発[周回48px・0.34s→膨張0.18s(90px)→220px/35%]) / arm_overclock(-22/45%, 弾速+100/200px/s, Lv1+貫通, Lv2貫通強化, レーザー長42+(ocLv&gt;=2?10:0)+baseLv×6 px[最大82px]) / def_sensor(+8/16/24/38/55%) / def_pulse(6/8/10/14/18, CD4.2/3.9/3.6/3.2/2.8s) / def_aegis(Lv1-2: 反撃22/42, CD7.0/4.5s) / mob_magnet(吸引+22/44/66/105/160%, 回復+10/20/30/50/75%) / mob_loot(宝+10/20/30/45/65%, 品質+1..5, EXP+8/16/24/42/68%) / mob_dash(Lv1-2: 1/2チャージ, 無敵1.30/1.60s, 2.5s加速+24/38%, 回復CD4.5/3.5s)</code></span></td>
         <td><code class="inline-code">%・px・秒・DMG・回</code></td>
         <td><div class="note-text">兵装を10F（Lv20前後）でサブ装備全体バフなしでも戦える主兵装特化へ強化し、全Tier3を最大Lv2へ統一してLv20（19SP）での完成テンポとビルド特色を両立するため（数値はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L155-L185</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-23" data-source-file="specs/parameters.md" data-item-id="PRM-23" title="元仕様ファイル specs/parameters.md (PRM-23)">specs/parameters.md#PRM-23</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2946,6 +2946,20 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L17</code>, <code class="inline-code">src/game/engine.ts#L1378</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-33" data-source-file="specs/parameters.md" data-item-id="PRM-33" title="元仕様ファイル specs/parameters.md (PRM-33)">specs/parameters.md#PRM-33</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="PRM-34" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-34" data-source-file="specs/parameters.md">
+        <td><a class="id-pill id-doc" href="#PRM-34">PRM-34</a></td>
+        <td><span class="cat-pill">スキル</span></td>
+        <td><strong>初期スキルポイント（暫定・<code class="inline-code">initialSkillPoints</code>）</strong></td>
+        <td><span class="param-val"><code class="inline-code">3</code>（Lv20到達時累計 <code class="inline-code">22</code> SP [19 + 3]）</span></td>
+        <td><code class="inline-code">SP</code></td>
+        <td><div class="note-text">ゲーム開始時（Lv1）から序盤スキル取得を可能にし、Lv20到達時のSP不足を緩和する暫定値のため（方針はDEC-21で確定・数値はプレイテスト検証対象のInferred）</div></td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts</code>（<code class="inline-code">DEC-21</code> 暫定値）</div><div class="source-cell">
+    <a class="source-link" href="../specs/parameters.md#PRM-34" data-source-file="specs/parameters.md" data-item-id="PRM-34" title="元仕様ファイル specs/parameters.md (PRM-34)">specs/parameters.md#PRM-34</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>
@@ -3091,12 +3105,12 @@
       </tr>
       <tr id="FML-05" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-05" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-05">FML-05</a></td>
-        <td><strong>メイン武器（コアショット）射程・発射数・弾速</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">range = min(PRM-06, round(PRM-17[基礎射程] * (1 + PRM-23[def_sensor(Lv)]))) + PRM-23[arm_base射程加算(Lv)]</code>（要視線判定・最大290px超可） / <code class="inline-code">shotCount = 1 + PRM-18[arm_parallel追加発射数(Lv)]</code>（平行軌道） / <code class="inline-code">homingCount = PRM-18[誘導バラマキ弾数(Lv)]</code>（発射直後に半径 <code class="inline-code">PRM-18[周回48px]</code> を <code class="inline-code">PRM-18[0.36s]</code>・約1周 <code class="inline-code">2π</code> 周回して接敵迎撃後、索敵 <code class="inline-code">PRM-18[220px]</code>・要LoSへホーミング移行） / <code class="inline-code">speed = PRM-17[基礎弾速] + PRM-18[弾速加算(Lv)]</code></div></td>
+        <td><strong>メイン武器（コアショット）射程・発射数・弾速・レーザー長</strong></td>
+        <td><div class="formula-expr"><code class="inline-code">range = min(PRM-06, round(PRM-17[基礎射程] * (1 + PRM-23[def_sensor(Lv)]))) + PRM-23[arm_base射程加算(Lv)]</code>（要視線判定・最大290px超可） / <code class="inline-code">shotCount = 1 + PRM-18[arm_parallel追加発射数(Lv)]</code>（平行軌道・レーン間隔 <code class="inline-code">PRM-18[通常7px / レーザー時 14+min(4, baseLv) px相当・壁めり込みガード]</code>） / <code class="inline-code">homingCount = PRM-18[誘導バラマキ弾数(Lv)]</code>（Phase1: 半径 <code class="inline-code">PRM-18[48px]</code> を <code class="inline-code">PRM-18[0.34s]</code>・約1周 <code class="inline-code">2π</code> 周回 → Phase2: <code class="inline-code">PRM-18[0.18s]</code> で半径 <code class="inline-code">PRM-18[48→90px付近]</code> へ放射膨張・壁手前ガード → Phase3: 弾自身座標 <code class="inline-code">(p.x, p.y)</code> 基準で索敵 <code class="inline-code">PRM-18[220px]</code>・要LoSへホーミング移行） / <code class="inline-code">speed = PRM-17[基礎弾速] + PRM-18[弾速加算(Lv)]</code> / <code class="inline-code">laserLength = min(82, 42 + (ocLv &gt;= 2 ? 10 : 0) + baseLv * 6)</code> px（<code class="inline-code">PRM-18</code>）</div></td>
         <td><code class="inline-code">arm_base Lv</code>, <code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">arm_overclock Lv (0..2)</code>, <code class="inline-code">def_sensor Lv</code>, <code class="inline-code">PRM-06</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
-        <td><code class="inline-code">射程 (px)</code> / <code class="inline-code">発射数 (発)</code> / <code class="inline-code">誘導弾数 (発)</code> / <code class="inline-code">弾速 (px/s)</code></td>
+        <td><code class="inline-code">射程 (px)</code> / <code class="inline-code">発射数 (発)</code> / <code class="inline-code">誘導弾数 (発)</code> / <code class="inline-code">弾速 (px/s)</code> / <code class="inline-code">レーザー長 (px)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1105-L1108</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-05" data-source-file="specs/formulas.md" data-item-id="FML-05" title="元仕様ファイル specs/formulas.md (FML-05)">specs/formulas.md#FML-05</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3603,7 +3617,7 @@
         <td><a class="id-pill id-doc" href="#OQ-06">OQ-06</a></td>
         <td><strong>AI決定のコード実値パラメータ・計算式係数（<code class="inline-code">Inferred</code>）のプレイテスト確認と <code class="inline-code">Confirmed</code> 昇格判断</strong></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-28">PRM-28</a><a class="ref-pill ref-link" href="#PRM-29">PRM-29</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-31">PRM-31</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#PRM-33">PRM-33</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#FML-10">FML-10</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-28">PRM-28</a><a class="ref-pill ref-link" href="#PRM-29">PRM-29</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-31">PRM-31</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#PRM-33">PRM-33</a><a class="ref-pill ref-link" href="#PRM-34">PRM-34</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#FML-10">FML-10</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a></div></td>
         <td><div class="note-text">仕様書へ実値を記載済み（<code class="inline-code">Inferred</code>）。先輩が実機プレイで手触りに納得した段階で <code class="inline-code">Confirmed</code> へ昇格</div></td>
         <td><div class="note-text">現行はAI決定の仮係数で動作中であり、バランス調整の余地が残る</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-06" data-source-file="specs/open-questions.md" data-item-id="OQ-06" title="元仕様ファイル specs/open-questions.md (OQ-06)">specs/open-questions.md#OQ-06</a>
@@ -3817,7 +3831,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(21件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(22件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -4058,6 +4072,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text">10F到達（Lv20前後）プレイテストで1ブランチ振り切りテンポ、バラマキ弾の周回迎撃感、レーザーの長さ・太さバランスを確認した時（<code class="inline-code">OQ-06</code>）</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-20" data-source-file="specs/decisions.md" data-item-id="DEC-20" title="元仕様ファイル specs/decisions.md (DEC-20)">specs/decisions.md#DEC-20</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-21" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-21" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-21">DEC-21</a></td>
+        <td><span class="date-pill">2026-11-19</span><div class="sub-code">先輩</div></td>
+        <td><strong>主兵装面制圧・誘導弾3フェーズ化・初期SP付与の方針確定：(1) レーザー長さ連動＆レーン間隔拡大（面制圧）：<code class="inline-code">arm_overclock</code> 貫通レーザーは <code class="inline-code">arm_base</code> 強化で太さが増すのに合わせて長さも伸ばし、平行ショットのレーン同士が重ならないようレーザーの太さに応じて間隔を広げて面で制圧できるようにする (2) バラマキ誘導弾の3フェーズ軌道（周回 → 外側膨張 → 弾自身基準ホーミング）：<code class="inline-code">arm_parallel</code> の誘導バラマキ弾は発射後まず自機周囲を約1周回転して接敵を迎撃し、次に周囲へ少し膨らんで展開したあと、それぞれの弾自身の位置から近くの敵へ追尾して飛ぶ (3) 初期スキルポイント付与（暫定値）：ゲーム開始時（Lv1）に暫定の初期スキルポイント（<code class="inline-code">3SP</code>）を付与し、序盤からスキル取得を行えるとともにLv20到達時のSP不足を緩和する（具体数値・暫定値はプレイテスト評価まで <code class="inline-code">Inferred</code> として <code class="inline-code">OQ-06</code> で管理）</strong><div class="note-text">レーザーの面制圧感と視認性の向上、バラマキ誘導弾の近距離迎撃から外側展開・追尾への自然な遷移、および序盤スキル取得とLv20到達時（累計22SP）のSP余裕確保のため（具体数値はInferred）</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed (`DEC-20`) → Confirmed (方針) / Inferred (AI仮数値: `PRM-18`, `PRM-23`, `PRM-34`, `FML-05`)</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-34">PRM-34</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="note-text">10F到達（Lv20前後）プレイテストでレーザー長さ・レーン間隔・3フェーズバラマキ弾の手触りおよび初期3SP（累計22SP）の成長テンポを確認した時（<code class="inline-code">OQ-06</code>）</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-21" data-source-file="specs/decisions.md" data-item-id="DEC-21" title="元仕様ファイル specs/decisions.md (DEC-21)">specs/decisions.md#DEC-21</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>
