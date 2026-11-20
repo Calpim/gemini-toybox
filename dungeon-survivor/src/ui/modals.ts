@@ -18,7 +18,6 @@ import {
 import {
   SKILL_PREREQ_LEVEL,
   SKILL_TREE_NODES,
-  TIER3_SUPPORT_MAX_LEVEL,
   canUpgradeSkill,
   computeSkillModifiers,
   getSkillEffectSummary,
@@ -134,9 +133,11 @@ export function renderModals(
         btn.disabled = !isAvailable;
 
         const costPattern =
-          maxLv === TIER3_SUPPORT_MAX_LEVEL
+          node.tier === 3
             ? 'Lv1:2 / Lv2:3'
-            : 'Lv1-3:1 / Lv4:2 / Lv5:3';
+            : node.tier === 1
+              ? 'Lv1-4:1 / Lv5:2'
+              : 'Lv1-3:1 / Lv4:2 / Lv5:3';
         const costLabel = isMax ? 'MAX' : `次Lv必要 ${nextCost} SP（${costPattern}）`;
         const reqLabel = node.requires
           ? `Tier ${node.tier} · ${costLabel} · 前提: ${getSkillNode(node.requires).name} Lv${SKILL_PREREQ_LEVEL}+`

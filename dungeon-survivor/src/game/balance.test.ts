@@ -174,15 +174,15 @@ describe('Balance Baseline Report', () => {
         name: '10F [A] 主兵装特化・サブなし (19SP)',
         playerLevel: 20,
         floor: 10,
-        skills: { arm_base: 5, arm_parallel: 5, arm_overclock: 2, def_sensor: 1 },
+        skills: { arm_base: 5, arm_parallel: 5, arm_overclock: 2 },
         equipment: [],
         mainHitRatio: 1.0, // 平行4発が単体ターゲットへ全弾ヒット
       },
       {
-        name: '10F [B] 主兵装特化・サブ3枠Lv4',
+        name: '10F [B] 主兵装特化・サブ3枠Lv4 (19SP)',
         playerLevel: 20,
         floor: 10,
-        skills: { arm_base: 5, arm_parallel: 5, arm_overclock: 2, def_sensor: 1 },
+        skills: { arm_base: 5, arm_parallel: 5, arm_overclock: 2 },
         equipment: [
           { id: 'seeker_drone', level: 4, cooldown: 0 },
           { id: 'pulse_blade', level: 4, cooldown: 0 },

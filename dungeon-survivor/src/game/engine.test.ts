@@ -607,10 +607,30 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.projectiles.filter((p) => p.kind === 'base_homing')).toHaveLength(1);
   });
 
-  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Lv1-3=1SP / Lv4=2SP / Lv5=3SP, Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
+  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Tier-based SP costs (Tier1:6, Tier2:8, Tier3:5 = 19SP), Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
     expect(MAX_SKILL_LEVEL).toBe(5);
     expect(SKILL_PREREQ_LEVEL).toBe(3);
-    expect([0, 1, 2, 3, 4].map((lv) => getSkillUpgradeCost(lv))).toEqual([1, 1, 1, 2, 3]);
+    expect([0, 1, 2, 3, 4, 5].map((lv) => getSkillUpgradeCost(lv, 'arm_base'))).toEqual([
+      1,
+      1,
+      1,
+      1,
+      2,
+      Infinity,
+    ]);
+    expect([0, 1, 2, 3, 4, 5].map((lv) => getSkillUpgradeCost(lv, 'arm_parallel'))).toEqual([
+      1,
+      1,
+      1,
+      2,
+      3,
+      Infinity,
+    ]);
+    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'arm_overclock'))).toEqual([
+      2,
+      3,
+      Infinity,
+    ]);
     expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'def_aegis'))).toEqual([2, 3, Infinity]);
     expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'mob_dash'))).toEqual([2, 3, Infinity]);
 
@@ -638,22 +658,20 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv2 (cost 1)
     expect(canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, 'arm_parallel')).toBe(false);
 
-    // Reaching Tier 1 Lv3 unlocks Tier 2 (cost 1 SP each up to Lv3)
+    // Reaching Tier 1 Lv3 unlocks Tier 2
     expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv3 (cost 1)
     expect(state.player.skillLevels.arm_base).toBe(3);
     expect(state.player.skillPoints).toBe(3);
 
-    // Lv4 requires 2 SP and delivers a large breakthrough jump; Lv5 requires 3 SP
+    // Tier 1: Lv4 requires 1 SP, Lv5 requires 2 SP (total 6 SP)
     state.player.skillPoints = 1;
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 2 SP for Lv4
-    state.player.skillPoints = 2;
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4 (cost 2)
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4 (cost 1)
     expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(2.2, 4);
 
+    state.player.skillPoints = 1;
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 2 SP for Tier1 Lv5
     state.player.skillPoints = 2;
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 3 SP for Lv5
-    state.player.skillPoints = 3;
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv5 (cost 3)
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv5 (cost 2)
     expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(2.7, 4);
     expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // capped at Lv5
 
@@ -669,11 +687,16 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv3 (cost 1)
     expect(state.player.skillPoints).toBe(0);
 
-    // Tier 3 unlocks at Tier 2 Lv3 and enables Main Weapon cooldown reduction & pierce
+    // Tier 3 unlocks at Tier 2 Lv3, costs 2 SP for Lv1 and 3 SP for Lv2 (capped at Lv2)
     state.player.skillPoints = 1;
-    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true); // Lv1 (cost 1)
-    expect(state.player.skillPoints).toBe(0);
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(false); // needs 2 SP for Lv1
+    state.player.skillPoints = 5;
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true); // Lv1 (cost 2)
+    expect(state.player.skillPoints).toBe(3);
     expect(getPlayerBaseAttackStats(state.player).pierce).toBe(true);
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true); // Lv2 (cost 3)
+    expect(state.player.skillPoints).toBe(0);
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(false); // capped at Lv2
 
     // Mobility branch order: mob_magnet (Tier 1) -> mob_loot (Tier 2) -> mob_dash (Tier 3)
     state.player.skillPoints = 10;
@@ -1749,7 +1772,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     state.player.skillLevels = {
       arm_base: 5,
       arm_parallel: 5,
-      arm_overclock: 5,
+      arm_overclock: 2,
       def_sensor: 5,
     };
 
@@ -1766,7 +1789,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(stats.speed).toBe(460 + 200);
     expect(stats.pierce).toBe(true);
     expect(stats.armBaseLevel).toBe(5);
-    expect(stats.armOverclockLevel).toBe(5);
+    expect(stats.armOverclockLevel).toBe(2);
 
     // Clear a large open area around the player so 270px LoS is guaranteed unobstructed
     const pTileX = Math.floor(state.player.x / TILE_SIZE);
@@ -1811,14 +1834,15 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       expect(bp.vx).toBeCloseTo(dir * stats.speed, 3);
       expect(bp.vy).toBeCloseTo(0, 3);
       expect(bp.pierce).toBe(true);
-      expect(bp.overclockLevel).toBe(5);
+      expect(bp.overclockLevel).toBe(2);
       expect(bp.baseLevel).toBe(5);
     }
     const yCoords = baseProjs.map((p) => p.y).sort((a, b) => a - b);
     expect(yCoords[3] - yCoords[0]).toBeGreaterThan(15);
 
-    // Homing shots have 35% damage and curve toward an enemy within 220px
+    // Homing shots have 35% damage and start in 48px orbit around player
     expect(homingProjs[0].damage).toBe(stats.homingDamage);
+    expect(homingProjs[0].orbitTimer).toBeCloseTo(0.36 - 1 / 60, 3);
 
     // Wall blocks LoS even within 290px (no sniping through walls)
     state.projectiles = [];
@@ -1827,6 +1851,133 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     state.map.tiles[pTileY * state.map.width + wallTx] = 'wall';
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(0);
+  });
+
+  it('[APP-GRW-02 & APP-GRW-05] allows completing an entire branch with 19 SP at Lv20 and applies 2-tier arm_overclock scaling', () => {
+    const state = createGameState({ seed: 2020 });
+    state.player.level = 20;
+    state.player.skillPoints = 19; // Lv1 -> Lv20 grants 19 SP
+
+    // Max out Tier 1 (6 SP) + Tier 2 (8 SP) + Tier 3 (5 SP) = 19 SP
+    for (let i = 0; i < 5; i++) expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
+    for (let i = 0; i < 5; i++) expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true);
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true);
+    const lv1Stats = getPlayerBaseAttackStats(state.player);
+    expect(lv1Stats.cooldown).toBeCloseTo(0.58 * 0.78, 4); // -22%
+    expect(lv1Stats.speed).toBe(460 + 100);
+    expect(lv1Stats.pierce).toBe(true);
+
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true);
+    expect(state.player.skillPoints).toBe(0);
+    expect(state.player.spentSkillPoints).toBe(19);
+    expect(upgradeSkillNode(state, 'arm_overclock')).toBe(false); // Tier 3 capped at Lv2
+
+    const lv2Stats = getPlayerBaseAttackStats(state.player);
+    expect(lv2Stats.cooldown).toBeCloseTo(0.58 * 0.55, 4); // -45%
+    expect(lv2Stats.speed).toBe(460 + 200);
+    expect(lv2Stats.pierce).toBe(true);
+  });
+
+  it('[APP-CMB-06] orbits base_homing shots around player at ~48px for 0.36s to intercept close enemies, then transitions to homing', () => {
+    const state = createGameState({ seed: 2021 });
+    state.chests = [];
+    state.pickups = [];
+    state.player.equipment = [];
+    state.player.skillLevels = { arm_base: 3, arm_parallel: 1 };
+
+    // Carve an open 11x11 floor around the player so walls never interfere
+    const pTileX = Math.floor(state.player.x / TILE_SIZE);
+    const pTileY = Math.floor(state.player.y / TILE_SIZE);
+    for (let dy = -5; dy <= 5; dy++) {
+      for (let dx = -5; dx <= 5; dx++) {
+        const tx = pTileX + dx;
+        const ty = pTileY + dy;
+        if (tx > 0 && tx < state.map.width - 1 && ty > 0 && ty < state.map.height - 1) {
+          state.map.tiles[ty * state.map.width + tx] = 'floor';
+        }
+      }
+    }
+
+    // 1. Far target triggers firing; no close enemy -> base_homing orbits at 48px for 0.36s, then homes
+    state.enemies = [
+      {
+        id: 9951,
+        x: state.player.x + 150,
+        y: state.player.y,
+        radius: 14,
+        speed: 0,
+        hp: 1000,
+        maxHp: 1000,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    let homing = state.projectiles.find((p) => p.kind === 'base_homing');
+    expect(homing).toBeDefined();
+    expect(Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y)).toBeCloseTo(48, 1);
+
+    // Step through part of the orbit (0.18s = half revolution)
+    for (let i = 0; i < 10; i++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+    homing = state.projectiles.find((p) => p.kind === 'base_homing');
+    expect(homing).toBeDefined();
+    expect(homing!.orbitTimer).toBeGreaterThan(0);
+    expect(Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y)).toBeCloseTo(48, 1);
+
+    // Finish the 0.36s orbit -> orbitTimer reaches 0 and transitions to homing toward enemy
+    for (let i = 0; i < 14; i++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+    homing = state.projectiles.find((p) => p.kind === 'base_homing');
+    if (homing) {
+      expect(homing.orbitTimer).toBe(0);
+      // Should be moving outside the 48px orbit toward the enemy
+      expect(Math.hypot(homing.x - state.player.x, homing.y - state.player.y)).toBeGreaterThan(48);
+    }
+
+    // 2. Close enemy on the 48px orbit ring gets intercepted during the orbit phase
+    state.projectiles = [];
+    state.player.baseAttackCooldown = 0;
+    state.enemies = [
+      {
+        id: 9952,
+        x: state.player.x + 150,
+        y: state.player.y,
+        radius: 14,
+        speed: 0,
+        hp: 1000,
+        maxHp: 1000,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+      {
+        id: 9953,
+        x: state.player.x,
+        y: state.player.y + 48,
+        radius: 12,
+        speed: 0,
+        hp: 100,
+        maxHp: 100,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    for (let i = 0; i < 12; i++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+    const closeEnemy = state.enemies.find((e) => e.id === 9953);
+    expect(closeEnemy!.hp).toBeLessThan(100);
   });
 });
 

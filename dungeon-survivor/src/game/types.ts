@@ -104,6 +104,9 @@ export interface ProjectileState {
   orbitTargetId?: number;
   orbitAngle?: number;
   orbitProgress?: number;
+  orbitTimer?: number;
+  orbitRadius?: number;
+  orbitAngularSpeed?: number;
   traveledDist?: number;
   maxDistance?: number;
   hitEnemyIds: number[];

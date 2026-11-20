@@ -777,14 +777,15 @@ export function renderGame(
       const angle = Math.atan2(proj.vy, proj.vx);
 
       if (ocLv >= 1) {
-        const beamLen = 20 + ocLv * 4 + (baseLv >= 3 ? 4 : 0);
-        const halfW = Math.max(2.2, proj.radius * 0.45);
+        const beamLen = 44 + (ocLv >= 2 ? 6 : 0) + Math.round(baseLv * 1.2);
+        const baseScale = 1 + baseLv * 0.14 + (ocLv >= 2 ? 0.12 : 0);
+        const halfW = Math.max(2.4, proj.radius * 0.42 * baseScale);
         ctx.save();
         ctx.translate(proj.x, proj.y);
         ctx.rotate(angle);
 
-        ctx.strokeStyle = 'rgba(45, 212, 191, 0.35)';
-        ctx.lineWidth = halfW * 3.2;
+        ctx.strokeStyle = ocLv >= 2 ? 'rgba(45, 212, 191, 0.42)' : 'rgba(45, 212, 191, 0.32)';
+        ctx.lineWidth = halfW * 3.4;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(-beamLen, 0);
@@ -792,17 +793,17 @@ export function renderGame(
         ctx.stroke();
 
         ctx.strokeStyle = proj.color;
-        ctx.lineWidth = halfW * 1.8;
+        ctx.lineWidth = halfW * 1.9;
         ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.85, 0);
-        ctx.lineTo(3, 0);
+        ctx.moveTo(-beamLen * 0.9, 0);
+        ctx.lineTo(4, 0);
         ctx.stroke();
 
         ctx.strokeStyle = '#ecfeff';
-        ctx.lineWidth = Math.max(1.4, halfW * 0.85);
+        ctx.lineWidth = Math.max(1.6, halfW * 0.92);
         ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.65, 0);
-        ctx.lineTo(4, 0);
+        ctx.moveTo(-beamLen * 0.72, 0);
+        ctx.lineTo(6, 0);
         ctx.stroke();
         ctx.restore();
       } else {
@@ -832,14 +833,16 @@ export function renderGame(
       }
     } else if (proj.kind === 'base_homing') {
       const angle = Math.atan2(proj.vy, proj.vx);
+      const isOrbiting = (proj.orbitTimer ?? 0) > 0;
+      const tailLen = isOrbiting ? 15 : 10;
       ctx.save();
       ctx.translate(proj.x, proj.y);
       ctx.rotate(angle);
-      ctx.strokeStyle = 'rgba(167, 243, 208, 0.55)';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = isOrbiting ? 'rgba(167, 243, 208, 0.72)' : 'rgba(167, 243, 208, 0.55)';
+      ctx.lineWidth = isOrbiting ? 3.0 : 2.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(-10, 0);
+      ctx.moveTo(-tailLen, 0);
       ctx.lineTo(0, 0);
       ctx.stroke();
 

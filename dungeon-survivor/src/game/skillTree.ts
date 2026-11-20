@@ -12,7 +12,8 @@ export type SkillNodeId =
   | 'mob_loot';
 
 export const MAX_SKILL_LEVEL = 5;
-export const TIER3_SUPPORT_MAX_LEVEL = 2;
+export const TIER3_MAX_LEVEL = 2;
+export const TIER3_SUPPORT_MAX_LEVEL = TIER3_MAX_LEVEL;
 export const SKILL_PREREQ_LEVEL = 3;
 export const BASE_HIT_INVULN_DURATION = 1.0;
 
@@ -28,22 +29,28 @@ export interface SkillNodeDef {
 }
 
 export function getSkillMaxLevel(nodeId: SkillNodeId): number {
-  if (nodeId === 'def_aegis' || nodeId === 'mob_dash') {
-    return TIER3_SUPPORT_MAX_LEVEL;
+  if (getSkillNode(nodeId).tier === 3) {
+    return TIER3_MAX_LEVEL;
   }
   return MAX_SKILL_LEVEL;
 }
 
 /**
  * Required SP to upgrade from `currentLevel` to `currentLevel + 1`:
- * - Standard (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 3
- * - Defense/Mobility Tier 3 (max Lv2): Lv0->1: 2, Lv1->2: 3
+ * - Tier 1 (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 1, Lv4->5: 2 (total 6 SP)
+ * - Tier 2 (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 3 (total 8 SP)
+ * - Tier 3 (max Lv2): Lv0->1: 2, Lv1->2: 3 (total 5 SP)
+ * Total per branch: 6 + 8 + 5 = 19 SP (completable at player Lv20)
  */
 export function getSkillUpgradeCost(currentLevel: number, nodeId?: SkillNodeId): number {
-  const maxLv = nodeId ? getSkillMaxLevel(nodeId) : MAX_SKILL_LEVEL;
+  const tier = nodeId ? getSkillNode(nodeId).tier : 2;
+  const maxLv = tier === 3 ? TIER3_MAX_LEVEL : MAX_SKILL_LEVEL;
   if (currentLevel >= maxLv) return Infinity;
-  if (maxLv === TIER3_SUPPORT_MAX_LEVEL) {
+  if (tier === 3) {
     return currentLevel === 0 ? 2 : 3;
+  }
+  if (tier === 1) {
+    return currentLevel <= 3 ? 1 : 2;
   }
   if (currentLevel <= 2) return 1;
   if (currentLevel === 3) return 2;
@@ -65,7 +72,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 2,
     name: '並列射出',
     requires: 'arm_base',
-    description: 'メイン弾を平行射出（+1〜3発 & 威力UP）+ 近距離へ飛ぶ小型誘導バラマキ弾を同時射出',
+    description: 'メイン弾を平行射出（+1〜3発 & 威力UP）+ 周囲周回後に敵へ飛ぶ小型誘導バラマキ弾を同時射出',
   },
   {
     id: 'arm_overclock',
@@ -73,7 +80,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    description: 'メイン武器CD短縮(-8〜45%) & 弾速UP + 貫通レーザー化（Lvに応じて光線VFX強化）',
+    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通レーザー化（Lv2で貫通・光線さらに強化）',
   },
   {
     id: 'def_sensor',
@@ -155,14 +162,14 @@ export function canUpgradeSkill(
 export const canUnlockSkill = canUpgradeSkill;
 
 // Per-level scaling curves [Lv0, Lv1, Lv2, Lv3, Lv4, Lv5]
-// Arms: Main Weapon dedicated scaling (DEC-19 / PRM-18 / PRM-23)
+// Arms: Main Weapon dedicated scaling (DEC-19 / DEC-20 / PRM-18 / PRM-23)
 const ARM_MAIN_DAMAGE_PCT = [0, 0.25, 0.5, 0.8, 1.2, 1.7] as const;
 const ARM_MAIN_RANGE_BONUS = [0, 20, 40, 60, 85, 110] as const;
 const ARM_MAIN_EXTRA_SHOTS = [0, 1, 1, 2, 2, 3] as const;
 const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.08, 0.08, 0.16, 0.25] as const;
 const ARM_MAIN_HOMING_SHOTS = [0, 1, 1, 2, 2, 3] as const;
-const ARM_MAIN_CD_REDUCTION = [0, 0.08, 0.16, 0.24, 0.34, 0.45] as const;
-const ARM_MAIN_SPEED_BONUS = [0, 40, 80, 120, 160, 200] as const;
+const ARM_MAIN_CD_REDUCTION = [0, 0.22, 0.45] as const;
+const ARM_MAIN_SPEED_BONUS = [0, 100, 200] as const;
 
 // Defense: Sensor range + controlled emergency defense (def_aegis capped at Lv2)
 const DEF_RANGE_PCT = [0, 0.08, 0.16, 0.24, 0.38, 0.55] as const;
@@ -288,7 +295,7 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
         : `平行 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 誘導弾${homing}発`;
     }
     case 'arm_overclock':
-      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / 貫通レーザー`;
+      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '貫通レーザー強化' : '貫通レーザー'}`;
     case 'def_sensor':
       return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
     case 'def_pulse':

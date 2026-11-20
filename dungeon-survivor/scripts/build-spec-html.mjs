@@ -535,7 +535,8 @@ export function extractFormulaParamValues(parameters) {
   const maxTargetRange = maxTargetMatch ? Number(maxTargetMatch[1]) : 180;
 
   const prm09 = getVal('PRM-09');
-  const spCostMatches = [...prm09.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
+  const prm09Tier2Block = prm09.match(/Tier2[^｜]*/)?.[0] || prm09;
+  const spCostMatches = [...prm09Tier2Block.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
   const spCostLv1_3 = spCostMatches[0] ?? 1;
   const spCostLv4 = spCostMatches[1] ?? 2;
   const spCostLv5 = spCostMatches[2] ?? 3;
@@ -598,9 +599,15 @@ export function extractFormulaParamValues(parameters) {
   const parsePctCurve = (label, fallback) => {
     const re = new RegExp(`${label}\\(([^)]+)\\)`);
     const block = prm23.match(re)?.[1] || '';
-    const nums = block.match(/[+-]?\d+(?:\.\d+)?/g);
-    if (!nums || nums.length < 5) return fallback;
-    return [0, ...nums.slice(0, 5).map((n) => Math.abs(Number(n)))];
+    const pctPart = block.includes('%') ? block.split('%')[0] : block;
+    const nums = pctPart.match(/[+-]?\d+(?:\.\d+)?/g);
+    if (!nums || nums.length === 0) return fallback;
+    const vals = nums.map((n) => Math.abs(Number(n)));
+    if (vals.length === 2) {
+      return [0, vals[0], vals[1], vals[1], vals[1], vals[1]];
+    }
+    if (vals.length < 5) return fallback;
+    return [0, ...vals.slice(0, 5)];
   };
   const armBasePct = parsePctCurve('arm_base', [0, 10, 20, 30, 45, 65]);
   const armOverclockPct = parsePctCurve('arm_overclock', [0, 6, 12, 18, 26, 35]);

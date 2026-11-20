@@ -1653,27 +1653,44 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
       if (baseStats.homingShots > 0) {
         const homingSpeed = Math.max(300, Math.round(baseStats.speed * 0.72));
+        const orbitDuration = 0.36;
+        const orbitRadius = 48;
+        const orbitAngularSpeed = (Math.PI * 2) / orbitDuration;
         for (let h = 0; h < baseStats.homingShots; h++) {
-          const scatterOffset =
-            baseStats.homingShots === 1
-              ? (state.nextEntityId % 2 === 0 ? 1 : -1) * 0.36
-              : (h - (baseStats.homingShots - 1) / 2) * 0.45;
-          const hAngle = centerAngle + scatterOffset;
+          const initialOrbitAngle = centerAngle + (h * Math.PI * 2) / baseStats.homingShots;
+          let spawnX = player.x + Math.cos(initialOrbitAngle) * orbitRadius;
+          let spawnY = player.y + Math.sin(initialOrbitAngle) * orbitRadius;
+          if (isWallAtWorld(map, spawnX, spawnY)) {
+            for (const ratio of [0.75, 0.5, 0.25, 0]) {
+              const candX = player.x + Math.cos(initialOrbitAngle) * orbitRadius * ratio;
+              const candY = player.y + Math.sin(initialOrbitAngle) * orbitRadius * ratio;
+              if (!isWallAtWorld(map, candX, candY)) {
+                spawnX = candX;
+                spawnY = candY;
+                break;
+              }
+            }
+          }
+          const tangentAngle = initialOrbitAngle + Math.PI / 2;
           state.projectiles.push({
             id: state.nextEntityId++,
             kind: 'base_homing',
-            x: player.x,
-            y: player.y,
-            vx: Math.cos(hAngle) * homingSpeed,
-            vy: Math.sin(hAngle) * homingSpeed,
+            x: spawnX,
+            y: spawnY,
+            vx: Math.cos(tangentAngle) * homingSpeed,
+            vy: Math.sin(tangentAngle) * homingSpeed,
             speed: homingSpeed,
-            radius: 4,
+            radius: 4.5,
             damage: baseStats.homingDamage,
-            life: 0.95,
+            life: orbitDuration + 0.95,
             pierce: false,
-            homingTurnRate: 5.2,
+            homingTurnRate: 5.5,
             homingRange: 220,
             maxDistance: 280,
+            orbitTimer: orbitDuration,
+            orbitAngle: initialOrbitAngle,
+            orbitRadius,
+            orbitAngularSpeed,
             hitEnemyIds: [],
             color: '#a7f3d0',
           });
@@ -2025,30 +2042,75 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     } else if (proj.kind === 'base_homing') {
       const spd = proj.speed ?? Math.max(1, Math.hypot(proj.vx, proj.vy));
-      const homingTarget = findNearestVisibleEnemy(
-        proj.x,
-        proj.y,
-        proj.homingRange ?? 220,
-        state,
-        proj.hitEnemyIds,
-        true
-      );
-      if (homingTarget) {
-        const currAngle = Math.atan2(proj.vy, proj.vx);
-        const desiredAngle = Math.atan2(homingTarget.y - proj.y, homingTarget.x - proj.x);
-        let diff = desiredAngle - currAngle;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        const maxTurn = (proj.homingTurnRate ?? 5.2) * clampedDt;
-        const nextAngle = currAngle + Math.max(-maxTurn, Math.min(maxTurn, diff));
-        proj.vx = Math.cos(nextAngle) * spd;
-        proj.vy = Math.sin(nextAngle) * spd;
+      if ((proj.orbitTimer ?? 0) > 0) {
+        const nextOrbitTimer = Math.max(0, (proj.orbitTimer ?? 0) - clampedDt);
+        const angularSpd = proj.orbitAngularSpeed ?? (Math.PI * 2) / 0.36;
+        const nextAngle = (proj.orbitAngle ?? 0) + angularSpd * clampedDt;
+        const orbitR = proj.orbitRadius ?? 48;
+        proj.orbitTimer = nextOrbitTimer;
+        proj.orbitAngle = nextAngle;
+
+        let nx = player.x + Math.cos(nextAngle) * orbitR;
+        let ny = player.y + Math.sin(nextAngle) * orbitR;
+        if (isWallAtWorld(map, nx, ny)) {
+          for (const ratio of [0.75, 0.5, 0.25, 0]) {
+            const candX = player.x + Math.cos(nextAngle) * orbitR * ratio;
+            const candY = player.y + Math.sin(nextAngle) * orbitR * ratio;
+            if (!isWallAtWorld(map, candX, candY)) {
+              nx = candX;
+              ny = candY;
+              break;
+            }
+          }
+        }
+        proj.x = nx;
+        proj.y = ny;
+
+        const tangentAngle = nextAngle + Math.PI / 2;
+        proj.vx = Math.cos(tangentAngle) * spd;
+        proj.vy = Math.sin(tangentAngle) * spd;
+
+        if (nextOrbitTimer <= 0) {
+          const immediateTarget = findNearestVisibleEnemy(
+            proj.x,
+            proj.y,
+            proj.homingRange ?? 220,
+            state,
+            proj.hitEnemyIds,
+            true
+          );
+          if (immediateTarget) {
+            const aimAngle = Math.atan2(immediateTarget.y - proj.y, immediateTarget.x - proj.x);
+            proj.vx = Math.cos(aimAngle) * spd;
+            proj.vy = Math.sin(aimAngle) * spd;
+          }
+        }
+      } else {
+        const homingTarget = findNearestVisibleEnemy(
+          proj.x,
+          proj.y,
+          proj.homingRange ?? 220,
+          state,
+          proj.hitEnemyIds,
+          true
+        );
+        if (homingTarget) {
+          const currAngle = Math.atan2(proj.vy, proj.vx);
+          const desiredAngle = Math.atan2(homingTarget.y - proj.y, homingTarget.x - proj.x);
+          let diff = desiredAngle - currAngle;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          const maxTurn = (proj.homingTurnRate ?? 5.5) * clampedDt;
+          const nextAngle = currAngle + Math.max(-maxTurn, Math.min(maxTurn, diff));
+          proj.vx = Math.cos(nextAngle) * spd;
+          proj.vy = Math.sin(nextAngle) * spd;
+        }
+        const nx = proj.x + proj.vx * clampedDt;
+        const ny = proj.y + proj.vy * clampedDt;
+        proj.traveledDist = (proj.traveledDist ?? 0) + Math.hypot(nx - proj.x, ny - proj.y);
+        proj.x = nx;
+        proj.y = ny;
       }
-      const nx = proj.x + proj.vx * clampedDt;
-      const ny = proj.y + proj.vy * clampedDt;
-      proj.traveledDist = (proj.traveledDist ?? 0) + Math.hypot(nx - proj.x, ny - proj.y);
-      proj.x = nx;
-      proj.y = ny;
     } else {
       proj.x += proj.vx * clampedDt;
       proj.y += proj.vy * clampedDt;
