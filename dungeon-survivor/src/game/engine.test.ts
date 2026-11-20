@@ -635,6 +635,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'mob_dash'))).toEqual([2, 3, Infinity]);
 
     const state = createGameState({ seed: 505 });
+    expect(state.player.skillPoints).toBe(3);
     state.enemies = [];
     state.chests = [];
     state.player.equipment = [
@@ -647,7 +648,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.level).toBe(2);
-    expect(state.player.skillPoints).toBe(1);
+    expect(state.player.skillPoints).toBe(4);
     expect(state.notifications.some((n) => n.kind === 'levelup' && n.text.includes('Lv2'))).toBe(true);
 
     // Cannot unlock Tier 2 before Tier 1 reaches Lv3
@@ -1838,11 +1839,12 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       expect(bp.baseLevel).toBe(5);
     }
     const yCoords = baseProjs.map((p) => p.y).sort((a, b) => a - b);
-    expect(yCoords[3] - yCoords[0]).toBeGreaterThan(15);
+    expect(yCoords[3] - yCoords[0]).toBeCloseTo(54, 1); // (14 + min(4, 5)) * 3 = 54px
 
-    // Homing shots have 35% damage and start in 48px orbit around player
+    // Homing shots have 35% damage and start in 48px orbit (0.34s) + expand (0.18s)
     expect(homingProjs[0].damage).toBe(stats.homingDamage);
-    expect(homingProjs[0].orbitTimer).toBeCloseTo(0.36 - 1 / 60, 3);
+    expect(homingProjs[0].orbitTimer).toBeCloseTo(0.34 - 1 / 60, 3);
+    expect(homingProjs[0].expandTimer).toBeCloseTo(0.18, 3);
 
     // Wall blocks LoS even within 290px (no sniping through walls)
     state.projectiles = [];
@@ -1878,14 +1880,12 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(lv2Stats.pierce).toBe(true);
   });
 
-  it('[APP-CMB-06] orbits base_homing shots around player at ~48px for 0.36s to intercept close enemies, then transitions to homing', () => {
-    const state = createGameState({ seed: 2021 });
+  it('[APP-CMB-06] widens parallel shot laneSpacing when overclock laser is active (7px normal vs 14+min(4,baseLv)px laser)', () => {
+    const state = createGameState({ seed: 2022 });
     state.chests = [];
     state.pickups = [];
     state.player.equipment = [];
-    state.player.skillLevels = { arm_base: 3, arm_parallel: 1 };
 
-    // Carve an open 11x11 floor around the player so walls never interfere
     const pTileX = Math.floor(state.player.x / TILE_SIZE);
     const pTileY = Math.floor(state.player.y / TILE_SIZE);
     for (let dy = -5; dy <= 5; dy++) {
@@ -1898,11 +1898,73 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       }
     }
 
-    // 1. Far target triggers firing; no close enemy -> base_homing orbits at 48px for 0.36s, then homes
+    state.enemies = [
+      {
+        id: 9940,
+        x: state.player.x + 150,
+        y: state.player.y,
+        radius: 14,
+        speed: 0,
+        hp: 5000,
+        maxHp: 5000,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+
+    // Normal shots (arm_overclock = 0): 4 shots * 7px laneSpacing -> span = 21px
+    state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 0 };
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    const normalYs = state.projectiles
+      .filter((p) => p.kind === 'base')
+      .map((p) => p.y)
+      .sort((a, b) => a - b);
+    expect(normalYs).toHaveLength(4);
+    expect(normalYs[3] - normalYs[0]).toBeCloseTo(21, 1);
+
+    // Laser shots (arm_overclock = 1, arm_base = 5): 4 shots * (14 + 4)px -> span = 54px
+    state.projectiles = [];
+    state.player.baseAttackCooldown = 0;
+    state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 1 };
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    const laserYs = state.projectiles
+      .filter((p) => p.kind === 'base')
+      .map((p) => p.y)
+      .sort((a, b) => a - b);
+    expect(laserYs).toHaveLength(4);
+    expect(laserYs[3] - laserYs[0]).toBeCloseTo(54, 1);
+  });
+
+  it('[APP-CMB-06] moves base_homing in 3 phases: 0.34s orbit (48px) -> 0.18s expand (90px) -> projectile-origin homing (220px)', () => {
+    const state = createGameState({ seed: 2021 });
+    state.chests = [];
+    state.pickups = [];
+    state.player.equipment = [];
+    state.player.skillLevels = { arm_base: 3, arm_parallel: 1 };
+
+    // Carve an open 15x15 floor around the player so walls never interfere
+    const pTileX = Math.floor(state.player.x / TILE_SIZE);
+    const pTileY = Math.floor(state.player.y / TILE_SIZE);
+    for (let dy = -7; dy <= 7; dy++) {
+      for (let dx = -7; dx <= 7; dx++) {
+        const tx = pTileX + dx;
+        const ty = pTileY + dy;
+        if (tx > 0 && tx < state.map.width - 1 && ty > 0 && ty < state.map.height - 1) {
+          state.map.tiles[ty * state.map.width + tx] = 'floor';
+        }
+      }
+    }
+
+    // 1. Enemy at 235px (within arm_base 3 range 240px, but >220px from player).
+    // After Phase 1 (0.34s @ 48px) + Phase 2 (0.18s -> 90px), projectile is at ~90px from player
+    // and ~145px from the enemy (<=220px), so Phase 3 homes from projectile's own position.
     state.enemies = [
       {
         id: 9951,
-        x: state.player.x + 150,
+        x: state.player.x + 235,
         y: state.player.y,
         radius: 14,
         speed: 0,
@@ -1920,27 +1982,40 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(homing).toBeDefined();
     expect(Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y)).toBeCloseTo(48, 1);
 
-    // Step through part of the orbit (0.18s = half revolution)
+    // Phase 1: Step through part of the 0.34s orbit (10 frames = ~0.167s)
     for (let i = 0; i < 10; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
     homing = state.projectiles.find((p) => p.kind === 'base_homing');
     expect(homing).toBeDefined();
     expect(homing!.orbitTimer).toBeGreaterThan(0);
+    expect(homing!.expandTimer).toBeCloseTo(0.18, 3);
     expect(Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y)).toBeCloseTo(48, 1);
 
-    // Finish the 0.36s orbit -> orbitTimer reaches 0 and transitions to homing toward enemy
-    for (let i = 0; i < 14; i++) {
+    // Finish Phase 1 (11 more frames -> total 21 frames = 0.35s > 0.34s), enter Phase 2 (expand)
+    for (let i = 0; i < 11; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
     homing = state.projectiles.find((p) => p.kind === 'base_homing');
-    if (homing) {
-      expect(homing.orbitTimer).toBe(0);
-      // Should be moving outside the 48px orbit toward the enemy
-      expect(Math.hypot(homing.x - state.player.x, homing.y - state.player.y)).toBeGreaterThan(48);
-    }
+    expect(homing).toBeDefined();
+    expect(homing!.orbitTimer).toBe(0);
+    expect(homing!.expandTimer).toBeGreaterThan(0);
 
-    // 2. Close enemy on the 48px orbit ring gets intercepted during the orbit phase
+    // Finish Phase 2 (11 more frames -> 0.183s > 0.18s) -> expands to ~90px and enters Phase 3
+    for (let i = 0; i < 11; i++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+    homing = state.projectiles.find((p) => p.kind === 'base_homing');
+    expect(homing).toBeDefined();
+    expect(homing!.orbitTimer).toBe(0);
+    expect(homing!.expandTimer).toBe(0);
+    const distAfterExpand = Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y);
+    expect(distAfterExpand).toBeGreaterThanOrEqual(85);
+    expect(distAfterExpand).toBeLessThanOrEqual(110);
+    // Velocity should now point toward the enemy (positive vx)
+    expect(homing!.vx).toBeGreaterThan(0);
+
+    // 2. Close enemy on the 48px orbit ring gets intercepted during Phase 1
     state.projectiles = [];
     state.player.baseAttackCooldown = 0;
     state.enemies = [

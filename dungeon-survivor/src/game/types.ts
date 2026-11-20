@@ -107,6 +107,9 @@ export interface ProjectileState {
   orbitTimer?: number;
   orbitRadius?: number;
   orbitAngularSpeed?: number;
+  expandTimer?: number;
+  expandDuration?: number;
+  expandTargetRadius?: number;
   traveledDist?: number;
   maxDistance?: number;
   hitEnemyIds: number[];

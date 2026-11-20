@@ -777,7 +777,7 @@ export function renderGame(
       const angle = Math.atan2(proj.vy, proj.vx);
 
       if (ocLv >= 1) {
-        const beamLen = 44 + (ocLv >= 2 ? 6 : 0) + Math.round(baseLv * 1.2);
+        const beamLen = Math.min(82, 42 + (ocLv >= 2 ? 10 : 0) + baseLv * 6);
         const baseScale = 1 + baseLv * 0.14 + (ocLv >= 2 ? 0.12 : 0);
         const halfW = Math.max(2.4, proj.radius * 0.42 * baseScale);
         ctx.save();
@@ -833,13 +833,13 @@ export function renderGame(
       }
     } else if (proj.kind === 'base_homing') {
       const angle = Math.atan2(proj.vy, proj.vx);
-      const isOrbiting = (proj.orbitTimer ?? 0) > 0;
-      const tailLen = isOrbiting ? 15 : 10;
+      const isPreHoming = (proj.orbitTimer ?? 0) > 0 || (proj.expandTimer ?? 0) > 0;
+      const tailLen = isPreHoming ? 15 : 10;
       ctx.save();
       ctx.translate(proj.x, proj.y);
       ctx.rotate(angle);
-      ctx.strokeStyle = isOrbiting ? 'rgba(167, 243, 208, 0.72)' : 'rgba(167, 243, 208, 0.55)';
-      ctx.lineWidth = isOrbiting ? 3.0 : 2.5;
+      ctx.strokeStyle = isPreHoming ? 'rgba(167, 243, 208, 0.72)' : 'rgba(167, 243, 208, 0.55)';
+      ctx.lineWidth = isPreHoming ? 3.0 : 2.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(-tailLen, 0);
