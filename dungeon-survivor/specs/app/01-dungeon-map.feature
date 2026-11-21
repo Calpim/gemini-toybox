@@ -71,5 +71,11 @@
     前提 SoundManager が localStorage によるミュート状態を保持し、engine.ts が state.soundEvents・particles・shakeTimer を管理している
     もし 攻撃（shot/blade/coil）・命中・撃破・ボス撃破・被弾・パリィ・取得・LvUP・警告・階段解放・ボス突進・階層クリアが発生する
     ならば 16種の SoundEventKind が種別ごとのスロットル付きで Web Audio API 合成再生され、同時に最大140個のパーティクル（spawnParticles）と決定論的カメラシェイク（triggerShake）が描画される
-    かつ HUD 右端のミュートボタン（#muteBtn）でいつでもサウンド ON/OFF を切り替えられる
+    かつ ポーズ画面ヘッダーのミュートボタン（#muteBtn）でいつでもサウンド ON/OFF を切り替えられる
 
+  @APP-MAP-10 @ref:BIZ-EXP-06 @Confirmed
+  シナリオ: 探索範囲に応じて自動縮尺調整される戦術レーダーミニマップとコックピットUIを表示する
+    前提 HUD 右上に独立した戦術レーダーミニマップ（#minimapCanvas）が配置されている
+    もし プレイヤーがフロアを探索して explored 範囲が広がる
+    ならば renderHudMinimap は探索初期の狭い範囲を大きくズーム表示し、探索済みタイル範囲の拡大に応じて自動で縮尺を調整しながら部屋・通路・階段・泉・宝箱・視界内の敵・自機コアを描画する
+    かつ 上HUDのスキル／ギアピルまたは下部コックピットの左右スイッチ（左 SKILL［習得可能時 ! バッジ］／右 GEAR）から時間停止のポーズ画面へ遷移できる

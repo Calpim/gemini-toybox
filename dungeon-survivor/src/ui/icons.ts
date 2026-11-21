@@ -17,3 +17,5 @@ export const ICON_BOSS = `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" s
 export const ICON_SPARK = `<svg class="ui-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 14.6 9.4 22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2Z"/></svg>`;
 
 export const ICON_CLOSE = `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`;
+
+export const ICON_GEAR = `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 7.5v9L12 21l7.5-4.5v-9L12 3Z" fill="currentColor" fill-opacity="0.22"/><path d="M12 12 4.5 7.5M12 12l7.5-4.5M12 12v9"/></svg>`;

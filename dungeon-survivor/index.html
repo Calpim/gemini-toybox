@@ -35,10 +35,9 @@
           </div>
         </div>
 
-        <div class="hud-sub-bar">
-          <button id="skillBtn" type="button" class="skill-btn"></button>
-          <span id="gearCountText" class="hud-stat hud-stat-gear">GEAR 0/2</span>
-          <span id="killsText" class="hud-stat hud-stat-kills">KILLS 0</span>
+        <div class="hud-pill-row">
+          <button id="skillBtn" type="button" class="hud-pill-btn hud-pill-skill" title="スキルツリー (ESC)"></button>
+          <button id="gearBtn" type="button" class="hud-pill-btn hud-pill-gear" title="装着中の装備・ステータス確認"></button>
         </div>
       </div>
 
@@ -57,7 +56,7 @@
   <canvas id="gameCanvas"></canvas>
 
   <div class="cockpit-console">
-    <svg class="cockpit-svg-shell" viewBox="0 0 420 102" preserveAspectRatio="none" aria-hidden="true">
+    <svg class="cockpit-svg-shell" viewBox="0 0 420 108" preserveAspectRatio="none" aria-hidden="true">
       <defs>
         <linearGradient id="cockpitDeckGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="rgba(26, 48, 82, 0.86)" />
@@ -65,12 +64,16 @@
           <stop offset="100%" stop-color="rgba(6, 13, 28, 0.97)" />
         </linearGradient>
         <linearGradient id="cockpitCanopyGlass" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="rgba(56, 189, 248, 0.2)" />
-          <stop offset="100%" stop-color="rgba(14, 28, 54, 0.65)" />
+          <stop offset="0%" stop-color="rgba(56, 189, 248, 0.16)" />
+          <stop offset="100%" stop-color="rgba(14, 28, 54, 0.68)" />
         </linearGradient>
-        <linearGradient id="cockpitSwitchBg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="rgba(18, 52, 86, 0.92)" />
-          <stop offset="100%" stop-color="rgba(8, 22, 46, 0.96)" />
+        <linearGradient id="skillSwitchBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(16, 68, 108, 0.94)" />
+          <stop offset="100%" stop-color="rgba(14, 26, 58, 0.97)" />
+        </linearGradient>
+        <linearGradient id="gearSwitchBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(58, 42, 18, 0.92)" />
+          <stop offset="100%" stop-color="rgba(20, 18, 24, 0.96)" />
         </linearGradient>
         <linearGradient id="cockpitCenterWell" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="rgba(4, 11, 24, 0.92)" />
@@ -79,20 +82,15 @@
       </defs>
 
       <polygon
-        points="0,34 86,10 334,10 420,34 420,102 0,102"
+        points="0,36 86,10 334,10 420,36 420,108 0,108"
         fill="url(#cockpitDeckGrad)"
         stroke="#38bdf8"
         stroke-opacity="0.7"
         stroke-width="1.5"
       />
-      <polyline
-        points="4,35 87,12 333,12 416,35"
-        fill="none"
-        stroke="#67e8f9"
-        stroke-width="2"
-      />
+      <polyline points="4,37 87,12 333,12 416,37" fill="none" stroke="#67e8f9" stroke-width="2" />
       <polygon
-        points="92,18 328,18 302,38 118,38"
+        points="92,18 328,18 302,42 118,42"
         fill="url(#cockpitCanopyGlass)"
         stroke="#38bdf8"
         stroke-opacity="0.45"
@@ -100,37 +98,37 @@
       />
 
       <polygon
-        points="10,44 80,26 106,52 106,94 10,94"
-        fill="url(#cockpitSwitchBg)"
+        points="10,48 80,30 106,56 106,100 10,100"
+        fill="url(#skillSwitchBg)"
         stroke="#22d3ee"
         stroke-width="2"
         stroke-linejoin="round"
       />
       <polygon
-        points="15,47 78,31 101,54 101,89 15,89"
+        points="15,51 78,35 101,58 101,95 15,95"
         fill="none"
         stroke="#67e8f9"
-        stroke-opacity="0.35"
+        stroke-opacity="0.38"
         stroke-width="1"
       />
 
       <polygon
-        points="410,44 340,26 314,52 314,94 410,94"
-        fill="url(#cockpitSwitchBg)"
-        stroke="#22d3ee"
+        points="410,48 340,30 314,56 314,100 410,100"
+        fill="url(#gearSwitchBg)"
+        stroke="#fbbf24"
         stroke-width="2"
         stroke-linejoin="round"
       />
       <polygon
-        points="405,47 342,31 319,54 319,89 405,89"
+        points="405,51 342,35 319,58 319,95 405,95"
         fill="none"
-        stroke="#67e8f9"
-        stroke-opacity="0.35"
+        stroke="#fde68a"
+        stroke-opacity="0.32"
         stroke-width="1"
       />
 
       <polygon
-        points="126,46 294,46 306,94 114,94"
+        points="126,50 294,50 306,100 114,100"
         fill="url(#cockpitCenterWell)"
         stroke="#38bdf8"
         stroke-opacity="0.65"
@@ -140,17 +138,25 @@
     </svg>
 
     <div class="cockpit-interactive-layer">
-      <button id="bottomPauseLeftBtn" type="button" class="cockpit-side-btn left" title="スキル / ポーズ (ESC)">
-        <span>SKILL /</span>
-        <span>PAUSE</span>
+      <div class="cockpit-kill-canopy">
+        <span>KILLS</span>
+        <span id="killsText" class="cockpit-kill-num">0</span>
+      </div>
+
+      <button id="bottomPauseLeftBtn" type="button" class="cockpit-side-btn left" title="スキルツリー (ESC)">
+        <span id="bottomSkillBadge" class="cockpit-alert-badge hidden">!</span>
+        <span>SKILL</span>
+        <span id="bottomSkillSub" class="cockpit-side-sub">SP 0</span>
       </button>
+
       <div class="cockpit-center-readout">
         <div class="cockpit-readout-main">DRAG / WASD to Move</div>
-        <div class="cockpit-readout-sub">ESC/K to Pause</div>
+        <div class="cockpit-readout-sub">ESC / K to Pause</div>
       </div>
-      <button id="bottomPauseRightBtn" type="button" class="cockpit-side-btn right" title="スキル / ポーズ (ESC)">
-        <span>SKILL /</span>
-        <span>PAUSE</span>
+
+      <button id="bottomGearBtn" type="button" class="cockpit-side-btn right" title="装備・ステータス確認">
+        <span>GEAR</span>
+        <span id="bottomGearSub" class="cockpit-side-sub">0 / 2</span>
       </button>
     </div>
   </div>

@@ -530,7 +530,7 @@
     
     <nav class="section-nav" aria-label="仕様セクション移動">
       <a class="nav-pill" href="#sec-overview">📊 概要</a>
-      <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (34/24)</a>
+      <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (34/25)</a>
       <a class="nav-pill" href="#sec-glossary">📖 用語集 (29)</a>
       <a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (34)</a>
       <a class="nav-pill" href="#sec-formulas">🧮 計算式 (13)</a>
@@ -538,7 +538,7 @@
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (10)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (10)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (23)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (24)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -551,15 +551,15 @@
 
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">34</div></div>
-        <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">24</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">156</div></div>
+        <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">25</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">158</div></div>
         <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">36</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">7</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">2</div></div>
       </div>
 
-      <div class="ok-banner">✅ トレーサビリティチェック OK：全 34 件のビジネス仕様と 24 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 143 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ トレーサビリティチェック OK：全 34 件のビジネス仕様と 25 件のアプリ仕様が ID 紐付けされています</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 144 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -1020,7 +1020,7 @@
         <details class="app-accordion">
           <summary class="app-accordion-summary">
             <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
-            <span class="app-accordion-meta">APP-MAP-06 (1件)</span>
+            <span class="app-accordion-meta">APP-MAP-06, APP-MAP-10 (2件)</span>
             <span class="app-accordion-hint"></span>
           </summary>
           <div class="app-branch">
@@ -1038,6 +1038,21 @@
                 <h4>スマホ対応の引いたズームと部屋全体点灯・通路円形ライトによるFog of Warを描画する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">目標論理表示幅 TARGET_VIEW_WORLD_WIDTH が 840px（約21タイル相当）、通路視界半径 CORRIDOR_VISION_RADIUS が 210px に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">renderGame がワールドと暗がりマスクを描画する</span></li><li><span class="kw">ならば</span><span class="st-text">画面幅・高さから computeCameraZoom（0.72x〜2.4x：スマホ縦画面でも約13.5タイル幅を表示）を算出して過剰な圧迫感とマップ全透視を両立し、未探索タイルは非表示、既探索の視界外は地形・宝箱・階段のみ暗色表示（敵は非表示）、通路は円形ライト、部屋滞在時は該当部屋領域を明るく照らす</span></li><li><span class="kw">かつ</span><span class="st-text">explored 記録も部屋入室時は部屋全体＋周囲壁1マス、通路では半径約4.7タイルへ連動する</span></li>
+  </ul>
+              </div>
+              <div class="app-card" id="APP-MAP-10" data-status="Confirmed" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-10</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-06</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+                </div>
+                
+                <h4>探索範囲に応じて自動縮尺調整される戦術レーダーミニマップとコックピットUIを表示する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">HUD 右上に独立した戦術レーダーミニマップ（#minimapCanvas）が配置されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがフロアを探索して explored 範囲が広がる</span></li><li><span class="kw">ならば</span><span class="st-text">renderHudMinimap は探索初期の狭い範囲を大きくズーム表示し、探索済みタイル範囲の拡大に応じて自動で縮尺を調整しながら部屋・通路・階段・泉・宝箱・視界内の敵・自機コアを描画する</span></li><li><span class="kw">かつ</span><span class="st-text">上HUDのスキル／ギアピルまたは下部コックピットの左右スイッチ（左 SKILL［習得可能時 ! バッジ］／右 GEAR）から時間停止のポーズ画面へ遷移できる</span></li>
   </ul>
               </div>
           </div>
@@ -1250,7 +1265,7 @@
                 
                 <h4>プロシージャル Web Audio SE とパーティクル・画面シェイク VFX を再生・制御する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">SoundManager が localStorage によるミュート状態を保持し、engine.ts が state.soundEvents・particles・shakeTimer を管理している</span></li><li><span class="kw">もし</span><span class="st-text">攻撃（shot/blade/coil）・命中・撃破・ボス撃破・被弾・パリィ・取得・LvUP・警告・階段解放・ボス突進・階層クリアが発生する</span></li><li><span class="kw">ならば</span><span class="st-text">16種の SoundEventKind が種別ごとのスロットル付きで Web Audio API 合成再生され、同時に最大140個のパーティクル（spawnParticles）と決定論的カメラシェイク（triggerShake）が描画される</span></li><li><span class="kw">かつ</span><span class="st-text">HUD 右端のミュートボタン（#muteBtn）でいつでもサウンド ON/OFF を切り替えられる</span></li>
+    <li><span class="kw">前提</span><span class="st-text">SoundManager が localStorage によるミュート状態を保持し、engine.ts が state.soundEvents・particles・shakeTimer を管理している</span></li><li><span class="kw">もし</span><span class="st-text">攻撃（shot/blade/coil）・命中・撃破・ボス撃破・被弾・パリィ・取得・LvUP・警告・階段解放・ボス突進・階層クリアが発生する</span></li><li><span class="kw">ならば</span><span class="st-text">16種の SoundEventKind が種別ごとのスロットル付きで Web Audio API 合成再生され、同時に最大140個のパーティクル（spawnParticles）と決定論的カメラシェイク（triggerShake）が描画される</span></li><li><span class="kw">かつ</span><span class="st-text">ポーズ画面ヘッダーのミュートボタン（#muteBtn）でいつでもサウンド ON/OFF を切り替えられる</span></li>
   </ul>
               </div>
           </div>
@@ -3831,7 +3846,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(23件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(24件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -4094,6 +4109,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text">10F到達（Lv20前後）プレイテストで貫通レーザーLv1最低3本／Lv2最大5本の面制圧感・火力バランスを確認した時（<code class="inline-code">OQ-06</code>）</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-22" data-source-file="specs/decisions.md" data-item-id="DEC-22" title="元仕様ファイル specs/decisions.md (DEC-22)">specs/decisions.md#DEC-22</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-23" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-23" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-23">DEC-23</a></td>
+        <td><span class="date-pill">2026-11-20</span><div class="sub-code">先輩</div></td>
+        <td><strong>サイバーネオンUI・グラスコックピットコンソール＆探索範囲連動オートズームミニマップの本採用：(1) 右上大型戦術レーダーミニマップについて、探索初期は大きく見やすく表示し、探索済み範囲が広がるにつれて自動で縮尺を調整するダイナミックフィット方式を正式採用（<code class="inline-code">Confirmed</code>） (2) 上HUDのスキル（<code class="inline-code">LV/SP</code> 周囲発光ピル）とギア（<code class="inline-code">GEAR</code> ピル）の統一表示、下部グラスコックピット（左 <code class="inline-code">SKILL</code>［習得可能時 <code class="inline-code">!</code> バッジ］／中央キャノピー <code class="inline-code">KILLS</code>／右 <code class="inline-code">GEAR</code>）への操作集約、およびミュートトグル（<code class="inline-code">#muteBtn</code>）のポーズ画面ヘッダー移設を確定</strong><div class="note-text">実機スマホ／PCでの詰まり感・誤タップを解消し、探索状況に応じたミニマップ視認性とコックピット操作感を両立するため</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-06">APP-MAP-06</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a></div></td>
+        <td><div class="note-text">画面レイアウトやミニマップ視認性を実機で再調整する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-23" data-source-file="specs/decisions.md" data-item-id="DEC-23" title="元仕様ファイル specs/decisions.md (DEC-23)">specs/decisions.md#DEC-23</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>

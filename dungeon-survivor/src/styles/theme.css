@@ -286,22 +286,88 @@ body {
   background: #040a16;
 }
 
-/* Sub HUD Bar (Clean 3-item status pill) */
-.hud-sub-bar {
-  align-self: flex-start;
-  max-width: 100%;
-  display: inline-flex;
+/* Unified Pill Row (SKILL + GEAR, ambient glow on SP available) */
+.hud-pill-row {
+  display: flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 12px;
+  flex-wrap: nowrap;
+}
+
+.hud-pill-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 29px;
+  padding: 0 13px;
   border-radius: 999px;
-  background: rgba(6, 12, 25, 0.88);
-  border: 1px solid rgba(56, 189, 248, 0.26);
-  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.65);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.16s ease;
+}
+
+.hud-pill-btn:active {
+  transform: scale(0.96);
+}
+
+.hud-pill-skill {
+  background: linear-gradient(180deg, rgba(16, 34, 62, 0.92), rgba(8, 18, 36, 0.96));
+  color: #e0f2fe;
+  border: 1.5px solid rgba(56, 189, 248, 0.58);
+  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.55);
+}
+
+.hud-pill-skill .ui-icon-tree {
+  color: #34d399;
+}
+
+.hud-pill-skill.has-sp {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.34) 0%, rgba(99, 102, 241, 0.38) 55%, rgba(168, 85, 247, 0.34) 100%);
+  color: #ffffff;
+  border-color: #67e8f9;
+  box-shadow:
+    0 0 14px rgba(34, 211, 238, 0.72),
+    0 0 24px rgba(168, 85, 247, 0.45),
+    inset 0 0 10px rgba(103, 232, 249, 0.25);
+  animation: spAura 2s ease-in-out infinite;
+}
+
+.hud-pill-skill.has-sp .ui-icon-tree {
+  color: #86efac;
+}
+
+@keyframes spAura {
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px rgba(34, 211, 238, 0.65),
+      0 0 22px rgba(168, 85, 247, 0.38),
+      inset 0 0 8px rgba(103, 232, 249, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(103, 232, 249, 0.95),
+      0 0 30px rgba(192, 132, 252, 0.65),
+      inset 0 0 12px rgba(103, 232, 249, 0.35);
+  }
+}
+
+.hud-pill-gear {
+  background: linear-gradient(180deg, rgba(36, 26, 14, 0.88), rgba(18, 14, 10, 0.95));
+  color: #fde68a;
+  border: 1.5px solid rgba(251, 191, 36, 0.58);
+  box-shadow:
+    0 0 10px rgba(245, 158, 11, 0.18),
+    0 4px 14px rgba(2, 6, 23, 0.55);
+}
+
+.hud-pill-gear .ui-icon {
+  color: #fbbf24;
 }
 
 .hud-icon-btn {
@@ -324,19 +390,6 @@ body {
   transform: scale(0.95);
 }
 
-.hud-icon-btn.pause-btn {
-  color: #fb923c;
-  border-color: rgba(249, 115, 22, 0.75);
-  background: rgba(36, 17, 10, 0.85);
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
-}
-
-.hud-icon-btn.pause-btn.has-sp,
-.hud-icon-btn.pause-btn:hover {
-  border-color: #fdba74;
-  box-shadow: 0 0 14px rgba(249, 115, 22, 0.6);
-}
-
 .hud-icon-btn.mute-btn {
   gap: 5px;
   border-radius: 8px;
@@ -352,108 +405,6 @@ body {
 .hud-icon-btn.mute-btn.is-muted {
   color: #64748b;
   border-color: rgba(100, 116, 139, 0.35);
-}
-
-.skill-btn {
-  position: relative;
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 26px;
-  padding: 0 11px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(15, 31, 56, 0.94), rgba(10, 20, 38, 0.96));
-  color: #e0f2fe;
-  border: 1px solid rgba(56, 189, 248, 0.6);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.22);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: transform 0.12s ease, box-shadow 0.15s ease;
-}
-
-.skill-btn .ui-icon-tree {
-  color: #34d399;
-}
-
-.skill-btn:active {
-  transform: scale(0.96);
-}
-
-.skill-btn.has-sp {
-  background: linear-gradient(90deg, #06b6d4 0%, #6366f1 55%, #9333ea 100%);
-  color: #ffffff;
-  border-color: #a5f3fc;
-  box-shadow:
-    0 0 14px rgba(56, 189, 248, 0.72),
-    0 0 22px rgba(168, 85, 247, 0.5);
-  animation: spPulse 1.8s ease-in-out infinite;
-}
-
-.skill-btn.has-sp .ui-icon-tree {
-  color: #86efac;
-}
-
-.skill-btn.has-sp::after {
-  content: '!';
-  position: absolute;
-  top: -5px;
-  right: -4px;
-  width: 15px;
-  height: 15px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #fb7185, #e11d48);
-  color: #ffffff;
-  font-family: var(--font-sans);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 15px;
-  text-align: center;
-  border: 1px solid #ffe4e6;
-  box-shadow: 0 0 8px rgba(244, 63, 94, 0.9);
-}
-
-@keyframes spPulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 12px rgba(56, 189, 248, 0.65),
-      0 0 20px rgba(168, 85, 247, 0.42);
-  }
-  50% {
-    box-shadow:
-      0 0 18px rgba(103, 232, 249, 0.95),
-      0 0 28px rgba(192, 132, 252, 0.72);
-  }
-}
-
-.hud-stat {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-}
-
-.hud-stat-gear {
-  color: #fbbf24;
-}
-
-.hud-stat-kills {
-  color: #fb7185;
-}
-
-.hud-stat-val {
-  color: #f8fafc;
-}
-
-.hud-stat-kills .hud-stat-val {
-  color: #fda4af;
 }
 
 /* =========================================================
@@ -566,7 +517,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: min(100vw, 560px);
-  height: 102px;
+  height: 108px;
   pointer-events: none;
   z-index: 12;
 }
@@ -586,6 +537,33 @@ body {
   height: 100%;
 }
 
+.cockpit-kill-canopy {
+  position: absolute;
+  top: 16.7%;
+  height: 22.2%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: #fda4af;
+  text-shadow: 0 0 10px rgba(244, 63, 94, 0.65);
+}
+
+.cockpit-kill-num {
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1;
+  color: #ffe4e6;
+}
+
 .cockpit-side-btn {
   position: absolute;
   bottom: 8px;
@@ -594,15 +572,16 @@ body {
   border: none;
   background: transparent;
   color: #e0f2fe;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   line-height: 1.15;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   cursor: pointer;
   pointer-events: auto;
   text-shadow: 0 0 8px rgba(34, 211, 238, 0.75);
@@ -619,6 +598,38 @@ body {
   right: 2.2%;
   padding-left: 6px;
   padding-top: 4px;
+  color: #fde68a;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.55);
+}
+
+.cockpit-side-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.88;
+}
+
+.cockpit-alert-badge {
+  position: absolute;
+  top: -4px;
+  right: 12px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fb7185, #e11d48);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  border: 1.5px solid #ffe4e6;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.95);
+}
+
+.cockpit-alert-badge.hidden {
+  display: none;
 }
 
 .cockpit-side-btn:hover {
@@ -631,8 +642,8 @@ body {
 }
 
 .cockpit-side-btn.has-sp {
-  color: #fde047;
-  text-shadow: 0 0 10px rgba(250, 204, 21, 0.85);
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(103, 232, 249, 0.95);
 }
 
 .cockpit-center-readout {
@@ -651,19 +662,19 @@ body {
 }
 
 .cockpit-readout-main {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #e0f2fe;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
 }
 
 .cockpit-readout-sub {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: #7dd3fc;
-  opacity: 0.85;
+  opacity: 0.82;
 }
 
 /* =========================================================
@@ -1492,28 +1503,27 @@ body {
     height: 92px;
   }
 
-  .hud-sub-bar {
-    gap: 8px;
-    padding: 4px 10px;
-    font-size: 11px;
+  .hud-pill-row {
+    gap: 7px;
   }
 
-  .skill-btn {
-    padding: 0 8px;
-    font-size: 11px;
+  .hud-pill-btn {
+    height: 27px;
+    padding: 0 10px;
+    font-size: 11.5px;
   }
 
   .cockpit-console {
-    height: 94px;
+    height: 100px;
   }
 
   .cockpit-side-btn {
     height: 54px;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .cockpit-readout-main {
-    font-size: 11.5px;
+    font-size: 11px;
   }
 
   .cockpit-readout-sub {

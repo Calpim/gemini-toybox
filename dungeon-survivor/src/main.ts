@@ -19,6 +19,7 @@ import {
   ICON_ALERT,
   ICON_BOSS,
   ICON_CLOSE,
+  ICON_GEAR,
   ICON_PAUSE,
   ICON_SPARK,
   ICON_TREE,
@@ -43,9 +44,12 @@ const floorText = document.getElementById('floorText')!;
 const playTimeText = document.getElementById('playTimeText')!;
 const muteBtn = document.getElementById('muteBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
+const gearBtn = document.getElementById('gearBtn')!;
 const bottomPauseLeftBtn = document.getElementById('bottomPauseLeftBtn');
-const bottomPauseRightBtn = document.getElementById('bottomPauseRightBtn');
-const gearCountText = document.getElementById('gearCountText')!;
+const bottomSkillBadge = document.getElementById('bottomSkillBadge');
+const bottomSkillSub = document.getElementById('bottomSkillSub');
+const bottomGearBtn = document.getElementById('bottomGearBtn');
+const bottomGearSub = document.getElementById('bottomGearSub');
 const killsText = document.getElementById('killsText')!;
 const notificationStack = document.getElementById('notificationStack')!;
 const skillModalHeading = document.getElementById('skillModalHeading');
@@ -82,6 +86,7 @@ let lastRenderedModalKey = '';
 let lastRenderedNotificationKey = '';
 let lastRenderedGameOverKey = '';
 let lastSkillBtnText = '';
+let lastGearBtnText = '';
 const safeInsets: HudSafeInsets = {
   hideCanvasMinimap: true,
   hideCanvasNotifications: true,
@@ -200,15 +205,22 @@ function syncUi(forceModals = false): void {
     skillBtn.innerHTML = `${ICON_TREE}<span>${skillLabel}</span>`;
   }
 
+  const gearLabel = `GEAR ${player.equipment.length}/${player.maxEquipSlots}`;
+  if (gearLabel !== lastGearBtnText) {
+    lastGearBtnText = gearLabel;
+    gearBtn.innerHTML = `${ICON_GEAR}<span>${gearLabel}</span>`;
+  }
+
   const canUnlockAny = SKILL_TREE_NODES.some((n) =>
     canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
   );
   skillBtn.classList.toggle('has-sp', canUnlockAny);
   bottomPauseLeftBtn?.classList.toggle('has-sp', canUnlockAny);
-  bottomPauseRightBtn?.classList.toggle('has-sp', canUnlockAny);
+  bottomSkillBadge?.classList.toggle('hidden', !canUnlockAny);
+  if (bottomSkillSub) bottomSkillSub.textContent = `SP ${player.skillPoints}`;
+  if (bottomGearSub) bottomGearSub.textContent = `${player.equipment.length} / ${player.maxEquipSlots}`;
 
-  gearCountText.textContent = `GEAR ${player.equipment.length}/${player.maxEquipSlots}`;
-  killsText.textContent = `KILLS ${stats.kills}`;
+  killsText.textContent = `${stats.kills}`;
 
   syncNotifications();
   startModal.classList.toggle('hidden', state.status !== 'title');
@@ -271,6 +283,15 @@ const handleTogglePause = (): void => {
   syncUi(true);
 };
 
+const handleOpenGear = (): void => {
+  const wasPlaying = state.status === 'playing';
+  toggleSkillTree(state);
+  syncUi(true);
+  if (wasPlaying) {
+    modalEls.skillGearSummary.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+};
+
 startBtn.addEventListener('click', () => {
   soundManager.unlock();
   startGame(state);
@@ -284,7 +305,8 @@ muteBtn.addEventListener('click', () => {
 
 skillBtn.addEventListener('click', handleTogglePause);
 bottomPauseLeftBtn?.addEventListener('click', handleTogglePause);
-bottomPauseRightBtn?.addEventListener('click', handleTogglePause);
+gearBtn.addEventListener('click', handleOpenGear);
+bottomGearBtn?.addEventListener('click', handleOpenGear);
 
 closeSkillBtn.addEventListener('click', () => {
   closeSkillTree(state);
