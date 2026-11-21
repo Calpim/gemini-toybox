@@ -535,15 +535,30 @@ export function extractFormulaParamValues(parameters) {
   const maxTargetRange = maxTargetMatch ? Number(maxTargetMatch[1]) : 180;
 
   const prm09 = getVal('PRM-09');
+  const prm09Tier1Block = prm09.match(/Tier1[^｜]*/)?.[0] || '';
+  const tier1Matches = [...prm09Tier1Block.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
+  const tier1CostLv1_4 = tier1Matches[0] ?? 1;
+  const tier1CostLv5 = tier1Matches[1] ?? 2;
+  const tier1Costs = [0, tier1CostLv1_4, tier1CostLv1_4, tier1CostLv1_4, tier1CostLv1_4, tier1CostLv5];
+
   const prm09Tier2Block = prm09.match(/Tier2[^｜]*/)?.[0] || prm09;
   const spCostMatches = [...prm09Tier2Block.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
   const spCostLv1_3 = spCostMatches[0] ?? 1;
   const spCostLv4 = spCostMatches[1] ?? 2;
   const spCostLv5 = spCostMatches[2] ?? 3;
+  const tier2Costs = [0, spCostLv1_3, spCostLv1_3, spCostLv1_3, spCostLv4, spCostLv5];
+
+  const prm09Tier3Block = prm09.match(/Tier3[^｜]*/)?.[0] || '';
+  const tier3Matches = [...prm09Tier3Block.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
+  const tier3CostLv1 = tier3Matches[0] ?? 2;
+  const tier3CostLv2 = tier3Matches[1] ?? 3;
+  const tier3Costs = [0, tier3CostLv1, tier3CostLv2];
 
   const prm10 = getVal('PRM-10');
   const maxSkillLvMatch = prm10.match(/最大\s*Lv(\d+)/);
   const maxSkillLv = maxSkillLvMatch ? Number(maxSkillLvMatch[1]) : 5;
+  const tier3MaxLvMatch = prm10.match(/Tier3[^｜]*最大\s*Lv(\d+)/);
+  const tier3MaxLv = tier3MaxLvMatch ? Number(tier3MaxLvMatch[1]) : 2;
 
   const prm17 = getVal('PRM-17');
   const coreDmgMatch = prm17.match(/威力\s*(\d+(?:\.\d+)?)/);
@@ -587,7 +602,7 @@ export function extractFormulaParamValues(parameters) {
     return [0, ...nums.slice(0, 5).map((n) => Math.abs(Number(n)))];
   };
   const armParallelExtraShots = parsePlusCurve(
-    prm18.match(/arm_parallel追加弾数\(([^)]+)\)/)?.[1],
+    prm18.match(/arm_parallel(?:平行)?追加弾数\(([^)]+)\)/)?.[1],
     [0, 1, 1, 2, 2, 3]
   );
   const armParallelDmgPct = parsePlusCurve(
@@ -617,6 +632,19 @@ export function extractFormulaParamValues(parameters) {
   const expNums = expPart.match(/\d+(?:\.\d+)?/g);
   const mobLootExpPct =
     expNums && expNums.length >= 5 ? [0, ...expNums.slice(0, 5).map(Number)] : [0, 8, 16, 24, 42, 68];
+  const armBaseRangeBonus = parsePlusCurve(
+    prm18.match(/arm_base主兵装射程加算\(([^)]+)\)/)?.[1] ||
+      prm23.match(/arm_base\([^)]*射程([^),]+)/)?.[1],
+    [0, 20, 40, 60, 85, 110]
+  );
+  const ocLv1Match =
+    prm18.match(/発射本数[^)\n]*Lv1:\s*(?:最低\s*)?(\d+)本/) ||
+    prm23.match(/発射本数[^),\n]*Lv1:\s*(?:最低\s*)?(\d+)本/);
+  const ocLv2Match =
+    prm18.match(/発射本数[^)\n]*Lv2:\s*(?:最低\s*)?(\d+)本/) ||
+    prm23.match(/発射本数[^),\n]*Lv2:\s*(?:最低\s*)?(\d+)本/);
+  const ocLv1MinShots = ocLv1Match ? Number(ocLv1Match[1]) : 3;
+  const ocLv2MinShots = ocLv2Match ? Number(ocLv2Match[1]) : 5;
 
   return {
     expInit,
@@ -625,7 +653,15 @@ export function extractFormulaParamValues(parameters) {
     spCostLv1_3,
     spCostLv4,
     spCostLv5,
+    tier1CostLv1_4,
+    tier1CostLv5,
+    tier1Costs,
+    tier2Costs,
+    tier3CostLv1,
+    tier3CostLv2,
+    tier3Costs,
     maxSkillLv,
+    tier3MaxLv,
     hasLegacySpScaling,
     coreBaseDmg,
     coreBaseCd,
@@ -640,6 +676,9 @@ export function extractFormulaParamValues(parameters) {
     coreSpRange,
     armParallelExtraShots,
     armParallelDmgPct,
+    armBaseRangeBonus,
+    ocLv1MinShots,
+    ocLv2MinShots,
     armBasePct,
     armOverclockPct,
     defSensorPct,
@@ -702,6 +741,7 @@ export function buildFormulaChartsData(parameters) {
     };
   } else {
     for (let lv = 0; lv <= p.maxSkillLv; lv++) {
+      const ocLv = Math.min(p.tier3MaxLv, lv);
       const baseMult = 1 + (p.armBasePct[lv] ?? 0) / 100;
       const parallelMult = 1 + (p.armParallelDmgPct[lv] ?? 0) / 100;
       const ocReduction = (p.armOverclockPct[lv] ?? 0) / 100;
@@ -709,8 +749,15 @@ export function buildFormulaChartsData(parameters) {
       const cooldown = Number(
         Math.max(p.coreMinCd, p.coreBaseCd * Math.max(p.coreMinCdMult, 1 - ocReduction)).toFixed(3)
       );
-      const range = Math.min(p.maxTargetRange, p.coreBaseRange);
-      const shotCount = 1 + (p.armParallelExtraShots[lv] ?? 0);
+      const range =
+        Math.min(p.maxTargetRange, p.coreBaseRange) + (p.armBaseRangeBonus[lv] ?? 0);
+      const baseShots = 1 + (p.armParallelExtraShots[lv] ?? 0);
+      const shotCount =
+        ocLv >= 2
+          ? Math.max(p.ocLv2MinShots, baseShots)
+          : ocLv === 1
+            ? Math.max(p.ocLv1MinShots, baseShots)
+            : baseShots;
       const dps = Number(((damage * shotCount) / cooldown).toFixed(1));
       coreShotRows.push({ lv, damage, cooldown, range, shotCount, dps });
     }
@@ -719,7 +766,7 @@ export function buildFormulaChartsData(parameters) {
       formulaIds: ['FML-03', 'FML-04', 'FML-05'],
       paramRefs: ['PRM-06', 'PRM-17', 'PRM-18', 'PRM-23'],
       title: 'メイン武器（コアショット）兵装スキル連動成長（FML-03〜05・総SP連動廃止）',
-      formulaExpr: `威力=round(PRM-17[${p.coreBaseDmg}]×(1+PRM-23[arm_base])×(1+PRM-18[parallel])), CD=max(PRM-18[${p.coreMinCd}], PRM-17[${p.coreBaseCd}]×max(${p.coreMinCdMult}, 1-PRM-23[arm_overclock])), 射程=min(PRM-06[${p.maxTargetRange}], PRM-17[${p.coreBaseRange}]×(1+PRM-23[def_sensor]))`,
+      formulaExpr: `威力=round(PRM-17[${p.coreBaseDmg}]×(1+PRM-23[arm_base])×(1+PRM-18[parallel])), CD=max(PRM-18[${p.coreMinCd}], PRM-17[${p.coreBaseCd}]×max(${p.coreMinCdMult}, 1-PRM-23[arm_overclock])), 発射数=max(1+parallel, OC Lv1:最低${p.ocLv1MinShots}本 / Lv2:${p.ocLv2MinShots}本), 射程=min(PRM-06[${p.maxTargetRange}], PRM-17[${p.coreBaseRange}])+PRM-23[arm_base射程]`,
       xLabel: 'lv',
       series: [
         { key: 'dps', label: '理論総DPS (DMG/s)', color: '#34d399', unit: 'DMG/s' },
@@ -737,23 +784,46 @@ export function buildFormulaChartsData(parameters) {
     };
   }
 
-  // 3. Skill Lv0..Lv5 growth curve & cumulative SP cost
+  // 3. Skill Lv0..Lv5 growth curve & cumulative SP cost per Tier
   const skillRows = [];
-  let cumSp = 0;
+  let tier1Cum = 0;
+  let tier2Cum = 0;
+  let tier3Cum = 0;
   for (let lv = 0; lv <= p.maxSkillLv; lv++) {
-    const stepCost =
-      lv === 0 ? 0 : lv <= 3 ? p.spCostLv1_3 : lv === 4 ? p.spCostLv4 : p.spCostLv5;
-    cumSp += stepCost;
+    const tier1Cost =
+      p.tier1Costs[lv] ?? (lv === 0 ? 0 : lv <= 4 ? p.tier1CostLv1_4 : p.tier1CostLv5);
+    const tier2Cost =
+      p.tier2Costs[lv] ??
+      (lv === 0 ? 0 : lv <= 3 ? p.spCostLv1_3 : lv === 4 ? p.spCostLv4 : p.spCostLv5);
+    const tier3Cost = lv <= p.tier3MaxLv ? (p.tier3Costs[lv] ?? 0) : null;
+    tier1Cum += tier1Cost;
+    tier2Cum += tier2Cost;
+    if (tier3Cost !== null) {
+      tier3Cum += tier3Cost;
+    }
+    const tier3CumSp = tier3Cost !== null ? tier3Cum : null;
     skillRows.push({
       lv,
-      stepCost,
-      cumSp,
+      stepCost: tier2Cost,
+      cumSp: tier2Cum,
+      tier1Cost,
+      tier1CumSp: tier1Cum,
+      tier2Cost,
+      tier2CumSp: tier2Cum,
+      tier3Cost,
+      tier3CumSp,
+      tier1Label: lv === 0 ? '0' : `${tier1Cost} (計${tier1Cum})`,
+      tier2Label: lv === 0 ? '0' : `${tier2Cost} (計${tier2Cum})`,
+      tier3Label: tier3Cost === null ? '-' : lv === 0 ? '0' : `${tier3Cost} (計${tier3Cum})`,
       armBasePct: p.armBasePct[lv] ?? 0,
       armOverclockPct: p.armOverclockPct[lv] ?? 0,
       defSensorPct: p.defSensorPct[lv] ?? 0,
       mobLootExpPct: p.mobLootExpPct[lv] ?? 0,
     });
   }
+  const tier1TotalSp = p.tier1Costs.reduce((sum, v) => sum + v, 0);
+  const tier2TotalSp = p.tier2Costs.reduce((sum, v) => sum + v, 0);
+  const tier3TotalSp = p.tier3Costs.reduce((sum, v) => sum + v, 0);
 
   return [
     {
@@ -779,8 +849,8 @@ export function buildFormulaChartsData(parameters) {
       id: 'chart-skill-curve',
       formulaIds: ['FML-02', 'FML-12'],
       paramRefs: ['PRM-09', 'PRM-10', 'PRM-23'],
-      title: 'スキルLv4〜5急上昇カーブと累積SP（FML-02 / FML-12）',
-      formulaExpr: `必要SP=PRM-09[Lv1-3:${p.spCostLv1_3} / Lv4:${p.spCostLv4} / Lv5:${p.spCostLv5}], 最大Lv=PRM-10[${p.maxSkillLv}], 成長率=PRM-23`,
+      title: 'スキル成長カーブとTier別必要SP・累積SP（FML-02 / FML-12）',
+      formulaExpr: `Tier1=PRM-09[Lv1-4:${p.tier1CostLv1_4}/Lv5:${p.tier1CostLv5}(計${tier1TotalSp}SP)], Tier2=PRM-09[Lv1-3:${p.spCostLv1_3}/Lv4:${p.spCostLv4}/Lv5:${p.spCostLv5}(計${tier2TotalSp}SP)], Tier3=PRM-09[Lv1:${p.tier3CostLv1}/Lv2:${p.tier3CostLv2}(最大Lv${p.tier3MaxLv}・計${tier3TotalSp}SP)], 最大Lv=PRM-10[${p.maxSkillLv}], 成長率=PRM-23`,
       xLabel: 'lv',
       series: [
         { key: 'armBasePct', label: '出力強化 威力+%', color: '#f87171', unit: '%' },
@@ -789,8 +859,9 @@ export function buildFormulaChartsData(parameters) {
       ],
       columns: [
         { key: 'lv', label: 'Lv' },
-        { key: 'stepCost', label: '必要SP' },
-        { key: 'cumSp', label: '累積SP' },
+        { key: 'tier1Label', label: 'Tier1 SP(累計)' },
+        { key: 'tier2Label', label: 'Tier2 SP(累計)' },
+        { key: 'tier3Label', label: 'Tier3 SP(累計)' },
         { key: 'armBasePct', label: '威力+%' },
         { key: 'defSensorPct', label: '射程+%' },
         { key: 'armOverclockPct', label: 'CD短縮%' },

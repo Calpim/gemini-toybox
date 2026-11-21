@@ -360,10 +360,19 @@ stateDiagram-v2
     assert.ok(coreChart && skillChart);
     assert.equal(coreChart.rows[0].damage, 14);
     assert.equal(coreChart.rows[0].cooldown, 0.58);
+    assert.equal(coreChart.rows[0].range, 180);
     assert.equal(coreChart.rows[0].shotCount, 1);
+    assert.equal(coreChart.rows[1].range, 200);
+    assert.equal(coreChart.rows[1].shotCount, 3);
     assert.equal(coreChart.rows[5].damage, 47);
-    assert.equal(coreChart.rows[5].shotCount, 4);
+    assert.equal(coreChart.rows[5].shotCount, 5);
     assert.equal(coreChart.rows[5].cooldown, 0.319);
+    assert.equal(coreChart.rows[5].range, 290);
+    assert.equal(coreChart.rows[5].dps, 736.7);
+    assert.equal(skillChart.rows[2].tier3CumSp, 5);
+    assert.equal(skillChart.rows[3].tier3Cost, null);
+    assert.equal(skillChart.rows[5].tier1CumSp, 6);
+    assert.equal(skillChart.rows[5].tier2CumSp, 8);
     assert.equal(skillChart.rows[5].armBasePct, 170);
     assert.equal(skillChart.rows[5].armOverclockPct, 45);
 
