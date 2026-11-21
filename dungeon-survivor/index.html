@@ -3,475 +3,134 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Dungeon Survivor — Phase 2-A</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
-    html, body {
-      position: fixed;
-      inset: 0;
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      overscroll-behavior: none;
-      touch-action: none;
-      background: #050811;
-      color: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
-    }
-    #gameCanvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-    }
-    .hud {
-      position: fixed;
-      top: max(10px, env(safe-area-inset-top));
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      pointer-events: none;
-      z-index: 10;
-      flex-wrap: wrap;
-    }
-    .hud-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(7, 11, 20, 0.85);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      border-radius: 10px;
-      padding: 5px 10px;
-      font-size: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-    .hud-bars {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .hud-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .hp-bar {
-      width: 84px;
-      height: 9px;
-      background: #1e293b;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .hp-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #ef4444, #10b981);
-      transition: width 0.1s linear;
-    }
-    .exp-bar {
-      width: 84px;
-      height: 5px;
-      background: #1e293b;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .exp-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #0284c7, #38bdf8);
-      transition: width 0.1s linear;
-    }
-    .skill-btn {
-      pointer-events: auto;
-      background: rgba(15, 23, 42, 0.9);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.45);
-      border-radius: 8px;
-      padding: 4px 9px;
-      font-size: 12px;
-      font-weight: 700;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      cursor: pointer;
-    }
-    .skill-btn.has-sp {
-      background: linear-gradient(90deg, #0284c7, #7c3aed);
-      color: #fff;
-      border-color: #fde047;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
-    }
-    .spec-link {
-      pointer-events: auto;
-      color: #7dd3fc;
-      text-decoration: none;
-      font-size: 11px;
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      padding: 3px 7px;
-      border-radius: 6px;
-      background: rgba(15, 23, 42, 0.85);
-    }
-    .hint {
-      position: fixed;
-      bottom: max(12px, env(safe-area-inset-bottom));
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(7, 11, 20, 0.72);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      border-radius: 999px;
-      padding: 5px 12px;
-      font-size: 11px;
-      color: #cbd5e1;
-      pointer-events: none;
-      white-space: nowrap;
-      max-width: calc(100vw - 24px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 23, 0.84);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      z-index: 30;
-    }
-    .modal.hidden { display: none; }
-    .modal-panel {
-      position: relative;
-      background: #0f172a;
-      border: 1px solid rgba(56, 189, 248, 0.45);
-      border-radius: 16px;
-      padding: 18px;
-      width: 100%;
-      max-width: 780px;
-      max-height: 88vh;
-      overflow-y: auto;
-      touch-action: pan-y;
-    }
-    .modal-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-    .modal-head h2 { margin: 0; font-size: 18px; color: #f8fafc; }
-    .sp-badge {
-      background: rgba(56, 189, 248, 0.16);
-      border: 1px solid rgba(56, 189, 248, 0.5);
-      color: #7dd3fc;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .tree-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-    .tree-col {
-      background: #090f1d;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .tree-col-head {
-      font-size: 13px;
-      font-weight: 800;
-      margin-bottom: 4px;
-      text-align: center;
-    }
-    .tree-arrow {
-      text-align: center;
-      color: #64748b;
-      font-size: 13px;
-      line-height: 1;
-    }
-    .tree-node {
-      text-align: left;
-      border-radius: 10px;
-      padding: 9px 10px;
-      border: 1px solid #334155;
-      background: #131c31;
-      color: #e2e8f0;
-      cursor: pointer;
-    }
-    .tree-node.unlocked {
-      border-color: #34d399;
-      background: rgba(16, 185, 129, 0.14);
-    }
-    .tree-node.available {
-      border-color: #38bdf8;
-      background: rgba(14, 165, 233, 0.2);
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
-    }
-    .tree-node.locked {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-    .node-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-    .node-state { font-size: 11px; color: #94a3b8; }
-    .tree-node.unlocked .node-state { color: #34d399; font-weight: 700; }
-    .tree-node.available .node-state { color: #fde047; font-weight: 700; }
-    .node-desc { font-size: 12px; color: #cbd5e1; margin-bottom: 4px; }
-    .node-req { font-size: 10px; color: #94a3b8; }
-    .gear-summary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .gear-pill {
-      font-size: 11px;
-      border: 1px solid #334155;
-      background: #0b1222;
-      padding: 3px 8px;
-      border-radius: 6px;
-    }
-    .drop-card {
-      background: #090f1d;
-      border: 1px solid #fbbf24;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .drop-badge { font-size: 11px; font-weight: 700; }
-    .drop-name { font-size: 16px; font-weight: 800; margin: 2px 0 4px; }
-    .drop-desc { font-size: 12px; color: #cbd5e1; }
-    .slot-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .slot-btn {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #131c31;
-      border: 1px solid #334155;
-      color: #f8fafc;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .slot-action { color: #38bdf8; font-weight: 700; font-size: 12px; }
-    .modal-card {
-      background: #0f172a;
-      border: 1px solid rgba(248, 113, 113, 0.45);
-      border-radius: 16px;
-      padding: 24px 24px;
-      text-align: center;
-      max-width: 360px;
-      width: 92%;
-    }
-    .modal-card h2 { margin: 0 0 14px; color: #fca5a5; }
-    .modal-card p { color: #cbd5e1; font-size: 14px; margin: 0 0 18px; }
-    .modal-close-icon {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.9);
-      color: #cbd5e1;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1;
-      cursor: pointer;
-    }
-    .result-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      background: #090f1d;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 18px;
-      text-align: left;
-    }
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(30, 41, 59, 0.7);
-    }
-    .result-row:last-child {
-      padding-bottom: 0;
-      border-bottom: none;
-    }
-    .result-label { color: #94a3b8; }
-    .result-value {
-      color: #f8fafc;
-      font-weight: 700;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-    .btn {
-      background: linear-gradient(90deg, #0284c7, #6366f1);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 20px;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      width: 100%;
-    }
-    .btn-scrap {
-      background: linear-gradient(90deg, #d97706, #ea580c);
-      margin-bottom: 4px;
-    }
-    .start-card {
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid rgba(56, 189, 248, 0.55);
-      box-shadow: 0 20px 50px rgba(2, 6, 23, 0.75);
-      border-radius: 18px;
-      padding: 26px 24px;
-      text-align: center;
-      max-width: 400px;
-      width: 92%;
-    }
-    .start-kicker {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      color: #38bdf8;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .start-card h1 {
-      margin: 0 0 8px;
-      font-size: 24px;
-      letter-spacing: 0.04em;
-      color: #f8fafc;
-    }
-    .start-sub {
-      margin: 0 0 16px;
-      font-size: 13px;
-      color: #cbd5e1;
-      line-height: 1.5;
-    }
-    .start-tips {
-      text-align: left;
-      background: #090f1d;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin-bottom: 18px;
-      font-size: 12px;
-      color: #cbd5e1;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .start-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
-    }
-    .start-spec-link {
-      font-size: 12px;
-      color: #7dd3fc;
-      text-decoration: none;
-    }
-  </style>
+  <title>Dungeon Survivor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="hud">
-    <div class="hud-group">
-      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15;">
-        <strong id="floorText" style="color:#22d3ee">1F</strong>
-        <span id="playTimeText" style="font-size:10px;color:#94a3b8;">00:00</span>
+    <div class="hud-main-panel">
+      <div class="hud-floor-block">
+        <strong id="floorText" class="hud-floor-text">1F</strong>
+        <span id="playTimeText" class="hud-time-text">00:00</span>
       </div>
+
       <div class="hud-bars">
-        <div class="hud-row">
-          <div class="hp-bar"><div id="hpFill" class="hp-fill" style="width:100%"></div></div>
-          <span id="hpText">100 / 100</span>
+        <div id="hpBar" class="bar-track hp-bar">
+          <div id="hpFill" class="hp-fill" style="width: 100%"></div>
+          <div class="bar-overlay">
+            <span class="bar-tag">HP</span>
+            <span id="hpText">100 / 100</span>
+          </div>
         </div>
-        <div class="hud-row">
-          <div class="exp-bar"><div id="expFill" class="exp-fill" style="width:0%"></div></div>
-          <span id="expText" style="font-size:10px;color:#7dd3fc">EXP 0/25</span>
+        <div class="bar-track exp-bar">
+          <div id="expFill" class="exp-fill" style="width: 0%"></div>
+          <div class="bar-overlay">
+            <span id="expText">EXP 0 / 25</span>
+          </div>
         </div>
       </div>
+
+      <div class="minimap-frame" aria-label="ミニマップ">
+        <canvas id="minimapCanvas"></canvas>
+      </div>
     </div>
-    <div class="hud-group">
-      <button id="pauseBtn" type="button" class="skill-btn" title="ポーズ / ステータス確認 (ESC)">⏸</button>
-      <button id="skillBtn" type="button" class="skill-btn">🌳 LV1 (SP 0)</button>
-      <span id="gearCountText" style="color:#fbbf24">GEAR 0/2</span>
-      <span id="killsText" style="color:#fda4af">KILLS 0</span>
-      <button id="muteBtn" type="button" class="skill-btn" title="サウンド ON/OFF">🔊</button>
+
+    <div class="hud-sub-bar">
+      <button id="pauseBtn" type="button" class="hud-icon-btn pause-btn" title="ポーズ / ステータス確認 (ESC)" aria-label="ポーズ"></button>
+      <button id="skillBtn" type="button" class="skill-btn"></button>
+      <span id="gearCountText" class="hud-stat hud-stat-gear">GEAR 0/2</span>
+      <span id="killsText" class="hud-stat hud-stat-kills">KILLS 0</span>
+      <button id="muteBtn" type="button" class="hud-icon-btn mute-btn" title="サウンド ON/OFF" aria-label="サウンド切替"></button>
     </div>
+
+    <div id="notificationStack" class="notification-stack" aria-live="polite"></div>
   </div>
 
   <canvas id="gameCanvas"></canvas>
-  <div class="hint">移動: ドラッグ/WASD · ESC・K・⏸でポーズ/スキル確認 · 同種装備で自動LvUP</div>
+
+  <div class="bottom-console">
+    <div class="bottom-console-inner">
+      <button id="bottomPauseLeftBtn" type="button" class="console-side-btn left" title="スキル / ポーズ (ESC)">
+        <span>SKILL/</span>
+        <span>PAUSE</span>
+      </button>
+      <div class="console-hint">
+        <div class="console-hint-main">DRAG / WASD to Move</div>
+        <div class="console-hint-sub">ESC/K to Pause</div>
+      </div>
+      <button id="bottomPauseRightBtn" type="button" class="console-side-btn right" title="スキル / ポーズ (ESC)">
+        <span>SKILL/</span>
+        <span>PAUSE</span>
+      </button>
+    </div>
+  </div>
 
   <div id="skillModal" class="modal hidden">
     <div class="modal-panel">
-      <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる">✕</button>
-      <div class="modal-head" style="padding-right:40px;">
-        <h2>⏸ ポーズ / 🌳 スキルツリー</h2>
-        <div style="display:flex;align-items:center;gap:8px;">
+      <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる"></button>
+      <div class="modal-head">
+        <h2 id="skillModalHeading">ポーズ / スキルツリー</h2>
+        <div class="modal-head-meta">
           <a class="spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書</a>
           <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
         </div>
       </div>
       <div id="skillColumns" class="tree-grid"></div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">装着中の装備・ステータス（時間停止中）</div>
+      <div class="gear-section-label">装着中の装備・ステータス（時間停止中）</div>
       <div id="skillGearSummary" class="gear-summary"></div>
       <button id="closeSkillBtn" type="button" class="btn">戦闘に戻る</button>
     </div>
   </div>
 
   <div id="equipModal" class="modal hidden">
-    <div class="modal-panel" style="max-width:480px">
-      <div class="modal-head">
-        <h2 id="equipModalTitle">📦 装備スロット満杯（2/2）</h2>
+    <div class="modal-panel" style="max-width: 480px">
+      <div class="modal-head" style="padding-right: 0">
+        <h2 id="equipModalTitle">装備スロット満杯（2/2）</h2>
       </div>
       <div id="equipDropCard" class="drop-card"></div>
-      <button id="scrapEquipBtn" type="button" class="btn btn-scrap">🔧 スクラップ＆ビルド：枠拡張へ蓄積（0/1）</button>
-      <div style="font-size:12px;color:#94a3b8;margin:10px 0 6px;">または既存スロットと入れ替え／スクラップで1個強化：</div>
+      <button id="scrapEquipBtn" type="button" class="btn btn-scrap">スクラップ＆ビルド：枠拡張へ蓄積（0/1）</button>
+      <div class="gear-section-label" style="margin: 10px 0 6px">または既存スロットと入れ替え／スクラップで1個強化：</div>
       <div id="equipSlotList" class="slot-list"></div>
     </div>
   </div>
 
   <div id="gameOverModal" class="modal hidden">
-    <div class="modal-card">
-      <h2>SIGNAL LOST</h2>
-      <div id="gameOverSummary" class="result-list"></div>
-      <button id="retryBtn" class="btn">リトライ</button>
+    <div class="gameover-frame-outer">
+      <svg class="gameover-border-svg" viewBox="0 0 374 420" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="goBorderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#22d3ee" />
+            <stop offset="50%" stop-color="#60a5fa" />
+            <stop offset="100%" stop-color="#fb7185" />
+          </linearGradient>
+        </defs>
+        <polygon
+          points="23,2 351,2 372,23 372,397 351,418 23,418 2,397 2,23"
+          fill="none"
+          stroke="url(#goBorderGrad)"
+          stroke-width="2.5"
+          vector-effect="non-scaling-stroke"
+        />
+        <polyline points="2,62 2,23 23,2 62,2" fill="none" stroke="#67e8f9" stroke-width="4" vector-effect="non-scaling-stroke" />
+        <polyline points="312,2 351,2 372,23 372,62" fill="none" stroke="#fda4af" stroke-width="4" vector-effect="non-scaling-stroke" />
+        <polyline points="2,358 2,397 23,418 62,418" fill="none" stroke="#67e8f9" stroke-width="4" vector-effect="non-scaling-stroke" />
+        <polyline points="312,418 351,418 372,397 372,358" fill="none" stroke="#fda4af" stroke-width="4" vector-effect="non-scaling-stroke" />
+      </svg>
+      <div class="gameover-wrap">
+        <h2 class="signal-lost-title">SIGNAL LOST</h2>
+        <div class="result-list">
+          <span class="result-bracket tl" aria-hidden="true"></span>
+          <span class="result-bracket tr" aria-hidden="true"></span>
+          <span class="result-bracket bl" aria-hidden="true"></span>
+          <span class="result-bracket br" aria-hidden="true"></span>
+          <div id="gameOverSummary"></div>
+        </div>
+        <div class="cyber-cta-bezel">
+          <button id="retryBtn" type="button" class="cyber-cta-btn">リトライ</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -481,12 +140,14 @@
       <h1>DUNGEON SURVIVOR</h1>
       <p class="start-sub">自動で放たれる攻撃とスキル強化を駆使して、未知のダンジョンを踏破しよう。</p>
       <div class="start-tips">
-        <div>🕹 <strong>移動</strong>: ドラッグ / WASD（攻撃は自動）</div>
-        <div>🌳 <strong>強化</strong>: LvUPでSP獲得 · ESC / K / ⏸ でスキルツリー</div>
-        <div>📦 <strong>装備</strong>: 宝箱やボスから獲得 · 同種で自動LvUP</div>
+        <div><strong>移動</strong>: ドラッグ / WASD（攻撃は自動）</div>
+        <div><strong>強化</strong>: LvUPでSP獲得 · ESC / K / 下部ボタンでスキルツリー</div>
+        <div><strong>装備</strong>: 宝箱やボスから獲得 · 同種で自動LvUP</div>
       </div>
       <div class="start-actions">
-        <button id="startBtn" type="button" class="btn">START</button>
+        <div class="cyber-cta-bezel">
+          <button id="startBtn" type="button" class="cyber-cta-btn">START</button>
+        </div>
         <a class="start-spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書を見る ↗</a>
       </div>
     </div>

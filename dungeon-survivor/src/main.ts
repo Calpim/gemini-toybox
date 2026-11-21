@@ -1,3 +1,4 @@
+import './styles/theme.css';
 import { SoundManager } from './audio/soundManager';
 import {
   closeSkillTree,
@@ -12,13 +13,28 @@ import {
 import { SKILL_TREE_NODES, canUnlockSkill } from './game/skillTree';
 import type { GameState } from './game/types';
 import { InputController } from './input/controller';
-import { renderGame } from './render/canvasRenderer';
+import { renderGame, type HudSafeInsets } from './render/canvasRenderer';
+import { renderHudMinimap } from './render/minimapRenderer';
+import {
+  ICON_ALERT,
+  ICON_BOSS,
+  ICON_CLOSE,
+  ICON_PAUSE,
+  ICON_SPARK,
+  ICON_TREE,
+  ICON_VOLUME_OFF,
+  ICON_VOLUME_ON,
+} from './ui/icons';
 import { renderModals } from './ui/modals';
 
 const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+const minimapCanvas = document.getElementById('minimapCanvas') as HTMLCanvasElement | null;
+const minimapCtx = minimapCanvas?.getContext('2d') ?? null;
+
 const hudEl = document.querySelector('.hud') as HTMLElement | null;
-const hintEl = document.querySelector('.hint') as HTMLElement | null;
+const bottomConsoleEl = document.querySelector('.bottom-console') as HTMLElement | null;
+const hpBar = document.getElementById('hpBar')!;
 const hpText = document.getElementById('hpText')!;
 const hpFill = document.getElementById('hpFill')!;
 const expText = document.getElementById('expText')!;
@@ -28,8 +44,12 @@ const playTimeText = document.getElementById('playTimeText')!;
 const muteBtn = document.getElementById('muteBtn')!;
 const pauseBtn = document.getElementById('pauseBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
+const bottomPauseLeftBtn = document.getElementById('bottomPauseLeftBtn');
+const bottomPauseRightBtn = document.getElementById('bottomPauseRightBtn');
 const gearCountText = document.getElementById('gearCountText')!;
 const killsText = document.getElementById('killsText')!;
+const notificationStack = document.getElementById('notificationStack')!;
+const skillModalHeading = document.getElementById('skillModalHeading');
 const startModal = document.getElementById('startModal')!;
 const startBtn = document.getElementById('startBtn')!;
 const gameOverModal = document.getElementById('gameOverModal')!;
@@ -50,15 +70,29 @@ const closeSkillBtn = document.getElementById('closeSkillBtn')!;
 const closeSkillTopBtn = document.getElementById('closeSkillTopBtn')!;
 const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
 
+// Initialize static SVG icons
+pauseBtn.innerHTML = ICON_PAUSE;
+closeSkillTopBtn.innerHTML = ICON_CLOSE;
+if (skillModalHeading) {
+  skillModalHeading.innerHTML = `<span style="color:#fb923c;display:inline-flex">${ICON_PAUSE}</span><span>ポーズ /</span><span style="color:#34d399;display:inline-flex">${ICON_TREE}</span><span>スキルツリー</span>`;
+}
+
 let state: GameState = createGameState({ initialStatus: 'title' });
 const controller = new InputController(canvas);
 const soundManager = new SoundManager();
 let lastRenderedModalKey = '';
-const safeInsets: { hudBottom?: number; hintTop?: number } = {};
+let lastRenderedNotificationKey = '';
+let lastRenderedGameOverKey = '';
+let lastSkillBtnText = '';
+const safeInsets: HudSafeInsets = {
+  hideCanvasMinimap: true,
+  hideCanvasNotifications: true,
+};
 
 function syncMuteBtn(): void {
   const muted = soundManager.isMuted();
-  muteBtn.textContent = muted ? '🔇' : '🔊';
+  muteBtn.innerHTML = muted ? ICON_VOLUME_OFF : ICON_VOLUME_ON;
+  muteBtn.classList.toggle('is-muted', muted);
   muteBtn.title = muted ? 'サウンド OFF（タップでON）' : 'サウンド ON（タップでOFF）';
 }
 syncMuteBtn();
@@ -69,15 +103,29 @@ const unlockAudioOnce = (): void => {
 window.addEventListener('pointerdown', unlockAudioOnce, { passive: true });
 window.addEventListener('keydown', unlockAudioOnce, { passive: true });
 
+function resizeMinimap(): void {
+  if (!minimapCanvas || !minimapCtx) return;
+  const rect = minimapCanvas.parentElement?.getBoundingClientRect();
+  const w = Math.max(48, Math.round(rect?.width ?? 68));
+  const h = Math.max(48, Math.round(rect?.height ?? 68));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (minimapCanvas.width !== Math.floor(w * dpr) || minimapCanvas.height !== Math.floor(h * dpr)) {
+    minimapCanvas.width = Math.floor(w * dpr);
+    minimapCanvas.height = Math.floor(h * dpr);
+    minimapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+}
+
 function updateSafeInsets(): void {
   if (hudEl) safeInsets.hudBottom = hudEl.getBoundingClientRect().bottom;
-  if (hintEl) safeInsets.hintTop = hintEl.getBoundingClientRect().top;
+  if (bottomConsoleEl) safeInsets.hintTop = bottomConsoleEl.getBoundingClientRect().top;
+  resizeMinimap();
 }
 
 if (typeof ResizeObserver !== 'undefined') {
   const observer = new ResizeObserver(updateSafeInsets);
   if (hudEl) observer.observe(hudEl);
-  if (hintEl) observer.observe(hintEl);
+  if (bottomConsoleEl) observer.observe(bottomConsoleEl);
 }
 
 function resizeCanvas(): void {
@@ -99,50 +147,105 @@ function getModalKey(): string {
     .join(',')}:${state.pendingEquipDrop?.item.id ?? ''}`;
 }
 
+function syncNotifications(): void {
+  const visible = state.notifications.slice(-2);
+  const key = visible.map((n) => `${n.id}:${n.kind}:${n.text}`).join('|');
+  if (key === lastRenderedNotificationKey) {
+    // Update subtle fade-out opacity as life expires
+    Array.from(notificationStack.children).forEach((el, idx) => {
+      const n = visible[idx];
+      if (n) {
+        (el as HTMLElement).style.opacity = String(Math.max(0, Math.min(1, n.life * 2.5)));
+      }
+    });
+    return;
+  }
+  lastRenderedNotificationKey = key;
+
+  notificationStack.replaceChildren(
+    ...visible.map((n) => {
+      const toast = document.createElement('div');
+      const isBossLike = n.text.includes('ボス') || n.text.includes('増援') || n.text.includes('ガーディアン');
+      const variant =
+        n.kind === 'alert'
+          ? 'toast-alert'
+          : n.kind === 'levelup'
+          ? 'toast-levelup'
+          : 'toast-info';
+      toast.className = `cyber-toast ${variant}`;
+      toast.style.opacity = String(Math.max(0, Math.min(1, n.life * 2.5)));
+      const iconHtml =
+        n.kind === 'alert' ? ICON_ALERT : isBossLike ? ICON_BOSS : ICON_SPARK;
+      toast.innerHTML = `<span class="toast-icon">${iconHtml}</span><span></span>`;
+      const textSpan = toast.lastElementChild as HTMLElement;
+      textSpan.textContent = n.text.replace(/^[⚠️⚠👾🎉📦✨⚡🛡🔥💥\s]+/u, '');
+      return toast;
+    })
+  );
+}
+
 function syncUi(forceModals = false): void {
   const { player, floor, stats } = state;
   const hpPct = Math.max(0, Math.min(100, (player.hp / player.maxHp) * 100));
   const expPct = Math.max(0, Math.min(100, (player.exp / Math.max(1, player.expToNext)) * 100));
   hpText.textContent = `${Math.ceil(player.hp)} / ${player.maxHp}`;
   hpFill.style.width = `${hpPct}%`;
-  expText.textContent = `EXP ${player.exp}/${player.expToNext}`;
+  hpBar.classList.toggle('is-low', hpPct <= 30);
+
+  expText.textContent = `EXP ${player.exp} / ${player.expToNext}`;
   expFill.style.width = `${expPct}%`;
   floorText.textContent = `${floor}F`;
   playTimeText.textContent = formatPlayTime(stats.elapsedPlayTime ?? 0);
-  skillBtn.textContent = `🌳 LV${player.level} (SP ${player.skillPoints})`;
+
+  const skillLabel = `LV${player.level} (SP ${player.skillPoints})`;
+  if (skillLabel !== lastSkillBtnText) {
+    lastSkillBtnText = skillLabel;
+    skillBtn.innerHTML = `${ICON_TREE}<span>${skillLabel}</span>`;
+  }
+
   const canUnlockAny = SKILL_TREE_NODES.some((n) =>
     canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
   );
   skillBtn.classList.toggle('has-sp', canUnlockAny);
   pauseBtn.classList.toggle('has-sp', state.status === 'skill_tree');
+  bottomPauseLeftBtn?.classList.toggle('has-sp', canUnlockAny);
+  bottomPauseRightBtn?.classList.toggle('has-sp', canUnlockAny);
+
   gearCountText.textContent = `GEAR ${player.equipment.length}/${player.maxEquipSlots}`;
   killsText.textContent = `KILLS ${stats.kills}`;
 
+  syncNotifications();
   startModal.classList.toggle('hidden', state.status !== 'title');
 
   if (state.status === 'gameover') {
     gameOverModal.classList.remove('hidden');
-    const rows: Array<[string, string]> = [
-      ['最終フロア', `${floor}F`],
-      ['10Fクリア時間', stats.clearTime10F !== undefined ? formatPlayTime(stats.clearTime10F) : '--:--'],
-      ['最終レベル', `LV ${player.level}`],
-      ['プレイ時間', formatPlayTime(stats.elapsedPlayTime ?? 0)],
-      ['撃破数', `${stats.kills}`],
-    ];
-    gameOverSummary.replaceChildren(
-      ...rows.map(([label, value]) => {
-        const row = document.createElement('div');
-        row.className = 'result-row';
-        const l = document.createElement('span');
-        l.className = 'result-label';
-        l.textContent = label;
-        const v = document.createElement('span');
-        v.className = 'result-value';
-        v.textContent = value;
-        row.append(l, v);
-        return row;
-      })
-    );
+    const goKey = `${floor}:${stats.clearTime10F ?? ''}:${player.level}:${Math.floor(stats.elapsedPlayTime ?? 0)}:${stats.kills}`;
+    if (forceModals || goKey !== lastRenderedGameOverKey) {
+      lastRenderedGameOverKey = goKey;
+      const clear10fText =
+        stats.clearTime10F !== undefined ? formatPlayTime(stats.clearTime10F) : '--:--';
+      const rows: Array<{ label: string; value: string; muted?: boolean; highlight?: boolean }> = [
+        { label: '最終フロア', value: `${floor}F` },
+        { label: '10Fクリア時間', value: clear10fText, muted: stats.clearTime10F === undefined },
+        { label: '最終レベル', value: `LV ${player.level}` },
+        { label: 'プレイ時間', value: formatPlayTime(stats.elapsedPlayTime ?? 0), highlight: true },
+        { label: '撃破数', value: `${stats.kills}` },
+      ];
+      gameOverSummary.replaceChildren(
+        ...rows.map(({ label, value, muted, highlight }) => {
+          const row = document.createElement('div');
+          row.className = `result-row${muted ? ' is-muted' : ''}${highlight ? ' is-highlight' : ''}`;
+          const l = document.createElement('span');
+          l.className = 'result-label';
+          l.textContent = label;
+          const v = document.createElement('span');
+          v.className = 'result-value';
+          v.textContent = value;
+          row.append(l, v);
+          return row;
+        })
+      );
+    }
   } else {
     gameOverModal.classList.add('hidden');
   }
@@ -167,6 +270,11 @@ function syncUi(forceModals = false): void {
   }
 }
 
+const handleTogglePause = (): void => {
+  toggleSkillTree(state);
+  syncUi(true);
+};
+
 startBtn.addEventListener('click', () => {
   soundManager.unlock();
   startGame(state);
@@ -178,15 +286,10 @@ muteBtn.addEventListener('click', () => {
   syncMuteBtn();
 });
 
-pauseBtn.addEventListener('click', () => {
-  toggleSkillTree(state);
-  syncUi(true);
-});
-
-skillBtn.addEventListener('click', () => {
-  toggleSkillTree(state);
-  syncUi(true);
-});
+pauseBtn.addEventListener('click', handleTogglePause);
+skillBtn.addEventListener('click', handleTogglePause);
+bottomPauseLeftBtn?.addEventListener('click', handleTogglePause);
+bottomPauseRightBtn?.addEventListener('click', handleTogglePause);
 
 closeSkillBtn.addEventListener('click', () => {
   closeSkillTree(state);
@@ -221,8 +324,15 @@ window.addEventListener('keydown', (e) => {
 
 retryBtn.addEventListener('click', () => {
   state = createGameState();
+  lastRenderedGameOverKey = '';
   syncUi(true);
 });
+
+// Expose lightweight debug hook for automated visual inspection / Playwright screenshots
+(window as unknown as Record<string, unknown>).__DS_DEBUG__ = {
+  getState: () => state,
+  syncUi: () => syncUi(true),
+};
 
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -235,6 +345,14 @@ function loop(now: number): void {
   stepGame(state, controller.getMoveVector(), dt);
   soundManager.playBatch(state.soundEvents);
   renderGame(ctx, window.innerWidth, window.innerHeight, state, controller.stick, now / 1000, safeInsets);
+
+  if (minimapCanvas && minimapCtx) {
+    const rect = minimapCanvas.parentElement?.getBoundingClientRect();
+    const mw = Math.max(48, Math.round(rect?.width ?? 68));
+    const mh = Math.max(48, Math.round(rect?.height ?? 68));
+    renderHudMinimap(minimapCtx, mw, mh, state, now / 1000);
+  }
+
   syncUi();
 
   requestAnimationFrame(loop);

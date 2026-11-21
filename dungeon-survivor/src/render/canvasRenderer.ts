@@ -1,4 +1,4 @@
-import { TILE_SIZE, findRoomAtTile, getTile, tileCenterWorld } from '../core/dungeon';
+import { TILE_SIZE, findRoomAtTile, getTile, tileCenterWorld, type DungeonMap } from '../core/dungeon';
 import {
   CORRIDOR_VISION_RADIUS,
   getOrbitBitPositions,
@@ -15,6 +15,7 @@ import {
 import { computeSkillModifiers } from '../game/skillTree';
 import type { EnemyState, GameState } from '../game/types';
 import type { VirtualStickState } from '../input/controller';
+import { drawGlowSprite, drawWallTile, type GlowColor } from './sprites';
 
 export const TARGET_VIEW_WORLD_WIDTH = 840; // ~21 tiles across on desktop/web
 
@@ -23,6 +24,10 @@ export interface HudSafeInsets {
   hudBottom?: number;
   /** Top Y coordinate (in CSS px) of the bottom hint bar */
   hintTop?: number;
+  /** When true, skips drawing the legacy in-canvas minimap */
+  hideCanvasMinimap?: boolean;
+  /** When true, skips drawing the legacy in-canvas notification toasts */
+  hideCanvasNotifications?: boolean;
 }
 
 export interface NotificationLayout {
@@ -99,6 +104,270 @@ function getFogCanvas(w: number, h: number): HTMLCanvasElement | null {
   return fogCanvas;
 }
 
+function setLineDashSafe(ctx: CanvasRenderingContext2D, segments: number[]): void {
+  if (typeof ctx.setLineDash === 'function') {
+    ctx.setLineDash(segments);
+  }
+}
+
+function traceCutCornerRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  cut: number
+): void {
+  const c = Math.max(0, Math.min(cut, w * 0.25, h * 0.45));
+  ctx.beginPath();
+  ctx.moveTo(x + c, y);
+  ctx.lineTo(x + w - c, y);
+  ctx.lineTo(x + w, y + c);
+  ctx.lineTo(x + w, y + h - c);
+  ctx.lineTo(x + w - c, y + h);
+  ctx.lineTo(x + c, y + h);
+  ctx.lineTo(x, y + h - c);
+  ctx.lineTo(x, y + c);
+  ctx.closePath();
+}
+
+function drawWallEdgesAndNotches(
+  ctx: CanvasRenderingContext2D,
+  map: DungeonMap,
+  tx: number,
+  ty: number,
+  px: number,
+  py: number
+): void {
+  const openTop = getTile(map, tx, ty - 1) !== 'wall';
+  const openBottom = getTile(map, tx, ty + 1) !== 'wall';
+  const openLeft = getTile(map, tx - 1, ty) !== 'wall';
+  const openRight = getTile(map, tx + 1, ty) !== 'wall';
+
+  const glowDepth = 6;
+  const rimWidth = 2;
+
+  // Floor-facing cyan neon rim highlights + subtle inward cyan sheen
+  if (openTop) {
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.16)';
+    ctx.fillRect(px, py, TILE_SIZE, glowDepth);
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.72)';
+    ctx.fillRect(px, py, TILE_SIZE, rimWidth);
+    ctx.fillStyle = 'rgba(165, 243, 252, 0.8)';
+    ctx.fillRect(px, py, TILE_SIZE, 1);
+  }
+  if (openBottom) {
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.16)';
+    ctx.fillRect(px, py + TILE_SIZE - glowDepth, TILE_SIZE, glowDepth);
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.72)';
+    ctx.fillRect(px, py + TILE_SIZE - rimWidth, TILE_SIZE, rimWidth);
+    ctx.fillStyle = 'rgba(165, 243, 252, 0.8)';
+    ctx.fillRect(px, py + TILE_SIZE - 1, TILE_SIZE, 1);
+  }
+  if (openLeft) {
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.16)';
+    ctx.fillRect(px, py, glowDepth, TILE_SIZE);
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.72)';
+    ctx.fillRect(px, py, rimWidth, TILE_SIZE);
+    ctx.fillStyle = 'rgba(165, 243, 252, 0.8)';
+    ctx.fillRect(px, py, 1, TILE_SIZE);
+  }
+  if (openRight) {
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.16)';
+    ctx.fillRect(px + TILE_SIZE - glowDepth, py, glowDepth, TILE_SIZE);
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.72)';
+    ctx.fillRect(px + TILE_SIZE - rimWidth, py, rimWidth, TILE_SIZE);
+    ctx.fillStyle = 'rgba(165, 243, 252, 0.8)';
+    ctx.fillRect(px + TILE_SIZE - 1, py, 1, TILE_SIZE);
+  }
+
+  // Convex corner accent caps (doorway / pillar edges where two open sides meet)
+  const cap = 4;
+  ctx.fillStyle = 'rgba(165, 243, 252, 0.92)';
+  if (openTop && openLeft) ctx.fillRect(px, py, cap, cap);
+  if (openTop && openRight) ctx.fillRect(px + TILE_SIZE - cap, py, cap, cap);
+  if (openBottom && openLeft) ctx.fillRect(px, py + TILE_SIZE - cap, cap, cap);
+  if (openBottom && openRight) ctx.fillRect(px + TILE_SIZE - cap, py + TILE_SIZE - cap, cap, cap);
+
+  // Concave chamber corner accent notches (diagonal neighbor is open floor while orthogonal neighbors are walls)
+  const notch = 7;
+  const drawOuterCornerSlash = (x1: number, y1: number, x2: number, y2: number, ix: number, iy: number) => {
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(165, 243, 252, 0.85)';
+    ctx.fillRect(ix, iy, 2.5, 2.5);
+  };
+
+  if (!openBottom && !openRight && getTile(map, tx + 1, ty + 1) !== 'wall') {
+    drawOuterCornerSlash(px + 2, py + notch, px + notch, py + 2, px + TILE_SIZE - 2.5, py + TILE_SIZE - 2.5);
+  }
+  if (!openBottom && !openLeft && getTile(map, tx - 1, ty + 1) !== 'wall') {
+    drawOuterCornerSlash(
+      px + TILE_SIZE - notch,
+      py + 2,
+      px + TILE_SIZE - 2,
+      py + notch,
+      px,
+      py + TILE_SIZE - 2.5
+    );
+  }
+  if (!openTop && !openRight && getTile(map, tx + 1, ty - 1) !== 'wall') {
+    drawOuterCornerSlash(
+      px + 2,
+      py + TILE_SIZE - notch,
+      px + notch,
+      py + TILE_SIZE - 2,
+      px + TILE_SIZE - 2.5,
+      py
+    );
+  }
+  if (!openTop && !openLeft && getTile(map, tx - 1, ty - 1) !== 'wall') {
+    drawOuterCornerSlash(
+      px + TILE_SIZE - notch,
+      py + TILE_SIZE - 2,
+      px + TILE_SIZE - 2,
+      py + TILE_SIZE - notch,
+      px,
+      py
+    );
+  }
+}
+
+function drawFloorStardust(
+  ctx: CanvasRenderingContext2D,
+  map: DungeonMap,
+  tx: number,
+  ty: number,
+  px: number,
+  py: number,
+  nowSec: number
+): void {
+  const nearWall =
+    getTile(map, tx - 1, ty) === 'wall' ||
+    getTile(map, tx + 1, ty) === 'wall' ||
+    getTile(map, tx, ty - 1) === 'wall' ||
+    getTile(map, tx, ty + 1) === 'wall';
+
+  const seed = Math.imul(tx + 31, 374761393) ^ Math.imul(ty + 17, 668265263);
+  const h = (seed ^ (seed >>> 13)) >>> 0;
+  const threshold = nearWall ? 0.7 : 0.22;
+  if ((h & 0xff) / 255 > threshold) return;
+
+  const count = nearWall && ((h >>> 8) & 1) === 1 ? 2 : 1;
+  for (let i = 0; i < count; i++) {
+    const sh = Math.imul(h ^ (i * 2246822519), 3266489917) >>> 0;
+    const fx = ((sh & 0xff) / 255) * (TILE_SIZE - 6) + 3;
+    const fy = (((sh >>> 8) & 0xff) / 255) * (TILE_SIZE - 6) + 3;
+    const phase = (((sh >>> 16) & 0xff) / 255) * Math.PI * 2;
+    const speed = 1.1 + (((sh >>> 24) & 0x0f) / 15) * 1.4;
+
+    const driftX = Math.sin(nowSec * speed * 0.7 + phase) * 2.2;
+    const driftY = Math.cos(nowSec * speed + phase) * 2.6;
+    const twinkle = 0.16 + 0.52 * (0.5 + 0.5 * Math.sin(nowSec * (speed + 0.8) + phase * 1.7));
+    const size = ((sh >>> 28) & 3) === 0 ? 2 : 1.35;
+    const isBright = ((sh >>> 30) & 1) === 1;
+
+    ctx.fillStyle = isBright
+      ? `rgba(224, 242, 254, ${(twinkle * 0.85).toFixed(3)})`
+      : `rgba(56, 189, 248, ${twinkle.toFixed(3)})`;
+    ctx.fillRect(px + fx + driftX, py + fy + driftY, size, size);
+  }
+}
+
+function drawPlayerCore(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  facingAngle: number,
+  nowSec: number
+): void {
+  const pulse = 0.82 + 0.18 * Math.sin(nowSec * 5.2);
+
+  // Soft outer cyan radial glow (pre-baked sprite, additive)
+  drawGlowSprite(ctx, 'cyan', x, y, radius * 3.15, 0.62 * pulse, true);
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Rotating outer segmented cyan energy ring
+  ctx.save();
+  ctx.rotate(nowSec * 1.35);
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.32)';
+  ctx.lineWidth = 1.25;
+  setLineDashSafe(ctx, [4, 4]);
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 5.5, 0, Math.PI * 2);
+  ctx.stroke();
+  setLineDashSafe(ctx, []);
+
+  ctx.strokeStyle = 'rgba(103, 232, 249, 0.85)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 5.5, 0.15, 1.35);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 5.5, Math.PI + 0.15, Math.PI + 1.35);
+  ctx.stroke();
+  ctx.restore();
+
+  // Counter-rotating inner subtle halo ring
+  ctx.save();
+  ctx.rotate(-nowSec * 2.1);
+  ctx.strokeStyle = 'rgba(165, 243, 252, 0.58)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 2.2, 0.4, 2.3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 2.2, Math.PI + 0.4, Math.PI + 2.3);
+  ctx.stroke();
+  ctx.restore();
+
+  // Glowing cyan-to-white energy orb
+  ctx.rotate(facingAngle);
+  if (typeof ctx.createRadialGradient === 'function') {
+    const coreGrad = ctx.createRadialGradient(-radius * 0.22, -radius * 0.22, 1, 0, 0, radius);
+    coreGrad.addColorStop(0, '#ffffff');
+    coreGrad.addColorStop(0.35, '#a5f3fc');
+    coreGrad.addColorStop(0.75, '#38bdf8');
+    coreGrad.addColorStop(1, '#0284c7');
+    ctx.fillStyle = coreGrad;
+  } else {
+    ctx.fillStyle = '#38bdf8';
+  }
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#ecfeff';
+  ctx.lineWidth = 2.2;
+  ctx.stroke();
+
+  // Inner concentric tech halo
+  ctx.strokeStyle = 'rgba(224, 242, 254, 0.65)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius * 0.62, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Crisp directional indicator dot
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(Math.max(5.5, radius * 0.52), 0, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#0ea5e9';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawEnemyBody(
   ctx: CanvasRenderingContext2D,
   enemy: EnemyState,
@@ -107,6 +376,27 @@ function drawEnemyBody(
   const kind = enemy.kind ?? 'normal';
   const flash = enemy.hitFlash > 0;
 
+  // Pre-baked outer neon halo (zero shadowBlur)
+  const glowColor: GlowColor =
+    enemy.isGrandBoss
+      ? 'rose'
+      : kind === 'tank'
+      ? 'purple'
+      : kind === 'runner' || kind === 'scout'
+      ? 'amber'
+      : kind === 'shooter'
+      ? 'pink'
+      : 'rose';
+  drawGlowSprite(
+    ctx,
+    glowColor,
+    enemy.x,
+    enemy.y,
+    enemy.radius * (enemy.isRoomBoss ? 2.5 : 2.1),
+    enemy.awake ? 0.44 : 0.24,
+    true
+  );
+
   ctx.save();
   ctx.translate(enemy.x, enemy.y);
 
@@ -114,21 +404,21 @@ function drawEnemyBody(
     ctx.globalAlpha = 0.55;
     ctx.strokeStyle = '#fbbf24';
     ctx.lineWidth = 2;
-    ctx.setLineDash([4, 3]);
+    setLineDashSafe(ctx, [4, 3]);
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius + 9, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.setLineDash([]);
+    setLineDashSafe(ctx, []);
   }
 
   if (enemy.isAmbush) {
     const glow = 0.65 + 0.35 * Math.sin(nowSec * 12);
-    ctx.fillStyle = `rgba(249, 115, 22, ${0.22 * glow})`;
+    ctx.fillStyle = `rgba(249, 115, 22, ${0.2 * glow})`;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius + 11, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = `rgba(251, 191, 36, ${0.75 * glow})`;
+    ctx.strokeStyle = `rgba(251, 191, 36, ${0.8 * glow})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius + 5 + glow * 3, 0, Math.PI * 2);
@@ -150,14 +440,14 @@ function drawEnemyBody(
       ctx.lineTo(tx, ty);
       ctx.stroke();
 
-      ctx.strokeStyle = `rgba(254, 205, 211, ${0.85 * blink})`;
+      ctx.strokeStyle = `rgba(254, 205, 211, ${0.88 * blink})`;
       ctx.lineWidth = 2;
-      ctx.setLineDash([6, 5]);
+      setLineDashSafe(ctx, [6, 5]);
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.lineTo(tx, ty);
       ctx.stroke();
-      ctx.setLineDash([]);
+      setLineDashSafe(ctx, []);
       ctx.restore();
     } else if (enemy.dashState === 'dashing') {
       ctx.strokeStyle = 'rgba(251, 113, 133, 0.95)';
@@ -169,8 +459,8 @@ function drawEnemyBody(
 
     const bossPulse = 0.7 + 0.3 * Math.sin(nowSec * 5);
     ctx.strokeStyle = enemy.isGrandBoss
-      ? `rgba(244, 63, 94, ${0.9 * bossPulse})`
-      : `rgba(250, 204, 21, ${0.85 * bossPulse})`;
+      ? `rgba(244, 63, 94, ${0.92 * bossPulse})`
+      : `rgba(250, 204, 21, ${0.88 * bossPulse})`;
     ctx.lineWidth = enemy.isGrandBoss ? 3.2 : 2.5;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius + (enemy.isGrandBoss ? 9 : 6), 0, Math.PI * 2);
@@ -178,22 +468,22 @@ function drawEnemyBody(
   }
 
   if (kind === 'tank') {
-    // Heavy armored hexagon
+    // Heavy armored neon hexagon
     ctx.fillStyle = flash
       ? '#ffffff'
       : enemy.isGrandBoss
       ? '#9f1239'
       : enemy.awake
-      ? '#7c3aed'
-      : '#4c1d95';
+      ? '#6d28d9'
+      : '#3b0764';
     ctx.strokeStyle = enemy.isGrandBoss
       ? '#fda4af'
       : enemy.isRoomBoss
       ? '#fde047'
       : enemy.awake
-      ? '#ddd6fe'
-      : '#6d28d9';
-    ctx.lineWidth = enemy.isRoomBoss ? 3.5 : 3;
+      ? '#e9d5ff'
+      : '#7c3aed';
+    ctx.lineWidth = enemy.isRoomBoss ? 3.5 : 2.6;
     ctx.beginPath();
     for (let s = 0; s < 6; s++) {
       const a = (s * Math.PI) / 3;
@@ -206,18 +496,31 @@ function drawEnemyBody(
     ctx.fill();
     ctx.stroke();
 
+    // Inner tech hexagon + core ring
     ctx.strokeStyle = enemy.isGrandBoss
-      ? 'rgba(253, 224, 71, 0.6)'
-      : 'rgba(221, 214, 254, 0.45)';
-    ctx.lineWidth = 1.5;
+      ? 'rgba(253, 224, 71, 0.65)'
+      : 'rgba(221, 214, 254, 0.55)';
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.arc(0, 0, enemy.radius * 0.55, 0, Math.PI * 2);
+    for (let s = 0; s < 6; s++) {
+      const a = (s * Math.PI) / 3;
+      const vx = Math.cos(a) * enemy.radius * 0.62;
+      const vy = Math.sin(a) * enemy.radius * 0.62;
+      if (s === 0) ctx.moveTo(vx, vy);
+      else ctx.lineTo(vx, vy);
+    }
+    ctx.closePath();
     ctx.stroke();
+
+    ctx.fillStyle = enemy.isGrandBoss ? 'rgba(254, 205, 211, 0.7)' : 'rgba(216, 180, 254, 0.55)';
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius * 0.24, 0, Math.PI * 2);
+    ctx.fill();
   } else if (kind === 'runner') {
-    // Fast agile diamond
+    // Fast agile neon diamond
     const r = enemy.radius + 1;
     ctx.fillStyle = flash ? '#ffffff' : enemy.isAmbush ? '#fb923c' : enemy.awake ? '#f59e0b' : '#92400e';
-    ctx.strokeStyle = enemy.isAmbush ? '#fef3c7' : enemy.awake ? '#fef08a' : '#78350f';
+    ctx.strokeStyle = enemy.isAmbush ? '#fef3c7' : enemy.awake ? '#fef08a' : '#b45309';
     ctx.lineWidth = enemy.isAmbush ? 2.5 : 2;
     ctx.beginPath();
     ctx.moveTo(0, -r);
@@ -227,18 +530,36 @@ function drawEnemyBody(
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // Inner bright core diamond
+    const ir = r * 0.44;
+    ctx.fillStyle = 'rgba(254, 249, 195, 0.65)';
+    ctx.beginPath();
+    ctx.moveTo(0, -ir);
+    ctx.lineTo(ir, 0);
+    ctx.lineTo(0, ir);
+    ctx.lineTo(-ir, 0);
+    ctx.closePath();
+    ctx.fill();
   } else if (kind === 'shooter') {
     // Stationary 8-way barrage turret with charge-up telegraph ring before firing
     const s = enemy.radius;
     const cd = enemy.attackCooldown ?? 1;
     if (enemy.awake && cd <= 0.65) {
       const charge = Math.max(0, Math.min(1, (0.65 - cd) / 0.65));
-      ctx.strokeStyle = `rgba(244, 114, 182, ${0.35 + charge * 0.6})`;
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = `rgba(244, 114, 182, ${0.4 + charge * 0.6})`;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.arc(0, 0, s + 9 - charge * 4, 0, Math.PI * 2);
       ctx.stroke();
     }
+
+    // Outer subtle tech halo ring
+    ctx.strokeStyle = enemy.awake ? 'rgba(244, 114, 182, 0.42)' : 'rgba(190, 24, 93, 0.28)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(0, 0, s + 3.5, 0, Math.PI * 2);
+    ctx.stroke();
 
     // Rotating radial barrage nozzles
     const rotOffset = (enemy.bossPatternIndex ?? 0) * (Math.PI / 8);
@@ -246,13 +567,13 @@ function drawEnemyBody(
     for (let k = 0; k < 8; k++) {
       ctx.save();
       ctx.rotate(rotOffset + (k * Math.PI) / 4);
-      ctx.fillRect(s * 0.45, -2, s * 0.72, 4);
+      ctx.fillRect(s * 0.45, -1.8, s * 0.72, 3.6);
       ctx.restore();
     }
 
     ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#db2777' : '#831843';
-    ctx.strokeStyle = enemy.awake ? '#fbcfe8' : '#500724';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = enemy.awake ? '#fbcfe8' : '#9d174d';
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     for (let k = 0; k < 8; k++) {
       const a = (k * Math.PI) / 4 + Math.PI / 8;
@@ -265,24 +586,30 @@ function drawEnemyBody(
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#fbcfe8';
+    ctx.strokeStyle = 'rgba(253, 242, 248, 0.65)';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+    ctx.arc(0, 0, s * 0.52, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fdf2f8';
+    ctx.beginPath();
+    ctx.arc(0, 0, 4.2, 0, Math.PI * 2);
     ctx.fill();
   } else if (kind === 'scout') {
-    // Wandering scout with radar ring
+    // Wandering scout with neon radar ring
     const pulse = 0.65 + 0.35 * Math.sin(nowSec * 6);
     ctx.strokeStyle = enemy.awake
-      ? `rgba(249, 115, 22, ${0.75 * pulse})`
-      : `rgba(250, 204, 21, ${0.45 * pulse})`;
-    ctx.lineWidth = 1.5;
+      ? `rgba(249, 115, 22, ${0.8 * pulse})`
+      : `rgba(250, 204, 21, ${0.5 * pulse})`;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius + 5 + pulse * 3, 0, Math.PI * 2);
     ctx.stroke();
 
     ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#f97316' : '#eab308';
     ctx.strokeStyle = '#fef9c3';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.moveTo(0, -enemy.radius - 2);
     ctx.lineTo(enemy.radius + 1, enemy.radius);
@@ -290,14 +617,30 @@ function drawEnemyBody(
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // Inner glowing tech chevron
+    ctx.strokeStyle = 'rgba(254, 249, 195, 0.72)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, -enemy.radius * 0.45);
+    ctx.lineTo(enemy.radius * 0.48, enemy.radius * 0.48);
+    ctx.lineTo(-enemy.radius * 0.48, enemy.radius * 0.48);
+    ctx.closePath();
+    ctx.stroke();
   } else {
-    // Standard chaser
-    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#f43f5e' : '#9f1239';
+    // Standard chaser with neon rim & inner core ring
+    ctx.fillStyle = flash ? '#ffffff' : enemy.awake ? '#e11d48' : '#881337';
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = enemy.awake ? '#fda4af' : '#4c0519';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = enemy.awake ? '#fda4af' : '#be123c';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    ctx.strokeStyle = enemy.awake ? 'rgba(255, 228, 230, 0.55)' : 'rgba(251, 113, 133, 0.35)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius * 0.52, 0, Math.PI * 2);
     ctx.stroke();
   }
 
@@ -319,7 +662,7 @@ function drawEnemyBody(
   if (enemy.hp < enemy.maxHp) {
     const bw = Math.max(24, enemy.radius * 2);
     const ratio = Math.max(0, enemy.hp / enemy.maxHp);
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillStyle = 'rgba(6, 12, 26, 0.88)';
     ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw, 4);
     ctx.fillStyle = enemy.isGrandBoss ? '#f43f5e' : enemy.isRoomBoss ? '#facc15' : '#fb7185';
     ctx.fillRect(enemy.x - bw / 2, enemy.y - enemy.radius - 9, bw * ratio, 4);
@@ -340,7 +683,7 @@ export function renderGame(
   const stairsLockCount = getStairsLockCount(state);
   const topSafeY = computeTopSafeY(width, insets.hudBottom);
 
-  ctx.fillStyle = '#050811';
+  ctx.fillStyle = '#040711';
   ctx.fillRect(0, 0, width, height);
 
   const zoom = computeCameraZoom(width, height);
@@ -372,24 +715,28 @@ export function renderGame(
       const py = ty * TILE_SIZE;
 
       if (tile === 'wall') {
-        ctx.fillStyle = '#141d31';
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        ctx.fillStyle = '#1e2b45';
-        ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 8);
+        drawWallTile(ctx, px, py, TILE_SIZE);
+        drawWallEdgesAndNotches(ctx, map, tx, ty, px, py);
       } else {
-        ctx.fillStyle = (tx + ty) % 2 === 0 ? '#0b101d' : '#0d1323';
+        // Deep navy checkerboard floor with subtle cyan-tinted grid hairline
+        ctx.fillStyle = (tx + ty) % 2 === 0 ? '#080e1d' : '#0c1529';
         ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-        ctx.strokeStyle = 'rgba(51, 65, 85, 0.18)';
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
+        ctx.lineWidth = 1;
         ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+
+        // Deterministic floating cyan/white stardust particles
+        drawFloorStardust(ctx, map, tx, ty, px, py, nowSec);
 
         if (tile === 'stairs') {
           const pulse = 0.7 + 0.3 * Math.sin(nowSec * 4.5);
           const center = tileCenterWorld(tx, ty);
           const locked = stairsLockCount > 0;
+          drawGlowSprite(ctx, locked ? 'rose' : 'cyan', center.x, center.y, TILE_SIZE * 0.95, 0.45 * pulse, true);
           ctx.save();
           ctx.fillStyle = locked
-            ? `rgba(244, 63, 94, ${0.2 * pulse})`
-            : `rgba(34, 211, 238, ${0.18 * pulse})`;
+            ? `rgba(244, 63, 94, ${0.22 * pulse})`
+            : `rgba(34, 211, 238, ${0.2 * pulse})`;
           ctx.beginPath();
           ctx.arc(center.x, center.y, TILE_SIZE * 0.48, 0, Math.PI * 2);
           ctx.fill();
@@ -418,6 +765,9 @@ export function renderGame(
           const center = tileCenterWorld(tx, ty);
           const used = Boolean(state.fountainUsed);
           const pulse = 0.72 + 0.28 * Math.sin(nowSec * 4);
+          if (!used) {
+            drawGlowSprite(ctx, 'emerald', center.x, center.y, TILE_SIZE * 0.9, 0.42 * pulse, true);
+          }
           ctx.save();
           ctx.fillStyle = used
             ? 'rgba(51, 65, 85, 0.35)'
@@ -446,20 +796,20 @@ export function renderGame(
     const cy = Math.floor(chest.y / TILE_SIZE);
     if (!explored[cy * map.width + cx]) continue;
 
+    if (!chest.opened) {
+      const glow = 0.75 + 0.25 * Math.sin(nowSec * 5);
+      drawGlowSprite(ctx, 'amber', chest.x, chest.y, 26, 0.42 * glow, true);
+    }
+
     ctx.save();
     ctx.translate(chest.x, chest.y);
     if (chest.opened) {
-      ctx.fillStyle = '#475569';
+      ctx.fillStyle = '#334155';
       ctx.fillRect(-11, -8, 22, 16);
-      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.2;
       ctx.strokeRect(-11, -8, 22, 16);
     } else {
-      const glow = 0.75 + 0.25 * Math.sin(nowSec * 5);
-      ctx.fillStyle = `rgba(251, 191, 36, ${0.2 * glow})`;
-      ctx.beginPath();
-      ctx.arc(0, 0, 20, 0, Math.PI * 2);
-      ctx.fill();
-
       ctx.fillStyle = '#b45309';
       ctx.fillRect(-11, -8, 22, 16);
       ctx.fillStyle = '#fbbf24';
@@ -479,6 +829,7 @@ export function renderGame(
     if (!explored[pty * map.width + ptx]) continue;
 
     if (p.kind === 'heal') {
+      drawGlowSprite(ctx, 'emerald', p.x, p.y, 17, 0.42, true);
       ctx.fillStyle = '#10b981';
       ctx.beginPath();
       ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
@@ -489,13 +840,9 @@ export function renderGame(
     } else if (p.kind === 'equip' && p.equipmentId) {
       const def = EQUIPMENT_CATALOG[p.equipmentId];
       const pulse = 0.7 + 0.3 * Math.sin(nowSec * 6);
+      drawGlowSprite(ctx, 'amber', p.x, p.y, 22, 0.5 * pulse, true);
       ctx.save();
       ctx.translate(p.x, p.y);
-      ctx.fillStyle = `rgba(251, 191, 36, ${0.24 * pulse})`;
-      ctx.beginPath();
-      ctx.arc(0, 0, 15, 0, Math.PI * 2);
-      ctx.fill();
-
       ctx.fillStyle = def.color;
       ctx.beginPath();
       ctx.arc(0, 0, 8, 0, Math.PI * 2);
@@ -510,6 +857,7 @@ export function renderGame(
       ctx.fillText(`Lv${p.itemLevel ?? 1}`, 0, -12);
       ctx.restore();
     } else {
+      drawGlowSprite(ctx, 'cyan', p.x, p.y, 12, 0.35, true);
       ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
       ctx.moveTo(p.x, p.y - 6);
@@ -524,7 +872,7 @@ export function renderGame(
   // 5. Intercept range rings & Orbit Bits
   const droneEquip = player.equipment.find((e) => e.id === 'seeker_drone');
   if (droneEquip) {
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(
@@ -544,24 +892,37 @@ export function renderGame(
   const bits = getOrbitBitPositions(state);
   if (bits.length > 0 && orbitEquip) {
     const orbitR = getOrbitShieldRadius(orbitEquip.level, mods.rangeMult);
-    ctx.fillStyle = 'rgba(167, 139, 250, 0.07)';
+    ctx.save();
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.04)';
     ctx.beginPath();
     ctx.arc(player.x, player.y, orbitR, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = 'rgba(167, 139, 250, 0.25)';
-    ctx.setLineDash([4, 4]);
+    // Crisp dashed cyan-blue tech orbit ring
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.42)';
+    ctx.lineWidth = 1.4;
+    setLineDashSafe(ctx, [5, 5]);
     ctx.beginPath();
     ctx.arc(player.x, player.y, orbitR, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.setLineDash([]);
+
+    // Subtle secondary inner dashed tech ring
+    ctx.strokeStyle = 'rgba(125, 211, 252, 0.28)';
+    ctx.lineWidth = 1.1;
+    setLineDashSafe(ctx, [3, 4]);
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, orbitR * 0.56, 0, Math.PI * 2);
+    ctx.stroke();
+    setLineDashSafe(ctx, []);
+    ctx.restore();
 
     for (const bit of bits) {
+      drawGlowSprite(ctx, 'purple', bit.x, bit.y, 17, 0.55, true);
       ctx.fillStyle = '#a78bfa';
       ctx.beginPath();
-      ctx.arc(bit.x, bit.y, 8, 0, Math.PI * 2);
+      ctx.arc(bit.x, bit.y, 7.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#ede9fe';
+      ctx.strokeStyle = '#f5f3ff';
       ctx.lineWidth = 2;
       ctx.stroke();
     }
@@ -569,6 +930,7 @@ export function renderGame(
 
   // Hovering Seeker Drones
   for (const drone of getSeekerDronePositions(state)) {
+    drawGlowSprite(ctx, 'cyan', drone.x, drone.y, 15, 0.42, true);
     ctx.fillStyle = '#38bdf8';
     ctx.beginPath();
     ctx.moveTo(drone.x, drone.y - 6);
@@ -594,11 +956,11 @@ export function renderGame(
 
     ctx.strokeStyle = 'rgba(216, 180, 254, 0.88)';
     ctx.lineWidth = 2;
-    ctx.setLineDash([5, 4]);
+    setLineDashSafe(ctx, [5, 4]);
     ctx.beginPath();
     ctx.arc(zone.targetX, zone.targetY, zone.radius, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.setLineDash([]);
+    setLineDashSafe(ctx, []);
 
     // Expanding inner timing circle (reaches outer ring right on impact)
     ctx.fillStyle = `rgba(244, 63, 94, ${0.18 + progress * 0.28})`;
@@ -621,6 +983,7 @@ export function renderGame(
     ctx.ellipse(shellGroundX, shellGroundY, 6, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    drawGlowSprite(ctx, 'purple', shellGroundX, shellGroundY - arcHeight, 15, 0.55, true);
     ctx.fillStyle = '#c084fc';
     ctx.beginPath();
     ctx.arc(shellGroundX, shellGroundY - arcHeight, 6, 0, Math.PI * 2);
@@ -631,7 +994,7 @@ export function renderGame(
     ctx.restore();
   }
 
-  // 5.6. Grand Boss wall-reflecting laser beams (telegraph -> high-energy beam)
+  // 5.6. Grand Boss wall-reflecting laser beams (telegraph -> additive-blended high-energy beam)
   for (const laser of state.bossLasers ?? []) {
     if (laser.points.length < 2) continue;
     ctx.save();
@@ -644,30 +1007,41 @@ export function renderGame(
     }
     if (laser.elapsed < laser.windup) {
       const progress = Math.max(0, Math.min(1, laser.elapsed / Math.max(0.01, laser.windup)));
-      ctx.strokeStyle = `rgba(244, 63, 94, ${0.35 + progress * 0.5})`;
+      ctx.strokeStyle = `rgba(244, 63, 94, ${0.35 + progress * 0.55})`;
       ctx.lineWidth = 1.8 + progress * 2.2;
-      ctx.setLineDash([8, 6]);
+      setLineDashSafe(ctx, [8, 6]);
       ctx.stroke();
-      ctx.setLineDash([]);
+      setLineDashSafe(ctx, []);
     } else {
       const activeSpan = Math.max(0.01, laser.duration - laser.windup);
       const fade = Math.max(0, 1 - (laser.elapsed - laser.windup) / activeSpan);
-      ctx.globalAlpha = 0.35 + fade * 0.65;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.4 + fade * 0.6;
+
+      ctx.strokeStyle = 'rgba(217, 70, 239, 0.42)';
+      ctx.lineWidth = laser.width * 2.8;
+      ctx.stroke();
+
       ctx.strokeStyle = '#e879f9';
-      ctx.lineWidth = laser.width * 1.9;
+      ctx.lineWidth = laser.width * 1.65;
       ctx.stroke();
 
       ctx.strokeStyle = '#fdf4ff';
       ctx.lineWidth = laser.width * 0.65;
       ctx.stroke();
+
+      for (const pt of laser.points) {
+        drawGlowSprite(ctx, 'pink', pt.x, pt.y, laser.width * 2.1, 0.65 * fade, false);
+      }
     }
     ctx.restore();
   }
 
-  // 6. Visual FX (Thick crescent Slash / Lightning / Pulse)
+  // 6. Visual FX (Additive-blended Thick crescent Slash / Lightning / Pulse)
   for (const fx of state.visualFx) {
     const alpha = Math.max(0, fx.life / fx.maxLife);
     ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = alpha;
     if (fx.kind === 'slash' && fx.radius !== undefined && fx.angle !== undefined) {
       const half = fx.halfArcRad ?? 1.0;
@@ -679,17 +1053,23 @@ export function renderGame(
       const midA = fx.angle;
 
       // Thick crescent blade body
-      ctx.fillStyle = 'rgba(34, 211, 238, 0.28)';
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.3)';
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, outerR, startA, endA);
       ctx.arc(fx.x, fx.y, innerR, endA, startA, true);
       ctx.closePath();
       ctx.fill();
 
-      // Bright cutting edge & trailing energy arc
+      // Wide outer bloom arc + bright cutting edge
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+      ctx.lineWidth = 9;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, outerR, startA, endA);
+      ctx.stroke();
+
       ctx.strokeStyle = fx.color;
       ctx.lineWidth = 4.5;
-      ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, outerR, startA, endA);
       ctx.stroke();
@@ -701,35 +1081,52 @@ export function renderGame(
       ctx.stroke();
     } else if (fx.kind === 'pulse' && fx.radius !== undefined) {
       ctx.strokeStyle = fx.color;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(fx.x, fx.y, fx.radius * (1 - alpha * 0.4), 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ecfeff';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, fx.radius * (1 - alpha * 0.4), 0, Math.PI * 2);
       ctx.stroke();
     } else if (fx.kind === 'lightning' && fx.points && fx.points.length >= 2) {
-      ctx.strokeStyle = fx.color;
-      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+      ctx.lineWidth = 6.5;
       ctx.beginPath();
       ctx.moveTo(fx.points[0].x, fx.points[0].y);
       for (let idx = 1; idx < fx.points.length; idx++) {
         ctx.lineTo(fx.points[idx].x, fx.points[idx].y);
       }
       ctx.stroke();
+
+      ctx.strokeStyle = fx.color;
+      ctx.lineWidth = 2.6;
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f0f9ff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
     }
     ctx.restore();
   }
 
-  // 6.5. Particles (hit sparks, death bursts, pickup sparkles)
+  // 6.5. Particles (additive glowing hit sparks, death bursts, pickup sparkles)
   if (state.particles && state.particles.length > 0) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
     for (const pt of state.particles) {
       const alpha = Math.max(0, Math.min(1, pt.life / Math.max(0.01, pt.maxLife)));
-      ctx.save();
       ctx.globalAlpha = alpha;
       ctx.fillStyle = pt.color;
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, pt.radius * (0.45 + alpha * 0.55), 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
+    ctx.restore();
   }
 
   // 7. Enemies (rendered when inside player's vision, or glowing ambush runners summoned by scout)
@@ -740,22 +1137,18 @@ export function renderGame(
     drawEnemyBody(ctx, enemy, nowSec);
   }
 
-  // 8. Projectiles
+  // 8. Projectiles (additive bloom for beams and energy shots)
   for (const proj of state.projectiles) {
     if (proj.kind === 'disc') {
       const glow = 0.65 + 0.35 * Math.sin(nowSec * 14);
+      drawGlowSprite(ctx, 'amber', proj.x, proj.y, proj.radius * 3.1, 0.55 * glow, true);
       ctx.save();
       ctx.translate(proj.x, proj.y);
 
-      ctx.fillStyle = `rgba(250, 204, 21, ${0.22 * glow})`;
+      ctx.strokeStyle = `rgba(254, 240, 138, ${0.78 * glow})`;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.arc(0, 0, proj.radius + 9, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = `rgba(254, 240, 138, ${0.72 * glow})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(0, 0, proj.radius + 4 + glow * 2.5, 0, Math.PI * 2);
+      ctx.arc(0, 0, proj.radius + 4 + glow * 2.2, 0, Math.PI * 2);
       ctx.stroke();
 
       ctx.rotate(proj.spinAngle ?? nowSec * 14);
@@ -781,40 +1174,56 @@ export function renderGame(
         const baseScale = 1 + baseLv * 0.14 + (ocLv >= 2 ? 0.12 : 0);
         const halfW = Math.max(2.4, proj.radius * 0.42 * baseScale);
         ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
         ctx.translate(proj.x, proj.y);
         ctx.rotate(angle);
-
-        ctx.strokeStyle = ocLv >= 2 ? 'rgba(45, 212, 191, 0.42)' : 'rgba(45, 212, 191, 0.32)';
-        ctx.lineWidth = halfW * 3.4;
         ctx.lineCap = 'round';
+
+        // Wide outer cyan neon bloom
+        ctx.strokeStyle = ocLv >= 2 ? 'rgba(6, 182, 212, 0.42)' : 'rgba(6, 182, 212, 0.34)';
+        ctx.lineWidth = halfW * 4.4;
         ctx.beginPath();
         ctx.moveTo(-beamLen, 0);
         ctx.lineTo(2, 0);
         ctx.stroke();
 
-        ctx.strokeStyle = proj.color;
-        ctx.lineWidth = halfW * 1.9;
+        // Mid intense turquoise energy sheath
+        ctx.strokeStyle = ocLv >= 2 ? 'rgba(45, 212, 191, 0.72)' : 'rgba(34, 211, 238, 0.65)';
+        ctx.lineWidth = halfW * 2.5;
         ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.9, 0);
+        ctx.moveTo(-beamLen * 0.94, 0);
         ctx.lineTo(4, 0);
         ctx.stroke();
 
-        ctx.strokeStyle = '#ecfeff';
-        ctx.lineWidth = Math.max(1.6, halfW * 0.92);
+        // Bright beam body
+        ctx.strokeStyle = proj.color;
+        ctx.lineWidth = halfW * 1.45;
+        ctx.beginPath();
+        ctx.moveTo(-beamLen * 0.86, 0);
+        ctx.lineTo(5, 0);
+        ctx.stroke();
+
+        // Blazing white-cyan core
+        ctx.strokeStyle = '#f0fdfa';
+        ctx.lineWidth = Math.max(1.8, halfW * 0.82);
         ctx.beginPath();
         ctx.moveTo(-beamLen * 0.72, 0);
         ctx.lineTo(6, 0);
         ctx.stroke();
+
+        drawGlowSprite(ctx, 'cyan', 2, 0, halfW * 2.8, 0.52, false);
         ctx.restore();
       } else {
+        drawGlowSprite(ctx, 'emerald', proj.x, proj.y, proj.radius * 2.6, 0.42, true);
         ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
         if (baseLv >= 3) {
           const tailLen = baseLv >= 5 ? 18 : 13;
           ctx.save();
           ctx.translate(proj.x, proj.y);
           ctx.rotate(angle);
-          ctx.strokeStyle = 'rgba(110, 231, 183, 0.42)';
-          ctx.lineWidth = proj.radius * 1.35;
+          ctx.strokeStyle = 'rgba(110, 231, 183, 0.5)';
+          ctx.lineWidth = proj.radius * 1.45;
           ctx.lineCap = 'round';
           ctx.beginPath();
           ctx.moveTo(-tailLen, 0);
@@ -835,10 +1244,12 @@ export function renderGame(
       const angle = Math.atan2(proj.vy, proj.vx);
       const isPreHoming = (proj.orbitTimer ?? 0) > 0 || (proj.expandTimer ?? 0) > 0;
       const tailLen = isPreHoming ? 15 : 10;
+      drawGlowSprite(ctx, 'emerald', proj.x, proj.y, proj.radius * 2.5, 0.45, true);
       ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
       ctx.translate(proj.x, proj.y);
       ctx.rotate(angle);
-      ctx.strokeStyle = isPreHoming ? 'rgba(167, 243, 208, 0.72)' : 'rgba(167, 243, 208, 0.55)';
+      ctx.strokeStyle = isPreHoming ? 'rgba(167, 243, 208, 0.75)' : 'rgba(167, 243, 208, 0.58)';
       ctx.lineWidth = isPreHoming ? 3.0 : 2.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -855,7 +1266,9 @@ export function renderGame(
       ctx.stroke();
       ctx.restore();
     } else if (proj.kind === 'reflected') {
+      drawGlowSprite(ctx, 'cyan', proj.x, proj.y, proj.radius * 2.8, 0.55, true);
       ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
       ctx.fillStyle = proj.color;
       ctx.beginPath();
       ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
@@ -865,19 +1278,32 @@ export function renderGame(
       ctx.stroke();
       ctx.restore();
     } else {
+      drawGlowSprite(ctx, 'cyan', proj.x, proj.y, proj.radius * 2.3, 0.4, true);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
       ctx.fillStyle = proj.color;
       ctx.beginPath();
       ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     }
   }
 
   for (const ep of state.enemyProjectiles) {
     if (!isPointInPlayerVision(map, player.x, player.y, ep.x, ep.y)) continue;
+    drawGlowSprite(
+      ctx,
+      ep.pierceDefense ? 'pink' : 'rose',
+      ep.x,
+      ep.y,
+      ep.radius * (ep.pierceDefense ? 2.8 : 2.2),
+      ep.pierceDefense ? 0.55 : 0.4,
+      true
+    );
     if (ep.pierceDefense) {
       ctx.fillStyle = 'rgba(232, 121, 249, 0.28)';
       ctx.beginPath();
-      ctx.arc(ep.x, ep.y, ep.radius + 4, 0, Math.PI * 2);
+      ctx.arc(ep.x, ep.y, ep.radius + 3.5, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.fillStyle = ep.color ?? '#fb7185';
@@ -885,37 +1311,23 @@ export function renderGame(
     ctx.arc(ep.x, ep.y, ep.radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = ep.pierceDefense ? '#fdf4ff' : '#ffe4e6';
-    ctx.lineWidth = ep.pierceDefense ? 1.8 : 1.2;
+    ctx.lineWidth = ep.pierceDefense ? 1.8 : 1.3;
     ctx.stroke();
   }
 
   // 9. Player & Aegis ready aura
   if (mods.hasAegisParry && player.aegisCooldown <= 0) {
-    ctx.strokeStyle = 'rgba(52, 211, 153, 0.65)';
+    drawGlowSprite(ctx, 'emerald', player.x, player.y, player.radius * 2.4, 0.32, true);
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.72)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(player.x, player.y, player.radius + 7, 0, Math.PI * 2);
+    ctx.arc(player.x, player.y, player.radius + 8.5, 0, Math.PI * 2);
     ctx.stroke();
   }
 
   const blink = player.invulnTimer > 0 && Math.floor(nowSec * 20) % 2 === 0;
   if (!blink) {
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.rotate(player.facingAngle);
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#e0f2fe';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    ctx.fillStyle = '#f8fafc';
-    ctx.beginPath();
-    ctx.arc(6, 0, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    drawPlayerCore(ctx, player.x, player.y, player.radius, player.facingAngle, nowSec);
   }
 
   // 10. Floating damage / pickup texts
@@ -933,8 +1345,10 @@ export function renderGame(
   // 10.5. Fog of War overlay (corridor circular light vs lit room)
   renderFogOverlay(ctx, width, height, zoom, camX, camY, state);
 
-  // 11. Mini-map (top-right, below HUD)
-  renderMinimap(ctx, width, state, topSafeY);
+  // 11. Legacy in-canvas Mini-map (skipped when HUD renders dedicated minimap canvas)
+  if (!insets.hideCanvasMinimap) {
+    renderMinimap(ctx, width, state, topSafeY);
+  }
 
   // 12. Virtual joystick indicator (if active)
   if (stick.active) {
@@ -945,21 +1359,24 @@ export function renderGame(
     const kx = dist > 0 ? stick.originX + (dx / dist) * clampedDist : stick.originX;
     const ky = dist > 0 ? stick.originY + (dy / dist) * clampedDist : stick.originY;
 
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.42)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(stick.originX, stick.originY, stick.maxRadius, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.55)';
+    ctx.fillStyle = 'rgba(34, 211, 238, 0.55)';
     ctx.beginPath();
     ctx.arc(kx, ky, 18, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // 13. Toast Notifications (bottom, compact on narrow screens) & Floor entry banner (centered)
-  renderNotifications(ctx, width, height, state, insets.hintTop);
+  // 13. Legacy in-canvas Toast Notifications (skipped when HUD renders DOM notifications)
+  if (!insets.hideCanvasNotifications) {
+    renderNotifications(ctx, width, height, state, insets.hintTop);
+  }
 
+  // 14. Sleek sci-fi cut-corner Floor Entry Banner
   if (state.floorBannerTimer > 0) {
     const isBoss = map.floorType === 'boss';
     const isGuardian = map.floorType === 'guardian';
@@ -969,14 +1386,42 @@ export function renderGame(
       ? `GUARDIAN ${state.floor}F`
       : `FLOOR ${state.floor}F`;
     const borderColor = isBoss ? '#f43f5e' : isGuardian ? '#facc15' : '#38bdf8';
+    const glowStroke = isBoss
+      ? 'rgba(244, 63, 94, 0.32)'
+      : isGuardian
+      ? 'rgba(250, 204, 21, 0.32)'
+      : 'rgba(56, 189, 248, 0.34)';
     const banner = computeFloorBannerRect(width, height, topSafeY);
 
     ctx.save();
     ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
-    ctx.fillRect(banner.x, banner.y, banner.width, banner.height);
+
+    traceCutCornerRect(ctx, banner.x, banner.y, banner.width, banner.height, 10);
+    if (typeof ctx.createLinearGradient === 'function') {
+      const grad = ctx.createLinearGradient(banner.x, banner.y, banner.x, banner.y + banner.height);
+      grad.addColorStop(0, 'rgba(12, 24, 48, 0.92)');
+      grad.addColorStop(1, 'rgba(5, 11, 24, 0.88)');
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = 'rgba(6, 14, 30, 0.88)';
+    }
+    ctx.fill();
+
+    // Soft outer neon border glow (zero shadowBlur)
+    ctx.strokeStyle = glowStroke;
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // Crisp neon frame stroke
     ctx.strokeStyle = borderColor;
-    ctx.strokeRect(banner.x, banner.y, banner.width, banner.height);
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // Side cyber accent bars inside banner
+    ctx.fillStyle = borderColor;
+    ctx.fillRect(banner.x + 12, banner.y + 11, 3, banner.height - 22);
+    ctx.fillRect(banner.x + banner.width - 15, banner.y + 11, 3, banner.height - 22);
+
     ctx.fillStyle = '#f8fafc';
     ctx.font = 'bold 18px monospace';
     ctx.textAlign = 'center';

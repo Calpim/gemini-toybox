@@ -29,6 +29,7 @@ import {
   type SkillNodeId,
 } from '../game/skillTree';
 import type { GameState } from '../game/types';
+import { ICON_LOCK } from './icons';
 
 export interface ModalHandlers {
   onUnlockSkill: (nodeId: SkillNodeId) => void;
@@ -37,9 +38,9 @@ export interface ModalHandlers {
 }
 
 const BRANCH_META: { id: SkillBranch; label: string; accent: string }[] = [
-  { id: 'arms', label: '🔴 兵装・ビット', accent: '#f87171' },
-  { id: 'defense', label: '🔵 迎撃・防衛', accent: '#60a5fa' },
-  { id: 'mobility', label: '🟢 探索・機動', accent: '#34d399' },
+  { id: 'arms', label: '兵装・ビット', accent: '#f87171' },
+  { id: 'defense', label: '迎撃・防衛', accent: '#60a5fa' },
+  { id: 'mobility', label: '探索・機動', accent: '#34d399' },
 ];
 
 function formatGearDetail(eq: EquippedItem, state: GameState): string {
@@ -98,7 +99,7 @@ export function renderModals(
       const heading = document.createElement('div');
       heading.className = 'tree-col-head';
       heading.style.color = branch.accent;
-      heading.textContent = branch.label;
+      heading.innerHTML = `<span class="branch-dot" style="background:${branch.accent};color:${branch.accent}"></span><span>${branch.label}</span>`;
       col.appendChild(heading);
 
       const nodes = SKILL_TREE_NODES.filter((n) => n.branch === branch.id).sort(
@@ -127,6 +128,8 @@ export function renderModals(
 
         const btn = document.createElement('button');
         btn.type = 'button';
+        btn.dataset.branch = node.branch;
+        btn.dataset.tier = String(node.tier);
         btn.className = `tree-node ${
           isMax ? 'unlocked' : isAvailable ? 'available' : currLv > 0 ? 'unlocked' : 'locked'
         }`;
@@ -143,15 +146,15 @@ export function renderModals(
           ? `Tier ${node.tier} · ${costLabel} · 前提: ${getSkillNode(node.requires).name} Lv${SKILL_PREREQ_LEVEL}+`
           : `Tier ${node.tier} · ${costLabel} · 基本ノード`;
 
-        const stateLabel = isMax
+        const stateHtml = isMax
           ? `MAX (${currLv}/${maxLv})`
           : isAvailable
           ? currLv === 0
             ? `習得 (-${nextCost} SP)`
             : `Lv${currLv}→${currLv + 1} (-${nextCost} SP)`
           : prereqMet
-          ? `🔒 SP不足 (必要${nextCost})`
-          : `🔒 前提Lv${SKILL_PREREQ_LEVEL}要`;
+          ? `${ICON_LOCK}<span>SP不足 (必要${nextCost})</span>`
+          : `${ICON_LOCK}<span>前提Lv${SKILL_PREREQ_LEVEL}要</span>`;
 
         const effectText =
           currLv > 0
@@ -160,8 +163,8 @@ export function renderModals(
 
         btn.innerHTML = `
           <div class="node-top">
-            <strong>${node.name} <span style="opacity:0.8;font-size:11px">Lv${currLv}/${maxLv}</span></strong>
-            <span class="node-state">${stateLabel}</span>
+            <span class="node-title">${node.name}<span class="node-lv">Lv${currLv}/${maxLv}</span></span>
+            <span class="node-state">${stateHtml}</span>
           </div>
           <div class="node-desc">${effectText}</div>
           <div class="node-req">${reqLabel}</div>
@@ -205,7 +208,7 @@ export function renderModals(
     els.equipModal.classList.remove('hidden');
     const titleEl = document.getElementById('equipModalTitle');
     if (titleEl) {
-      titleEl.textContent = `📦 装備スロット満杯（${state.player.equipment.length}/${state.player.maxEquipSlots}）`;
+      titleEl.textContent = `装備スロット満杯（${state.player.equipment.length}/${state.player.maxEquipSlots}）`;
     }
     const scrapExpandBtn = document.getElementById('scrapEquipBtn') as HTMLButtonElement | null;
     if (scrapExpandBtn) {
@@ -213,8 +216,8 @@ export function renderModals(
       const expandCost = getScrapExpandCost(state.player.maxEquipSlots);
       scrapExpandBtn.disabled = !canExpand;
       scrapExpandBtn.textContent = canExpand
-        ? `🔧 スクラップ＆ビルド：枠拡張へ蓄積（${state.player.scrapExpandProgress}/${expandCost}）→ ${expandCost}回で枠+1`
-        : `🔧 装備枠は最大（${MAX_EQUIP_SLOTS_CAP}/${MAX_EQUIP_SLOTS_CAP}）`;
+        ? `スクラップ＆ビルド：枠拡張へ蓄積（${state.player.scrapExpandProgress}/${expandCost}）→ ${expandCost}回で枠+1`
+        : `装備枠は最大（${MAX_EQUIP_SLOTS_CAP}/${MAX_EQUIP_SLOTS_CAP}）`;
     }
 
     const dropItem = state.pendingEquipDrop.item;
@@ -233,7 +236,6 @@ export function renderModals(
       const isMaxLv = eq.level >= MAX_EQUIPMENT_LEVEL;
       const row = document.createElement('div');
       row.className = 'slot-btn';
-      row.style.cursor = 'default';
       row.innerHTML = `
         <span><strong>枠${idx + 1}/${state.player.maxEquipSlots}</strong> ${def.name} Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} <small style="color:#94a3b8">(${evo})</small></span>
       `;
@@ -244,29 +246,16 @@ export function renderModals(
       const replaceBtn = document.createElement('button');
       replaceBtn.type = 'button';
       replaceBtn.className = 'slot-action';
-      replaceBtn.style.border = '1px solid #38bdf866';
-      replaceBtn.style.background = '#0f172a';
-      replaceBtn.style.borderRadius = '6px';
-      replaceBtn.style.padding = '4px 8px';
-      replaceBtn.style.cursor = 'pointer';
       replaceBtn.textContent = '入れ替える';
       replaceBtn.addEventListener('click', () => handlers.onResolveEquip({ type: 'replace', slotIndex: idx }));
 
       const upgradeBtn = document.createElement('button');
       upgradeBtn.type = 'button';
-      upgradeBtn.className = 'slot-action';
-      upgradeBtn.style.border = '1px solid #fbbf2466';
-      upgradeBtn.style.color = '#fbbf24';
-      upgradeBtn.style.background = '#0f172a';
-      upgradeBtn.style.borderRadius = '6px';
-      upgradeBtn.style.padding = '4px 8px';
+      upgradeBtn.className = 'slot-action upgrade';
       if (isMaxLv) {
         upgradeBtn.disabled = true;
-        upgradeBtn.style.opacity = '0.45';
-        upgradeBtn.style.cursor = 'not-allowed';
         upgradeBtn.textContent = `MAX (Lv${MAX_EQUIPMENT_LEVEL})`;
       } else {
-        upgradeBtn.style.cursor = 'pointer';
         upgradeBtn.textContent = `Lv+1 (${eq.level}→${eq.level + 1})`;
         upgradeBtn.addEventListener('click', () =>
           handlers.onResolveEquip({ type: 'scrap_upgrade', slotIndex: idx })
