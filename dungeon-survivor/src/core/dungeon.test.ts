@@ -139,7 +139,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
     expect(hasLineOfSight(left.x, left.y, right.x, right.y, map)).toBe(false);
   });
 
-  it('[APP-MAP-08 & APP-MAP-09] guarantees spacious stairs room on Guardian floors (3/6/9F) and generates Boss Arena + Fountain anteroom on 10F/20F', () => {
+  it('[APP-MAP-01 & APP-BOS-01] guarantees spacious stairs room on Guardian floors (3/6/9F) and generates Boss Arena + Fountain anteroom on 10F/20F', () => {
     for (const gf of [3, 6, 9, 13]) {
       const gMap = generateDungeon({ floor: gf, seed: 4242 });
       expect(gMap.floorType).toBe('guardian');

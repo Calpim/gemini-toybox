@@ -90,7 +90,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.x - startX).toBeCloseTo(210 * 0.05, 1);
   });
 
-  it('[APP-MAP-01 & APP-MAP-08] keeps normal floor stairs unlocked, spawns Guardian mid-boss every 3/6/9F to lock stairs, and drops higher-level gear on defeat', () => {
+  it('[APP-MAP-01 & INV-04] keeps normal floor stairs unlocked, spawns Guardian mid-boss every 3/6/9F to lock stairs, and drops higher-level gear on defeat', () => {
     // 1F (normal floor) has unlocked stairs without mid-boss
     const normalState = createGameState({ seed: 2026, startFloor: 1 });
     expect(normalState.floor).toBe(1);
@@ -1219,7 +1219,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(scoutState.pickups.length).toBe(0);
   });
 
-  it('[APP-GRW-08] enforces MAX_EQUIPMENT_LEVEL=8 cap, auto-expands slots on Lv8 duplicates when maxEquipSlots < 5, and grants overflow bonus at cap', () => {
+  it('[INV-09 / APP-GRW-04] enforces MAX_EQUIPMENT_LEVEL=8 cap, auto-expands slots on Lv8 duplicates when maxEquipSlots < 5, and grants overflow bonus at cap', () => {
     expect(MAX_EQUIPMENT_LEVEL).toBe(8);
     const state = createGameState({ seed: 940 });
 
@@ -1266,7 +1266,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.equipment[1].level).toBe(6);
   });
 
-  it('[APP-MAP-09 & APP-UI-01] heals 100% once at 10F Fountain, fights Grand Boss with 4 barrage/dash patterns, continues endlessly to 11F, and pauses cleanly via toggleSkillTree', () => {
+  it('[APP-BOS-01 & APP-BOS-02 & ST-01] heals 100% once at 10F Fountain, fights Grand Boss with 4 barrage/dash patterns, continues endlessly to 11F, and pauses cleanly via toggleSkillTree', () => {
     const state = createGameState({ seed: 950, startFloor: 10 });
     expect(state.map.floorType).toBe('boss');
     expect(state.map.fountainTile).not.toBeNull();

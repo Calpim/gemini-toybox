@@ -296,8 +296,14 @@ function syncUi(forceModals = false): void {
 const handleOpenSkill = (): void => {
   if (state.status === 'playing') {
     activePauseTab = 'skill';
+    toggleSkillTree(state);
+  } else if (state.status === 'skill_tree') {
+    if (activePauseTab === 'skill') {
+      closeSkillTree(state);
+    } else {
+      activePauseTab = 'skill';
+    }
   }
-  toggleSkillTree(state);
   syncUi(true);
 };
 
