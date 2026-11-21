@@ -10,39 +10,45 @@
 </head>
 <body>
   <div class="hud">
-    <div class="hud-main-panel">
-      <div class="hud-floor-block">
-        <strong id="floorText" class="hud-floor-text">1F</strong>
-        <span id="playTimeText" class="hud-time-text">00:00</span>
-      </div>
+    <div class="hud-top-grid">
+      <div class="hud-left-stack">
+        <div class="hud-main-panel">
+          <div class="hud-floor-block">
+            <strong id="floorText" class="hud-floor-text">1F</strong>
+            <span id="playTimeText" class="hud-time-text">00:00</span>
+          </div>
 
-      <div class="hud-bars">
-        <div id="hpBar" class="bar-track hp-bar">
-          <div id="hpFill" class="hp-fill" style="width: 100%"></div>
-          <div class="bar-overlay">
-            <span class="bar-tag">HP</span>
-            <span id="hpText">100 / 100</span>
+          <div class="hud-bars">
+            <div id="hpBar" class="bar-track hp-bar">
+              <div id="hpFill" class="hp-fill" style="width: 100%"></div>
+              <div class="bar-overlay">
+                <span class="bar-tag">HP</span>
+                <span id="hpText">100 / 100</span>
+              </div>
+            </div>
+            <div class="bar-track exp-bar">
+              <div id="expFill" class="exp-fill" style="width: 0%"></div>
+              <div class="bar-overlay">
+                <span id="expText">EXP 0 / 25</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="bar-track exp-bar">
-          <div id="expFill" class="exp-fill" style="width: 0%"></div>
-          <div class="bar-overlay">
-            <span id="expText">EXP 0 / 25</span>
-          </div>
+
+        <div class="hud-sub-bar">
+          <button id="skillBtn" type="button" class="skill-btn"></button>
+          <span id="gearCountText" class="hud-stat hud-stat-gear">GEAR 0/2</span>
+          <span id="killsText" class="hud-stat hud-stat-kills">KILLS 0</span>
         </div>
       </div>
 
-      <div class="minimap-frame" aria-label="ミニマップ">
+      <div class="minimap-tactical" aria-label="ミニマップ">
+        <span class="mm-cap tl" aria-hidden="true"></span>
+        <span class="mm-cap tr" aria-hidden="true"></span>
+        <span class="mm-cap bl" aria-hidden="true"></span>
+        <span class="mm-cap br" aria-hidden="true"></span>
         <canvas id="minimapCanvas"></canvas>
       </div>
-    </div>
-
-    <div class="hud-sub-bar">
-      <button id="pauseBtn" type="button" class="hud-icon-btn pause-btn" title="ポーズ / ステータス確認 (ESC)" aria-label="ポーズ"></button>
-      <button id="skillBtn" type="button" class="skill-btn"></button>
-      <span id="gearCountText" class="hud-stat hud-stat-gear">GEAR 0/2</span>
-      <span id="killsText" class="hud-stat hud-stat-kills">KILLS 0</span>
-      <button id="muteBtn" type="button" class="hud-icon-btn mute-btn" title="サウンド ON/OFF" aria-label="サウンド切替"></button>
     </div>
 
     <div id="notificationStack" class="notification-stack" aria-live="polite"></div>
@@ -50,18 +56,100 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <div class="bottom-console">
-    <div class="bottom-console-inner">
-      <button id="bottomPauseLeftBtn" type="button" class="console-side-btn left" title="スキル / ポーズ (ESC)">
-        <span>SKILL/</span>
+  <div class="cockpit-console">
+    <svg class="cockpit-svg-shell" viewBox="0 0 420 102" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="cockpitDeckGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(26, 48, 82, 0.86)" />
+          <stop offset="45%" stop-color="rgba(12, 24, 46, 0.92)" />
+          <stop offset="100%" stop-color="rgba(6, 13, 28, 0.97)" />
+        </linearGradient>
+        <linearGradient id="cockpitCanopyGlass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(56, 189, 248, 0.2)" />
+          <stop offset="100%" stop-color="rgba(14, 28, 54, 0.65)" />
+        </linearGradient>
+        <linearGradient id="cockpitSwitchBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(18, 52, 86, 0.92)" />
+          <stop offset="100%" stop-color="rgba(8, 22, 46, 0.96)" />
+        </linearGradient>
+        <linearGradient id="cockpitCenterWell" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(4, 11, 24, 0.92)" />
+          <stop offset="100%" stop-color="rgba(9, 20, 40, 0.96)" />
+        </linearGradient>
+      </defs>
+
+      <polygon
+        points="0,34 86,10 334,10 420,34 420,102 0,102"
+        fill="url(#cockpitDeckGrad)"
+        stroke="#38bdf8"
+        stroke-opacity="0.7"
+        stroke-width="1.5"
+      />
+      <polyline
+        points="4,35 87,12 333,12 416,35"
+        fill="none"
+        stroke="#67e8f9"
+        stroke-width="2"
+      />
+      <polygon
+        points="92,18 328,18 302,38 118,38"
+        fill="url(#cockpitCanopyGlass)"
+        stroke="#38bdf8"
+        stroke-opacity="0.45"
+        stroke-width="1"
+      />
+
+      <polygon
+        points="10,44 80,26 106,52 106,94 10,94"
+        fill="url(#cockpitSwitchBg)"
+        stroke="#22d3ee"
+        stroke-width="2"
+        stroke-linejoin="round"
+      />
+      <polygon
+        points="15,47 78,31 101,54 101,89 15,89"
+        fill="none"
+        stroke="#67e8f9"
+        stroke-opacity="0.35"
+        stroke-width="1"
+      />
+
+      <polygon
+        points="410,44 340,26 314,52 314,94 410,94"
+        fill="url(#cockpitSwitchBg)"
+        stroke="#22d3ee"
+        stroke-width="2"
+        stroke-linejoin="round"
+      />
+      <polygon
+        points="405,47 342,31 319,54 319,89 405,89"
+        fill="none"
+        stroke="#67e8f9"
+        stroke-opacity="0.35"
+        stroke-width="1"
+      />
+
+      <polygon
+        points="126,46 294,46 306,94 114,94"
+        fill="url(#cockpitCenterWell)"
+        stroke="#38bdf8"
+        stroke-opacity="0.65"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
+    </svg>
+
+    <div class="cockpit-interactive-layer">
+      <button id="bottomPauseLeftBtn" type="button" class="cockpit-side-btn left" title="スキル / ポーズ (ESC)">
+        <span>SKILL /</span>
         <span>PAUSE</span>
       </button>
-      <div class="console-hint">
-        <div class="console-hint-main">DRAG / WASD to Move</div>
-        <div class="console-hint-sub">ESC/K to Pause</div>
+      <div class="cockpit-center-readout">
+        <div class="cockpit-readout-main">DRAG / WASD to Move</div>
+        <div class="cockpit-readout-sub">ESC/K to Pause</div>
       </div>
-      <button id="bottomPauseRightBtn" type="button" class="console-side-btn right" title="スキル / ポーズ (ESC)">
-        <span>SKILL/</span>
+      <button id="bottomPauseRightBtn" type="button" class="cockpit-side-btn right" title="スキル / ポーズ (ESC)">
+        <span>SKILL /</span>
         <span>PAUSE</span>
       </button>
     </div>
@@ -73,6 +161,7 @@
       <div class="modal-head">
         <h2 id="skillModalHeading">ポーズ / スキルツリー</h2>
         <div class="modal-head-meta">
+          <button id="muteBtn" type="button" class="hud-icon-btn mute-btn" title="サウンド ON/OFF" aria-label="サウンド切替"></button>
           <a class="spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書</a>
           <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
         </div>

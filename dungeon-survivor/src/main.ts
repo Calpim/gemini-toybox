@@ -33,7 +33,7 @@ const minimapCanvas = document.getElementById('minimapCanvas') as HTMLCanvasElem
 const minimapCtx = minimapCanvas?.getContext('2d') ?? null;
 
 const hudEl = document.querySelector('.hud') as HTMLElement | null;
-const bottomConsoleEl = document.querySelector('.bottom-console') as HTMLElement | null;
+const bottomConsoleEl = document.querySelector('.cockpit-console') as HTMLElement | null;
 const hpBar = document.getElementById('hpBar')!;
 const hpText = document.getElementById('hpText')!;
 const hpFill = document.getElementById('hpFill')!;
@@ -42,7 +42,6 @@ const expFill = document.getElementById('expFill')!;
 const floorText = document.getElementById('floorText')!;
 const playTimeText = document.getElementById('playTimeText')!;
 const muteBtn = document.getElementById('muteBtn')!;
-const pauseBtn = document.getElementById('pauseBtn')!;
 const skillBtn = document.getElementById('skillBtn')!;
 const bottomPauseLeftBtn = document.getElementById('bottomPauseLeftBtn');
 const bottomPauseRightBtn = document.getElementById('bottomPauseRightBtn');
@@ -71,7 +70,6 @@ const closeSkillTopBtn = document.getElementById('closeSkillTopBtn')!;
 const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
 
 // Initialize static SVG icons
-pauseBtn.innerHTML = ICON_PAUSE;
 closeSkillTopBtn.innerHTML = ICON_CLOSE;
 if (skillModalHeading) {
   skillModalHeading.innerHTML = `<span style="color:#fb923c;display:inline-flex">${ICON_PAUSE}</span><span>ポーズ /</span><span style="color:#34d399;display:inline-flex">${ICON_TREE}</span><span>スキルツリー</span>`;
@@ -91,7 +89,7 @@ const safeInsets: HudSafeInsets = {
 
 function syncMuteBtn(): void {
   const muted = soundManager.isMuted();
-  muteBtn.innerHTML = muted ? ICON_VOLUME_OFF : ICON_VOLUME_ON;
+  muteBtn.innerHTML = `${muted ? ICON_VOLUME_OFF : ICON_VOLUME_ON}<span>${muted ? 'OFF' : 'ON'}</span>`;
   muteBtn.classList.toggle('is-muted', muted);
   muteBtn.title = muted ? 'サウンド OFF（タップでON）' : 'サウンド ON（タップでOFF）';
 }
@@ -105,9 +103,9 @@ window.addEventListener('keydown', unlockAudioOnce, { passive: true });
 
 function resizeMinimap(): void {
   if (!minimapCanvas || !minimapCtx) return;
-  const rect = minimapCanvas.parentElement?.getBoundingClientRect();
-  const w = Math.max(48, Math.round(rect?.width ?? 68));
-  const h = Math.max(48, Math.round(rect?.height ?? 68));
+  const rect = minimapCanvas.getBoundingClientRect();
+  const w = Math.max(64, Math.round(rect.width || 96));
+  const h = Math.max(64, Math.round(rect.height || 96));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   if (minimapCanvas.width !== Math.floor(w * dpr) || minimapCanvas.height !== Math.floor(h * dpr)) {
     minimapCanvas.width = Math.floor(w * dpr);
@@ -151,7 +149,6 @@ function syncNotifications(): void {
   const visible = state.notifications.slice(-2);
   const key = visible.map((n) => `${n.id}:${n.kind}:${n.text}`).join('|');
   if (key === lastRenderedNotificationKey) {
-    // Update subtle fade-out opacity as life expires
     Array.from(notificationStack.children).forEach((el, idx) => {
       const n = visible[idx];
       if (n) {
@@ -207,7 +204,6 @@ function syncUi(forceModals = false): void {
     canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
   );
   skillBtn.classList.toggle('has-sp', canUnlockAny);
-  pauseBtn.classList.toggle('has-sp', state.status === 'skill_tree');
   bottomPauseLeftBtn?.classList.toggle('has-sp', canUnlockAny);
   bottomPauseRightBtn?.classList.toggle('has-sp', canUnlockAny);
 
@@ -286,7 +282,6 @@ muteBtn.addEventListener('click', () => {
   syncMuteBtn();
 });
 
-pauseBtn.addEventListener('click', handleTogglePause);
 skillBtn.addEventListener('click', handleTogglePause);
 bottomPauseLeftBtn?.addEventListener('click', handleTogglePause);
 bottomPauseRightBtn?.addEventListener('click', handleTogglePause);
@@ -347,9 +342,9 @@ function loop(now: number): void {
   renderGame(ctx, window.innerWidth, window.innerHeight, state, controller.stick, now / 1000, safeInsets);
 
   if (minimapCanvas && minimapCtx) {
-    const rect = minimapCanvas.parentElement?.getBoundingClientRect();
-    const mw = Math.max(48, Math.round(rect?.width ?? 68));
-    const mh = Math.max(48, Math.round(rect?.height ?? 68));
+    const rect = minimapCanvas.getBoundingClientRect();
+    const mw = Math.max(64, Math.round(rect.width || 96));
+    const mh = Math.max(64, Math.round(rect.height || 96));
     renderHudMinimap(minimapCtx, mw, mh, state, now / 1000);
   }
 

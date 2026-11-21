@@ -68,31 +68,45 @@ body {
    ========================================================= */
 .hud {
   position: fixed;
-  top: max(8px, env(safe-area-inset-top));
+  top: max(12px, env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
-  width: min(calc(100vw - 16px), 520px);
+  width: min(calc(100vw - 20px), 540px);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 8px;
   pointer-events: none;
   z-index: 12;
+}
+
+.hud-top-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.hud-left-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .hud-main-panel {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(58px, auto) 1fr auto;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 10px;
-  padding: 9px 11px;
-  border-radius: 15px;
-  background: linear-gradient(180deg, rgba(19, 34, 62, 0.86) 0%, rgba(8, 15, 31, 0.92) 100%);
-  border: 1px solid rgba(125, 211, 252, 0.42);
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(19, 34, 62, 0.88) 0%, rgba(8, 15, 31, 0.93) 100%);
+  border: 1px solid rgba(125, 211, 252, 0.45);
   box-shadow:
     0 0 0 1px rgba(34, 211, 238, 0.14) inset,
-    0 1px 0 rgba(224, 242, 254, 0.45) inset,
+    0 1px 0 rgba(224, 242, 254, 0.42) inset,
     0 10px 26px rgba(2, 6, 23, 0.72),
     0 0 18px rgba(34, 211, 238, 0.14);
   backdrop-filter: blur(10px);
@@ -104,7 +118,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 58px;
+  min-width: 56px;
+  padding-right: 4px;
   line-height: 1.05;
 }
 
@@ -120,7 +135,7 @@ body {
 }
 
 .hud-time-text {
-  margin-top: 3px;
+  margin-top: 4px;
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
@@ -131,7 +146,7 @@ body {
 .hud-bars {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -140,14 +155,14 @@ body {
   width: 100%;
   border-radius: 9px;
   overflow: hidden;
-  background: rgba(6, 13, 28, 0.88);
+  background: rgba(6, 13, 28, 0.9);
   border: 1px solid rgba(103, 232, 249, 0.35);
   box-shadow: inset 0 2px 6px rgba(2, 6, 23, 0.85);
 }
 
 .hp-bar {
-  height: 25px;
-  border-color: rgba(52, 211, 153, 0.62);
+  height: 24px;
+  border-color: rgba(52, 211, 153, 0.65);
   box-shadow:
     inset 0 2px 6px rgba(2, 6, 23, 0.8),
     0 0 12px rgba(16, 185, 129, 0.25);
@@ -177,7 +192,7 @@ body {
 }
 
 .exp-bar {
-  height: 19px;
+  height: 18px;
   border-color: rgba(56, 189, 248, 0.45);
 }
 
@@ -207,7 +222,7 @@ body {
 }
 
 .hp-bar .bar-overlay {
-  font-size: 14px;
+  font-size: 13.5px;
   letter-spacing: 0.04em;
   color: #f8fafc;
 }
@@ -216,7 +231,7 @@ body {
   position: absolute;
   left: 8px;
   font-family: var(--font-display);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: #bbf7d0;
@@ -233,38 +248,55 @@ body {
   color: #e0f2fe;
 }
 
-/* Integrated Radar Minimap inside Top HUD */
-.minimap-frame {
+/* Enlarged Tactical Radar Minimap (Concept B) */
+.minimap-tactical {
   position: relative;
-  width: 68px;
-  height: 68px;
-  border-radius: 9px;
-  overflow: hidden;
-  background: #040a16;
-  border: 1px solid rgba(56, 189, 248, 0.45);
+  width: 104px;
+  height: 104px;
+  padding: 4px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(14, 28, 54, 0.94) 0%, rgba(5, 11, 24, 0.96) 100%);
+  border: 1.5px solid rgba(56, 189, 248, 0.68);
   box-shadow:
-    inset 0 0 12px rgba(34, 211, 238, 0.2),
-    0 0 10px rgba(2, 6, 23, 0.7);
+    0 0 18px rgba(34, 211, 238, 0.28),
+    inset 0 0 14px rgba(34, 211, 238, 0.16),
+    0 10px 24px rgba(2, 6, 23, 0.8);
   flex-shrink: 0;
 }
+
+.mm-cap {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: #67e8f9;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.mm-cap.tl { top: -2px; left: -2px; border-width: 2.5px 0 0 2.5px; border-radius: 4px 0 0 0; }
+.mm-cap.tr { top: -2px; right: -2px; border-width: 2.5px 2.5px 0 0; border-radius: 0 4px 0 0; }
+.mm-cap.bl { bottom: -2px; left: -2px; border-width: 0 0 2.5px 2.5px; border-radius: 0 0 0 4px; }
+.mm-cap.br { bottom: -2px; right: -2px; border-width: 0 2.5px 2.5px 0; border-radius: 0 0 4px 0; }
 
 #minimapCanvas {
   display: block;
   width: 100%;
   height: 100%;
+  border-radius: 8px;
+  background: #040a16;
 }
 
-/* Sub HUD Bar */
+/* Sub HUD Bar (Clean 3-item status pill) */
 .hud-sub-bar {
   align-self: flex-start;
   max-width: 100%;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 8px;
+  gap: 10px;
+  padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(6, 12, 25, 0.86);
-  border: 1px solid rgba(56, 189, 248, 0.24);
+  background: rgba(6, 12, 25, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.26);
   box-shadow: 0 6px 18px rgba(2, 6, 23, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -306,11 +338,15 @@ body {
 }
 
 .hud-icon-btn.mute-btn {
+  gap: 5px;
   border-radius: 8px;
-  min-width: 30px;
-  padding: 0 6px;
+  min-width: 58px;
+  padding: 0 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
   color: #7dd3fc;
-  border-color: rgba(56, 189, 248, 0.3);
+  border-color: rgba(56, 189, 248, 0.42);
 }
 
 .hud-icon-btn.mute-btn.is-muted {
@@ -522,125 +558,112 @@ body {
 }
 
 /* =========================================================
-   BOTTOM SCI-FI CONSOLE BAR (Left & Right SKILL/PAUSE)
+   BOTTOM GLASS COCKPIT CONSOLE (Concept A - SVG Bezels)
    ========================================================= */
-.bottom-console {
+.cockpit-console {
   position: fixed;
-  bottom: max(6px, env(safe-area-inset-bottom));
+  bottom: max(0px, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
-  width: min(calc(100vw - 12px), 560px);
+  width: min(100vw, 560px);
+  height: 102px;
   pointer-events: none;
   z-index: 12;
 }
 
-.bottom-console-inner {
-  position: relative;
-  display: grid;
-  grid-template-columns: 76px 1fr 76px;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 8px 7px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(22, 36, 58, 0.72) 0%, rgba(7, 13, 26, 0.86) 100%);
-  border: 1px solid rgba(125, 211, 252, 0.28);
-  box-shadow:
-    inset 0 1px 0 rgba(186, 230, 253, 0.24),
-    0 -4px 20px rgba(2, 6, 23, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.bottom-console-inner::before {
-  content: '';
+.cockpit-svg-shell {
   position: absolute;
-  top: -1px;
-  left: 26%;
-  right: 26%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #22d3ee 20%, #e0f2fe 50%, #22d3ee 80%, transparent);
-  opacity: 0.75;
-  pointer-events: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 -6px 18px rgba(34, 211, 238, 0.22));
 }
 
-.console-side-btn {
-  pointer-events: auto;
-  height: 54px;
+.cockpit-interactive-layer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.cockpit-side-btn {
+  position: absolute;
+  bottom: 8px;
+  width: 24.5%;
+  height: 58px;
+  border: none;
+  background: transparent;
+  color: #e0f2fe;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  border: 1px solid rgba(148, 163, 184, 0.42);
-  background: linear-gradient(180deg, rgba(71, 95, 128, 0.58) 0%, rgba(30, 44, 68, 0.76) 100%);
-  color: #e2e8f0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1.15;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(226, 232, 240, 0.28),
-    0 2px 10px rgba(2, 6, 23, 0.55);
-  transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  pointer-events: auto;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.75);
+  transition: transform 0.1s ease, color 0.15s ease, text-shadow 0.15s ease;
 }
 
-.console-side-btn.left {
-  border-radius: 7px;
-  clip-path: polygon(0 0, 74% 0, 100% 34%, 100% 100%, 0 100%);
-  padding-right: 4px;
+.cockpit-side-btn.left {
+  left: 2.2%;
+  padding-right: 6px;
+  padding-top: 4px;
 }
 
-.console-side-btn.right {
-  border-radius: 7px;
-  clip-path: polygon(26% 0, 100% 0, 100% 100%, 0 100%, 0 34%);
-  padding-left: 4px;
+.cockpit-side-btn.right {
+  right: 2.2%;
+  padding-left: 6px;
+  padding-top: 4px;
 }
 
-.console-side-btn:hover {
-  border-color: rgba(56, 189, 248, 0.75);
+.cockpit-side-btn:hover {
   color: #ffffff;
-  box-shadow:
-    inset 0 1px 0 rgba(224, 242, 254, 0.4),
-    0 0 14px rgba(56, 189, 248, 0.35);
+  text-shadow: 0 0 12px rgba(103, 232, 249, 0.95);
 }
 
-.console-side-btn:active {
+.cockpit-side-btn:active {
   transform: scale(0.96);
 }
 
-.console-side-btn.has-sp {
-  border-color: rgba(56, 189, 248, 0.85);
-  background: linear-gradient(180deg, rgba(14, 116, 144, 0.65) 0%, rgba(49, 46, 129, 0.78) 100%);
-  color: #e0f2fe;
+.cockpit-side-btn.has-sp {
+  color: #fde047;
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.85);
 }
 
-.console-hint {
-  pointer-events: none;
+.cockpit-center-readout {
+  position: absolute;
+  left: 28%;
+  right: 28%;
+  bottom: 10px;
+  height: 46px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 2px;
   font-family: var(--font-mono);
-  color: #cbd5e1;
-  line-height: 1.2;
+  pointer-events: none;
 }
 
-.console-hint-main {
+.cockpit-readout-main {
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #e2e8f0;
+  letter-spacing: 0.05em;
+  color: #e0f2fe;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
 }
 
-.console-hint-sub {
-  font-size: 11.5px;
+.cockpit-readout-sub {
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #94a3b8;
+  color: #7dd3fc;
+  opacity: 0.85;
 }
 
 /* =========================================================
@@ -1450,24 +1473,28 @@ body {
    RESPONSIVE BREAKPOINTS (Mobile compact & Desktop wide)
    ========================================================= */
 @media (max-width: 390px) {
+  .hud {
+    width: calc(100vw - 14px);
+    top: max(10px, env(safe-area-inset-top));
+  }
+
   .hud-main-panel {
-    gap: 8px;
-    padding: 8px 9px;
-    grid-template-columns: minmax(50px, auto) 1fr auto;
+    gap: 9px;
+    padding: 9px 10px;
   }
 
   .hud-floor-text {
     font-size: 24px;
   }
 
-  .minimap-frame {
-    width: 60px;
-    height: 60px;
+  .minimap-tactical {
+    width: 92px;
+    height: 92px;
   }
 
   .hud-sub-bar {
-    gap: 5px;
-    padding: 4px 6px;
+    gap: 8px;
+    padding: 4px 10px;
     font-size: 11px;
   }
 
@@ -1476,21 +1503,21 @@ body {
     font-size: 11px;
   }
 
-  .bottom-console-inner {
-    grid-template-columns: 68px 1fr 68px;
+  .cockpit-console {
+    height: 94px;
   }
 
-  .console-side-btn {
-    height: 48px;
+  .cockpit-side-btn {
+    height: 54px;
+    font-size: 11px;
+  }
+
+  .cockpit-readout-main {
+    font-size: 11.5px;
+  }
+
+  .cockpit-readout-sub {
     font-size: 10px;
-  }
-
-  .console-hint-main {
-    font-size: 12px;
-  }
-
-  .console-hint-sub {
-    font-size: 10.5px;
   }
 }
 
@@ -1500,12 +1527,8 @@ body {
     width: 540px;
   }
 
-  .hud-sub-bar {
-    align-self: center;
-  }
-
-  .bottom-console {
-    bottom: 12px;
+  .cockpit-console {
+    bottom: 6px;
     width: 560px;
   }
 

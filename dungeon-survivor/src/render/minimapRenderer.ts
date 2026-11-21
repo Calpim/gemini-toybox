@@ -76,8 +76,8 @@ export function renderHudMinimap(
   minTy = Math.min(minTy, Math.floor(pTileY));
   maxTy = Math.max(maxTy, Math.floor(pTileY));
 
-  const marginTiles = 3;
-  const minSpan = Math.min(Math.max(map.width, map.height), 24);
+  const marginTiles = 2;
+  const minSpan = Math.min(Math.max(map.width, map.height), 18);
   const rawSpanX = maxTx - minTx + 1 + marginTiles * 2;
   const rawSpanY = maxTy - minTy + 1 + marginTiles * 2;
   const viewSpanX = Math.min(map.width, Math.max(minSpan, rawSpanX));
