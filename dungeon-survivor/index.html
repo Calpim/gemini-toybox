@@ -165,16 +165,23 @@
     <div class="modal-panel">
       <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる"></button>
       <div class="modal-head">
-        <h2 id="skillModalHeading">ポーズ / スキルツリー</h2>
+        <h2 id="skillModalHeading">ポーズ / スキル</h2>
         <div class="modal-head-meta">
           <button id="muteBtn" type="button" class="hud-icon-btn mute-btn" title="サウンド ON/OFF" aria-label="サウンド切替"></button>
           <a class="spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書</a>
           <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
         </div>
       </div>
-      <div id="skillColumns" class="tree-grid"></div>
-      <div class="gear-section-label">装着中の装備・ステータス（時間停止中）</div>
-      <div id="skillGearSummary" class="gear-summary"></div>
+      <div class="pause-tabs" role="tablist" aria-label="ポーズ画面タブ">
+        <button id="tabSkillBtn" type="button" class="pause-tab active-skill" role="tab" aria-selected="true"></button>
+        <button id="tabGearBtn" type="button" class="pause-tab" role="tab" aria-selected="false"></button>
+      </div>
+      <div id="skillTabBody">
+        <div id="skillColumns" class="tree-grid"></div>
+        <div class="gear-section-label">装着中の装備・ステータス（時間停止中）</div>
+        <div id="skillGearSummary" class="gear-summary"></div>
+      </div>
+      <div id="gearTabBody" class="hidden"></div>
       <button id="closeSkillBtn" type="button" class="btn">戦闘に戻る</button>
     </div>
   </div>

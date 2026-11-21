@@ -29,12 +29,15 @@ import {
   type SkillNodeId,
 } from '../game/skillTree';
 import type { GameState } from '../game/types';
-import { ICON_LOCK } from './icons';
+import { ICON_GEAR, ICON_LOCK, ICON_TREE } from './icons';
+
+export type PauseModalTab = 'skill' | 'gear';
 
 export interface ModalHandlers {
   onUnlockSkill: (nodeId: SkillNodeId) => void;
   onCloseSkillTree: () => void;
   onResolveEquip: (choice: EquipChoice) => void;
+  activeTab?: PauseModalTab;
 }
 
 const BRANCH_META: { id: SkillBranch; label: string; accent: string }[] = [
@@ -43,20 +46,15 @@ const BRANCH_META: { id: SkillBranch; label: string; accent: string }[] = [
   { id: 'mobility', label: '探索・機動', accent: '#34d399' },
 ];
 
-function formatGearDetail(eq: EquippedItem, state: GameState): string {
+function getEquipmentNumericChips(eq: EquippedItem, state: GameState): string[] {
   const def = EQUIPMENT_CATALOG[eq.id];
   const mods = computeSkillModifiers(state.player.skillLevels);
   const dmg = Math.round(getEquipmentDamage(eq, 1));
   const cdMult = getEquipmentCooldownMultiplier(eq.level);
-  const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
-  const lvTag =
-    eq.level >= MAX_EQUIPMENT_LEVEL
-      ? `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} MAX`
-      : `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL}`;
 
   if (eq.id === 'orbit_shield') {
     const r = Math.round(getOrbitShieldRadius(eq.level, mods.rangeMult));
-    return `${def.name} ${lvTag}｜威力${dmg}｜半径${r}px (${evo})`;
+    return [`威力 ${dmg}`, `半径 ${r}px`];
   }
   const cdSec = (def.baseCooldown * cdMult).toFixed(2);
   let actualRange = def.baseRange * mods.rangeMult;
@@ -70,7 +68,104 @@ function formatGearDetail(eq: EquippedItem, state: GameState): string {
     actualRange = getRicochetDiscStats(eq.level, mods.rangeMult).range;
   }
   const cappedRange = Math.round(Math.min(MAX_TARGET_RANGE, actualRange));
-  return `${def.name} ${lvTag}｜威力${dmg} / ${cdSec}s / 射程${cappedRange}px (${evo})`;
+  return [`威力 ${dmg}`, `${cdSec}s`, `射程 ${cappedRange}px`];
+}
+
+function formatGearDetail(eq: EquippedItem, state: GameState): string {
+  const def = EQUIPMENT_CATALOG[eq.id];
+  const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
+  const lvTag =
+    eq.level >= MAX_EQUIPMENT_LEVEL
+      ? `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} MAX`
+      : `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL}`;
+  const chips = getEquipmentNumericChips(eq, state).join(' / ');
+  return `${def.name} ${lvTag}｜${chips} (${evo})`;
+}
+
+function renderGearTabContent(container: HTMLElement, state: GameState): void {
+  const { player } = state;
+  const isMaxSlots = player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP;
+  const expandCost = getScrapExpandCost(player.maxEquipSlots);
+  const progress = isMaxSlots ? 100 : Math.min(100, Math.round((player.scrapExpandProgress / Math.max(1, expandCost)) * 100));
+  const remaining = Math.max(0, expandCost - player.scrapExpandProgress);
+
+  const scrapTitleRight = isMaxSlots
+    ? `枠 ${player.maxEquipSlots} / ${MAX_EQUIP_SLOTS_CAP}（最大拡張済み）`
+    : `枠 ${player.maxEquipSlots} / ${MAX_EQUIP_SLOTS_CAP}（蓄積 ${player.scrapExpandProgress} / ${expandCost}）`;
+
+  const scrapHint = isMaxSlots
+    ? `装備枠は最大（${MAX_EQUIP_SLOTS_CAP}枠）に到達しています。満杯時のドロップは既存装備のLv+1や入れ替えに活用できます。`
+    : `満杯状態で装備ドロップ時に「枠拡張へ蓄積」を選ぶと、あと <strong>${remaining}回</strong> で装備枠が +1 されます（任意装備Lv+1も満杯時に選択可能）。`;
+
+  const baseStats = getPlayerBaseAttackStats(player);
+  const ocLv = getSkillLevel(player.skillLevels, 'arm_overclock');
+  const mainBadge = ocLv > 0 ? `レーザー化 Lv${ocLv}` : `メイン武器`;
+  const homingLabel = baseStats.homingShots > 0 ? ` + 誘導${baseStats.homingShots}発` : '';
+  const pierceChip = baseStats.pierce ? `<span class="stat-chip" style="color:#67e8f9">貫通</span>` : '';
+
+  const subCards: string[] = [];
+  for (let i = 0; i < player.maxEquipSlots; i++) {
+    const eq = player.equipment[i];
+    if (eq) {
+      const def = EQUIPMENT_CATALOG[eq.id];
+      const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
+      const lvLabel = eq.level >= MAX_EQUIPMENT_LEVEL ? `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} MAX` : `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL}`;
+      const chipsHtml = getEquipmentNumericChips(eq, state)
+        .map((c) => `<span class="stat-chip">${c}</span>`)
+        .join('');
+      subCards.push(`
+        <div class="sub-gear-card" style="--card-accent:${def.color}88">
+          <div class="gear-cat" style="color:${def.color}">${def.category}</div>
+          <div class="gear-card-head">
+            <span class="gear-name">${def.name}</span>
+            <span class="gear-lv" style="color:${def.color}">${lvLabel}</span>
+          </div>
+          <div class="gear-evo">進化: ${evo}</div>
+          <div class="gear-stats">${chipsHtml}</div>
+        </div>
+      `);
+    } else {
+      subCards.push(`
+        <div class="sub-gear-card empty">
+          <div>
+            <div class="gear-cat">SLOT ${i + 1} / ${player.maxEquipSlots}</div>
+            <div style="font-size:13.5px;font-weight:700;color:#94a3b8">EMPTY SLOT</div>
+            <div style="font-size:11px">宝箱やボスドロップで自動装着</div>
+          </div>
+          <span class="gear-lv">空き枠</span>
+        </div>
+      `);
+    }
+  }
+
+  container.innerHTML = `
+    <div class="scrap-panel">
+      <div class="scrap-top">
+        <span class="scrap-title">スクラップ＆ビルド（枠拡張進捗）</span>
+        <span class="scrap-count">${scrapTitleRight}</span>
+      </div>
+      <div class="scrap-bar-track"><div class="scrap-bar-fill" style="width:${progress}%"></div></div>
+      <div class="scrap-hint">${scrapHint}</div>
+    </div>
+
+    <div class="gear-section-kicker">MAIN WEAPON（常時装備）</div>
+    <div class="main-weapon-card">
+      <div class="gear-card-head">
+        <span class="gear-name" style="color:#6ee7b7">コアショット（メイン武器）</span>
+        <span class="gear-lv" style="color:#34d399;border-color:rgba(52,211,153,0.5)">${mainBadge}</span>
+      </div>
+      <div class="gear-stats">
+        <span class="stat-chip">威力 ${baseStats.damage}</span>
+        <span class="stat-chip">${baseStats.shotCount}発${homingLabel}</span>
+        <span class="stat-chip">${baseStats.cooldown.toFixed(2)}s</span>
+        <span class="stat-chip">射程 ${baseStats.range}px</span>
+        ${pierceChip}
+      </div>
+    </div>
+
+    <div class="gear-section-kicker">SUB EQUIPMENT SLOTS（${player.equipment.length} / ${player.maxEquipSlots} 装着中）</div>
+    <div class="gear-grid">${subCards.join('')}</div>
+  `;
 }
 
 export function renderModals(
@@ -80,16 +175,39 @@ export function renderModals(
     skillSpBadge: HTMLElement;
     skillColumns: HTMLElement;
     skillGearSummary: HTMLElement;
+    skillTabBody?: HTMLElement;
+    gearTabBody?: HTMLElement;
+    tabSkillBtn?: HTMLElement;
+    tabGearBtn?: HTMLElement;
     equipModal: HTMLElement;
     equipDropCard: HTMLElement;
     equipSlotList: HTMLElement;
   },
   handlers: ModalHandlers
 ): void {
-  // 1. Pause & Skill Tree Modal
+  // 1. Pause Modal (Skill Tree / Gear & Scrap-Build Tabs)
   if (state.status === 'skill_tree') {
+    const activeTab: PauseModalTab = handlers.activeTab ?? 'skill';
     els.skillModal.classList.remove('hidden');
     els.skillSpBadge.textContent = `所持 SP: ${state.player.skillPoints} (使用済 ${state.player.spentSkillPoints})`;
+
+    if (els.tabSkillBtn) {
+      els.tabSkillBtn.innerHTML = `${ICON_TREE}<span>スキル</span><span class="tab-badge">SP ${state.player.skillPoints}</span>`;
+      els.tabSkillBtn.classList.toggle('active-skill', activeTab === 'skill');
+      els.tabSkillBtn.setAttribute('aria-selected', String(activeTab === 'skill'));
+    }
+    if (els.tabGearBtn) {
+      els.tabGearBtn.innerHTML = `${ICON_GEAR}<span>装備・ギア</span><span class="tab-badge tab-badge-gear">${state.player.equipment.length} / ${state.player.maxEquipSlots}</span>`;
+      els.tabGearBtn.classList.toggle('active-gear', activeTab === 'gear');
+      els.tabGearBtn.setAttribute('aria-selected', String(activeTab === 'gear'));
+    }
+    if (els.skillTabBody && els.gearTabBody) {
+      els.skillTabBody.classList.toggle('hidden', activeTab !== 'skill');
+      els.gearTabBody.classList.toggle('hidden', activeTab !== 'gear');
+      if (activeTab === 'gear') {
+        renderGearTabContent(els.gearTabBody, state);
+      }
+    }
 
     els.skillColumns.innerHTML = '';
     for (const branch of BRANCH_META) {

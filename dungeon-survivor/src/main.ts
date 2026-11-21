@@ -26,7 +26,7 @@ import {
   ICON_VOLUME_OFF,
   ICON_VOLUME_ON,
 } from './ui/icons';
-import { renderModals } from './ui/modals';
+import { renderModals, type PauseModalTab } from './ui/modals';
 
 const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -64,6 +64,10 @@ const modalEls = {
   skillSpBadge: document.getElementById('skillSpBadge')!,
   skillColumns: document.getElementById('skillColumns')!,
   skillGearSummary: document.getElementById('skillGearSummary')!,
+  skillTabBody: document.getElementById('skillTabBody')!,
+  gearTabBody: document.getElementById('gearTabBody')!,
+  tabSkillBtn: document.getElementById('tabSkillBtn')!,
+  tabGearBtn: document.getElementById('tabGearBtn')!,
   equipModal: document.getElementById('equipModal')!,
   equipDropCard: document.getElementById('equipDropCard')!,
   equipSlotList: document.getElementById('equipSlotList')!,
@@ -73,11 +77,20 @@ const closeSkillBtn = document.getElementById('closeSkillBtn')!;
 const closeSkillTopBtn = document.getElementById('closeSkillTopBtn')!;
 const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
 
+let activePauseTab: PauseModalTab = 'skill';
+
+function syncModalHeading(): void {
+  if (!skillModalHeading) return;
+  if (activePauseTab === 'gear') {
+    skillModalHeading.innerHTML = `<span style="color:#fb923c;display:inline-flex">${ICON_PAUSE}</span><span>ポーズ /</span><span style="color:#fbbf24;display:inline-flex">${ICON_GEAR}</span><span>装備・ギア</span>`;
+  } else {
+    skillModalHeading.innerHTML = `<span style="color:#fb923c;display:inline-flex">${ICON_PAUSE}</span><span>ポーズ /</span><span style="color:#34d399;display:inline-flex">${ICON_TREE}</span><span>スキル</span>`;
+  }
+}
+
 // Initialize static SVG icons
 closeSkillTopBtn.innerHTML = ICON_CLOSE;
-if (skillModalHeading) {
-  skillModalHeading.innerHTML = `<span style="color:#fb923c;display:inline-flex">${ICON_PAUSE}</span><span>ポーズ /</span><span style="color:#34d399;display:inline-flex">${ICON_TREE}</span><span>スキルツリー</span>`;
-}
+syncModalHeading();
 
 let state: GameState = createGameState({ initialStatus: 'title' });
 const controller = new InputController(canvas);
@@ -145,7 +158,7 @@ function resizeCanvas(): void {
 
 function getModalKey(): string {
   const skillsKey = SKILL_TREE_NODES.map((n) => state.player.skillLevels[n.id] ?? 0).join(',');
-  return `${state.status}:${state.player.level}:${state.player.skillPoints}:${state.player.spentSkillPoints}:${state.player.maxEquipSlots}:${state.player.scrapExpandProgress}:${skillsKey}:${state.player.equipment
+  return `${state.status}:${activePauseTab}:${state.player.level}:${state.player.skillPoints}:${state.player.spentSkillPoints}:${state.player.maxEquipSlots}:${state.player.scrapExpandProgress}:${skillsKey}:${state.player.equipment
     .map((e) => `${e.id}${e.level}`)
     .join(',')}:${state.pendingEquipDrop?.item.id ?? ''}`;
 }
@@ -261,7 +274,9 @@ function syncUi(forceModals = false): void {
   const key = getModalKey();
   if (forceModals || key !== lastRenderedModalKey) {
     lastRenderedModalKey = key;
+    syncModalHeading();
     renderModals(state, modalEls, {
+      activeTab: activePauseTab,
       onUnlockSkill: (nodeId) => {
         unlockSkillNode(state, nodeId);
         syncUi(true);
@@ -278,18 +293,26 @@ function syncUi(forceModals = false): void {
   }
 }
 
-const handleTogglePause = (): void => {
+const handleOpenSkill = (): void => {
+  if (state.status === 'playing') {
+    activePauseTab = 'skill';
+  }
   toggleSkillTree(state);
   syncUi(true);
 };
 
 const handleOpenGear = (): void => {
-  const wasPlaying = state.status === 'playing';
-  toggleSkillTree(state);
-  syncUi(true);
-  if (wasPlaying) {
-    modalEls.skillGearSummary.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  if (state.status === 'playing') {
+    activePauseTab = 'gear';
+    toggleSkillTree(state);
+  } else if (state.status === 'skill_tree') {
+    if (activePauseTab === 'gear') {
+      closeSkillTree(state);
+    } else {
+      activePauseTab = 'gear';
+    }
   }
+  syncUi(true);
 };
 
 startBtn.addEventListener('click', () => {
@@ -303,10 +326,20 @@ muteBtn.addEventListener('click', () => {
   syncMuteBtn();
 });
 
-skillBtn.addEventListener('click', handleTogglePause);
-bottomPauseLeftBtn?.addEventListener('click', handleTogglePause);
+skillBtn.addEventListener('click', handleOpenSkill);
+bottomPauseLeftBtn?.addEventListener('click', handleOpenSkill);
 gearBtn.addEventListener('click', handleOpenGear);
 bottomGearBtn?.addEventListener('click', handleOpenGear);
+
+modalEls.tabSkillBtn.addEventListener('click', () => {
+  activePauseTab = 'skill';
+  syncUi(true);
+});
+
+modalEls.tabGearBtn.addEventListener('click', () => {
+  activePauseTab = 'gear';
+  syncUi(true);
+});
 
 closeSkillBtn.addEventListener('click', () => {
   closeSkillTree(state);
