@@ -162,7 +162,7 @@
   </div>
 
   <div id="skillModal" class="modal hidden">
-    <div class="modal-panel">
+    <div class="modal-panel pause-modal-panel">
       <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる"></button>
       <div class="modal-head">
         <h2 id="skillModalHeading">ポーズ / スキル</h2>
@@ -176,13 +176,17 @@
         <button id="tabSkillBtn" type="button" class="pause-tab active-skill" role="tab" aria-selected="true"></button>
         <button id="tabGearBtn" type="button" class="pause-tab" role="tab" aria-selected="false"></button>
       </div>
-      <div id="skillTabBody">
-        <div id="skillColumns" class="tree-grid"></div>
-        <div class="gear-section-label">装着中の装備・ステータス（時間停止中）</div>
-        <div id="skillGearSummary" class="gear-summary"></div>
+      <div class="pause-modal-scroll">
+        <div id="skillTabBody">
+          <div id="skillColumns" class="tree-grid"></div>
+          <div class="gear-section-label">装着中の装備・ステータス（時間停止中）</div>
+          <div id="skillGearSummary" class="gear-summary"></div>
+        </div>
+        <div id="gearTabBody" class="hidden"></div>
       </div>
-      <div id="gearTabBody" class="hidden"></div>
-      <button id="closeSkillBtn" type="button" class="btn">戦闘に戻る</button>
+      <div class="pause-modal-footer">
+        <button id="closeSkillBtn" type="button" class="btn">戦闘に戻る</button>
+      </div>
     </div>
   </div>
 
@@ -191,6 +195,7 @@
       <div class="modal-head" style="padding-right: 0">
         <h2 id="equipModalTitle">装備スロット満杯（2/2）</h2>
       </div>
+      <div id="equipModalReason" class="equip-reason-banner"></div>
       <div id="equipDropCard" class="drop-card"></div>
       <button id="scrapEquipBtn" type="button" class="btn btn-scrap">スクラップ＆ビルド：枠拡張へ蓄積（0/1）</button>
       <div id="equipModalSubLabel" class="gear-section-label" style="margin: 10px 0 6px">または既存スロットと入れ替え／スクラップで1個強化：</div>

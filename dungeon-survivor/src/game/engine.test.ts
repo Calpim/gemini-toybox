@@ -2171,14 +2171,19 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(fullSlotState.status).toBe('playing');
     expect(fullSlotState.player.equipment[0].level).toBe(3);
 
-    // Higher-level duplicate -> modal, blocks replacing other slot, allows scrap_upgrade on other slot
+    // +1 level duplicate item also auto-levels up without opening modal
+    acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 4));
+    expect(fullSlotState.status).toBe('playing');
+    expect(fullSlotState.player.equipment[0].level).toBe(4);
+
+    // +2 or higher level duplicate -> modal, blocks replacing other slot, allows scrap_upgrade on other slot
     acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 6));
     expect(fullSlotState.status).toBe('equip_choice');
     expect(resolveEquipChoice(fullSlotState, { type: 'replace', slotIndex: 1 })).toBe(false);
     expect(fullSlotState.status).toBe('equip_choice');
     expect(resolveEquipChoice(fullSlotState, { type: 'scrap_upgrade', slotIndex: 1 })).toBe(true);
     expect(fullSlotState.status).toBe('playing');
-    expect(fullSlotState.player.equipment[0].level).toBe(3);
+    expect(fullSlotState.player.equipment[0].level).toBe(4);
     expect(fullSlotState.player.equipment[1].level).toBe(3);
 
     // Higher-level duplicate also allows scrap_expand

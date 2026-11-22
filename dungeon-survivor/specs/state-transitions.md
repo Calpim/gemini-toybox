@@ -8,7 +8,7 @@ stateDiagram-v2
   title --> playing : STARTボタン / Enter / Space (1F開始)
   playing --> skill_tree : ESC / K / SKILL・GEARスイッチ (時間停止・2タブ)
   skill_tree --> playing : ESC / K / 閉じるボタン / 同タブボタン
-  playing --> equip_choice : 枠満杯時に未所持装備取得 または 所持中より高Lvの同種装備取得
+  playing --> equip_choice : 枠満杯時に未所持装備取得 または 所持中より+2Lv以上の同種装備取得
   equip_choice --> playing : 入れ替え または スクラップ＆ビルド
   playing --> playing : 階段到達 (通常階は無条件 / 3,6,9,10Fはボス撃破後)
   playing --> gameover : player.hp <= 0
@@ -21,7 +21,7 @@ stateDiagram-v2
 | --- | --- | --- | --- | --- | --- | --- |
 | ST-01 | `playing` | 上HUDのスキル／ギアピル、下部コックピットの `SKILL` / `GEAR` スイッチ押下、または `ESC` / `K` キー入力 | `skill_tree` | Confirmed | BIZ-EXP-02, APP-MAP-02, APP-MAP-10, APP-GRW-02, GLS-04, GLS-14, DEC-10, DEC-23, DEC-24 | シミュレーションを完全停止して2タブ（「スキル」「装備・ギア」）構成のポーズモーダルを表示（`SKILL` 側はスキルタブ、`GEAR` 側は装備・ギアタブを直接開き、`ESC`/`K` は前回タブで開く） |
 | ST-02 | `skill_tree` | 閉じるボタン・`ESC` / `K` キー・または開いているのと同じタブ側のスイッチ（`SKILL` / `GEAR`）押下 | `playing` | Confirmed | BIZ-EXP-02, APP-MAP-02, APP-MAP-10, APP-GRW-02, GLS-04, GLS-14, DEC-10, DEC-23, DEC-24 | スキル配分・装備確認後に探索再開（別タブ側のスイッチまたはタブバー押下時はモーダル内でタブを切替） |
-| ST-03 | `playing` | 装備枠（現在上限）が満杯の状態で未所持装備を拾う、または空き枠の有無にかかわらず所持中と同種かつ高Lv（ドロップLv > 装備中Lv）の装備を拾う | `equip_choice` | Confirmed | BIZ-GRW-03, BIZ-GRW-04, APP-GRW-03, APP-GRW-04, PRM-05, INV-11, DEC-07, DEC-25 | 入れ替えまたはスクラップ＆ビルド選択（同種高Lv時は同一装備重複装着不可：`INV-11`） |
+| ST-03 | `playing` | 装備枠（現在上限）が満杯の状態で未所持装備を拾う、または空き枠の有無にかかわらず所持中と同種かつ+2Lv以上（ドロップLv >= 装備中Lv + 2）の装備を拾う | `equip_choice` | Confirmed | BIZ-GRW-03, BIZ-GRW-04, APP-GRW-03, APP-GRW-04, PRM-05, INV-11, DEC-07, DEC-25 | 入れ替えまたはスクラップ＆ビルド選択（理由バナー表示・同種+2Lv以上時は対象枠強調＆同一装備重複装着不可：`INV-11`） |
 | ST-04 | `equip_choice` | 入れ替えスロット選択（重複時は同装備枠のみ有効）またはスクラップ＆ビルド（所持装備1個強化／枠拡張蓄積）実行 | `playing` | Confirmed | BIZ-GRW-03, BIZ-GRW-04, APP-GRW-03, APP-GRW-04, GLS-09, INV-11, DEC-07, DEC-25 | 選択結果を即時反映して探索再開（`resolveEquipChoice` で他枠への重複入れ替えは拒否） |
 | ST-05 | `playing` | 階段に接触（通常階は無条件、3/6/9F守護中ボス階・10F毎大ボス階は `getStairsLockCount === 0` 後） | `playing（次階層 N+1F）` | Confirmed | BIZ-EXP-01, APP-MAP-01, INV-04, GLS-07, GLS-15, DEC-08, DEC-10 | ボス階は封印解除後に `advanceToNextFloor` 実行 |
 | ST-06 | `playing` | 敵接触または敵弾被弾により `player.hp <= 0` | `gameover` | Confirmed | APP-MAP-02 | 到達階層・撃破数サマリーを表示 |

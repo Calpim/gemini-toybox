@@ -94,8 +94,8 @@ function renderGearTabContent(container: HTMLElement, state: GameState): void {
     : `枠 ${player.maxEquipSlots} / ${MAX_EQUIP_SLOTS_CAP}（蓄積 ${player.scrapExpandProgress} / ${expandCost}）`;
 
   const scrapHint = isMaxSlots
-    ? `装備枠は最大（${MAX_EQUIP_SLOTS_CAP}枠）に到達しています。満杯時や高Lv重複ドロップ時は既存装備のLv+1や入れ替えに活用できます。`
-    : `満杯状態や高Lv重複ドロップ時に「枠拡張へ蓄積」を選ぶと、あと <strong>${remaining}回</strong> で装備枠が +1 されます（他装備Lv+1や入れ替えも選択可能）。`;
+    ? `装備枠は最大（${MAX_EQUIP_SLOTS_CAP}枠）に到達しています。満杯時や+2Lv以上の重複ドロップ時は既存装備のLv+1や入れ替えに活用できます。`
+    : `満杯状態や+2Lv以上の重複ドロップ時に「枠拡張へ蓄積」を選ぶと、あと <strong>${remaining}回</strong> で装備枠が +1 されます（他装備Lv+1や入れ替えも選択可能）。`;
 
   const baseStats = getPlayerBaseAttackStats(player);
   const ocLv = getSkillLevel(player.skillLevels, 'arm_overclock');
@@ -321,7 +321,7 @@ export function renderModals(
     els.skillModal.classList.add('hidden');
   }
 
-  // 2. Equipment Choice Modal (when slots === maxEquipSlots or higher-Lv duplicate drop)
+  // 2. Equipment Choice Modal (when slots === maxEquipSlots or +2Lv+ higher duplicate drop)
   if (state.status === 'equip_choice' && state.pendingEquipDrop) {
     els.equipModal.classList.remove('hidden');
     const dropItem = state.pendingEquipDrop.item;
@@ -329,12 +329,21 @@ export function renderModals(
     const dropEvo = getEquipmentEvolutionSummary(dropItem.id, dropItem.level);
     const existingIdx = state.player.equipment.findIndex((eq) => eq.id === dropItem.id);
     const isDuplicateDrop = existingIdx !== -1;
+    const existingLv = isDuplicateDrop ? state.player.equipment[existingIdx].level : 0;
+    const levelDiff = dropItem.level - existingLv;
 
     const titleEl = document.getElementById('equipModalTitle');
     if (titleEl) {
       titleEl.textContent = isDuplicateDrop
-        ? '重複装備ドロップ（高Lv取得：入れ替え／他枠強化／枠拡張）'
+        ? `⚡ 高Lv重複ドロップ（+${levelDiff}Lv）`
         : `装備スロット満杯（${state.player.equipment.length}/${state.player.maxEquipSlots}）`;
+    }
+    const reasonEl = document.getElementById('equipModalReason');
+    if (reasonEl) {
+      reasonEl.classList.toggle('dup', isDuplicateDrop);
+      reasonEl.textContent = isDuplicateDrop
+        ? `所持中の「${dropDef.name} Lv${existingLv}」より +${levelDiff}Lv 高い装備が出現！一気に入れ替えるか、他装備の強化・枠拡張に回せます。`
+        : '装備枠がいっぱいのため、既存装備と入れ替えるか、スクラップにして他装備のLv+1・枠拡張に活用できます。';
     }
     const subLabelEl = document.getElementById('equipModalSubLabel');
     if (subLabelEl) {
@@ -365,9 +374,13 @@ export function renderModals(
       const isMaxLv = eq.level >= MAX_EQUIPMENT_LEVEL;
       const isSameEquipment = eq.id === dropItem.id;
       const row = document.createElement('div');
-      row.className = 'slot-btn';
+      row.className = isDuplicateDrop && isSameEquipment ? 'slot-btn dup-match' : 'slot-btn';
+      const matchTag =
+        isDuplicateDrop && isSameEquipment
+          ? `<span class="slot-match-tag">所持中・入替で+${levelDiff}Lv</span>`
+          : '';
       row.innerHTML = `
-        <span><strong>枠${idx + 1}/${state.player.maxEquipSlots}</strong> ${def.name} Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} <small style="color:#94a3b8">(${evo})</small></span>
+        <span><strong>枠${idx + 1}/${state.player.maxEquipSlots}</strong> ${def.name} Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} <small style="color:#94a3b8">(${evo})</small>${matchTag}</span>
       `;
       const actions = document.createElement('span');
       actions.style.display = 'inline-flex';

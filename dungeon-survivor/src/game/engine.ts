@@ -956,7 +956,7 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
       });
       return;
     }
-    if (normalizedItem.level > existing.level) {
+    if (normalizedItem.level >= existing.level + 2) {
       state.pendingEquipDrop = { item: normalizedItem };
       state.status = 'equip_choice';
       return;
