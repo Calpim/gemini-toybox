@@ -70,7 +70,7 @@ function calcSubEquipmentSingleTargetDps(item: EquippedItem): number {
       return dmg / cd;
     }
     case 'ricochet_disc': {
-      // 単体相手は周囲1周再ヒット込みで平均1.5ヒット相当として試算
+      // 単体相手はヒット位置起点1回転による再ヒット込みで平均1.5ヒット相当として試算
       return (dmg * 1.5) / cd;
     }
     case 'orbit_shield': {
@@ -149,7 +149,7 @@ describe('Balance Baseline Report', () => {
         equipment: [],
         mainHitRatio: 1,
       },
-      // 3F 中ボス (Lv6 = 5SP)
+      // 3F 中ボス (Lv6 = 累計6SP / 5SP使用)
       {
         name: '3F 主兵装振り (サブなし)',
         playerLevel: 6,
@@ -169,9 +169,9 @@ describe('Balance Baseline Report', () => {
         ],
         mainHitRatio: 1,
       },
-      // 10F 大ボス (Lv20 = 19SP)
+      // 10F 大ボス (Lv20 = 累計30SP / 主兵装1系統MAX = 20SP使用)
       {
-        name: '10F [A] 主兵装特化・サブなし (19SP)',
+        name: '10F [A] 主兵装特化・サブなし (20SP)',
         playerLevel: 20,
         floor: 10,
         skills: { arm_base: 5, arm_parallel: 5, arm_overclock: 2 },
@@ -179,7 +179,7 @@ describe('Balance Baseline Report', () => {
         mainHitRatio: 1.0, // 平行・貫通レーザー5発が単体ターゲットへ全弾ヒット
       },
       {
-        name: '10F [B] 主兵装特化・サブ3枠Lv4 (19SP)',
+        name: '10F [B] 主兵装特化・サブ3枠Lv4 (20SP)',
         playerLevel: 20,
         floor: 10,
         skills: { arm_base: 5, arm_parallel: 5, arm_overclock: 2 },

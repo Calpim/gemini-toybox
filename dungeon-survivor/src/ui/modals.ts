@@ -94,8 +94,8 @@ function renderGearTabContent(container: HTMLElement, state: GameState): void {
     : `枠 ${player.maxEquipSlots} / ${MAX_EQUIP_SLOTS_CAP}（蓄積 ${player.scrapExpandProgress} / ${expandCost}）`;
 
   const scrapHint = isMaxSlots
-    ? `装備枠は最大（${MAX_EQUIP_SLOTS_CAP}枠）に到達しています。満杯時のドロップは既存装備のLv+1や入れ替えに活用できます。`
-    : `満杯状態で装備ドロップ時に「枠拡張へ蓄積」を選ぶと、あと <strong>${remaining}回</strong> で装備枠が +1 されます（任意装備Lv+1も満杯時に選択可能）。`;
+    ? `装備枠は最大（${MAX_EQUIP_SLOTS_CAP}枠）に到達しています。満杯時や高Lv重複ドロップ時は既存装備のLv+1や入れ替えに活用できます。`
+    : `満杯状態や高Lv重複ドロップ時に「枠拡張へ蓄積」を選ぶと、あと <strong>${remaining}回</strong> で装備枠が +1 されます（他装備Lv+1や入れ替えも選択可能）。`;
 
   const baseStats = getPlayerBaseAttackStats(player);
   const ocLv = getSkillLevel(player.skillLevels, 'arm_overclock');
@@ -257,7 +257,7 @@ export function renderModals(
           node.tier === 3
             ? 'Lv1:2 / Lv2:3'
             : node.tier === 1
-              ? 'Lv1-4:1 / Lv5:2'
+              ? 'Lv1-3:1 / Lv4-5:2'
               : 'Lv1-3:1 / Lv4:2 / Lv5:3';
         const costLabel = isMax ? 'MAX' : `次Lv必要 ${nextCost} SP（${costPattern}）`;
         const reqLabel = node.requires
@@ -321,12 +321,26 @@ export function renderModals(
     els.skillModal.classList.add('hidden');
   }
 
-  // 2. Equipment Choice Modal (when slots === maxEquipSlots)
+  // 2. Equipment Choice Modal (when slots === maxEquipSlots or higher-Lv duplicate drop)
   if (state.status === 'equip_choice' && state.pendingEquipDrop) {
     els.equipModal.classList.remove('hidden');
+    const dropItem = state.pendingEquipDrop.item;
+    const dropDef = EQUIPMENT_CATALOG[dropItem.id];
+    const dropEvo = getEquipmentEvolutionSummary(dropItem.id, dropItem.level);
+    const existingIdx = state.player.equipment.findIndex((eq) => eq.id === dropItem.id);
+    const isDuplicateDrop = existingIdx !== -1;
+
     const titleEl = document.getElementById('equipModalTitle');
     if (titleEl) {
-      titleEl.textContent = `装備スロット満杯（${state.player.equipment.length}/${state.player.maxEquipSlots}）`;
+      titleEl.textContent = isDuplicateDrop
+        ? '重複装備ドロップ（高Lv取得：入れ替え／他枠強化／枠拡張）'
+        : `装備スロット満杯（${state.player.equipment.length}/${state.player.maxEquipSlots}）`;
+    }
+    const subLabelEl = document.getElementById('equipModalSubLabel');
+    if (subLabelEl) {
+      subLabelEl.textContent = isDuplicateDrop
+        ? 'または同装備と入れ替え／他装備をLv+1で強化：'
+        : 'または既存スロットと入れ替え／スクラップで1個強化：';
     }
     const scrapExpandBtn = document.getElementById('scrapEquipBtn') as HTMLButtonElement | null;
     if (scrapExpandBtn) {
@@ -338,9 +352,6 @@ export function renderModals(
         : `装備枠は最大（${MAX_EQUIP_SLOTS_CAP}/${MAX_EQUIP_SLOTS_CAP}）`;
     }
 
-    const dropItem = state.pendingEquipDrop.item;
-    const dropDef = EQUIPMENT_CATALOG[dropItem.id];
-    const dropEvo = getEquipmentEvolutionSummary(dropItem.id, dropItem.level);
     els.equipDropCard.innerHTML = `
       <div class="drop-badge" style="color:${dropDef.color}">${dropDef.category}</div>
       <div class="drop-name">${dropDef.name} Lv${dropItem.level} <span style="font-size:12px;color:#fbbf24;">[${dropEvo}]</span></div>
@@ -352,6 +363,7 @@ export function renderModals(
       const def = EQUIPMENT_CATALOG[eq.id];
       const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
       const isMaxLv = eq.level >= MAX_EQUIPMENT_LEVEL;
+      const isSameEquipment = eq.id === dropItem.id;
       const row = document.createElement('div');
       row.className = 'slot-btn';
       row.innerHTML = `
@@ -364,8 +376,17 @@ export function renderModals(
       const replaceBtn = document.createElement('button');
       replaceBtn.type = 'button';
       replaceBtn.className = 'slot-action';
-      replaceBtn.textContent = '入れ替える';
-      replaceBtn.addEventListener('click', () => handlers.onResolveEquip({ type: 'replace', slotIndex: idx }));
+      if (isDuplicateDrop && !isSameEquipment) {
+        replaceBtn.disabled = true;
+        replaceBtn.textContent = '重複不可';
+      } else {
+        replaceBtn.textContent = isDuplicateDrop
+          ? `入れ替える (Lv${eq.level}→Lv${dropItem.level})`
+          : '入れ替える';
+        replaceBtn.addEventListener('click', () =>
+          handlers.onResolveEquip({ type: 'replace', slotIndex: idx })
+        );
+      }
 
       const upgradeBtn = document.createElement('button');
       upgradeBtn.type = 'button';
@@ -373,6 +394,9 @@ export function renderModals(
       if (isMaxLv) {
         upgradeBtn.disabled = true;
         upgradeBtn.textContent = `MAX (Lv${MAX_EQUIPMENT_LEVEL})`;
+      } else if (isDuplicateDrop && isSameEquipment) {
+        upgradeBtn.disabled = true;
+        upgradeBtn.textContent = '入替で強化';
       } else {
         upgradeBtn.textContent = `Lv+1 (${eq.level}→${eq.level + 1})`;
         upgradeBtn.addEventListener('click', () =>

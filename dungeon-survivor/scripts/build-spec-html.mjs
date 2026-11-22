@@ -537,9 +537,15 @@ export function extractFormulaParamValues(parameters) {
   const prm09 = getVal('PRM-09');
   const prm09Tier1Block = prm09.match(/Tier1[^｜]*/)?.[0] || '';
   const tier1Matches = [...prm09Tier1Block.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
-  const tier1CostLv1_4 = tier1Matches[0] ?? 1;
-  const tier1CostLv5 = tier1Matches[1] ?? 2;
-  const tier1Costs = [0, tier1CostLv1_4, tier1CostLv1_4, tier1CostLv1_4, tier1CostLv1_4, tier1CostLv5];
+  const tier1LowCost = tier1Matches[0] ?? 1;
+  const tier1HighCost = tier1Matches[1] ?? 2;
+  const isLegacyTier1_4 = /Lv1-4/.test(prm09Tier1Block);
+  const tier1Costs = isLegacyTier1_4
+    ? [0, tier1LowCost, tier1LowCost, tier1LowCost, tier1LowCost, tier1HighCost]
+    : [0, tier1LowCost, tier1LowCost, tier1LowCost, tier1HighCost, tier1HighCost];
+  const tier1CostLabel = isLegacyTier1_4
+    ? `Lv1-4:${tier1LowCost}/Lv5:${tier1HighCost}`
+    : `Lv1-3:${tier1LowCost}/Lv4-5:${tier1HighCost}`;
 
   const prm09Tier2Block = prm09.match(/Tier2[^｜]*/)?.[0] || prm09;
   const spCostMatches = [...prm09Tier2Block.matchAll(/:\s*(\d+)/g)].map((m) => Number(m[1]));
@@ -653,8 +659,9 @@ export function extractFormulaParamValues(parameters) {
     spCostLv1_3,
     spCostLv4,
     spCostLv5,
-    tier1CostLv1_4,
-    tier1CostLv5,
+    tier1CostLv1_4: tier1LowCost,
+    tier1CostLv5: tier1HighCost,
+    tier1CostLabel,
     tier1Costs,
     tier2Costs,
     tier3CostLv1,
@@ -791,7 +798,7 @@ export function buildFormulaChartsData(parameters) {
   let tier3Cum = 0;
   for (let lv = 0; lv <= p.maxSkillLv; lv++) {
     const tier1Cost =
-      p.tier1Costs[lv] ?? (lv === 0 ? 0 : lv <= 4 ? p.tier1CostLv1_4 : p.tier1CostLv5);
+      p.tier1Costs[lv] ?? (lv === 0 ? 0 : lv <= 3 ? p.tier1CostLv1_4 : p.tier1CostLv5);
     const tier2Cost =
       p.tier2Costs[lv] ??
       (lv === 0 ? 0 : lv <= 3 ? p.spCostLv1_3 : lv === 4 ? p.spCostLv4 : p.spCostLv5);
@@ -850,7 +857,7 @@ export function buildFormulaChartsData(parameters) {
       formulaIds: ['FML-02', 'FML-12'],
       paramRefs: ['PRM-09', 'PRM-10', 'PRM-23'],
       title: 'スキル成長カーブとTier別必要SP・累積SP（FML-02 / FML-12）',
-      formulaExpr: `Tier1=PRM-09[Lv1-4:${p.tier1CostLv1_4}/Lv5:${p.tier1CostLv5}(計${tier1TotalSp}SP)], Tier2=PRM-09[Lv1-3:${p.spCostLv1_3}/Lv4:${p.spCostLv4}/Lv5:${p.spCostLv5}(計${tier2TotalSp}SP)], Tier3=PRM-09[Lv1:${p.tier3CostLv1}/Lv2:${p.tier3CostLv2}(最大Lv${p.tier3MaxLv}・計${tier3TotalSp}SP)], 最大Lv=PRM-10[${p.maxSkillLv}], 成長率=PRM-23`,
+      formulaExpr: `Tier1=PRM-09[${p.tier1CostLabel}(計${tier1TotalSp}SP)], Tier2=PRM-09[Lv1-3:${p.spCostLv1_3}/Lv4:${p.spCostLv4}/Lv5:${p.spCostLv5}(計${tier2TotalSp}SP)], Tier3=PRM-09[Lv1:${p.tier3CostLv1}/Lv2:${p.tier3CostLv2}(最大Lv${p.tier3MaxLv}・計${tier3TotalSp}SP)], 最大Lv=PRM-10[${p.maxSkillLv}], 成長率=PRM-23`,
       xLabel: 'lv',
       series: [
         { key: 'armBasePct', label: '出力強化 威力+%', color: '#f87171', unit: '%' },

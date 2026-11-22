@@ -90,7 +90,7 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     baseCooldown: 1.12,
     baseRange: 150,
     baseDamage: 18,
-    description: '追尾し敵間を跳ね回る単発円刃。次の敵がいなければ周囲を1周して再ヒット！（Lv6で跳弾数最大）',
+    description: '追尾し敵間を跳ね回る単発円刃。次の敵がいなければヒット位置起点で1回転して再ヒット！（Lv6で跳弾数最大）',
   },
 };
 

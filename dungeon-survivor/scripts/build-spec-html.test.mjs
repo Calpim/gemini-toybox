@@ -371,8 +371,10 @@ stateDiagram-v2
     assert.equal(coreChart.rows[5].dps, 736.7);
     assert.equal(skillChart.rows[2].tier3CumSp, 5);
     assert.equal(skillChart.rows[3].tier3Cost, null);
-    assert.equal(skillChart.rows[5].tier1CumSp, 6);
+    assert.equal(skillChart.rows[4].tier1Cost, 2);
+    assert.equal(skillChart.rows[5].tier1CumSp, 7);
     assert.equal(skillChart.rows[5].tier2CumSp, 8);
+    assert.match(skillChart.formulaExpr, /Lv1-3:1\/Lv4-5:2\(計7SP\)/);
     assert.equal(skillChart.rows[5].armBasePct, 170);
     assert.equal(skillChart.rows[5].armOverclockPct, 45);
 

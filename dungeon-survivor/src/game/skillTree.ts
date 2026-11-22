@@ -37,10 +37,10 @@ export function getSkillMaxLevel(nodeId: SkillNodeId): number {
 
 /**
  * Required SP to upgrade from `currentLevel` to `currentLevel + 1`:
- * - Tier 1 (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 1, Lv4->5: 2 (total 6 SP)
+ * - Tier 1 (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 2 (total 7 SP)
  * - Tier 2 (max Lv5): Lv0->1: 1, Lv1->2: 1, Lv2->3: 1, Lv3->4: 2, Lv4->5: 3 (total 8 SP)
  * - Tier 3 (max Lv2): Lv0->1: 2, Lv1->2: 3 (total 5 SP)
- * Total per branch: 6 + 8 + 5 = 19 SP (completable at player Lv20)
+ * Total per branch: 7 + 8 + 5 = 20 SP (completable at player Lv15; 2 branches at Lv25)
  */
 export function getSkillUpgradeCost(currentLevel: number, nodeId?: SkillNodeId): number {
   const tier = nodeId ? getSkillNode(nodeId).tier : 2;
@@ -50,7 +50,7 @@ export function getSkillUpgradeCost(currentLevel: number, nodeId?: SkillNodeId):
     return currentLevel === 0 ? 2 : 3;
   }
   if (tier === 1) {
-    return currentLevel <= 3 ? 1 : 2;
+    return currentLevel <= 2 ? 1 : 2;
   }
   if (currentLevel <= 2) return 1;
   if (currentLevel === 3) return 2;

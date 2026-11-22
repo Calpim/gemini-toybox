@@ -19,6 +19,7 @@ import {
 } from './equipment';
 import {
   CORRIDOR_VISION_RADIUS,
+  RICOCHET_DISC_LOOP_RADIUS,
   SCOUT_ALERT_COOLDOWN,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
@@ -31,6 +32,7 @@ import {
   startGame,
   createGameState,
   formatPlayTime,
+  getLevelUpSkillPoints,
   getNormalEnemyShotStats,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
@@ -426,7 +428,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(discState.enemies[0].hp).toBeLessThan(100);
     expect(discState.enemies[1].hp).toBeLessThan(100);
 
-    // Solo enemy: hits once, orbits 1 full loop (~0.6s) without instant burst, then re-hits
+    // Solo enemy: hits once, loops 1 full revolution anchored at hit point (fixed center even if enemy moves), then re-hits
     const soloDiscState = createGameState({ seed: 454 });
     soloDiscState.chests = [];
     soloDiscState.pickups = [];
@@ -449,23 +451,42 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
         bitHitCooldown: 0,
       },
     ];
-    for (let f = 0; f < 15; f++) {
+    for (let f = 0; f < 10; f++) {
       stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
     }
     const hpAfterFirstHit = soloDiscState.enemies[0].hp;
-    expect(hpAfterFirstHit).toBe(182); // 1 hit only (baseDamage 18), entering circular orbit
-    expect(soloDiscState.projectiles.some((p) => p.kind === 'disc' && p.orbitTargetId === 903)).toBe(
-      true
+    expect(hpAfterFirstHit).toBe(182); // 1 hit only (baseDamage 18), entering hit-originated loop
+    const soloLoopDisc = soloDiscState.projectiles.find(
+      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 903
     );
+    expect(soloLoopDisc).toBeDefined();
+    expect(soloLoopDisc!.loopRadius).toBe(RICOCHET_DISC_LOOP_RADIUS);
+    const fixedLoopCenterX = soloLoopDisc!.loopCenterX!;
+    const fixedLoopCenterY = soloLoopDisc!.loopCenterY!;
+    expect(fixedLoopCenterX).toBeTypeOf('number');
+    expect(fixedLoopCenterY).toBeTypeOf('number');
 
-    // Keep item on cooldown so only the orbiting disc can re-hit after completing 1 revolution
+    // Move enemy while keeping item on cooldown; loop center stays fixed at hit-origin circle
     soloDiscState.player.equipment[0].cooldown = 5;
-    for (let f = 0; f < 60; f++) {
+    soloDiscState.enemies[0].x += 30;
+    soloDiscState.enemies[0].y -= 15;
+    for (let f = 0; f < 10; f++) {
+      stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
+    }
+    const midLoopDisc = soloDiscState.projectiles.find(
+      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 903
+    );
+    expect(midLoopDisc).toBeDefined();
+    expect(midLoopDisc!.loopCenterX).toBe(fixedLoopCenterX);
+    expect(midLoopDisc!.loopCenterY).toBe(fixedLoopCenterY);
+
+    // Finish revolution and pursue moved enemy to re-hit
+    for (let f = 0; f < 50; f++) {
       stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
     }
     expect(soloDiscState.enemies[0].hp).toBeLessThan(hpAfterFirstHit);
 
-    // Large boss (radius 26): orbit radius scales with enemy radius and maintains constant linear speed (no 11.5 rad/s clamp)
+    // Large boss (radius 26): hit-originated loop keeps constant radius and linear speed
     const bossDiscState = createGameState({ seed: 4541 });
     bossDiscState.chests = [];
     bossDiscState.pickups = [];
@@ -490,20 +511,19 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
         isGrandBoss: true,
       },
     ];
-    for (let f = 0; f < 20; f++) {
+    for (let f = 0; f < 15; f++) {
       stepGame(bossDiscState, { x: 0, y: 0 }, 1 / 60);
     }
-    const bossOrbitDisc = bossDiscState.projectiles.find(
-      (p) => p.kind === 'disc' && p.orbitTargetId === 904
+    const bossLoopDisc = bossDiscState.projectiles.find(
+      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 904
     );
-    expect(bossOrbitDisc).toBeDefined();
-    const distFromBossCenter = Math.hypot(
-      bossOrbitDisc!.x - bossDiscState.enemies[0].x,
-      bossOrbitDisc!.y - bossDiscState.enemies[0].y
+    expect(bossLoopDisc).toBeDefined();
+    const distFromLoopCenter = Math.hypot(
+      bossLoopDisc!.x - bossLoopDisc!.loopCenterX!,
+      bossLoopDisc!.y - bossLoopDisc!.loopCenterY!
     );
-    // orbitRadius = 26 * 1.8 + 18 = 64.8px (far wider than old 48px)
-    expect(distFromBossCenter).toBeCloseTo(64.8, 1);
-    const orbitTangentialSpeed = Math.hypot(bossOrbitDisc!.vx, bossOrbitDisc!.vy);
+    expect(distFromLoopCenter).toBeCloseTo(RICOCHET_DISC_LOOP_RADIUS, 1);
+    const orbitTangentialSpeed = Math.hypot(bossLoopDisc!.vx, bossLoopDisc!.vy);
     expect(orbitTangentialSpeed).toBeLessThan(400);
 
     // 6. Pulse blade triggers on incoming enemy projectiles even with no enemy in range and reflects them
@@ -607,14 +627,14 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.projectiles.filter((p) => p.kind === 'base_homing')).toHaveLength(1);
   });
 
-  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Tier-based SP costs (Tier1:6, Tier2:8, Tier3:5 = 19SP), Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
+  it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Tier-based SP costs (Tier1:7, Tier2:8, Tier3:5 = 20SP), Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
     expect(MAX_SKILL_LEVEL).toBe(5);
     expect(SKILL_PREREQ_LEVEL).toBe(3);
     expect([0, 1, 2, 3, 4, 5].map((lv) => getSkillUpgradeCost(lv, 'arm_base'))).toEqual([
       1,
       1,
       1,
-      1,
+      2,
       2,
       Infinity,
     ]);
@@ -635,7 +655,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'mob_dash'))).toEqual([2, 3, Infinity]);
 
     const state = createGameState({ seed: 505 });
-    expect(state.player.skillPoints).toBe(3);
+    expect(state.player.skillPoints).toBe(1);
     state.enemies = [];
     state.chests = [];
     state.player.equipment = [
@@ -648,7 +668,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.level).toBe(2);
-    expect(state.player.skillPoints).toBe(4);
+    expect(state.player.skillPoints).toBe(2);
     expect(state.notifications.some((n) => n.kind === 'levelup' && n.text.includes('Lv2'))).toBe(true);
 
     // Cannot unlock Tier 2 before Tier 1 reaches Lv3
@@ -664,9 +684,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.skillLevels.arm_base).toBe(3);
     expect(state.player.skillPoints).toBe(3);
 
-    // Tier 1: Lv4 requires 1 SP, Lv5 requires 2 SP (total 6 SP)
+    // Tier 1: Lv4 requires 2 SP, Lv5 requires 2 SP (total 7 SP)
     state.player.skillPoints = 1;
-    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4 (cost 1)
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(false); // needs 2 SP for Tier1 Lv4
+    state.player.skillPoints = 2;
+    expect(upgradeSkillNode(state, 'arm_base')).toBe(true); // Lv4 (cost 2)
     expect(computeSkillModifiers(state.player.skillLevels).mainDamageMult).toBeCloseTo(2.2, 4);
 
     state.player.skillPoints = 1;
@@ -723,7 +745,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(upgradeSkillNode(state, 'mob_dash')).toBe(true); // Lv1
   });
 
-  it('[APP-GRW-03 & APP-GRW-04] enforces initial 2-slot limit, auto-levels owned duplicates (including higher-Lv drops), prompts on 3rd unowned gear, and expands via Scrap & Build', () => {
+  it('[APP-GRW-03 & APP-GRW-04] enforces initial 2-slot limit, auto-levels <=Lv duplicates, opens modal for higher-Lv duplicates without duplication, prompts on 3rd unowned gear, and expands via Scrap & Build', () => {
     expect(MAX_EQUIP_SLOTS).toBe(2);
 
     const state = createGameState({ seed: 606 });
@@ -734,14 +756,22 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     ];
     expect(state.player.equipment.length).toBe(MAX_EQUIP_SLOTS);
 
-    // Duplicate item auto-levels up without opening modal
+    // Same-or-lower level duplicate item auto-levels up without opening modal
     acquireEquipment(state, createEquippedItem('seeker_drone', 1));
     expect(state.status).toBe('playing');
     expect(state.pendingEquipDrop).toBeNull();
     expect(state.player.equipment.find((e) => e.id === 'seeker_drone')?.level).toBe(2);
 
-    // Higher-level duplicate drop jumps to droppedItem.level via Math.max(existing + 1, dropped)
+    // Higher-level duplicate drop opens equip_choice modal instead of auto-overwriting
     acquireEquipment(state, createEquippedItem('seeker_drone', 5));
+    expect(state.status).toBe('equip_choice');
+    expect(state.pendingEquipDrop?.item).toMatchObject({ id: 'seeker_drone', level: 5 });
+    // Replacing a different slot is blocked so the same equipment cannot be equipped twice
+    expect(resolveEquipChoice(state, { type: 'replace', slotIndex: 0 })).toBe(false);
+    expect(state.status).toBe('equip_choice');
+    // Replacing the matching slot upgrades it cleanly
+    expect(resolveEquipChoice(state, { type: 'replace', slotIndex: 1 })).toBe(true);
+    expect(state.status).toBe('playing');
     expect(state.player.equipment.find((e) => e.id === 'seeker_drone')?.level).toBe(5);
 
     // Unowned 3rd item triggers replace/scrap_upgrade/scrap_expand choice modal
@@ -1876,12 +1906,51 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(5);
   });
 
-  it('[APP-GRW-02 & APP-GRW-05] allows completing an entire branch with 19 SP at Lv20 and applies 2-tier arm_overclock scaling', () => {
-    const state = createGameState({ seed: 2020 });
-    state.player.level = 20;
-    state.player.skillPoints = 19; // Lv1 -> Lv20 grants 19 SP
+  it('[APP-GRW-02 & APP-GRW-05] uses 2-stage SP curve (1SP <=Lv10, 2SP >=Lv11) reaching 20SP at Lv15 and 40SP at Lv25, and applies 2-tier arm_overclock scaling', () => {
+    // 1. Verify getLevelUpSkillPoints & actual level-up transitions from Lv1 -> Lv10 -> Lv15 -> Lv25
+    for (let lv = 2; lv <= 10; lv++) {
+      expect(getLevelUpSkillPoints(lv)).toBe(1);
+    }
+    for (let lv = 11; lv <= 25; lv++) {
+      expect(getLevelUpSkillPoints(lv)).toBe(2);
+    }
 
-    // Max out Tier 1 (6 SP) + Tier 2 (8 SP) + Tier 3 (5 SP) = 19 SP
+    const progState = createGameState({ seed: 2020 });
+    progState.enemies = [];
+    progState.chests = [];
+    expect(progState.player.level).toBe(1);
+    expect(progState.player.skillPoints).toBe(1);
+
+    const stepOneLevelUp = () => {
+      progState.pickups = [
+        {
+          id: progState.nextEntityId++,
+          kind: 'exp',
+          x: progState.player.x,
+          y: progState.player.y,
+          value: progState.player.expToNext,
+        },
+      ];
+      stepGame(progState, { x: 0, y: 0 }, 1 / 60);
+    };
+
+    while (progState.player.level < 10) stepOneLevelUp();
+    expect(progState.player.level).toBe(10);
+    expect(progState.player.skillPoints).toBe(10);
+
+    while (progState.player.level < 15) stepOneLevelUp();
+    expect(progState.player.level).toBe(15);
+    expect(progState.player.skillPoints).toBe(20);
+
+    while (progState.player.level < 25) stepOneLevelUp();
+    expect(progState.player.level).toBe(25);
+    expect(progState.player.skillPoints).toBe(40);
+
+    // 2. Completing an entire branch costs 20 SP (Tier1: 7 + Tier2: 8 + Tier3: 5)
+    const state = createGameState({ seed: 2020 });
+    state.player.level = 15;
+    state.player.skillPoints = 20;
+
     for (let i = 0; i < 5; i++) expect(upgradeSkillNode(state, 'arm_base')).toBe(true);
     for (let i = 0; i < 5; i++) expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true);
     expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true);
@@ -1893,7 +1962,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
 
     expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true);
     expect(state.player.skillPoints).toBe(0);
-    expect(state.player.spentSkillPoints).toBe(19);
+    expect(state.player.spentSkillPoints).toBe(20);
     expect(upgradeSkillNode(state, 'arm_overclock')).toBe(false); // Tier 3 capped at Lv2
 
     const lv2Stats = getPlayerBaseAttackStats(state.player);
@@ -2076,6 +2145,158 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     const closeEnemy = state.enemies.find((e) => e.id === 9953);
     expect(closeEnemy!.hp).toBeLessThan(100);
+  });
+
+  it('handles higher-level duplicate equipment choices across empty/full slots and safely exits ricochet_disc loop on wall contact', () => {
+    // 1. Higher-level duplicate opens equip_choice even with an empty slot
+    const emptySlotState = createGameState({ seed: 2023 });
+    emptySlotState.player.maxEquipSlots = 3;
+    emptySlotState.player.equipment = [createEquippedItem('pulse_blade', 1)];
+    acquireEquipment(emptySlotState, createEquippedItem('pulse_blade', 4));
+    expect(emptySlotState.status).toBe('equip_choice');
+    expect(emptySlotState.pendingEquipDrop?.item).toMatchObject({ id: 'pulse_blade', level: 4 });
+    expect(resolveEquipChoice(emptySlotState, { type: 'replace', slotIndex: 0 })).toBe(true);
+    expect(emptySlotState.player.equipment).toHaveLength(1);
+    expect(emptySlotState.player.equipment[0]).toMatchObject({ id: 'pulse_blade', level: 4 });
+
+    // 2. Same/lower-level duplicate auto-upgrades, while higher-Lv duplicate allows other-slot scrap_upgrade & scrap_expand
+    const fullSlotState = createGameState({ seed: 2024 });
+    fullSlotState.player.maxEquipSlots = 2;
+    fullSlotState.player.equipment = [
+      createEquippedItem('pulse_blade', 2),
+      createEquippedItem('seeker_drone', 2),
+    ];
+    // Lower/equal level duplicate -> auto Lv+1
+    acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 2));
+    expect(fullSlotState.status).toBe('playing');
+    expect(fullSlotState.player.equipment[0].level).toBe(3);
+
+    // Higher-level duplicate -> modal, blocks replacing other slot, allows scrap_upgrade on other slot
+    acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 6));
+    expect(fullSlotState.status).toBe('equip_choice');
+    expect(resolveEquipChoice(fullSlotState, { type: 'replace', slotIndex: 1 })).toBe(false);
+    expect(fullSlotState.status).toBe('equip_choice');
+    expect(resolveEquipChoice(fullSlotState, { type: 'scrap_upgrade', slotIndex: 1 })).toBe(true);
+    expect(fullSlotState.status).toBe('playing');
+    expect(fullSlotState.player.equipment[0].level).toBe(3);
+    expect(fullSlotState.player.equipment[1].level).toBe(3);
+
+    // Higher-level duplicate also allows scrap_expand
+    acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 6));
+    expect(fullSlotState.status).toBe('equip_choice');
+    expect(resolveEquipChoice(fullSlotState, { type: 'scrap_expand' })).toBe(true);
+    expect(fullSlotState.status).toBe('playing');
+    expect(fullSlotState.player.maxEquipSlots).toBe(3);
+
+    // 3. Ricochet disc loop prefers wall-free side when one side is walled, and safely exits loop without sticking when walled on both sides
+    const preferClearState = createGameState({ seed: 20251 });
+    preferClearState.chests = [];
+    preferClearState.pickups = [];
+    preferClearState.player.baseAttackCooldown = 999;
+    preferClearState.map.tiles.fill('floor');
+    const cPtx = 5;
+    const cPty = 5;
+    const cCenter = tileCenterWorld(cPtx, cPty);
+    preferClearState.player.x = cCenter.x;
+    preferClearState.player.y = cCenter.y;
+    for (let tx = cPtx - 1; tx <= cPtx + 3; tx++) {
+      preferClearState.map.tiles[(cPty + 1) * preferClearState.map.width + tx] = 'wall';
+    }
+    preferClearState.player.equipment = [createEquippedItem('ricochet_disc', 1)];
+    preferClearState.enemies = [
+      {
+        id: 9959,
+        x: cCenter.x + 55,
+        y: cCenter.y,
+        radius: 13,
+        speed: 0,
+        hp: 200,
+        maxHp: 200,
+        damage: 0,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    for (let f = 0; f < 10; f++) {
+      stepGame(preferClearState, { x: 0, y: 0 }, 1 / 60);
+    }
+    const clearSideDisc = preferClearState.projectiles.find(
+      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 9959
+    );
+    expect(clearSideDisc).toBeDefined();
+    expect(clearSideDisc!.loopCenterY!).toBeLessThan(cCenter.y);
+    expect(clearSideDisc!.loopDir).toBe(-1);
+
+    // When both loop sides collide with walls, loop cancels cleanly and disc keeps moving without sticking
+    const wallDiscState = createGameState({ seed: 2025 });
+    wallDiscState.chests = [];
+    wallDiscState.pickups = [];
+    wallDiscState.player.baseAttackCooldown = 999;
+    wallDiscState.map.tiles.fill('floor');
+
+    const ptx = 4;
+    const pty = 4;
+    const pCenter = tileCenterWorld(ptx, pty);
+    wallDiscState.player.x = pCenter.x;
+    wallDiscState.player.y = pCenter.y;
+    // Narrow 1-tile corridor around enemy at tile (5, 4) so any 32px loop touches wall tiles
+    wallDiscState.map.tiles[(pty - 1) * wallDiscState.map.width + (ptx + 1)] = 'wall';
+    wallDiscState.map.tiles[(pty + 1) * wallDiscState.map.width + (ptx + 1)] = 'wall';
+    wallDiscState.map.tiles[pty * wallDiscState.map.width + (ptx + 2)] = 'wall';
+    wallDiscState.map.tiles[(pty - 1) * wallDiscState.map.width + ptx] = 'wall';
+    wallDiscState.map.tiles[(pty + 1) * wallDiscState.map.width + ptx] = 'wall';
+
+    wallDiscState.player.equipment = [createEquippedItem('ricochet_disc', 1)];
+    const enemyCenter = tileCenterWorld(ptx + 1, pty);
+    wallDiscState.enemies = [
+      {
+        id: 9960,
+        x: enemyCenter.x,
+        y: enemyCenter.y,
+        radius: 13,
+        speed: 0,
+        hp: 200,
+        maxHp: 200,
+        damage: 0,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+
+    let sawLoopStart = false;
+    let exitedLoopOnWall = false;
+    let lastPosAfterExit: { x: number; y: number } | null = null;
+    let movedAfterExit = false;
+
+    for (let f = 0; f < 30; f++) {
+      stepGame(wallDiscState, { x: 0, y: 0 }, 1 / 60);
+      wallDiscState.player.equipment[0].cooldown = 5;
+      const disc = wallDiscState.projectiles.find((p) => p.kind === 'disc');
+      if (!disc) break;
+      if (disc.loopCenterX !== undefined) {
+        if (!sawLoopStart) {
+          sawLoopStart = true;
+          // Move enemy out of the narrow corridor after hit so post-exit flight distance is clearly observed
+          wallDiscState.enemies[0].x = pCenter.x - 100;
+        }
+      } else if (sawLoopStart) {
+        exitedLoopOnWall = true;
+        if (lastPosAfterExit) {
+          if (Math.hypot(disc.x - lastPosAfterExit.x, disc.y - lastPosAfterExit.y) > 0.5) {
+            movedAfterExit = true;
+          }
+        }
+        lastPosAfterExit = { x: disc.x, y: disc.y };
+      }
+    }
+
+    expect(sawLoopStart).toBe(true);
+    expect(exitedLoopOnWall).toBe(true);
+    expect(movedAfterExit).toBe(true);
   });
 });
 

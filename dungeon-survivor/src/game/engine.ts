@@ -60,6 +60,7 @@ import type {
   MainWeaponId,
   PickupState,
   PlayerState,
+  ProjectileState,
   SoundEventKind,
   Vec2,
 } from './types';
@@ -118,6 +119,59 @@ export const SCOUT_SUMMON_CAP_PER_SCOUT = 3;
 export const SCOUT_SUMMON_MAX_PLAYER_DIST = 420;
 export const SHOOTER_AGGRO_RANGE = 320;
 export const INITIAL_RESPAWN_DELAY = 24;
+// REVISIT_IF: プレイテストでチャクラム回転半径の視認性・再ヒット率を調整する場合 (OQ-06)
+export const RICOCHET_DISC_LOOP_RADIUS = 32;
+
+function clearDiscLoopState(proj: ProjectileState): void {
+  proj.loopCenterX = undefined;
+  proj.loopCenterY = undefined;
+  proj.loopRadius = undefined;
+  proj.loopAngle = undefined;
+  proj.loopProgress = undefined;
+  proj.loopDir = undefined;
+  proj.loopTargetEnemyId = undefined;
+  proj.loopExitAngle = undefined;
+}
+
+function scoreLoopCircleClearance(
+  map: DungeonMap,
+  cx: number,
+  cy: number,
+  radius: number
+): number {
+  let score = !isWallAtWorld(map, cx, cy) ? 10 : 0;
+  for (let k = 0; k < 8; k++) {
+    const angle = (k * Math.PI) / 4;
+    if (!isWallAtWorld(map, cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius)) {
+      score += 1;
+    }
+  }
+  return score;
+}
+
+function chooseDiscLoopCandidate(
+  map: DungeonMap,
+  hitX: number,
+  hitY: number,
+  heading: number,
+  radius: number
+): { cx: number; cy: number; startAngle: number; dir: 1 | -1 } {
+  const candA = {
+    cx: hitX + Math.cos(heading + Math.PI / 2) * radius,
+    cy: hitY + Math.sin(heading + Math.PI / 2) * radius,
+    startAngle: heading - Math.PI / 2,
+    dir: 1 as const,
+  };
+  const candB = {
+    cx: hitX + Math.cos(heading - Math.PI / 2) * radius,
+    cy: hitY + Math.sin(heading - Math.PI / 2) * radius,
+    startAngle: heading + Math.PI / 2,
+    dir: -1 as const,
+  };
+  const scoreA = scoreLoopCircleClearance(map, candA.cx, candA.cy, radius);
+  const scoreB = scoreLoopCircleClearance(map, candB.cx, candB.cy, radius);
+  return scoreB > scoreA ? candB : candA;
+}
 
 export interface NormalEnemyShotStats {
   shotCount: number;
@@ -652,7 +706,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       level: 1,
       exp: 0,
       expToNext: 25,
-      skillPoints: 3,
+      skillPoints: 1,
       spentSkillPoints: 0,
       skillLevels: {},
       mainWeaponId: 'core_shot',
@@ -817,6 +871,10 @@ export function toggleSkillTree(state: GameState): void {
   }
 }
 
+export function getLevelUpSkillPoints(newLevel: number): number {
+  return newLevel <= 10 ? 1 : 2;
+}
+
 function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
   const { player } = state;
   player.exp += gainedExp;
@@ -824,14 +882,15 @@ function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
   while (player.exp >= player.expToNext) {
     player.exp -= player.expToNext;
     player.level += 1;
-    player.skillPoints += 1;
+    const gainedSp = getLevelUpSkillPoints(player.level);
+    player.skillPoints += gainedSp;
     player.expToNext = Math.round(player.expToNext * 1.22);
     emitSound(state, 'level_up');
     spawnParticles(state, player.x, player.y, '#38bdf8', 14, 55, 165, 3.0, 0.45);
     state.floatingTexts.push({
       x: player.x,
       y: player.y - 24,
-      text: `LEVEL ${player.level}! (+1 SP)`,
+      text: `LEVEL ${player.level}! (+${gainedSp} SP)`,
       color: '#38bdf8',
       life: 1.0,
       maxLife: 1.0,
@@ -839,7 +898,7 @@ function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
     pushNotification(
       state,
       'levelup',
-      `🎉 LEVEL UP! Lv${player.level} (+1 SP)`,
+      `🎉 LEVEL UP! Lv${player.level} (+${gainedSp} SP)`,
       '#38bdf8',
       2.6
     );
@@ -897,7 +956,12 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
       });
       return;
     }
-    existing.level = clampEquipmentLevel(Math.max(existing.level + 1, clampedLevel));
+    if (normalizedItem.level > existing.level) {
+      state.pendingEquipDrop = { item: normalizedItem };
+      state.status = 'equip_choice';
+      return;
+    }
+    existing.level = clampEquipmentLevel(existing.level + 1);
     const def = EQUIPMENT_CATALOG[existing.id];
     state.floatingTexts.push({
       x: player.x,
@@ -963,9 +1027,17 @@ export function resolveEquipChoice(
     if (choice.slotIndex < 0 || choice.slotIndex >= state.player.equipment.length) {
       return false;
     }
+    if (
+      state.player.equipment.some(
+        (eq, idx) => idx !== choice.slotIndex && eq.id === dropped.id
+      )
+    ) {
+      return false;
+    }
     state.player.equipment[choice.slotIndex] = {
       ...dropped,
       level: clampEquipmentLevel(dropped.level),
+      cooldown: 0,
     };
     const def = EQUIPMENT_CATALOG[dropped.id];
     state.floatingTexts.push({
@@ -1971,41 +2043,59 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     if (proj.kind === 'disc') {
       proj.spinAngle = (proj.spinAngle ?? 0) + 18 * clampedDt;
       const spd = proj.speed ?? 360;
+      let runNormalMove = true;
 
-      if (proj.orbitTargetId !== undefined) {
-        const orbitTarget = state.enemies.find((e) => e.id === proj.orbitTargetId && e.hp > 0);
-        if (!orbitTarget) {
-          proj.orbitTargetId = undefined;
-          proj.orbitProgress = 0;
-        } else {
-          const orbitRadius = orbitTarget.radius * 1.8 + 18;
-          const angularStep = (spd / orbitRadius) * clampedDt;
-          const nextOrbitAngle = (proj.orbitAngle ?? 0) + angularStep;
-          const nextProgress = (proj.orbitProgress ?? 0) + angularStep;
-          const ox = orbitTarget.x + Math.cos(nextOrbitAngle) * orbitRadius;
-          const oy = orbitTarget.y + Math.sin(nextOrbitAngle) * orbitRadius;
+      if (proj.loopCenterX !== undefined && proj.loopCenterY !== undefined) {
+        runNormalMove = false;
+        const r = proj.loopRadius ?? RICOCHET_DISC_LOOP_RADIUS;
+        const angularStep = (spd / r) * clampedDt;
+        const dir = proj.loopDir ?? 1;
+        const nextAngle = (proj.loopAngle ?? 0) + dir * angularStep;
+        const nextProgress = (proj.loopProgress ?? 0) + angularStep;
+        const ox = proj.loopCenterX + Math.cos(nextAngle) * r;
+        const oy = proj.loopCenterY + Math.sin(nextAngle) * r;
 
-          if (!isWallAtWorld(map, ox, oy)) {
-            proj.vx = (ox - proj.x) / Math.max(1e-4, clampedDt);
-            proj.vy = (oy - proj.y) / Math.max(1e-4, clampedDt);
-            proj.x = ox;
-            proj.y = oy;
+        if (isWallAtWorld(map, ox, oy)) {
+          const tangentAngle = (proj.loopAngle ?? 0) + dir * (Math.PI / 2);
+          proj.vx = Math.cos(tangentAngle) * spd;
+          proj.vy = Math.sin(tangentAngle) * spd;
+          if (proj.loopTargetEnemyId !== undefined) {
+            const targetId = proj.loopTargetEnemyId;
+            proj.hitEnemyIds = proj.hitEnemyIds.filter((id) => id !== targetId);
           }
-          proj.orbitAngle = nextOrbitAngle;
-          proj.orbitProgress = nextProgress;
+          clearDiscLoopState(proj);
+          runNormalMove = true;
+        } else {
+          const tangentAngle = nextAngle + dir * (Math.PI / 2);
+          proj.vx = Math.cos(tangentAngle) * spd;
+          proj.vy = Math.sin(tangentAngle) * spd;
+          proj.x = ox;
+          proj.y = oy;
+          proj.loopAngle = nextAngle;
+          proj.loopProgress = nextProgress;
 
           if (nextProgress >= Math.PI * 2) {
-            proj.hitEnemyIds = proj.hitEnemyIds.filter((id) => id !== orbitTarget.id);
-            proj.orbitTargetId = undefined;
-            proj.orbitProgress = 0;
-            const strikeAngle = Math.atan2(orbitTarget.y - proj.y, orbitTarget.x - proj.x);
-            proj.vx = Math.cos(strikeAngle) * spd;
-            proj.vy = Math.sin(strikeAngle) * spd;
+            const targetId = proj.loopTargetEnemyId;
+            const exitAngle = proj.loopExitAngle ?? tangentAngle;
+            if (targetId !== undefined) {
+              proj.hitEnemyIds = proj.hitEnemyIds.filter((id) => id !== targetId);
+            }
+            clearDiscLoopState(proj);
+            const target =
+              targetId !== undefined
+                ? state.enemies.find((e) => e.id === targetId && e.hp > 0)
+                : undefined;
+            const resumeAngle =
+              target && Math.hypot(target.x - proj.x, target.y - proj.y) > 1e-6
+                ? Math.atan2(target.y - proj.y, target.x - proj.x)
+                : exitAngle;
+            proj.vx = Math.cos(resumeAngle) * spd;
+            proj.vy = Math.sin(resumeAngle) * spd;
           }
         }
       }
 
-      if (proj.orbitTargetId === undefined) {
+      if (runNormalMove) {
         const homingTarget = findNearestVisibleEnemy(
           proj.x,
           proj.y,
@@ -2180,16 +2270,18 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       proj.y += proj.vy * clampedDt;
     }
 
+    const isLoopingDisc =
+      proj.kind === 'disc' && proj.loopCenterX !== undefined && proj.loopCenterY !== undefined;
     const exceededDist =
       proj.maxDistance !== undefined && (proj.traveledDist ?? 0) >= proj.maxDistance;
-    if (proj.life <= 0 || exceededDist || isWallAtWorld(map, proj.x, proj.y)) {
+    if (proj.life <= 0 || (!isLoopingDisc && (exceededDist || isWallAtWorld(map, proj.x, proj.y)))) {
       state.projectiles.splice(i, 1);
       continue;
     }
 
     let consumed = false;
     for (const enemy of state.enemies) {
-      if (proj.orbitTargetId === enemy.id || proj.hitEnemyIds.includes(enemy.id)) continue;
+      if (proj.loopTargetEnemyId === enemy.id || proj.hitEnemyIds.includes(enemy.id)) continue;
       if (Math.hypot(enemy.x - proj.x, enemy.y - proj.y) <= enemy.radius + proj.radius) {
         damageEnemy(state, enemy, proj.damage);
         proj.hitEnemyIds.push(enemy.id);
@@ -2207,10 +2299,24 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             proj.vy = Math.sin(bounceAngle) * spd;
             proj.life = Math.max(proj.life, 0.9);
           } else {
-            // No unhit enemy in sight: orbit around this enemy for 1 full revolution, then re-hit
-            proj.orbitTargetId = enemy.id;
-            proj.orbitAngle = Math.atan2(proj.y - enemy.y, proj.x - enemy.x);
-            proj.orbitProgress = 0;
+            // No unhit enemy in sight: loop 1 full revolution anchored at hit point, then re-hit
+            const spd = proj.speed ?? 360;
+            const heading =
+              Math.hypot(proj.vx, proj.vy) > 1e-6
+                ? Math.atan2(proj.vy, proj.vx)
+                : Math.atan2(enemy.y - player.y, enemy.x - player.x);
+            const loopRadius = RICOCHET_DISC_LOOP_RADIUS;
+            const candidate = chooseDiscLoopCandidate(map, proj.x, proj.y, heading, loopRadius);
+            proj.loopCenterX = candidate.cx;
+            proj.loopCenterY = candidate.cy;
+            proj.loopRadius = loopRadius;
+            proj.loopAngle = candidate.startAngle;
+            proj.loopProgress = 0;
+            proj.loopDir = candidate.dir;
+            proj.loopTargetEnemyId = enemy.id;
+            proj.loopExitAngle = heading;
+            proj.vx = Math.cos(heading) * spd;
+            proj.vy = Math.sin(heading) * spd;
             proj.life = Math.max(proj.life, 1.0);
           }
           break;

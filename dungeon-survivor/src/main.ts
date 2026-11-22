@@ -160,7 +160,7 @@ function getModalKey(): string {
   const skillsKey = SKILL_TREE_NODES.map((n) => state.player.skillLevels[n.id] ?? 0).join(',');
   return `${state.status}:${activePauseTab}:${state.player.level}:${state.player.skillPoints}:${state.player.spentSkillPoints}:${state.player.maxEquipSlots}:${state.player.scrapExpandProgress}:${skillsKey}:${state.player.equipment
     .map((e) => `${e.id}${e.level}`)
-    .join(',')}:${state.pendingEquipDrop?.item.id ?? ''}`;
+    .join(',')}:${state.pendingEquipDrop?.item.id ?? ''}:${state.pendingEquipDrop?.item.level ?? ''}`;
 }
 
 function syncNotifications(): void {

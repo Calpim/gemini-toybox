@@ -14,12 +14,12 @@
     ならば プレイヤーが攻撃ボタンを押さなくても、自機の基本攻撃と所持装備による自動迎撃が発生する
 
   # split-from: BIZ-CMB-02 (CMB-02-a)
-  # 移管・委譲参照: 個別装備の手段詳細(CMB-02-b〜e) → APP-CMB-02, APP-CMB-05, GLS-02, PRM-19, PRM-20, PRM-21, FML-07, INV-10, NG-10, DEC-10, DEC-11
+  # 移管・委譲参照: 個別装備の手段詳細(CMB-02-b〜e) → APP-CMB-02, APP-CMB-05, GLS-02, PRM-19, PRM-20, PRM-21, PRM-36, FML-07, INV-10, INV-11, NG-10, DEC-10, DEC-11, DEC-25
   @BIZ-CMB-02 @Confirmed
   シナリオ: 武器や盾だけでなくビットや迎撃系装備を組み合わせて並列に自動迎撃・防御支援できる
     前提 プレイヤーが探索中に様々な系統の装備を入手している
     もし 役割の異なる複数系統の装備（近接・防御・自律・追尾・反撃）を組み合わせて装備する
-    ならば それぞれの役割に応じた自動攻撃や防御・反射・減速支援が同時に機能する
+    ならば それぞれの役割に応じた自動攻撃や防御・反射・減速支援が同時に機能する（同一装備の重複装着は不可：INV-11）
 
   # split-from: BIZ-CMB-03 (CMB-03-a)
   # 関連: APP-CMB-03, INV-06, GLS-19, NG-09 / 対応テスト: src/core/dungeon.test.ts ([APP-CMB-03]), src/game/engine.test.ts ([APP-CMB-01 & APP-CMB-03])
@@ -46,7 +46,7 @@
 
   # split-from: BIZ-CMB-05 (CMB-05-a, CMB-05-b)
   # 移管・参照統一: Lv8到達後の余剰獲得処理(CMB-05-c) → BIZ-GRW-04, INV-09, PRM-32 (Inferred)
-  # 関連: APP-CMB-05, GLS-12, PRM-13, PRM-21, PRM-22, FML-06, FML-07, DEC-10, DEC-16
+  # 関連: APP-CMB-05, GLS-12, PRM-13, PRM-21, PRM-22, PRM-36, FML-06, FML-07, DEC-10, DEC-16, DEC-25
   @BIZ-CMB-05 @Confirmed
   シナリオ: 装備のレベルはLv6まで展開挙動が進化し、Lv7〜8で威力・CD・射程が伸びる
     前提 プレイヤーが装備スロットに上限Lv8の装備を所持している
