@@ -1515,7 +1515,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(baseHitState.player.hp).toBe(90); // second projectile ignored by invulnTimer
     expect(baseHitState.player.invulnTimer).toBeCloseTo(1.0, 2);
 
-    // mob_dash triggers charge-based invuln extension + speed boost without forced movement
+    // mob_dash triggers charge-based no-damage evasion + invuln extension + speed boost without forced movement
     const dashState = createGameState({ seed: 970 });
     dashState.chests = [];
     dashState.pickups = [];
@@ -1536,7 +1536,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
     stepGame(dashState, { x: 0, y: 0 }, 0.02);
-    expect(dashState.player.hp).toBe(90);
+    expect(dashState.player.hp).toBe(100);
     expect(dashState.player.x).toBe(startX); // no forced teleport/step into walls
     expect(dashState.player.invulnTimer).toBeCloseTo(1.6, 2);
     expect(dashState.player.tacticalStepCharges).toBe(1);
@@ -1549,7 +1549,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const movedDist = boostedStartX - dashState.player.x;
     expect(movedDist).toBeGreaterThan(210 * 0.05 * 1.3);
 
-    // Consume 2nd charge after invuln expires, then fallback to 1.0s base invuln when out of charges
+    // Consume 2nd charge after invuln expires (still no damage), then take damage + 1.0s base invuln when out of charges
     dashState.player.invulnTimer = 0;
     dashState.enemyProjectiles = [
       {
@@ -1564,6 +1564,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
     stepGame(dashState, { x: 0, y: 0 }, 0.02);
+    expect(dashState.player.hp).toBe(100);
     expect(dashState.player.tacticalStepCharges).toBe(0);
     expect(dashState.player.invulnTimer).toBeCloseTo(1.6, 2);
 
@@ -1581,6 +1582,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
     stepGame(dashState, { x: 0, y: 0 }, 0.02);
+    expect(dashState.player.hp).toBe(90);
     expect(dashState.player.tacticalStepCharges).toBe(0);
     expect(dashState.player.invulnTimer).toBeCloseTo(1.0, 2);
 
@@ -2302,6 +2304,282 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(sawLoopStart).toBe(true);
     expect(exitedLoopOnWall).toBe(true);
     expect(movedAfterExit).toBe(true);
+  });
+
+  it('[BUG-30] skips pierceDefense shots in pulse_blade/orbit_shield and bypasses def_aegis parry for pierceDefense, mortar, and bossLaser', () => {
+    // 1. pulse_blade must NOT trigger idle slash FX/sound/CD when only pierceDefense projectiles are in range
+    const bladeState = createGameState({ seed: 3001 });
+    bladeState.chests = [];
+    bladeState.pickups = [];
+    bladeState.enemies = [];
+    bladeState.map.tiles.fill('floor');
+    bladeState.player.baseAttackCooldown = 999;
+    bladeState.player.equipment = [createEquippedItem('pulse_blade', 3)];
+    bladeState.player.equipment[0].cooldown = 0;
+    bladeState.enemyProjectiles = [
+      {
+        id: 8801,
+        x: bladeState.player.x + 36,
+        y: bladeState.player.y,
+        vx: -20,
+        vy: 0,
+        radius: 5,
+        damage: 10,
+        life: 2.0,
+        color: '#f472b6',
+        pierceDefense: true,
+      },
+    ];
+    bladeState.soundEvents = [];
+    bladeState.visualFx = [];
+    stepGame(bladeState, { x: 0, y: 0 }, 0.016);
+    expect(bladeState.visualFx.some((fx) => fx.kind === 'slash')).toBe(false);
+    expect(bladeState.soundEvents.includes('blade')).toBe(false);
+    expect(bladeState.player.equipment[0].cooldown).toBe(0);
+    expect(bladeState.enemyProjectiles.some((ep) => ep.id === 8801)).toBe(true);
+
+    // 2. orbit_shield clears normal shots on bit contact but leaves pierceDefense shots intact
+    const shieldState = createGameState({ seed: 3002 });
+    shieldState.chests = [];
+    shieldState.pickups = [];
+    shieldState.enemies = [];
+    shieldState.map.tiles.fill('floor');
+    shieldState.player.baseAttackCooldown = 999;
+    shieldState.player.equipment = [createEquippedItem('orbit_shield', 1)];
+    const bits = getOrbitBitPositions(shieldState);
+    expect(bits.length).toBeGreaterThanOrEqual(1);
+    shieldState.enemyProjectiles = [
+      {
+        id: 8802,
+        x: bits[0].x,
+        y: bits[0].y,
+        vx: 0,
+        vy: 0,
+        radius: 5,
+        damage: 10,
+        life: 2.0,
+        color: '#f472b6',
+        pierceDefense: true,
+      },
+      {
+        id: 8803,
+        x: bits[0].x,
+        y: bits[0].y,
+        vx: 0,
+        vy: 0,
+        radius: 5,
+        damage: 10,
+        life: 2.0,
+        color: '#fb7185',
+        pierceDefense: false,
+      },
+    ];
+    stepGame(shieldState, { x: 0, y: 0 }, 0.001);
+    expect(shieldState.enemyProjectiles.some((ep) => ep.id === 8802)).toBe(true);
+    expect(shieldState.enemyProjectiles.some((ep) => ep.id === 8803)).toBe(false);
+
+    // 3. def_aegis does NOT parry pierceDefense shots, mortarZones, or bossLasers, but DOES parry normal shots
+    const makeAegisState = (seed: number) => {
+      const s = createGameState({ seed });
+      s.chests = [];
+      s.pickups = [];
+      s.enemies = [];
+      s.map.tiles.fill('floor');
+      s.player.baseAttackCooldown = 999;
+      s.player.invulnTimer = 0;
+      s.player.aegisCooldown = 0;
+      s.player.skillLevels = {
+        def_sensor: 3,
+        def_pulse: 3,
+        def_aegis: 1,
+      };
+      return s;
+    };
+
+    // 3a. pierceDefense projectile hits player directly without triggering parry
+    const pierceParryState = makeAegisState(3003);
+    const hpBeforePierce = pierceParryState.player.hp;
+    pierceParryState.enemyProjectiles = [
+      {
+        id: 8804,
+        x: pierceParryState.player.x,
+        y: pierceParryState.player.y,
+        vx: 0,
+        vy: 0,
+        radius: 6,
+        damage: 12,
+        life: 1.0,
+        color: '#f472b6',
+        pierceDefense: true,
+      },
+    ];
+    stepGame(pierceParryState, { x: 0, y: 0 }, 0.016);
+    expect(pierceParryState.player.hp).toBe(hpBeforePierce - 12);
+    expect(pierceParryState.player.aegisCooldown).toBe(0);
+    expect(pierceParryState.floatingTexts.some((ft) => ft.text === 'PARRY!')).toBe(false);
+
+    // 3b. mortarZone impact hits player without triggering parry
+    const mortarParryState = makeAegisState(3004);
+    const hpBeforeMortar = mortarParryState.player.hp;
+    mortarParryState.mortarZones = [
+      {
+        id: 8805,
+        startX: mortarParryState.player.x - 100,
+        startY: mortarParryState.player.y,
+        targetX: mortarParryState.player.x,
+        targetY: mortarParryState.player.y,
+        radius: 40,
+        damage: 15,
+        elapsed: 0.84,
+        duration: 0.85,
+      },
+    ];
+    stepGame(mortarParryState, { x: 0, y: 0 }, 0.02);
+    expect(mortarParryState.player.hp).toBe(hpBeforeMortar - 15);
+    expect(mortarParryState.player.aegisCooldown).toBe(0);
+    expect(mortarParryState.floatingTexts.some((ft) => ft.text === 'PARRY!')).toBe(false);
+
+    // 3c. bossLaser hits player without triggering parry
+    const laserParryState = makeAegisState(3005);
+    const hpBeforeLaser = laserParryState.player.hp;
+    laserParryState.bossLasers = [
+      {
+        id: 8806,
+        points: [
+          { x: laserParryState.player.x - 50, y: laserParryState.player.y },
+          { x: laserParryState.player.x + 50, y: laserParryState.player.y },
+        ],
+        width: 12,
+        damage: 18,
+        elapsed: 0.5,
+        windup: 0.4,
+        duration: 1.0,
+        hitPlayer: false,
+      },
+    ];
+    stepGame(laserParryState, { x: 0, y: 0 }, 0.016);
+    expect(laserParryState.player.hp).toBe(hpBeforeLaser - 18);
+    expect(laserParryState.player.aegisCooldown).toBe(0);
+    expect(laserParryState.floatingTexts.some((ft) => ft.text === 'PARRY!')).toBe(false);
+
+    // 3d. normal projectile IS parried by def_aegis
+    const normalParryState = makeAegisState(3006);
+    const hpBeforeNormal = normalParryState.player.hp;
+    normalParryState.enemyProjectiles = [
+      {
+        id: 8807,
+        x: normalParryState.player.x,
+        y: normalParryState.player.y,
+        vx: 0,
+        vy: 0,
+        radius: 6,
+        damage: 12,
+        life: 1.0,
+        color: '#fb7185',
+        pierceDefense: false,
+      },
+    ];
+    stepGame(normalParryState, { x: 0, y: 0 }, 0.016);
+    expect(normalParryState.player.hp).toBe(hpBeforeNormal);
+    expect(normalParryState.player.aegisCooldown).toBeGreaterThan(0);
+    expect(normalParryState.floatingTexts.some((ft) => ft.text === 'PARRY!')).toBe(true);
+
+    // 4. Priority & mob_dash no-damage evasion across heavy attacks + boss dash parry trade
+    // 4a. When both def_aegis and mob_dash are ready against normal shot, def_aegis takes priority and preserves mob_dash charge
+    const priorityState = makeAegisState(3007);
+    priorityState.player.skillLevels = {
+      def_sensor: 3,
+      def_pulse: 3,
+      def_aegis: 1,
+      mob_magnet: 3,
+      mob_loot: 3,
+      mob_dash: 1,
+    };
+    priorityState.player.tacticalStepCharges = 1;
+    priorityState.enemyProjectiles = [
+      {
+        id: 8808,
+        x: priorityState.player.x,
+        y: priorityState.player.y,
+        vx: 0,
+        vy: 0,
+        radius: 6,
+        damage: 12,
+        life: 1.0,
+        pierceDefense: false,
+      },
+    ];
+    stepGame(priorityState, { x: 0, y: 0 }, 0.016);
+    expect(priorityState.player.hp).toBe(100);
+    expect(priorityState.player.aegisCooldown).toBeGreaterThan(0);
+    expect(priorityState.player.tacticalStepCharges).toBe(1);
+    expect(priorityState.floatingTexts.some((ft) => ft.text === 'PARRY!')).toBe(true);
+
+    // 4b. mob_dash evades pierceDefense, mortarZones, and bossLasers with zero damage
+    const evadeHeavyState = createGameState({ seed: 3008 });
+    evadeHeavyState.chests = [];
+    evadeHeavyState.pickups = [];
+    evadeHeavyState.enemies = [];
+    evadeHeavyState.map.tiles.fill('floor');
+    evadeHeavyState.player.baseAttackCooldown = 999;
+    evadeHeavyState.player.skillLevels = { mob_magnet: 3, mob_loot: 3, mob_dash: 2 };
+    evadeHeavyState.player.tacticalStepCharges = 2;
+    evadeHeavyState.player.invulnTimer = 0;
+    evadeHeavyState.enemyProjectiles = [
+      {
+        id: 8809,
+        x: evadeHeavyState.player.x,
+        y: evadeHeavyState.player.y,
+        vx: 0,
+        vy: 0,
+        radius: 6,
+        damage: 15,
+        life: 1.0,
+        pierceDefense: true,
+      },
+    ];
+    stepGame(evadeHeavyState, { x: 0, y: 0 }, 0.016);
+    expect(evadeHeavyState.player.hp).toBe(100);
+    expect(evadeHeavyState.player.tacticalStepCharges).toBe(1);
+    expect(evadeHeavyState.floatingTexts.some((ft) => ft.text === 'EVADE!')).toBe(true);
+
+    evadeHeavyState.player.invulnTimer = 0;
+    evadeHeavyState.floatingTexts = [];
+    evadeHeavyState.mortarZones = [
+      {
+        id: 8810,
+        startX: evadeHeavyState.player.x - 80,
+        startY: evadeHeavyState.player.y,
+        targetX: evadeHeavyState.player.x,
+        targetY: evadeHeavyState.player.y,
+        radius: 40,
+        damage: 18,
+        elapsed: 0.84,
+        duration: 0.85,
+      },
+    ];
+    stepGame(evadeHeavyState, { x: 0, y: 0 }, 0.02);
+    expect(evadeHeavyState.player.hp).toBe(100);
+    expect(evadeHeavyState.player.tacticalStepCharges).toBe(0);
+    expect(evadeHeavyState.floatingTexts.some((ft) => ft.text === 'EVADE!')).toBe(true);
+
+    // 4c. Boss during dashState === 'dashing' bypasses def_aegis damage negation (player takes hit) but still triggers counter damage (trade)
+    const bossTradeState = makeAegisState(3009);
+    bossTradeState.player.repulsorCooldown = 999;
+    const boss = createEnemyByKind(8811, 'tank', bossTradeState.player.x, bossTradeState.player.y, 3);
+    boss.isRoomBoss = true;
+    boss.dashState = 'dashing';
+    boss.dashTimer = 0.2;
+    boss.dashDir = { x: 1, y: 0 };
+    boss.damage = 20;
+    boss.hp = 300;
+    boss.maxHp = 300;
+    bossTradeState.enemies = [boss];
+    stepGame(bossTradeState, { x: 0, y: 0 }, 0.016);
+    expect(bossTradeState.player.hp).toBe(80);
+    expect(boss.hp).toBe(300 - 22); // Lv1 def_aegis counter damage = 22
+    expect(bossTradeState.player.aegisCooldown).toBeGreaterThan(0);
+    expect(bossTradeState.floatingTexts.some((ft) => ft.text === 'PARRY!')).toBe(true);
   });
 });
 

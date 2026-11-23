@@ -104,7 +104,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オートパリィ盾',
     requires: 'def_pulse',
-    description: '被弾無効パリィ＋小反撃＆無敵1.0s（Lv1: CD7.0s/反撃22 → Lv2: CD4.5s/反撃42）',
+    description: '通常弾・近接をパリィ無効化＋反撃＆無敵1.0s（Lv1: CD7.0s/22 → Lv2: CD4.5s/42、貫通/迫撃砲/レーザー不可・突進は相打ち）',
   },
   {
     id: 'mob_magnet',
@@ -128,7 +128,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: '緊急回避ブースト',
     requires: 'mob_loot',
-    description: '被弾時にチャージ消費で無敵延長＆2.5s移動加速（Lv1: 1回/1.30s/+24% → Lv2: 2回/1.60s/+38%）',
+    description: '全攻撃をチャージ消費でノーダメ回避＋無敵延長＆2.5s移動加速（Lv1: 1回/1.30s/+24% → Lv2: 2回/1.60s/+38%）',
   },
 ] as const;
 

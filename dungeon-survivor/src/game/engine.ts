@@ -1461,32 +1461,105 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
 
 export const getMainWeaponStats = getPlayerBaseAttackStats;
 
-function applyTacticalStepOnHit(
+/**
+ * Attempts to consume a mob_dash charge to completely evade an incoming hit (no damage, extended invuln, speed boost).
+ * Can evade all attack types including pierceDefense, mortars, boss lasers, and boss dashes.
+ */
+function tryTacticalStepEvade(
   state: GameState,
-  mods: ComputedSkillModifiers,
-  defaultInvuln = BASE_HIT_INVULN_DURATION
-): void {
+  mods: ComputedSkillModifiers
+): boolean {
   const { player } = state;
   const charges = player.tacticalStepCharges ?? mods.tacticalMaxCharges;
-  if (mods.hasTacticalStep && charges > 0) {
-    player.tacticalStepCharges = charges - 1;
-    if (player.tacticalStepCooldown <= 0) {
-      player.tacticalStepCooldown = mods.tacticalStepCooldown;
-    }
-    player.invulnTimer = mods.tacticalInvulnDuration;
-    player.tacticalSpeedTimer = TACTICAL_SPEED_BOOST_DURATION;
-    player.tacticalSpeedBonus = mods.tacticalSpeedBonus;
-    state.floatingTexts.push({
-      x: player.x,
-      y: player.y - 22,
-      text: 'EVADE!',
-      color: '#38bdf8',
-      life: 0.65,
-      maxLife: 0.65,
-    });
-  } else {
-    player.invulnTimer = defaultInvuln;
+  if (!mods.hasTacticalStep || charges <= 0) return false;
+  player.tacticalStepCharges = charges - 1;
+  if (player.tacticalStepCooldown <= 0) {
+    player.tacticalStepCooldown = mods.tacticalStepCooldown;
   }
+  player.invulnTimer = mods.tacticalInvulnDuration;
+  player.tacticalSpeedTimer = TACTICAL_SPEED_BOOST_DURATION;
+  player.tacticalSpeedBonus = mods.tacticalSpeedBonus;
+  state.floatingTexts.push({
+    x: player.x,
+    y: player.y - 22,
+    text: 'EVADE!',
+    color: '#38bdf8',
+    life: 0.65,
+    maxLife: 0.65,
+  });
+  return true;
+}
+
+/**
+ * Applies standard player hit damage, feedback FX, and base hit invulnerability.
+ * Returns true if the player died (status transitioned to gameover).
+ */
+function applyPlayerHitDamage(
+  state: GameState,
+  damage: number,
+  shakeIntensity: number,
+  shakeDuration: number,
+  particleColor = '#f87171',
+  particleCount = 6
+): boolean {
+  const { player } = state;
+  player.hp = Math.max(0, player.hp - damage);
+  emitSound(state, 'player_hit');
+  triggerShake(state, shakeIntensity, shakeDuration);
+  spawnParticles(state, player.x, player.y, particleColor, particleCount, 45, 140, 2.5, 0.3);
+  state.floatingTexts.push({
+    x: player.x,
+    y: player.y - player.radius - 6,
+    text: `-${damage}`,
+    color: particleColor,
+    life: 0.7,
+    maxLife: 0.7,
+  });
+  if (player.hp <= 0) {
+    state.status = 'gameover';
+    return true;
+  }
+  player.invulnTimer = BASE_HIT_INVULN_DURATION;
+  return false;
+}
+
+/**
+ * Attempts to trigger def_aegis parry against parryable hits (melee contact or normal enemy projectiles).
+ * Piercing projectiles, parabolic mortars, and boss lasers bypass parry.
+ */
+function tryAegisParry(
+  state: GameState,
+  mods: ComputedSkillModifiers,
+  counterTarget?: EnemyState
+): boolean {
+  const { player } = state;
+  if (!mods.hasAegisParry || player.aegisCooldown > 0) return false;
+  player.aegisCooldown = mods.aegisCooldown;
+  player.invulnTimer = BASE_HIT_INVULN_DURATION;
+  emitSound(state, 'parry');
+  triggerShake(state, 3.5, 0.12);
+  spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
+  if (counterTarget) {
+    damageEnemy(state, counterTarget, mods.aegisDamage);
+    state.visualFx.push({
+      kind: 'pulse',
+      x: player.x,
+      y: player.y,
+      radius: 70,
+      color: '#34d399',
+      life: 0.25,
+      maxLife: 0.25,
+    });
+  }
+  state.floatingTexts.push({
+    x: player.x,
+    y: player.y - 20,
+    text: 'PARRY!',
+    color: '#34d399',
+    life: 0.7,
+    maxLife: 0.7,
+  });
+  return true;
 }
 
 /**
@@ -1820,6 +1893,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       if (!leadEnemy) {
         let bestBulletDist = cappedRange;
         for (const ep of state.enemyProjectiles) {
+          if (ep.pierceDefense) continue;
           const d = Math.hypot(ep.x - player.x, ep.y - player.y);
           if (d <= bestBulletDist && hasLineOfSight(player.x, player.y, ep.x, ep.y, map)) {
             bestBulletDist = d;
@@ -2025,7 +2099,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       state.enemyProjectiles.splice(i, 1);
       continue;
     }
-    if (!ep.pierceDefense) {
+    if (!ep.pierceDefense && bits.length > 0) {
       const blockedByBit = bits.some(
         (bit) => Math.hypot(bit.x - ep.x, bit.y - ep.y) <= ep.radius + 10
       );
@@ -3253,9 +3327,30 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       player.invulnTimer <= 0 &&
       Math.hypot(player.x - enemy.x, player.y - enemy.y) <= player.radius + enemy.radius
     ) {
-      if (mods.hasAegisParry && player.aegisCooldown <= 0) {
+      const isDashingBoss =
+        Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
+
+      if (!isDashingBoss) {
+        if (tryAegisParry(state, mods, enemy)) {
+          continue;
+        }
+        if (tryTacticalStepEvade(state, mods)) {
+          continue;
+        }
+      } else {
+        if (tryTacticalStepEvade(state, mods)) {
+          continue;
+        }
+      }
+
+      if (applyPlayerHitDamage(state, enemy.damage, 6, 0.18, '#f87171', 7)) {
+        return;
+      }
+
+      // Boss dash bypasses parry damage negation, but def_aegis still triggers a counter-hit (trade)
+      if (isDashingBoss && mods.hasAegisParry && player.aegisCooldown <= 0) {
         player.aegisCooldown = mods.aegisCooldown;
-        player.invulnTimer = BASE_HIT_INVULN_DURATION;
+        emitSound(state, 'parry');
         damageEnemy(state, enemy, mods.aegisDamage);
         state.visualFx.push({
           kind: 'pulse',
@@ -3274,13 +3369,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           life: 0.7,
           maxLife: 0.7,
         });
-        continue;
       }
-
-      player.hp = Math.max(0, player.hp - enemy.damage);
-      emitSound(state, 'player_hit');
-      triggerShake(state, 6, 0.18);
-      spawnParticles(state, player.x, player.y, '#f87171', 7, 50, 140, 2.5, 0.3);
 
       // Trigger reactive coil counter immediately on hit if equipped
       const coil = player.equipment.find((e) => e.id === 'reactive_coil');
@@ -3299,21 +3388,6 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           coilStats.maxTargets
         );
       }
-
-      state.floatingTexts.push({
-        x: player.x,
-        y: player.y - player.radius - 6,
-        text: `-${enemy.damage}`,
-        color: '#f87171',
-        life: 0.7,
-        maxLife: 0.7,
-      });
-
-      if (player.hp <= 0) {
-        state.status = 'gameover';
-        return;
-      }
-      applyTacticalStepOnHit(state, mods);
     }
   }
 
@@ -3329,38 +3403,14 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       Math.hypot(player.x - ep.x, player.y - ep.y) <= player.radius + ep.radius
     ) {
       state.enemyProjectiles.splice(i, 1);
-      if (mods.hasAegisParry && player.aegisCooldown <= 0) {
-        player.aegisCooldown = mods.aegisCooldown;
-        player.invulnTimer = BASE_HIT_INVULN_DURATION;
-        emitSound(state, 'parry');
-        triggerShake(state, 3.5, 0.12);
-        spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
-        state.floatingTexts.push({
-          x: player.x,
-          y: player.y - 20,
-          text: 'PARRY!',
-          color: '#34d399',
-          life: 0.7,
-          maxLife: 0.7,
-        });
-      } else {
-        player.hp = Math.max(0, player.hp - ep.damage);
-        emitSound(state, 'player_hit');
-        triggerShake(state, 5.5, 0.16);
-        spawnParticles(state, player.x, player.y, '#f87171', 6, 45, 125, 2.4, 0.28);
-        state.floatingTexts.push({
-          x: player.x,
-          y: player.y - player.radius - 6,
-          text: `-${ep.damage}`,
-          color: '#f87171',
-          life: 0.7,
-          maxLife: 0.7,
-        });
-        if (player.hp <= 0) {
-          state.status = 'gameover';
-          return;
-        }
-        applyTacticalStepOnHit(state, mods);
+      if (!ep.pierceDefense && tryAegisParry(state, mods)) {
+        continue;
+      }
+      if (tryTacticalStepEvade(state, mods)) {
+        continue;
+      }
+      if (applyPlayerHitDamage(state, ep.damage, 5.5, 0.16, '#f87171', 6)) {
+        return;
       }
     }
   }
@@ -3389,38 +3439,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         Math.hypot(player.x - zone.targetX, player.y - zone.targetY) <=
           zone.radius + player.radius * 0.5
       ) {
-        if (mods.hasAegisParry && player.aegisCooldown <= 0) {
-          player.aegisCooldown = mods.aegisCooldown;
-          player.invulnTimer = BASE_HIT_INVULN_DURATION;
-          emitSound(state, 'parry');
-          triggerShake(state, 3.5, 0.12);
-          spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
-          state.floatingTexts.push({
-            x: player.x,
-            y: player.y - 20,
-            text: 'PARRY!',
-            color: '#34d399',
-            life: 0.7,
-            maxLife: 0.7,
-          });
-        } else {
-          player.hp = Math.max(0, player.hp - zone.damage);
-          emitSound(state, 'player_hit');
-          triggerShake(state, 6.5, 0.2);
-          spawnParticles(state, player.x, player.y, '#f87171', 7, 50, 140, 2.5, 0.3);
-          state.floatingTexts.push({
-            x: player.x,
-            y: player.y - player.radius - 6,
-            text: `-${zone.damage}`,
-            color: '#f87171',
-            life: 0.7,
-            maxLife: 0.7,
-          });
-          if (player.hp <= 0) {
-            state.status = 'gameover';
+        if (!tryTacticalStepEvade(state, mods)) {
+          if (applyPlayerHitDamage(state, zone.damage, 6.5, 0.2, '#f87171', 7)) {
             return;
           }
-          applyTacticalStepOnHit(state, mods);
         }
       }
     }
@@ -3449,38 +3471,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         }
         if (minDist <= player.radius + laser.width * 0.5) {
           laser.hitPlayer = true;
-          if (mods.hasAegisParry && player.aegisCooldown <= 0) {
-            player.aegisCooldown = mods.aegisCooldown;
-            player.invulnTimer = BASE_HIT_INVULN_DURATION;
-            emitSound(state, 'parry');
-            triggerShake(state, 3.5, 0.12);
-            spawnParticles(state, player.x, player.y, '#34d399', 8, 55, 140, 2.4, 0.28);
-            state.floatingTexts.push({
-              x: player.x,
-              y: player.y - 20,
-              text: 'PARRY!',
-              color: '#34d399',
-              life: 0.7,
-              maxLife: 0.7,
-            });
-          } else {
-            player.hp = Math.max(0, player.hp - laser.damage);
-            emitSound(state, 'player_hit');
-            triggerShake(state, 7, 0.22);
-            spawnParticles(state, player.x, player.y, '#f43f5e', 8, 55, 150, 2.5, 0.3);
-            state.floatingTexts.push({
-              x: player.x,
-              y: player.y - player.radius - 6,
-              text: `-${laser.damage}`,
-              color: '#f43f5e',
-              life: 0.7,
-              maxLife: 0.7,
-            });
-            if (player.hp <= 0) {
-              state.status = 'gameover';
+          if (!tryTacticalStepEvade(state, mods)) {
+            if (applyPlayerHitDamage(state, laser.damage, 7, 0.22, '#f43f5e', 8)) {
               return;
             }
-            applyTacticalStepOnHit(state, mods);
           }
         }
       }
