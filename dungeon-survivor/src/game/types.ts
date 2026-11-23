@@ -74,10 +74,11 @@ export interface EnemyState {
   isRoomBoss?: boolean;
   isGrandBoss?: boolean;
   bossPatternIndex?: number;
-  dashState?: 'none' | 'windup' | 'dashing';
+  dashState?: 'none' | 'windup' | 'dashing' | 'recovering';
   dashTimer?: number;
   dashDir?: Vec2;
   dashSpeed?: number;
+  dashBouncesLeft?: number;
   mortarCooldown?: number;
 }
 

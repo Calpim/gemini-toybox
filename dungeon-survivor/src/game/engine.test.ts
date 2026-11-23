@@ -39,6 +39,7 @@ import {
   getRunnerPackSize,
   getSeekerDronePositions,
   getStairsLockCount,
+  getActiveBossLaserWidth,
   isPointInPlayerVision,
   pickEnemyKindForFloor,
   resolveEquipChoice,
@@ -1364,7 +1365,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.mortarZones.length).toBeGreaterThanOrEqual(1);
     expect(grandBoss!.dashState).toBe('windup');
     const preDashX = grandBoss!.x;
-    for (let f = 0; f < 60; f++) {
+    for (let f = 0; f < 80; f++) {
       stepGame(state, { x: 0, y: 0 }, 0.02);
     }
     expect(Math.abs(grandBoss!.x - preDashX)).toBeGreaterThan(50);
@@ -2580,6 +2581,158 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(boss.hp).toBe(300 - 22); // Lv1 def_aegis counter damage = 22
     expect(bossTradeState.player.aegisCooldown).toBeGreaterThan(0);
     expect(bossTradeState.floatingTexts.some((ft) => ft.text === 'PARRY!')).toBe(true);
+  });
+
+  it('[ENH-13] grants boss dash invulnerability (parry trade pierces), bounces Grand Boss dash off walls once into recovering stun with non-piercing burst, and expands boss laser width over time', () => {
+    // 1. Boss takes damage during windup, is invulnerable to normal attacks during dashing, and takes damage again during recovering
+    const invulnState = createGameState({ seed: 1301 });
+    invulnState.chests = [];
+    invulnState.pickups = [];
+    invulnState.map.tiles.fill('floor');
+    invulnState.player.invulnTimer = 99;
+    invulnState.player.baseAttackCooldown = 0;
+    const gBoss = createEnemyByKind(9101, 'tank', invulnState.player.x + 80, invulnState.player.y, 10);
+    gBoss.isRoomBoss = true;
+    gBoss.isGrandBoss = true;
+    gBoss.awake = true;
+    gBoss.hp = 1000;
+    gBoss.maxHp = 1000;
+    gBoss.attackCooldown = 99;
+    gBoss.mortarCooldown = 99;
+    gBoss.dashState = 'windup';
+    gBoss.dashTimer = 0.5;
+    gBoss.dashDir = { x: 1, y: 0 };
+    gBoss.dashSpeed = 540;
+    invulnState.enemies = [gBoss];
+
+    // Windup: normal player attack hits
+    stepGame(invulnState, { x: 0, y: 0 }, 0.02);
+    for (let f = 0; f < 15; f++) {
+      stepGame(invulnState, { x: 0, y: 0 }, 0.02);
+    }
+    const hpAfterWindup = gBoss.hp;
+    expect(hpAfterWindup).toBeLessThan(1000);
+
+    // Dashing: direct projectile hits do NOT reduce boss HP
+    gBoss.dashState = 'dashing';
+    gBoss.dashTimer = 0.5;
+    gBoss.dashBouncesLeft = 1;
+    gBoss.x = invulnState.player.x + 60;
+    gBoss.y = invulnState.player.y;
+    invulnState.projectiles.push({
+      id: 9102,
+      kind: 'base',
+      x: gBoss.x,
+      y: gBoss.y,
+      vx: 0,
+      vy: 0,
+      radius: 8,
+      damage: 50,
+      life: 1.0,
+      pierce: false,
+      hitEnemyIds: [],
+      color: '#67e8f9',
+    });
+    stepGame(invulnState, { x: 0, y: 0 }, 0.016);
+    expect(gBoss.hp).toBe(hpAfterWindup);
+
+    // Recovering: boss stands still and takes damage again
+    gBoss.dashState = 'recovering';
+    gBoss.dashTimer = 0.8;
+    const recX = gBoss.x;
+    const recY = gBoss.y;
+    invulnState.projectiles.push({
+      id: 9103,
+      kind: 'base',
+      x: gBoss.x,
+      y: gBoss.y,
+      vx: 0,
+      vy: 0,
+      radius: 8,
+      damage: 50,
+      life: 1.0,
+      pierce: false,
+      hitEnemyIds: [],
+      color: '#67e8f9',
+    });
+    stepGame(invulnState, { x: 0, y: 0 }, 0.016);
+    expect(gBoss.x).toBe(recX);
+    expect(gBoss.y).toBe(recY);
+    expect(gBoss.hp).toBe(hpAfterWindup - 50);
+
+    // 2. Grand Boss bounces once off a wall during dash, continues dashing, then transitions to recovering with all non-piercing burst shots
+    const bounceState = createGameState({ seed: 1302 });
+    bounceState.chests = [];
+    bounceState.pickups = [];
+    bounceState.map.tiles.fill('floor');
+    // Put a vertical wall column at tile x = 12
+    const pTile = findRoomAtTile(bounceState.map, Math.floor(bounceState.player.x / TILE_SIZE), Math.floor(bounceState.player.y / TILE_SIZE));
+    const baseTx = Math.floor(bounceState.player.x / TILE_SIZE);
+    const baseTy = Math.floor(bounceState.player.y / TILE_SIZE);
+    const wallTx = baseTx + 3;
+    for (let wy = Math.max(0, baseTy - 4); wy <= Math.min(bounceState.map.height - 1, baseTy + 4); wy++) {
+      bounceState.map.tiles[wy * bounceState.map.width + wallTx] = 'wall';
+    }
+    expect(pTile === null || pTile !== null).toBe(true);
+    const wallLeftEdge = wallTx * TILE_SIZE;
+    const rBoss = createEnemyByKind(9104, 'tank', wallLeftEdge - 32, bounceState.player.y, 10);
+    rBoss.isRoomBoss = true;
+    rBoss.isGrandBoss = true;
+    rBoss.awake = true;
+    rBoss.attackCooldown = 99;
+    rBoss.mortarCooldown = 99;
+    rBoss.dashState = 'dashing';
+    rBoss.dashTimer = 0.72;
+    rBoss.dashDir = { x: 1, y: 0 };
+    rBoss.dashSpeed = 540;
+    rBoss.dashBouncesLeft = 1;
+    bounceState.enemies = [rBoss];
+    bounceState.player.invulnTimer = 99;
+    bounceState.player.baseAttackCooldown = 999;
+
+    // Step until wall hit triggers bounce (dashDir.x flips negative)
+    let bounced = false;
+    for (let f = 0; f < 15; f++) {
+      stepGame(bounceState, { x: 0, y: 0 }, 0.016);
+      if ((rBoss.dashDir?.x ?? 1) < 0) {
+        bounced = true;
+        break;
+      }
+    }
+    expect(bounced).toBe(true);
+    expect(rBoss.dashState).toBe('dashing');
+    expect(rBoss.dashBouncesLeft).toBe(0);
+
+    // Step remaining dash duration until recovering + landing burst
+    const getDashState = () => bounceState.enemies[0].dashState;
+    for (let f = 0; f < 55; f++) {
+      stepGame(bounceState, { x: 0, y: 0 }, 0.016);
+      if (getDashState() === 'recovering') break;
+    }
+    expect(getDashState()).toBe('recovering');
+    expect(bounceState.enemyProjectiles.length).toBeGreaterThanOrEqual(8);
+    expect(bounceState.enemyProjectiles.every((ep) => !ep.pierceDefense)).toBe(true);
+
+    // 3. Boss laser starts thin on activation and gradually widens to full width (22px)
+    const laserSample = {
+      id: 9105,
+      points: [
+        { x: 0, y: 0 },
+        { x: 200, y: 0 },
+      ],
+      width: 22,
+      damage: 20,
+      elapsed: 0.5,
+      windup: 0.72,
+      duration: 1.12,
+      hitPlayer: false,
+    };
+    expect(getActiveBossLaserWidth(laserSample)).toBe(0);
+    laserSample.elapsed = 0.72; // just fired
+    const initialActiveWidth = getActiveBossLaserWidth(laserSample);
+    expect(initialActiveWidth).toBeCloseTo(22 * 0.28, 3);
+    laserSample.elapsed = 0.90; // >= windup + 0.18s -> full width
+    expect(getActiveBossLaserWidth(laserSample)).toBeCloseTo(22, 3);
   });
 });
 

@@ -51,6 +51,7 @@ import {
   type SkillNodeId,
 } from './skillTree';
 import type {
+  BossLaserState,
   ChestState,
   EnemyKind,
   EnemyState,
@@ -1115,6 +1116,19 @@ export function getSeekerDronePositions(state: GameState): Vec2[] {
   return positions;
 }
 
+/**
+ * Computes the active beam width of a Grand Boss laser as it expands from thin to full width.
+ * Returns 0 during windup telegraph.
+ */
+export function getActiveBossLaserWidth(laser: BossLaserState): number {
+  if (laser.elapsed < laser.windup) return 0;
+  const activeElapsed = laser.elapsed - laser.windup;
+  const growSpan = Math.min(0.18, Math.max(0.01, (laser.duration - laser.windup) * 0.5));
+  const t = Math.max(0, Math.min(1, activeElapsed / growSpan));
+  const ease = 1 - (1 - t) * (1 - t);
+  return laser.width * (0.28 + 0.72 * ease);
+}
+
 export function rollDropEquipmentLevel(
   equipment: readonly EquippedItem[],
   rngNext: () => number,
@@ -1145,7 +1159,19 @@ function pickChestDrop(state: GameState, chestId: number): { id: EquipmentId; le
   return { id, level };
 }
 
-function damageEnemy(state: GameState, enemy: EnemyState, amount: number): void {
+function damageEnemy(
+  state: GameState,
+  enemy: EnemyState,
+  amount: number,
+  bypassDashInvuln = false
+): void {
+  const isDashInvuln =
+    Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
+  if (isDashInvuln && !bypassDashInvuln) {
+    enemy.hitFlash = 0.06;
+    spawnParticles(state, enemy.x, enemy.y, '#cbd5e1', 2, 30, 90, 1.8, 0.16);
+    return;
+  }
   enemy.hp -= amount;
   enemy.hitFlash = 0.14;
   enemy.awake = true;
@@ -2984,7 +3010,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     // Guardian / Grand Boss rotating patterns (ring, spread homing orbs, wall-bouncing shots, lead dash + burst) + independent mortar
     if (enemy.isRoomBoss && enemy.awake) {
       const isGrand = Boolean(enemy.isGrandBoss);
-      if (wasAwake && enemy.dashState !== 'dashing' && enemy.dashState !== 'windup') {
+      if (
+        wasAwake &&
+        enemy.dashState !== 'dashing' &&
+        enemy.dashState !== 'windup' &&
+        enemy.dashState !== 'recovering'
+      ) {
         enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? 0.6) - clampedDt);
         const canBossMortar =
           distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 780 : 400);
@@ -3035,11 +3066,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
         if ((enemy.dashTimer ?? 0) <= 0) {
           enemy.dashState = 'dashing';
-          enemy.dashTimer = isGrand ? 0.55 : 0.50;
+          enemy.dashTimer = isGrand ? 0.72 : 0.62;
           emitSound(state, 'boss_dash');
         }
       } else if (enemy.dashState === 'dashing' && enemy.dashDir) {
-        const dashSpd = enemy.dashSpeed ?? (isGrand ? 460 : 410);
+        const dashSpd = enemy.dashSpeed ?? (isGrand ? 540 : 480);
         const stepDist = dashSpd * clampedDt;
         const resolvedDash = resolveCircleGridCollision(
           enemy.x + enemy.dashDir.x * stepDist,
@@ -3052,29 +3083,69 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         enemy.y = resolvedDash.y;
         spawnParticles(state, enemy.x, enemy.y, isGrand ? '#fbbf24' : '#f43f5e', 1, 10, 40, 2.6, 0.22);
         enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
-        if ((enemy.dashTimer ?? 0) <= 0 || moved < stepDist * 0.45) {
-          enemy.dashState = 'none';
+
+        const hitWall = stepDist > 1e-4 && moved < stepDist * 0.65;
+        let endedDash = (enemy.dashTimer ?? 0) <= 0;
+        if (hitWall) {
+          if ((enemy.dashBouncesLeft ?? 0) > 0) {
+            const rx = resolveCircleGridCollision(
+              enemy.x + enemy.dashDir.x * stepDist,
+              enemy.y,
+              enemy.radius,
+              map
+            );
+            const ry = resolveCircleGridCollision(
+              enemy.x,
+              enemy.y + enemy.dashDir.y * stepDist,
+              enemy.radius,
+              map
+            );
+            const blockedX =
+              Math.abs(enemy.dashDir.x) > 1e-3 &&
+              Math.abs(rx.x - enemy.x) < Math.abs(enemy.dashDir.x) * stepDist * 0.65;
+            const blockedY =
+              Math.abs(enemy.dashDir.y) > 1e-3 &&
+              Math.abs(ry.y - enemy.y) < Math.abs(enemy.dashDir.y) * stepDist * 0.65;
+            if (blockedX) enemy.dashDir.x = -enemy.dashDir.x;
+            if (blockedY) enemy.dashDir.y = -enemy.dashDir.y;
+            if (!blockedX && !blockedY) {
+              enemy.dashDir.x = -enemy.dashDir.x;
+              enemy.dashDir.y = -enemy.dashDir.y;
+            }
+            enemy.dashBouncesLeft = (enemy.dashBouncesLeft ?? 1) - 1;
+            triggerShake(state, 3.5, 0.12);
+            spawnParticles(state, enemy.x, enemy.y, '#fbbf24', 6, 40, 120, 2.4, 0.25);
+          } else {
+            endedDash = true;
+          }
+        }
+
+        if (endedDash) {
+          enemy.dashState = 'recovering';
+          enemy.dashTimer = isGrand ? 1.05 : 0.95;
           const burstCount = isGrand ? 8 : 4;
           const burstSpd = isGrand ? 195 : 170;
           const baseBurstAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-          const pSlotA = rng.int(0, burstCount - 1);
-          const pSlotB = isGrand ? (pSlotA + rng.int(1, burstCount - 1)) % burstCount : -1;
           for (let k = 0; k < burstCount; k++) {
             const ba = baseBurstAngle + (k * Math.PI * 2) / burstCount;
-            const isPiercing = k === pSlotA || k === pSlotB;
             state.enemyProjectiles.push({
               id: state.nextEntityId++,
               x: enemy.x,
               y: enemy.y,
               vx: Math.cos(ba) * burstSpd,
               vy: Math.sin(ba) * burstSpd,
-              radius: isPiercing ? 6 : 5.5,
+              radius: 5.5,
               damage: Math.round(enemy.damage * 0.78),
               life: 1.7,
-              pierceDefense: isPiercing,
-              color: isPiercing ? '#e879f9' : '#f97316',
+              pierceDefense: false,
+              color: '#f97316',
             });
           }
+        }
+      } else if (enemy.dashState === 'recovering') {
+        enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+        if ((enemy.dashTimer ?? 0) <= 0) {
+          enemy.dashState = 'none';
         }
       } else {
         const inSight =
@@ -3179,11 +3250,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                 state.bossLasers.push({
                   id: state.nextEntityId++,
                   points,
-                  width: 11,
+                  width: 22,
                   damage: Math.round(enemy.damage * 1.15),
                   elapsed: 0,
-                  windup: 0.65,
-                  duration: 0.92,
+                  windup: 0.72,
+                  duration: 1.12,
                   hitPlayer: false,
                 });
               } else {
@@ -3213,9 +3284,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
               const leadPy = player.y + (player.velY ?? 0) * 0.35;
               const dashAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
               enemy.dashState = 'windup';
-              enemy.dashTimer = isGrand ? 0.52 : 0.58;
+              enemy.dashTimer = isGrand ? 0.55 : 0.58;
               enemy.dashDir = { x: Math.cos(dashAngle), y: Math.sin(dashAngle) };
-              enemy.dashSpeed = isGrand ? 460 : 410;
+              enemy.dashSpeed = isGrand ? 540 : 480;
+              enemy.dashBouncesLeft = isGrand ? 1 : 0;
             }
             enemy.bossPatternIndex = (pattern + 1) % 4;
             enemy.attackCooldown = isGrand ? 1.35 : 1.85;
@@ -3224,10 +3296,13 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
 
-    const isBossDashingOrWindup =
-      enemy.isRoomBoss && (enemy.dashState === 'windup' || enemy.dashState === 'dashing');
+    const isBossDashLocked =
+      enemy.isRoomBoss &&
+      (enemy.dashState === 'windup' ||
+        enemy.dashState === 'dashing' ||
+        enemy.dashState === 'recovering');
 
-    if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isBossDashingOrWindup) {
+    if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isBossDashLocked) {
       let steerX = player.x;
       let steerY = player.y;
       if (!hasClearCorridorPath(enemy.x, enemy.y, player.x, player.y, enemy.radius, map)) {
@@ -3351,7 +3426,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       if (isDashingBoss && mods.hasAegisParry && player.aegisCooldown <= 0) {
         player.aegisCooldown = mods.aegisCooldown;
         emitSound(state, 'parry');
-        damageEnemy(state, enemy, mods.aegisDamage);
+        damageEnemy(state, enemy, mods.aegisDamage, true);
         state.visualFx.push({
           kind: 'pulse',
           x: player.x,
@@ -3469,7 +3544,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const cy = a.y + aby * t;
           minDist = Math.min(minDist, Math.hypot(player.x - cx, player.y - cy));
         }
-        if (minDist <= player.radius + laser.width * 0.5) {
+        const activeWidth = getActiveBossLaserWidth(laser);
+        if (activeWidth > 0 && minDist <= player.radius + activeWidth * 0.5) {
           laser.hitPlayer = true;
           if (!tryTacticalStepEvade(state, mods)) {
             if (applyPlayerHitDamage(state, laser.damage, 7, 0.22, '#f43f5e', 8)) {

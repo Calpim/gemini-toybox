@@ -1,6 +1,7 @@
 import { TILE_SIZE, findRoomAtTile, getTile, tileCenterWorld, type DungeonMap } from '../core/dungeon';
 import {
   CORRIDOR_VISION_RADIUS,
+  getActiveBossLaserWidth,
   getOrbitBitPositions,
   getSeekerDronePositions,
   getStairsLockCount,
@@ -427,7 +428,7 @@ function drawEnemyBody(
 
   if (enemy.isRoomBoss) {
     if (enemy.dashState === 'windup' && enemy.dashDir) {
-      const dashPreviewLen = (enemy.dashSpeed ?? 320) * (enemy.isGrandBoss ? 0.48 : 0.42);
+      const dashPreviewLen = (enemy.dashSpeed ?? 480) * (enemy.isGrandBoss ? 0.62 : 0.55);
       const tx = enemy.dashDir.x * dashPreviewLen;
       const ty = enemy.dashDir.y * dashPreviewLen;
       const blink = 0.55 + 0.45 * Math.sin(nowSec * 28);
@@ -450,11 +451,28 @@ function drawEnemyBody(
       setLineDashSafe(ctx, []);
       ctx.restore();
     } else if (enemy.dashState === 'dashing') {
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.92)';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(0, 0, enemy.radius + 14, 0, Math.PI * 2);
+      ctx.stroke();
+
       ctx.strokeStyle = 'rgba(251, 113, 133, 0.95)';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, enemy.radius + 9, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (enemy.dashState === 'recovering') {
+      const stunBlink = 0.45 + 0.55 * Math.sin(nowSec * 20);
+      ctx.save();
+      ctx.strokeStyle = `rgba(34, 211, 238, ${0.88 * stunBlink})`;
+      ctx.lineWidth = 2.8;
+      setLineDashSafe(ctx, [5, 4]);
       ctx.beginPath();
       ctx.arc(0, 0, enemy.radius + 11, 0, Math.PI * 2);
       ctx.stroke();
+      setLineDashSafe(ctx, []);
+      ctx.restore();
     }
 
     const bossPulse = 0.7 + 0.3 * Math.sin(nowSec * 5);
@@ -1007,31 +1025,36 @@ export function renderGame(
     }
     if (laser.elapsed < laser.windup) {
       const progress = Math.max(0, Math.min(1, laser.elapsed / Math.max(0.01, laser.windup)));
-      ctx.strokeStyle = `rgba(244, 63, 94, ${0.35 + progress * 0.55})`;
+      ctx.strokeStyle = `rgba(244, 63, 94, ${0.1 + progress * 0.12})`;
+      ctx.lineWidth = laser.width;
+      ctx.stroke();
+
+      ctx.strokeStyle = `rgba(244, 63, 94, ${0.4 + progress * 0.55})`;
       ctx.lineWidth = 1.8 + progress * 2.2;
       setLineDashSafe(ctx, [8, 6]);
       ctx.stroke();
       setLineDashSafe(ctx, []);
     } else {
+      const curWidth = getActiveBossLaserWidth(laser);
       const activeSpan = Math.max(0.01, laser.duration - laser.windup);
       const fade = Math.max(0, 1 - (laser.elapsed - laser.windup) / activeSpan);
       ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = 0.4 + fade * 0.6;
 
       ctx.strokeStyle = 'rgba(217, 70, 239, 0.42)';
-      ctx.lineWidth = laser.width * 2.8;
+      ctx.lineWidth = curWidth * 2.4;
       ctx.stroke();
 
       ctx.strokeStyle = '#e879f9';
-      ctx.lineWidth = laser.width * 1.65;
+      ctx.lineWidth = curWidth * 1.45;
       ctx.stroke();
 
       ctx.strokeStyle = '#fdf4ff';
-      ctx.lineWidth = laser.width * 0.65;
+      ctx.lineWidth = curWidth * 0.6;
       ctx.stroke();
 
       for (const pt of laser.points) {
-        drawGlowSprite(ctx, 'pink', pt.x, pt.y, laser.width * 2.1, 0.65 * fade, false);
+        drawGlowSprite(ctx, 'pink', pt.x, pt.y, curWidth * 1.9, 0.65 * fade, false);
       }
     }
     ctx.restore();
