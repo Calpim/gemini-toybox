@@ -103,6 +103,7 @@ export interface ProjectileState {
   trail?: Vec2[];
   baseLevel?: number;
   overclockLevel?: number;
+  isCenterCharge?: boolean;
   visualTier?: number;
   orbitAngle?: number;
   orbitTimer?: number;

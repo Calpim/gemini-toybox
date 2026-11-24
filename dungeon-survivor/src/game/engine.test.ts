@@ -2018,18 +2018,26 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(normalProjs).toHaveLength(1);
     expect(normalProjs[0].radius).toBeCloseTo(9, 2);
 
-    // Laser shots (arm_overclock = 1, arm_base = 5): 3 shots * 10px -> span = 20px
+    // Hybrid shots (arm_overclock = 1, arm_base = 5): center charge (radius 9, 100% dmg) + 2 side slim lasers (radius 4.8, 60% dmg) @ 10px spacing -> span = 20px
     state.projectiles = [];
     state.player.baseAttackCooldown = 0;
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 1 };
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    const laserProjs = state.projectiles.filter((p) => p.kind === 'base');
-    const laserYs = laserProjs.map((p) => p.y).sort((a, b) => a - b);
-    expect(laserYs).toHaveLength(3);
-    expect(laserYs[2] - laserYs[0]).toBeCloseTo(20, 1);
-    expect(laserProjs[0].radius).toBeCloseTo(5.5, 2);
+    const oc1Stats = getPlayerBaseAttackStats(state.player);
+    const sideDmg1 = Math.max(1, Math.round(oc1Stats.damage * 0.6));
+    const laserProjs = state.projectiles.filter((p) => p.kind === 'base').sort((a, b) => a.y - b.y);
+    expect(laserProjs).toHaveLength(3);
+    expect(laserProjs[2].y - laserProjs[0].y).toBeCloseTo(20, 1);
+    expect(laserProjs[0].isCenterCharge).toBe(false);
+    expect(laserProjs[0].radius).toBeCloseTo(4.8, 2);
+    expect(laserProjs[0].damage).toBe(sideDmg1);
+    expect(laserProjs[1].isCenterCharge).toBe(true);
+    expect(laserProjs[1].radius).toBeCloseTo(9, 2);
+    expect(laserProjs[1].damage).toBe(oc1Stats.damage);
+    expect(laserProjs[2].isCenterCharge).toBe(false);
+    expect(laserProjs[2].damage).toBe(sideDmg1);
 
-    // Large enemy (radius 26, e.g. boss/tank) takes 5 simultaneous hits from arm_overclock Lv2 (5 beams @ 10px spacing)
+    // Large enemy (radius 26, e.g. boss/tank) takes center charge (100%) + 4 side lasers (60% each) from arm_overclock Lv2
     state.projectiles = [];
     state.player.baseAttackCooldown = 0;
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 2 };
@@ -2049,12 +2057,12 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     };
     state.enemies = [largeEnemy];
     const oc2Stats = getPlayerBaseAttackStats(state.player);
+    const expectedHybridDamage = oc2Stats.damage + Math.max(1, Math.round(oc2Stats.damage * 0.6)) * 4;
     for (let i = 0; i < 15; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
     const damageTaken = 5000 - largeEnemy.hp;
-    // All 5 slim parallel beams (span 40px vs 26+5.5=31.5px half-hit-width) hit the large enemy
-    expect(damageTaken).toBeGreaterThanOrEqual(oc2Stats.damage * 5);
+    expect(damageTaken).toBeGreaterThanOrEqual(expectedHybridDamage);
   });
 
   it('[APP-CMB-06] scales arm_parallel Lv1-5 homing counts (2,3,4,6,8) while keeping 1 main charge shot until overclock', () => {

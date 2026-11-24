@@ -1789,17 +1789,21 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const perpY = dirX;
       const laneSpacing = baseStats.armOverclockLevel >= 1 ? 10 : 14;
       const mainLife = Math.max(0.75, (baseStats.range + 60) / baseStats.speed);
-      const baseRadius = baseStats.pierce
-        ? 4.5 + (baseStats.armBaseLevel >= 5 ? 1.0 : baseStats.armBaseLevel >= 3 ? 0.5 : 0)
-        : 5 + (baseStats.armBaseLevel >= 5 ? 4.0 : baseStats.armBaseLevel >= 3 ? 2.5 : 0);
+      const chargeRadius =
+        5 + (baseStats.armBaseLevel >= 5 ? 4.0 : baseStats.armBaseLevel >= 3 ? 2.5 : 0);
+      const sideLaserRadius =
+        4.0 + (baseStats.armBaseLevel >= 5 ? 0.8 : baseStats.armBaseLevel >= 3 ? 0.4 : 0);
+      const sideLaserDamage = Math.max(1, Math.round(baseStats.damage * 0.6));
       const mainColor = baseStats.pierce
         ? '#2dd4bf'
         : baseStats.armBaseLevel >= 3
           ? '#6ee7b7'
           : '#34d399';
 
+      const centerIndex = Math.floor(baseStats.shotCount / 2);
       for (let s = 0; s < baseStats.shotCount; s++) {
         const laneOffset = (s - (baseStats.shotCount - 1) / 2) * laneSpacing;
+        const isCenterCharge = baseStats.armOverclockLevel === 0 || s === centerIndex;
         let spawnX = player.x + perpX * laneOffset;
         let spawnY = player.y + perpY * laneOffset;
         if (isWallAtWorld(map, spawnX, spawnY)) {
@@ -1813,12 +1817,13 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           y: spawnY,
           vx: dirX * baseStats.speed,
           vy: dirY * baseStats.speed,
-          radius: baseRadius,
-          damage: baseStats.damage,
+          radius: isCenterCharge ? chargeRadius : sideLaserRadius,
+          damage: isCenterCharge ? baseStats.damage : sideLaserDamage,
           life: mainLife,
           pierce: baseStats.pierce,
           baseLevel: baseStats.armBaseLevel,
           overclockLevel: baseStats.armOverclockLevel,
+          isCenterCharge,
           visualTier: Math.max(
             baseStats.armBaseLevel >= 3 ? 1 : 0,
             baseStats.armOverclockLevel

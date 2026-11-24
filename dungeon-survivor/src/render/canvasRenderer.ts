@@ -1192,7 +1192,7 @@ export function renderGame(
       const baseLv = proj.baseLevel ?? 0;
       const angle = Math.atan2(proj.vy, proj.vx);
 
-      if (ocLv >= 1) {
+      if (ocLv >= 1 && !proj.isCenterCharge) {
         const beamLen = Math.min(92, 56 + (ocLv >= 2 ? 12 : 0) + baseLv * 5);
         const baseScale = 1 + baseLv * 0.08 + (ocLv >= 2 ? 0.08 : 0);
         const halfW = Math.max(1.2, proj.radius * 0.24 * baseScale);
@@ -1237,24 +1237,40 @@ export function renderGame(
         drawGlowSprite(ctx, 'cyan', 2, 0, halfW * 2.0, 0.45, false);
         ctx.restore();
       } else {
-        const isBigCharge = baseLv >= 5;
-        const isMidCharge = baseLv >= 3;
+        const isOverclockCharge = ocLv >= 1;
+        const isBigCharge = baseLv >= 5 || ocLv >= 2;
+        const isMidCharge = baseLv >= 3 || isOverclockCharge;
         const glowRadius = proj.radius * (isBigCharge ? 3.2 : isMidCharge ? 2.9 : 2.5);
-        drawGlowSprite(ctx, 'emerald', proj.x, proj.y, glowRadius, isBigCharge ? 0.58 : 0.45, true);
+        drawGlowSprite(
+          ctx,
+          isOverclockCharge ? 'cyan' : 'emerald',
+          proj.x,
+          proj.y,
+          glowRadius,
+          isBigCharge ? 0.62 : 0.48,
+          true
+        );
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.translate(proj.x, proj.y);
         ctx.rotate(angle);
 
-        const rx = proj.radius * (isBigCharge ? 1.75 : isMidCharge ? 1.5 : 1.25);
-        const ry = proj.radius * (isBigCharge ? 1.05 : isMidCharge ? 0.96 : 0.88);
-        const tailLen = isBigCharge ? 32 : isMidCharge ? 22 : 10;
+        const rx = proj.radius * (isBigCharge ? 1.85 : isMidCharge ? 1.55 : 1.25);
+        const ry = proj.radius * (isBigCharge ? 1.08 : isMidCharge ? 0.96 : 0.88);
+        const tailLen = isOverclockCharge ? (isBigCharge ? 42 : 30) : isBigCharge ? 32 : isMidCharge ? 22 : 10;
 
         // Energy charge wake / plasma tail
         const tailGrad = ctx.createLinearGradient(-tailLen - rx * 0.4, 0, rx * 0.6, 0);
-        tailGrad.addColorStop(0, 'rgba(16, 185, 129, 0)');
-        tailGrad.addColorStop(0.55, isBigCharge ? 'rgba(52, 211, 153, 0.52)' : 'rgba(52, 211, 153, 0.36)');
-        tailGrad.addColorStop(1, 'rgba(167, 243, 208, 0.82)');
+        tailGrad.addColorStop(0, isOverclockCharge ? 'rgba(6, 182, 212, 0)' : 'rgba(16, 185, 129, 0)');
+        tailGrad.addColorStop(
+          0.55,
+          isOverclockCharge
+            ? 'rgba(34, 211, 238, 0.58)'
+            : isBigCharge
+              ? 'rgba(52, 211, 153, 0.52)'
+              : 'rgba(52, 211, 153, 0.36)'
+        );
+        tailGrad.addColorStop(1, isOverclockCharge ? 'rgba(207, 250, 254, 0.9)' : 'rgba(167, 243, 208, 0.82)');
         ctx.fillStyle = tailGrad;
         ctx.beginPath();
         ctx.moveTo(rx * 0.35, -ry * 0.92);
@@ -1269,8 +1285,12 @@ export function renderGame(
         ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Mid glowing turquoise-mint sheath
-        ctx.fillStyle = isBigCharge ? 'rgba(167, 243, 208, 0.88)' : 'rgba(167, 243, 208, 0.72)';
+        // Mid glowing sheath
+        ctx.fillStyle = isOverclockCharge
+          ? 'rgba(165, 243, 252, 0.9)'
+          : isBigCharge
+            ? 'rgba(167, 243, 208, 0.88)'
+            : 'rgba(167, 243, 208, 0.72)';
         ctx.beginPath();
         ctx.ellipse(rx * 0.1, 0, rx * 0.76, ry * 0.68, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -1282,7 +1302,11 @@ export function renderGame(
         ctx.fill();
 
         // Crisp rim highlight for charge shot depth
-        ctx.strokeStyle = isBigCharge ? 'rgba(236, 253, 245, 0.92)' : 'rgba(236, 253, 245, 0.72)';
+        ctx.strokeStyle = isOverclockCharge
+          ? 'rgba(236, 254, 255, 0.95)'
+          : isBigCharge
+            ? 'rgba(236, 253, 245, 0.92)'
+            : 'rgba(236, 253, 245, 0.72)';
         ctx.lineWidth = isBigCharge ? 2.0 : isMidCharge ? 1.6 : 1.2;
         ctx.beginPath();
         ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);

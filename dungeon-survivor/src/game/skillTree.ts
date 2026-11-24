@@ -118,10 +118,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    tagline: '連射・弾速強化＆3〜5本極細貫通レーザー化',
-    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 極細貫通レーザー化（3本 / Lv2で5本・光線強化）',
+    tagline: '貫通チャージ弾＋両脇極細レーザー追加',
+    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通化＆両脇に極細レーザー(左右2本 / Lv2で4本・各60%威力)を追加',
     detailNote:
-      'メイン武器CD短縮(最小0.20s)＆弾速UPに加え、単発チャージ弾から極細貫通レーザー束(3本/5本・長さ56〜92px・10px間隔)へ覚醒。大型敵に複数同時ヒットします。',
+      'メイン武器CD短縮(最小0.20s)＆弾速UPに加え、中央の極太チャージ弾(100%威力・貫通)の両脇へ極細貫通レーザー(各60%威力・10px間隔)を展開します。',
   },
   {
     id: 'def_sensor',
@@ -355,7 +355,7 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
       return `追尾レーザー${homing}発`;
     }
     case 'arm_overclock':
-      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '5本極細貫通レーザー' : '3本極細貫通レーザー'}`;
+      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '貫通チャージ＋脇レーザー4本' : '貫通チャージ＋脇レーザー2本'}`;
     case 'def_sensor':
       return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
     case 'def_pulse':

@@ -609,7 +609,7 @@ export function extractFormulaParamValues(parameters) {
   };
   const armParallelExtraShots = parsePlusCurve(
     prm18.match(/arm_parallel(?:平行)?追加弾数\(([^)]+)\)/)?.[1],
-    [0, 1, 1, 2, 2, 3]
+    [0, 0, 0, 0, 0, 0]
   );
   const armParallelDmgPct = parsePlusCurve(
     prm18.match(/威力補正\(([^)]+)\)/)?.[1],
