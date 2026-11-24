@@ -364,11 +364,11 @@ stateDiagram-v2
     assert.equal(coreChart.rows[0].shotCount, 1);
     assert.equal(coreChart.rows[1].range, 200);
     assert.equal(coreChart.rows[1].shotCount, 3);
-    assert.equal(coreChart.rows[5].damage, 47);
+    assert.equal(coreChart.rows[5].damage, 51);
     assert.equal(coreChart.rows[5].shotCount, 5);
     assert.equal(coreChart.rows[5].cooldown, 0.319);
     assert.equal(coreChart.rows[5].range, 290);
-    assert.equal(coreChart.rows[5].dps, 736.7);
+    assert.equal(coreChart.rows[5].dps, 799.4);
     assert.equal(skillChart.rows[2].tier3CumSp, 5);
     assert.equal(skillChart.rows[3].tier3Cost, null);
     assert.equal(skillChart.rows[4].tier1Cost, 2);

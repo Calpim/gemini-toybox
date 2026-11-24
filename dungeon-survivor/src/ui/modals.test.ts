@@ -458,7 +458,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     expect(armBaseCard.querySelector('.node-title')?.textContent).toBe('出力強化');
     expect(armBaseCard.querySelector('.node-lv')?.textContent).toBe('Lv2/5');
     expect(armBaseCard.querySelector('.node-tagline')?.textContent).toBe(
-      'メイン威力＆射程を大きく強化'
+      'メイン威力＆射程UP・チャージ弾化'
     );
     expect(armBaseCard.querySelector('.node-cost')?.textContent).toBe('-1 SP');
 
@@ -505,8 +505,8 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
 
     expect(popover.classList.contains('hidden')).toBe(false);
     expect(infoBtn.getAttribute('aria-expanded')).toBe('true');
-    expect(popover.querySelector('.skill-popover-title')?.textContent).toBe('並列射出');
-    expect(popover.querySelector('.skill-popover-current-val')?.textContent).toContain('平行 +1発');
+    expect(popover.querySelector('.skill-popover-title')?.textContent).toBe('追尾レーザー展開');
+    expect(popover.querySelector('.skill-popover-current-val')?.textContent).toContain('追尾レーザー2発');
     expect(popover.querySelector('.skill-popover-prereq-val')?.textContent).toContain('出力強化 Lv3+');
     expect(popover.querySelector('.skill-popover-prereq-val')?.textContent).toContain('達成済み');
     expect(popover.querySelector('.skill-popover-total-sp')?.textContent).toBe('合計 8 SP');

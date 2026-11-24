@@ -595,8 +595,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const skilledStats = getPlayerBaseAttackStats(state.player);
     expect(skilledStats.damage).toBeGreaterThan(initialStats.damage);
     expect(skilledStats.range).toBe(MAX_TARGET_RANGE + 60);
-    expect(skilledStats.shotCount).toBe(2);
-    expect(skilledStats.homingShots).toBe(0);
+    expect(skilledStats.shotCount).toBe(1);
+    expect(skilledStats.homingShots).toBe(2);
 
     // Sub-equipment counts/damage/cooldown stay purely determined by equipment level (not arms skills)
     state.player.equipment = [
@@ -606,7 +606,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(getOrbitBitPositions(state).length).toBe(1);
     expect(getSeekerDronePositions(state).length).toBe(1);
 
-    // Fires 2 parallel base shots (arm_parallel Lv1 has 0 homing lasers; homing unlocks at Lv2)
+    // Fires 1 charge shot + 2 homing lasers at arm_parallel Lv1
     state.enemies = [
       {
         id: 910,
@@ -624,8 +624,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(2);
-    expect(state.projectiles.filter((p) => p.kind === 'base_homing')).toHaveLength(0);
+    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(1);
+    expect(state.projectiles.filter((p) => p.kind === 'base_homing')).toHaveLength(2);
   });
 
   it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Tier-based SP costs (Tier1:7, Tier2:8, Tier3:5 = 20SP), Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
@@ -703,7 +703,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     state.player.skillPoints = 3;
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv1 (cost 1)
     expect(state.player.skillPoints).toBe(2);
-    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(2);
+    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(1);
+    expect(getPlayerBaseAttackStats(state.player).homingShots).toBe(2);
     expect(getOrbitBitPositions(state).length).toBe(1);
     expect(getSeekerDronePositions(state).length).toBe(1);
 
@@ -1811,11 +1812,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     };
 
     const stats = getPlayerBaseAttackStats(state.player);
-    // 14 * (1 + 1.70) * (1 + 0.25) = 14 * 2.7 * 1.25 = 47.25 -> 47
-    expect(stats.damage).toBe(47);
+    // 14 * (1 + 1.70) * (1 + 0.35) = 14 * 2.7 * 1.35 = 51.03 -> 51
+    expect(stats.damage).toBe(51);
     expect(stats.shotCount).toBe(5);
-    expect(stats.homingShots).toBe(6);
-    expect(stats.homingDamage).toBe(Math.round(47 * 0.35)); // 16
+    expect(stats.homingShots).toBe(8);
+    expect(stats.homingDamage).toBe(Math.round(51 * 0.35)); // 18
     // min(180, round(180 * 1.55)) + 110 = 180 + 110 = 290
     expect(stats.range).toBe(290);
     // 0.58 * 0.55 = 0.319 >= 0.20
@@ -1861,7 +1862,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const baseProjs = state.projectiles.filter((p) => p.kind === 'base');
     const homingProjs = state.projectiles.filter((p) => p.kind === 'base_homing');
     expect(baseProjs).toHaveLength(5);
-    expect(homingProjs).toHaveLength(6);
+    expect(homingProjs).toHaveLength(8);
 
     // Parallel shots share the exact same velocity vector and are offset perpendicularly
     for (const bp of baseProjs) {
@@ -1898,9 +1899,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     state.player.skillLevels = { arm_base: 3, arm_parallel: 1, arm_overclock: 1 };
     expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(3);
 
-    // arm_parallel Lv5 gives baseShots=4, so arm_overclock Lv1 keeps 4
+    // arm_parallel Lv5 keeps baseShots=1, so arm_overclock Lv1 upgrades to 3 slim beams
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 1 };
-    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(4);
+    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(3);
 
     // arm_overclock Lv2 always guarantees at least 5 shots regardless of arm_parallel Lv
     state.player.skillLevels = { arm_base: 3, arm_parallel: 1, arm_overclock: 2 };
@@ -1961,7 +1962,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(lv1Stats.cooldown).toBeCloseTo(0.58 * 0.78, 4); // -22%
     expect(lv1Stats.speed).toBe(460 + 100);
     expect(lv1Stats.pierce).toBe(true);
-    expect(lv1Stats.shotCount).toBe(4);
+    expect(lv1Stats.shotCount).toBe(3);
 
     expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true);
     expect(state.player.skillPoints).toBe(0);
@@ -2010,25 +2011,22 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
 
-    // Normal shots (arm_overclock = 0): 4 shots * 14px laneSpacing -> span = 42px
+    // Normal charge shot (arm_overclock = 0): 1 thick charge shot (radius = 9 at arm_base Lv5)
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 0 };
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    const normalYs = state.projectiles
-      .filter((p) => p.kind === 'base')
-      .map((p) => p.y)
-      .sort((a, b) => a - b);
-    expect(normalYs).toHaveLength(4);
-    expect(normalYs[3] - normalYs[0]).toBeCloseTo(42, 1);
+    const normalProjs = state.projectiles.filter((p) => p.kind === 'base');
+    expect(normalProjs).toHaveLength(1);
+    expect(normalProjs[0].radius).toBeCloseTo(9, 2);
 
-    // Laser shots (arm_overclock = 1, arm_base = 5): 4 shots * 10px -> span = 30px
+    // Laser shots (arm_overclock = 1, arm_base = 5): 3 shots * 10px -> span = 20px
     state.projectiles = [];
     state.player.baseAttackCooldown = 0;
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 1 };
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     const laserProjs = state.projectiles.filter((p) => p.kind === 'base');
     const laserYs = laserProjs.map((p) => p.y).sort((a, b) => a - b);
-    expect(laserYs).toHaveLength(4);
-    expect(laserYs[3] - laserYs[0]).toBeCloseTo(30, 1);
+    expect(laserYs).toHaveLength(3);
+    expect(laserYs[2] - laserYs[0]).toBeCloseTo(20, 1);
     expect(laserProjs[0].radius).toBeCloseTo(5.5, 2);
 
     // Large enemy (radius 26, e.g. boss/tank) takes 5 simultaneous hits from arm_overclock Lv2 (5 beams @ 10px spacing)
@@ -2059,15 +2057,15 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(damageTaken).toBeGreaterThanOrEqual(oc2Stats.damage * 5);
   });
 
-  it('[APP-CMB-06] scales arm_parallel Lv1-5 shot/homing counts (0,2,3,4,6) and parallel damage bonus', () => {
+  it('[APP-CMB-06] scales arm_parallel Lv1-5 homing counts (2,3,4,6,8) while keeping 1 main charge shot until overclock', () => {
     const state = createGameState({ seed: 2025 });
     state.player.skillLevels = { arm_base: 3 };
     const expected = [
-      { lv: 1, shots: 2, homing: 0 },
-      { lv: 2, shots: 2, homing: 2 },
-      { lv: 3, shots: 3, homing: 3 },
-      { lv: 4, shots: 3, homing: 4 },
-      { lv: 5, shots: 4, homing: 6 },
+      { lv: 1, shots: 1, homing: 2 },
+      { lv: 2, shots: 1, homing: 3 },
+      { lv: 3, shots: 1, homing: 4 },
+      { lv: 4, shots: 1, homing: 6 },
+      { lv: 5, shots: 1, homing: 8 },
     ];
     for (const row of expected) {
       state.player.skillLevels = { arm_base: 3, arm_parallel: row.lv };

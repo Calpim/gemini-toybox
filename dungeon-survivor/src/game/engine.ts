@@ -1791,7 +1791,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const mainLife = Math.max(0.75, (baseStats.range + 60) / baseStats.speed);
       const baseRadius = baseStats.pierce
         ? 4.5 + (baseStats.armBaseLevel >= 5 ? 1.0 : baseStats.armBaseLevel >= 3 ? 0.5 : 0)
-        : 5 + (baseStats.armBaseLevel >= 5 ? 2.5 : baseStats.armBaseLevel >= 3 ? 1.5 : 0);
+        : 5 + (baseStats.armBaseLevel >= 5 ? 4.0 : baseStats.armBaseLevel >= 3 ? 2.5 : 0);
       const mainColor = baseStats.pierce
         ? '#2dd4bf'
         : baseStats.armBaseLevel >= 3

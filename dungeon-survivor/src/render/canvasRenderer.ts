@@ -1237,30 +1237,57 @@ export function renderGame(
         drawGlowSprite(ctx, 'cyan', 2, 0, halfW * 2.0, 0.45, false);
         ctx.restore();
       } else {
-        drawGlowSprite(ctx, 'emerald', proj.x, proj.y, proj.radius * 2.6, 0.42, true);
+        const isBigCharge = baseLv >= 5;
+        const isMidCharge = baseLv >= 3;
+        const glowRadius = proj.radius * (isBigCharge ? 3.2 : isMidCharge ? 2.9 : 2.5);
+        drawGlowSprite(ctx, 'emerald', proj.x, proj.y, glowRadius, isBigCharge ? 0.58 : 0.45, true);
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        if (baseLv >= 3) {
-          const tailLen = baseLv >= 5 ? 18 : 13;
-          ctx.save();
-          ctx.translate(proj.x, proj.y);
-          ctx.rotate(angle);
-          ctx.strokeStyle = 'rgba(110, 231, 183, 0.5)';
-          ctx.lineWidth = proj.radius * 1.45;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(-tailLen, 0);
-          ctx.lineTo(0, 0);
-          ctx.stroke();
-          ctx.restore();
-        }
+        ctx.translate(proj.x, proj.y);
+        ctx.rotate(angle);
+
+        const rx = proj.radius * (isBigCharge ? 1.75 : isMidCharge ? 1.5 : 1.25);
+        const ry = proj.radius * (isBigCharge ? 1.05 : isMidCharge ? 0.96 : 0.88);
+        const tailLen = isBigCharge ? 32 : isMidCharge ? 22 : 10;
+
+        // Energy charge wake / plasma tail
+        const tailGrad = ctx.createLinearGradient(-tailLen - rx * 0.4, 0, rx * 0.6, 0);
+        tailGrad.addColorStop(0, 'rgba(16, 185, 129, 0)');
+        tailGrad.addColorStop(0.55, isBigCharge ? 'rgba(52, 211, 153, 0.52)' : 'rgba(52, 211, 153, 0.36)');
+        tailGrad.addColorStop(1, 'rgba(167, 243, 208, 0.82)');
+        ctx.fillStyle = tailGrad;
+        ctx.beginPath();
+        ctx.moveTo(rx * 0.35, -ry * 0.92);
+        ctx.quadraticCurveTo(-tailLen * 0.45, -ry * 0.65, -tailLen - rx * 0.35, 0);
+        ctx.quadraticCurveTo(-tailLen * 0.45, ry * 0.65, rx * 0.35, ry * 0.92);
+        ctx.closePath();
+        ctx.fill();
+
+        // Outer plasma shell (oval charge shot silhouette)
         ctx.fillStyle = proj.color;
         ctx.beginPath();
-        ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#ecfdf5';
-        ctx.lineWidth = baseLv >= 3 ? 2 : 1.5;
+
+        // Mid glowing turquoise-mint sheath
+        ctx.fillStyle = isBigCharge ? 'rgba(167, 243, 208, 0.88)' : 'rgba(167, 243, 208, 0.72)';
+        ctx.beginPath();
+        ctx.ellipse(rx * 0.1, 0, rx * 0.76, ry * 0.68, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Blazing white-hot core
+        ctx.fillStyle = '#f0fdfa';
+        ctx.beginPath();
+        ctx.ellipse(rx * 0.22, 0, rx * 0.48, ry * 0.42, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Crisp rim highlight for charge shot depth
+        ctx.strokeStyle = isBigCharge ? 'rgba(236, 253, 245, 0.92)' : 'rgba(236, 253, 245, 0.72)';
+        ctx.lineWidth = isBigCharge ? 2.0 : isMidCharge ? 1.6 : 1.2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
         ctx.stroke();
+
         ctx.restore();
       }
     } else if (proj.kind === 'base_homing') {

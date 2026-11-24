@@ -96,21 +96,21 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '出力強化',
     requires: null,
-    tagline: 'メイン威力＆射程を大きく強化',
-    description: 'メイン武器ダメ大幅UP & 主兵装射程延長（Lv3+で弾拡大・残像強化 / 最大射程+110px）',
+    tagline: 'メイン威力＆射程UP・チャージ弾化',
+    description: 'メイン武器ダメ大幅UP & 主兵装射程延長（Lv3+で極太チャージショット化 / 最大射程+110px）',
     detailNote:
-      'メイン武器「コアショット」専用。視線が通る敵へ索敵上限(180px)を超えて攻撃でき、Lv3+で弾拡大＆残像が強化されます。',
+      'メイン武器「コアショット」専用。視線が通る敵へ索敵上限(180px)を超えて攻撃でき、Lv3/Lv5で楕円プラズマチャージ弾が段階的に巨大化します。',
   },
   {
     id: 'arm_parallel',
     branch: 'arms',
     tier: 2,
-    name: '並列射出',
+    name: '追尾レーザー展開',
     requires: 'arm_base',
-    tagline: '平行弾増加＆追尾レーザーを追加射出',
-    description: 'メイン弾を平行射出（+1〜3発 & Lv3+威力UP）+ Lv2〜周囲周回後に敵へ急加速する追尾レーザー(2〜6発)を同時射出',
+    tagline: '周囲周回→急加速の追尾レーザーを大量展開',
+    description: 'メイン弾は極太1発のまま、周囲周回後に敵へ急加速する追尾レーザー(2〜8発)を同時射出 & 威力UP',
     detailNote:
-      '平行レーン(通常14px／レーザー10px)で追加射出。Lv2から追加される追尾レーザー(威力35%)は44pxを0.26s周回→84pxへ離脱後に高速追尾します。',
+      'Lv1から追尾レーザー(威力35%)を展開(2→3→4→6→8発)し、Lv2+でメイン威力も上昇(+8〜35%)。44pxを0.26s周回→84pxへ離脱後に高速追尾します。',
   },
   {
     id: 'arm_overclock',
@@ -118,10 +118,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    tagline: '連射・弾速強化＆極細貫通レーザー化',
-    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 極細貫通レーザー化（最低3本 / Lv2で5本・光線強化）',
+    tagline: '連射・弾速強化＆3〜5本極細貫通レーザー化',
+    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 極細貫通レーザー化（3本 / Lv2で5本・光線強化）',
     detailNote:
-      'メイン武器CD短縮(最小0.20s)＆弾速UPに加え、極細貫通レーザー化(長さ56〜92px・10px間隔)。大型敵には複数本が同時ヒットします。',
+      'メイン武器CD短縮(最小0.20s)＆弾速UPに加え、単発チャージ弾から極細貫通レーザー束(3本/5本・長さ56〜92px・10px間隔)へ覚醒。大型敵に複数同時ヒットします。',
   },
   {
     id: 'def_sensor',
@@ -224,9 +224,9 @@ export const canUnlockSkill = canUpgradeSkill;
 // Arms: Main Weapon dedicated scaling (DEC-19 / DEC-20 / PRM-18 / PRM-23)
 const ARM_MAIN_DAMAGE_PCT = [0, 0.25, 0.5, 0.8, 1.2, 1.7] as const;
 const ARM_MAIN_RANGE_BONUS = [0, 20, 40, 60, 85, 110] as const;
-const ARM_MAIN_EXTRA_SHOTS = [0, 1, 1, 2, 2, 3] as const;
-const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0, 0.08, 0.16, 0.25] as const;
-const ARM_MAIN_HOMING_SHOTS = [0, 0, 2, 3, 4, 6] as const;
+const ARM_MAIN_EXTRA_SHOTS = [0, 0, 0, 0, 0, 0] as const;
+const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.08, 0.16, 0.25, 0.35] as const;
+const ARM_MAIN_HOMING_SHOTS = [0, 2, 3, 4, 6, 8] as const;
 const ARM_MAIN_CD_REDUCTION = [0, 0.22, 0.45] as const;
 const ARM_MAIN_SPEED_BONUS = [0, 100, 200] as const;
 
@@ -349,16 +349,13 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
     case 'arm_parallel': {
       const dmgPct = Math.round(ARM_MAIN_PARALLEL_DMG_PCT[lv] * 100);
       const homing = ARM_MAIN_HOMING_SHOTS[lv];
-      if (dmgPct > 0 && homing > 0) {
-        return `平行 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 威力 +${dmgPct}% / 追尾レーザー${homing}発`;
+      if (dmgPct > 0) {
+        return `追尾レーザー${homing}発 / メイン威力 +${dmgPct}%`;
       }
-      if (homing > 0) {
-        return `平行 +${ARM_MAIN_EXTRA_SHOTS[lv]}発 / 追尾レーザー${homing}発`;
-      }
-      return `平行 +${ARM_MAIN_EXTRA_SHOTS[lv]}発`;
+      return `追尾レーザー${homing}発`;
     }
     case 'arm_overclock':
-      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '5本貫通レーザー強化' : '最低3本貫通レーザー'}`;
+      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '5本極細貫通レーザー' : '3本極細貫通レーザー'}`;
     case 'def_sensor':
       return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
     case 'def_pulse':
