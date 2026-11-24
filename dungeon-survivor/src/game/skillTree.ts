@@ -25,7 +25,39 @@ export interface SkillNodeDef {
   tier: 1 | 2 | 3;
   name: string;
   requires: SkillNodeId | null;
+  tagline: string;
   description: string;
+  detailNote: string;
+}
+
+export interface SkillLevelDetail {
+  level: number;
+  cost: number;
+  summary: string;
+}
+
+export interface SkillPrerequisiteInfo {
+  id: SkillNodeId;
+  name: string;
+  requiredLevel: number;
+  currentLevel: number;
+  met: boolean;
+}
+
+export interface SkillDetailedSpec {
+  id: SkillNodeId;
+  name: string;
+  branch: SkillBranch;
+  tier: 1 | 2 | 3;
+  tagline: string;
+  detailNote: string;
+  currentLevel: number;
+  maxLevel: number;
+  currentEffect: string;
+  nextCost: number;
+  totalCost: number;
+  requires: SkillPrerequisiteInfo | null;
+  levels: SkillLevelDetail[];
 }
 
 export function getSkillMaxLevel(nodeId: SkillNodeId): number {
@@ -64,7 +96,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '出力強化',
     requires: null,
+    tagline: 'メイン威力＆射程を大きく強化',
     description: 'メイン武器ダメ大幅UP & 主兵装射程延長（Lv3+で弾拡大・残像強化 / 最大射程+110px）',
+    detailNote:
+      'メイン武器「コアショット」専用。視線が通る敵へ索敵上限(180px)を超えて攻撃でき、Lv3+で弾拡大＆残像が強化されます。',
   },
   {
     id: 'arm_parallel',
@@ -72,7 +107,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 2,
     name: '並列射出',
     requires: 'arm_base',
+    tagline: '平行弾増加＆追尾小型弾を追加射出',
     description: 'メイン弾を平行射出（+1〜3発 & 威力UP）+ 周囲周回後に敵へ飛ぶ小型誘導バラマキ弾を同時射出',
+    detailNote:
+      '平行レーン(通常7px／レーザー14+min(4,出力Lv)px)で追加射出。誘導弾(威力35%)は48pxを0.34s周回→90pxへ膨張後に220px(要LoS)追尾します。',
   },
   {
     id: 'arm_overclock',
@@ -80,7 +118,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
+    tagline: '連射・弾速強化＆貫通レーザー化',
     description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通レーザー化（最低3本 / Lv2で5本・光線強化）',
+    detailNote:
+      'メイン武器CD短縮(最小0.20s)＆弾速UPに加え、貫通レーザー化(長さ42〜82px)。太さ・長さは「出力強化」Lvと連動します。',
   },
   {
     id: 'def_sensor',
@@ -88,7 +129,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '広域索敵',
     requires: null,
+    tagline: '迎撃・装備の索敵レンジを拡大',
     description: '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px）',
+    detailNote:
+      '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで）。',
   },
   {
     id: 'def_pulse',
@@ -96,7 +140,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 2,
     name: '電磁リパルサー',
     requires: 'def_sensor',
+    tagline: '接近した敵を衝撃波で押し返す',
     description: '接近敵を緊急ノックバック（低威力・長めCDで危機回避寄り）',
+    detailNote:
+      '視線内の周囲敵へ緊急電磁パルスを放ち、ダメージ＋38pxノックバックを与えます（ボス・固定砲台はノックバック無効）。',
   },
   {
     id: 'def_aegis',
@@ -104,7 +151,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オートパリィ盾',
     requires: 'def_pulse',
+    tagline: '通常弾・近接をパリィし反撃＋無敵',
     description: '通常弾・近接をパリィ無効化＋反撃＆無敵1.0s（Lv1: CD7.0s/22 → Lv2: CD4.5s/42、貫通/迫撃砲/レーザー不可・突進は相打ち）',
+    detailNote:
+      '通常弾・近接接触をパリィ無効化し反撃＋無敵1.0s。貫通弾・迫撃砲・レーザーは無効化不可（ボス突進は被弾しつつ相打ち反撃）。',
   },
   {
     id: 'mob_magnet',
@@ -112,7 +162,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '磁力回収フレーム',
     requires: null,
+    tagline: 'アイテム吸引範囲と回復効果を強化',
     description: '吸引範囲＆回復オーブ強化（Lv4: 回復+50% / Lv5: 吸引+160% & 回復+75%）',
+    detailNote:
+      '基礎吸引距離(95px)の倍率と、回復オーブ取得時のHP回復量を乗算で強化します。',
   },
   {
     id: 'mob_loot',
@@ -120,7 +173,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 2,
     name: 'トレジャー解析',
     requires: 'mob_magnet',
+    tagline: '装備ドロップ率・品質とEXPを強化',
     description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（サブ装備固めの要）',
+    detailNote:
+      '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
   },
   {
     id: 'mob_dash',
@@ -128,7 +184,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: '緊急回避ブースト',
     requires: 'mob_loot',
+    tagline: '全攻撃をノーダメ回避＋無敵・加速',
     description: '全攻撃をチャージ消費でノーダメ回避＋無敵延長＆2.5s移動加速（Lv1: 1回/1.30s/+24% → Lv2: 2回/1.60s/+38%）',
+    detailNote:
+      '被弾時にチャージ消費で全攻撃(貫通・迫撃砲・レーザー・突進含む)をノーダメ回避し、無敵延長＋2.5s移動加速（パリィ盾が通常攻撃を優先し温存）。',
   },
 ] as const;
 
@@ -309,4 +368,72 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
     case 'mob_dash':
       return `連続${MOB_DASH_CHARGES[lv]}回 / 無敵${MOB_DASH_INVULN[lv].toFixed(2)}s / 加速+${Math.round(MOB_DASH_SPEED_BOOST[lv] * 100)}% / 回復${MOB_DASH_CD[lv].toFixed(1)}s`;
   }
+}
+
+function getSkillLevelDetailSummary(nodeId: SkillNodeId, level: number): string {
+  const base = getSkillEffectSummary(nodeId, level);
+  switch (nodeId) {
+    case 'arm_base':
+      if (level === 3) return `${base} / 弾拡大・残像`;
+      if (level === 5) return `${base} / 最大拡大`;
+      return base;
+    case 'def_aegis':
+      return `${base} / 無敵${BASE_HIT_INVULN_DURATION.toFixed(1)}s`;
+    case 'mob_loot':
+      return `${base} / 宝+${Math.round(MOB_LOOT_PCT[level] * 100)}%`;
+    default:
+      return base;
+  }
+}
+
+export function getSkillDetailedSpec(
+  nodeId: SkillNodeId,
+  levels: SkillLevelMap
+): SkillDetailedSpec {
+  const node = getSkillNode(nodeId);
+  const currentLevel = getSkillLevel(levels, nodeId);
+  const maxLevel = getSkillMaxLevel(nodeId);
+  const nextCost = getSkillUpgradeCost(currentLevel, nodeId);
+
+  const levelDetails: SkillLevelDetail[] = [];
+  let totalCost = 0;
+  for (let lv = 1; lv <= maxLevel; lv++) {
+    const cost = getSkillUpgradeCost(lv - 1, nodeId);
+    totalCost += cost;
+    levelDetails.push({
+      level: lv,
+      cost,
+      summary: getSkillLevelDetailSummary(nodeId, lv),
+    });
+  }
+
+  let requires: SkillPrerequisiteInfo | null = null;
+  if (node.requires !== null) {
+    const reqNode = getSkillNode(node.requires);
+    const reqCurrLv = getSkillLevel(levels, node.requires);
+    requires = {
+      id: reqNode.id,
+      name: reqNode.name,
+      requiredLevel: SKILL_PREREQ_LEVEL,
+      currentLevel: reqCurrLv,
+      met: reqCurrLv >= SKILL_PREREQ_LEVEL,
+    };
+  }
+
+  return {
+    id: node.id,
+    name: node.name,
+    branch: node.branch,
+    tier: node.tier,
+    tagline: node.tagline,
+    detailNote: node.detailNote,
+    currentLevel,
+    maxLevel,
+    currentEffect:
+      currentLevel > 0 ? getSkillLevelDetailSummary(nodeId, currentLevel) : '未習得',
+    nextCost,
+    totalCost,
+    requires,
+    levels: levelDetails,
+  };
 }

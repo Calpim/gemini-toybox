@@ -26,7 +26,7 @@ import {
   ICON_VOLUME_OFF,
   ICON_VOLUME_ON,
 } from './ui/icons';
-import { renderModals, type PauseModalTab } from './ui/modals';
+import { closeOpenSkillInfoPopover, renderModals, type PauseModalTab } from './ui/modals';
 
 const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -63,7 +63,6 @@ const modalEls = {
   skillModal: document.getElementById('skillModal')!,
   skillSpBadge: document.getElementById('skillSpBadge')!,
   skillColumns: document.getElementById('skillColumns')!,
-  skillGearSummary: document.getElementById('skillGearSummary')!,
   skillTabBody: document.getElementById('skillTabBody')!,
   gearTabBody: document.getElementById('gearTabBody')!,
   tabSkillBtn: document.getElementById('tabSkillBtn')!,
@@ -370,6 +369,12 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'Escape' || e.key.toLowerCase() === 'k') {
+    if (e.key === 'Escape' && state.status === 'skill_tree') {
+      if (closeOpenSkillInfoPopover(modalEls.skillModal)) {
+        e.preventDefault();
+        return;
+      }
+    }
     if (state.status === 'playing' || state.status === 'skill_tree') {
       if (e.key === 'Escape') e.preventDefault();
       toggleSkillTree(state);
