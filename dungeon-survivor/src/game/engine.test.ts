@@ -2010,7 +2010,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       },
     ];
 
-    // Normal shots (arm_overclock = 0): 4 shots * 7px laneSpacing -> span = 21px
+    // Normal shots (arm_overclock = 0): 4 shots * 14px laneSpacing -> span = 42px
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 0 };
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     const normalYs = state.projectiles
@@ -2018,7 +2018,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       .map((p) => p.y)
       .sort((a, b) => a - b);
     expect(normalYs).toHaveLength(4);
-    expect(normalYs[3] - normalYs[0]).toBeCloseTo(21, 1);
+    expect(normalYs[3] - normalYs[0]).toBeCloseTo(42, 1);
 
     // Laser shots (arm_overclock = 1, arm_base = 5): 4 shots * 10px -> span = 30px
     state.projectiles = [];

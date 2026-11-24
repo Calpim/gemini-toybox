@@ -1787,7 +1787,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const dirY = Math.sin(centerAngle);
       const perpX = -dirY;
       const perpY = dirX;
-      const laneSpacing = baseStats.armOverclockLevel >= 1 ? 10 : 7;
+      const laneSpacing = baseStats.armOverclockLevel >= 1 ? 10 : 14;
       const mainLife = Math.max(0.75, (baseStats.range + 60) / baseStats.speed);
       const baseRadius = baseStats.pierce
         ? 4.5 + (baseStats.armBaseLevel >= 5 ? 1.0 : baseStats.armBaseLevel >= 3 ? 0.5 : 0)

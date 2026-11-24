@@ -110,7 +110,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tagline: '平行弾増加＆追尾レーザーを追加射出',
     description: 'メイン弾を平行射出（+1〜3発 & Lv3+威力UP）+ Lv2〜周囲周回後に敵へ急加速する追尾レーザー(2〜6発)を同時射出',
     detailNote:
-      '平行レーン(通常7px／レーザー10px)で追加射出。Lv2から追加される追尾レーザー(威力35%)は44pxを0.26s周回→84pxへ離脱後に高速追尾します。',
+      '平行レーン(通常14px／レーザー10px)で追加射出。Lv2から追加される追尾レーザー(威力35%)は44pxを0.26s周回→84pxへ離脱後に高速追尾します。',
   },
   {
     id: 'arm_overclock',
