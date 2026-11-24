@@ -1787,14 +1787,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const dirY = Math.sin(centerAngle);
       const perpX = -dirY;
       const perpY = dirX;
-      const laneSpacing =
-        baseStats.armOverclockLevel >= 1
-          ? 14 + Math.min(4, baseStats.armBaseLevel)
-          : 7;
+      const laneSpacing = baseStats.armOverclockLevel >= 1 ? 10 : 7;
       const mainLife = Math.max(0.75, (baseStats.range + 60) / baseStats.speed);
-      const baseRadius =
-        (baseStats.pierce ? 6 : 5) +
-        (baseStats.armBaseLevel >= 5 ? 2.5 : baseStats.armBaseLevel >= 3 ? 1.5 : 0);
+      const baseRadius = baseStats.pierce
+        ? 4.5 + (baseStats.armBaseLevel >= 5 ? 1.0 : baseStats.armBaseLevel >= 3 ? 0.5 : 0)
+        : 5 + (baseStats.armBaseLevel >= 5 ? 2.5 : baseStats.armBaseLevel >= 3 ? 1.5 : 0);
       const mainColor = baseStats.pierce
         ? '#2dd4bf'
         : baseStats.armBaseLevel >= 3
@@ -1833,10 +1830,11 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
       if (baseStats.homingShots > 0) {
         const homingSpeed = Math.max(300, Math.round(baseStats.speed * 0.72));
-        const orbitDuration = 0.34;
-        const expandDuration = 0.18;
-        const orbitRadius = 48;
-        const expandTargetRadius = 90;
+        const homingDashSpeed = Math.max(540, Math.round(baseStats.speed * 1.25));
+        const orbitDuration = 0.26;
+        const expandDuration = 0.13;
+        const orbitRadius = 44;
+        const expandTargetRadius = 84;
         const orbitAngularSpeed = (Math.PI * 2) / orbitDuration;
         for (let h = 0; h < baseStats.homingShots; h++) {
           const initialOrbitAngle = centerAngle + (h * Math.PI * 2) / baseStats.homingShots;
@@ -1862,11 +1860,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             vx: Math.cos(tangentAngle) * homingSpeed,
             vy: Math.sin(tangentAngle) * homingSpeed,
             speed: homingSpeed,
+            homingDashSpeed,
             radius: 4.5,
             damage: baseStats.homingDamage,
             life: orbitDuration + expandDuration + 1.03,
             pierce: false,
-            homingTurnRate: 5.5,
+            homingTurnRate: 10,
             homingRange: 220,
             maxDistance: 320,
             orbitTimer: orbitDuration,
@@ -1876,6 +1875,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             expandTimer: expandDuration,
             expandDuration,
             expandTargetRadius,
+            trail: [{ x: spawnX, y: spawnY }],
             hitEnemyIds: [],
             color: '#a7f3d0',
           });
@@ -2246,11 +2246,12 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     } else if (proj.kind === 'base_homing') {
       const spd = proj.speed ?? Math.max(1, Math.hypot(proj.vx, proj.vy));
+      const dashSpd = proj.homingDashSpeed ?? Math.max(540, Math.round(spd * 1.75));
       if ((proj.orbitTimer ?? 0) > 0) {
         const nextOrbitTimer = Math.max(0, (proj.orbitTimer ?? 0) - clampedDt);
-        const angularSpd = proj.orbitAngularSpeed ?? (Math.PI * 2) / 0.34;
+        const angularSpd = proj.orbitAngularSpeed ?? (Math.PI * 2) / 0.26;
         const nextAngle = (proj.orbitAngle ?? 0) + angularSpd * clampedDt;
-        const orbitR = proj.orbitRadius ?? 48;
+        const orbitR = proj.orbitRadius ?? 44;
         proj.orbitTimer = nextOrbitTimer;
         proj.orbitAngle = nextAngle;
 
@@ -2279,6 +2280,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             proj.vx = Math.cos(nextAngle) * spd;
             proj.vy = Math.sin(nextAngle) * spd;
           } else {
+            proj.speed = dashSpd;
             const immediateTarget = findNearestVisibleEnemy(
               proj.x,
               proj.y,
@@ -2289,20 +2291,23 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             );
             if (immediateTarget) {
               const aimAngle = Math.atan2(immediateTarget.y - proj.y, immediateTarget.x - proj.x);
-              proj.vx = Math.cos(aimAngle) * spd;
-              proj.vy = Math.sin(aimAngle) * spd;
+              proj.vx = Math.cos(aimAngle) * dashSpd;
+              proj.vy = Math.sin(aimAngle) * dashSpd;
+            } else {
+              proj.vx = Math.cos(tangentAngle) * dashSpd;
+              proj.vy = Math.sin(tangentAngle) * dashSpd;
             }
           }
         }
       } else if ((proj.expandTimer ?? 0) > 0) {
-        const expandDur = proj.expandDuration ?? 0.18;
+        const expandDur = proj.expandDuration ?? 0.13;
         const nextExpandTimer = Math.max(0, (proj.expandTimer ?? 0) - clampedDt);
         proj.expandTimer = nextExpandTimer;
 
         const t = Math.min(1, Math.max(0, 1 - nextExpandTimer / expandDur));
         const ease = 1 - (1 - t) * (1 - t);
-        const startR = proj.orbitRadius ?? 48;
-        const targetR = proj.expandTargetRadius ?? 90;
+        const startR = proj.orbitRadius ?? 44;
+        const targetR = proj.expandTargetRadius ?? 84;
         const currR = startR + (targetR - startR) * ease;
         const radialAngle = proj.orbitAngle ?? Math.atan2(proj.y - player.y, proj.x - player.x);
 
@@ -2325,6 +2330,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         proj.vy = Math.sin(radialAngle) * spd;
 
         if (nextExpandTimer <= 0) {
+          proj.speed = dashSpd;
           const immediateTarget = findNearestVisibleEnemy(
             proj.x,
             proj.y,
@@ -2335,11 +2341,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           );
           if (immediateTarget) {
             const aimAngle = Math.atan2(immediateTarget.y - proj.y, immediateTarget.x - proj.x);
-            proj.vx = Math.cos(aimAngle) * spd;
-            proj.vy = Math.sin(aimAngle) * spd;
+            proj.vx = Math.cos(aimAngle) * dashSpd;
+            proj.vy = Math.sin(aimAngle) * dashSpd;
+          } else {
+            proj.vx = Math.cos(radialAngle) * dashSpd;
+            proj.vy = Math.sin(radialAngle) * dashSpd;
           }
         }
       } else {
+        const activeSpd = Math.max(spd, dashSpd);
+        proj.speed = activeSpd;
         const homingTarget = findNearestVisibleEnemy(
           proj.x,
           proj.y,
@@ -2354,16 +2365,23 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           let diff = desiredAngle - currAngle;
           while (diff > Math.PI) diff -= Math.PI * 2;
           while (diff < -Math.PI) diff += Math.PI * 2;
-          const maxTurn = (proj.homingTurnRate ?? 5.5) * clampedDt;
+          const maxTurn = (proj.homingTurnRate ?? 10) * clampedDt;
           const nextAngle = currAngle + Math.max(-maxTurn, Math.min(maxTurn, diff));
-          proj.vx = Math.cos(nextAngle) * spd;
-          proj.vy = Math.sin(nextAngle) * spd;
+          proj.vx = Math.cos(nextAngle) * activeSpd;
+          proj.vy = Math.sin(nextAngle) * activeSpd;
         }
         const nx = proj.x + proj.vx * clampedDt;
         const ny = proj.y + proj.vy * clampedDt;
         proj.traveledDist = (proj.traveledDist ?? 0) + Math.hypot(nx - proj.x, ny - proj.y);
         proj.x = nx;
         proj.y = ny;
+      }
+      if (!proj.trail) {
+        proj.trail = [];
+      }
+      proj.trail.push({ x: proj.x, y: proj.y });
+      if (proj.trail.length > 12) {
+        proj.trail.shift();
       }
     } else {
       proj.x += proj.vx * clampedDt;

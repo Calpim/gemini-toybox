@@ -99,6 +99,8 @@ export interface ProjectileState {
   spinAngle?: number;
   homingTurnRate?: number;
   homingRange?: number;
+  homingDashSpeed?: number;
+  trail?: Vec2[];
   baseLevel?: number;
   overclockLevel?: number;
   visualTier?: number;

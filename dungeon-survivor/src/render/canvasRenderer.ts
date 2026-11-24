@@ -1193,18 +1193,18 @@ export function renderGame(
       const angle = Math.atan2(proj.vy, proj.vx);
 
       if (ocLv >= 1) {
-        const beamLen = Math.min(82, 42 + (ocLv >= 2 ? 10 : 0) + baseLv * 6);
-        const baseScale = 1 + baseLv * 0.14 + (ocLv >= 2 ? 0.12 : 0);
-        const halfW = Math.max(2.4, proj.radius * 0.42 * baseScale);
+        const beamLen = Math.min(92, 56 + (ocLv >= 2 ? 12 : 0) + baseLv * 5);
+        const baseScale = 1 + baseLv * 0.08 + (ocLv >= 2 ? 0.08 : 0);
+        const halfW = Math.max(1.2, proj.radius * 0.24 * baseScale);
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.translate(proj.x, proj.y);
         ctx.rotate(angle);
         ctx.lineCap = 'round';
 
-        // Wide outer cyan neon bloom
-        ctx.strokeStyle = ocLv >= 2 ? 'rgba(6, 182, 212, 0.42)' : 'rgba(6, 182, 212, 0.34)';
-        ctx.lineWidth = halfW * 4.4;
+        // Tight outer cyan neon bloom (slim so parallel beams stay crisp and distinct)
+        ctx.strokeStyle = ocLv >= 2 ? 'rgba(6, 182, 212, 0.36)' : 'rgba(6, 182, 212, 0.28)';
+        ctx.lineWidth = halfW * 2.8;
         ctx.beginPath();
         ctx.moveTo(-beamLen, 0);
         ctx.lineTo(2, 0);
@@ -1212,29 +1212,29 @@ export function renderGame(
 
         // Mid intense turquoise energy sheath
         ctx.strokeStyle = ocLv >= 2 ? 'rgba(45, 212, 191, 0.72)' : 'rgba(34, 211, 238, 0.65)';
-        ctx.lineWidth = halfW * 2.5;
+        ctx.lineWidth = halfW * 1.65;
         ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.94, 0);
+        ctx.moveTo(-beamLen * 0.95, 0);
         ctx.lineTo(4, 0);
         ctx.stroke();
 
-        // Bright beam body
+        // Bright slim beam body
         ctx.strokeStyle = proj.color;
-        ctx.lineWidth = halfW * 1.45;
+        ctx.lineWidth = halfW * 1.05;
         ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.86, 0);
+        ctx.moveTo(-beamLen * 0.88, 0);
         ctx.lineTo(5, 0);
         ctx.stroke();
 
-        // Blazing white-cyan core
+        // Razor-sharp white-cyan core
         ctx.strokeStyle = '#f0fdfa';
-        ctx.lineWidth = Math.max(1.8, halfW * 0.82);
+        ctx.lineWidth = Math.max(1.0, halfW * 0.55);
         ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.72, 0);
+        ctx.moveTo(-beamLen * 0.78, 0);
         ctx.lineTo(6, 0);
         ctx.stroke();
 
-        drawGlowSprite(ctx, 'cyan', 2, 0, halfW * 2.8, 0.52, false);
+        drawGlowSprite(ctx, 'cyan', 2, 0, halfW * 2.0, 0.45, false);
         ctx.restore();
       } else {
         drawGlowSprite(ctx, 'emerald', proj.x, proj.y, proj.radius * 2.6, 0.42, true);
@@ -1266,27 +1266,54 @@ export function renderGame(
     } else if (proj.kind === 'base_homing') {
       const angle = Math.atan2(proj.vy, proj.vx);
       const isPreHoming = (proj.orbitTimer ?? 0) > 0 || (proj.expandTimer ?? 0) > 0;
-      const tailLen = isPreHoming ? 15 : 10;
-      drawGlowSprite(ctx, 'emerald', proj.x, proj.y, proj.radius * 2.5, 0.45, true);
+      const trail = proj.trail;
+      const traceRibbon = () => {
+        ctx.beginPath();
+        if (trail && trail.length >= 2) {
+          ctx.moveTo(trail[0].x, trail[0].y);
+          for (let t = 1; t < trail.length; t++) {
+            ctx.lineTo(trail[t].x, trail[t].y);
+          }
+          const last = trail[trail.length - 1];
+          if (last.x !== proj.x || last.y !== proj.y) {
+            ctx.lineTo(proj.x, proj.y);
+          }
+        } else {
+          const tailLen = isPreHoming ? 16 : 22;
+          ctx.moveTo(proj.x - Math.cos(angle) * tailLen, proj.y - Math.sin(angle) * tailLen);
+          ctx.lineTo(proj.x, proj.y);
+        }
+      };
+
+      drawGlowSprite(ctx, 'emerald', proj.x, proj.y, proj.radius * 2.2, 0.48, true);
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      ctx.translate(proj.x, proj.y);
-      ctx.rotate(angle);
-      ctx.strokeStyle = isPreHoming ? 'rgba(167, 243, 208, 0.75)' : 'rgba(167, 243, 208, 0.58)';
-      ctx.lineWidth = isPreHoming ? 3.0 : 2.5;
       ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(-tailLen, 0);
-      ctx.lineTo(0, 0);
+      ctx.lineJoin = 'round';
+
+      // Outer glowing cyan/emerald laser aura
+      ctx.strokeStyle = isPreHoming ? 'rgba(45, 212, 191, 0.34)' : 'rgba(45, 212, 191, 0.44)';
+      ctx.lineWidth = isPreHoming ? 5.2 : 6.2;
+      traceRibbon();
       ctx.stroke();
 
-      ctx.fillStyle = proj.color;
-      ctx.beginPath();
-      ctx.arc(0, 0, proj.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#ecfdf5';
-      ctx.lineWidth = 1.2;
+      // Mid emerald-mint laser body
+      ctx.strokeStyle = isPreHoming ? 'rgba(110, 231, 183, 0.72)' : 'rgba(110, 231, 183, 0.85)';
+      ctx.lineWidth = isPreHoming ? 2.6 : 3.0;
+      traceRibbon();
       ctx.stroke();
+
+      // Bright thin white-mint core
+      ctx.strokeStyle = '#ecfdf5';
+      ctx.lineWidth = 1.3;
+      traceRibbon();
+      ctx.stroke();
+
+      // Sharp glowing tip
+      ctx.fillStyle = '#f0fdfa';
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, 2.2, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     } else if (proj.kind === 'reflected') {
       drawGlowSprite(ctx, 'cyan', proj.x, proj.y, proj.radius * 2.8, 0.55, true);
