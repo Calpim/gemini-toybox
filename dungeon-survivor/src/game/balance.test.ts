@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { getPlayerBaseAttackStats } from './engine';
 import {
   EQUIPMENT_CATALOG,
-  EquippedItem,
+  type EquippedItem,
   getEquipmentCooldownMultiplier,
   getEquipmentDamage,
   getOrbitBitCount,
   getSeekerDroneCount,
 } from './equipment';
-import { getPlayerBaseAttackStats } from './engine';
-import { PlayerState } from './types';
-import { SkillLevelMap } from './skillTree';
+import type { SkillLevelMap } from './skillTree';
+import type { PlayerState } from './types';
 
 interface BuildPreset {
   name: string;

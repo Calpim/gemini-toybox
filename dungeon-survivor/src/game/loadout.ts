@@ -1,17 +1,17 @@
 import { createRng } from '../core/rng';
 import {
   ALL_EQUIPMENT_IDS,
+  clampEquipmentLevel,
   EQUIPMENT_CATALOG,
   type EquipmentId,
   type EquippedItem,
-  MAX_EQUIPMENT_LEVEL,
-  MAX_EQUIP_SLOTS_CAP,
-  MAX_TARGET_RANGE,
-  clampEquipmentLevel,
   getOrbitBitCount,
   getOrbitShieldRadius,
   getScrapExpandCost,
   getSeekerDroneCount,
+  MAX_EQUIP_SLOTS_CAP,
+  MAX_EQUIPMENT_LEVEL,
+  MAX_TARGET_RANGE,
 } from './equipment';
 import { grantExpAndCheckLevelUp } from './leveling';
 import { computeSkillModifiers } from './skillTree';
@@ -296,5 +296,3 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
     spentSp: player.spentSkillPoints,
   };
 }
-
-export const getMainWeaponStats = getPlayerBaseAttackStats;

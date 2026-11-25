@@ -13,7 +13,6 @@ export type SkillNodeId =
 
 export const MAX_SKILL_LEVEL = 5;
 export const TIER3_MAX_LEVEL = 2;
-export const TIER3_SUPPORT_MAX_LEVEL = TIER3_MAX_LEVEL;
 export const SKILL_PREREQ_LEVEL = 3;
 export const BASE_HIT_INVULN_DURATION = 1.0;
 
@@ -213,8 +212,6 @@ export function canUpgradeSkill(levels: SkillLevelMap, skillPoints: number, node
   if (node.requires === null) return true;
   return getSkillLevel(levels, node.requires) >= SKILL_PREREQ_LEVEL;
 }
-
-export const canUnlockSkill = canUpgradeSkill;
 
 // Per-level scaling curves [Lv0, Lv1, Lv2, Lv3, Lv4, Lv5]
 // Arms: Main Weapon dedicated scaling (DEC-19 / DEC-20 / PRM-18 / PRM-23)

@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import indexHtmlRaw from '../../index.html?raw';
 import { createGameState } from '../game/engine';
-import { SKILL_PREREQ_LEVEL, SKILL_TREE_NODES, getSkillDetailedSpec } from '../game/skillTree';
+import { getSkillDetailedSpec, SKILL_PREREQ_LEVEL, SKILL_TREE_NODES } from '../game/skillTree';
 import { getSkillIcon } from './icons';
-import { closeOpenSkillInfoPopover, computePopoverPosition, renderModals, type ModalElements } from './modals';
+import { closeOpenSkillInfoPopover, computePopoverPosition, type ModalElements, renderModals } from './modals';
 
-interface MockListener {
-  (event: MockEvent): void;
-}
+type MockListener = (event: MockEvent) => void;
 
 interface MockEvent {
   type: string;
@@ -219,8 +217,8 @@ class MockElement {
       type,
       target: this,
       currentTarget: this,
-      pointerType: opts.pointerType,
-      key: opts.key,
+      ...(opts.pointerType !== undefined ? { pointerType: opts.pointerType } : {}),
+      ...(opts.key !== undefined ? { key: opts.key } : {}),
       defaultPrevented: false,
       propagationStopped: false,
       preventDefault() {

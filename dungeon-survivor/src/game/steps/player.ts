@@ -1,7 +1,7 @@
 import { resolveCircleGridCollision } from '../../core/collision';
-import { type DungeonMap, TILE_SIZE, findRoomAtTile, tileCenterWorld } from '../../core/dungeon';
+import { type DungeonMap, findRoomAtTile, TILE_SIZE, tileCenterWorld } from '../../core/dungeon';
 import { pushNotification } from '../effects';
-import { type EquipmentId, type EquippedItem, createEquippedItem } from '../equipment';
+import { createEquippedItem, type EquipmentId, type EquippedItem } from '../equipment';
 import type { GameState, Vec2 } from '../types';
 
 export interface PlayerStepDeps {

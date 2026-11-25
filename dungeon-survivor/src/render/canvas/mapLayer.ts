@@ -1,4 +1,4 @@
-import { type DungeonMap, TILE_SIZE, getTile, tileCenterWorld } from '../../core/dungeon';
+import { type DungeonMap, getTile, TILE_SIZE, tileCenterWorld } from '../../core/dungeon';
 import { EQUIPMENT_CATALOG } from '../../game/equipment';
 import type { GameState } from '../../game/types';
 import { drawGlowSprite, drawWallTile } from '../sprites';

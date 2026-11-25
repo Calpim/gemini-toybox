@@ -1,13 +1,25 @@
 import { hasLineOfSight } from '../core/collision';
 import {
-  TILE_SIZE,
+  type DungeonMap,
   findRoomAtTile,
   generateDungeon,
   isTileInRoom,
+  TILE_SIZE,
   tileCenterWorld,
-  type DungeonMap,
 } from '../core/dungeon';
+import { emitSound, pushNotification } from './effects';
 import { MAX_EQUIP_SLOTS } from './equipment';
+import { getLevelUpSkillPoints, grantExpAndCheckLevelUp } from './leveling';
+import {
+  acquireEquipment,
+  type EquipChoice,
+  getOrbitBitPositions,
+  getPlayerBaseAttackStats,
+  getSeekerDronePositions,
+  pickChestDrop,
+  resolveEquipChoice,
+  rollDropEquipmentLevel,
+} from './loadout';
 import {
   canUpgradeSkill,
   computeSkillModifiers,
@@ -17,39 +29,22 @@ import {
   getSkillUpgradeCost,
   type SkillNodeId,
 } from './skillTree';
-import { emitSound, pushNotification } from './effects';
-import { getLevelUpSkillPoints, grantExpAndCheckLevelUp } from './leveling';
 import {
-  type EquipChoice,
-  type PlayerBaseAttackStats,
-  acquireEquipment,
-  getMainWeaponStats,
-  getOrbitBitPositions,
-  getPlayerBaseAttackStats,
-  getSeekerDronePositions,
-  pickChestDrop,
-  resolveEquipChoice,
-  rollDropEquipmentLevel,
-} from './loadout';
-import {
-  SHOOTER_AGGRO_RANGE,
   createEnemyByKind,
   getRunnerPackSize,
   pickEnemyKindForFloor,
   populateFloor,
+  SHOOTER_AGGRO_RANGE,
 } from './spawn';
 import { stepPlayerCombat } from './steps/combat';
 import {
-  type NormalEnemyShotStats,
-  SCOUT_ALERT_COOLDOWN,
-  SCOUT_ALERT_SPEED_MULT,
-  SCOUT_CHASE_DIST,
-  SCOUT_KEEP_DIST,
-  SCOUT_MAX_ALERT_SPEED,
-  SCOUT_SUMMON_CAP_PER_SCOUT,
-  SCOUT_SUMMON_MAX_PLAYER_DIST,
   getActiveBossLaserWidth,
   getNormalEnemyShotStats,
+  SCOUT_ALERT_COOLDOWN,
+  SCOUT_CHASE_DIST,
+  SCOUT_KEEP_DIST,
+  SCOUT_SUMMON_CAP_PER_SCOUT,
+  SCOUT_SUMMON_MAX_PLAYER_DIST,
   stepEnemies,
 } from './steps/enemies';
 import { stepPickupsAndFx } from './steps/pickups';
@@ -58,23 +53,11 @@ import { RICOCHET_DISC_LOOP_RADIUS, stepProjectiles } from './steps/projectiles'
 import type { GameState, GameStatus, Vec2 } from './types';
 
 export {
-  type EquipChoice,
-  type NormalEnemyShotStats,
-  type PlayerBaseAttackStats,
-  RICOCHET_DISC_LOOP_RADIUS,
-  SCOUT_ALERT_COOLDOWN,
-  SCOUT_ALERT_SPEED_MULT,
-  SCOUT_CHASE_DIST,
-  SCOUT_KEEP_DIST,
-  SCOUT_MAX_ALERT_SPEED,
-  SCOUT_SUMMON_CAP_PER_SCOUT,
-  SCOUT_SUMMON_MAX_PLAYER_DIST,
-  SHOOTER_AGGRO_RANGE,
   acquireEquipment,
   createEnemyByKind,
+  type EquipChoice,
   getActiveBossLaserWidth,
   getLevelUpSkillPoints,
-  getMainWeaponStats,
   getNormalEnemyShotStats,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
@@ -82,8 +65,15 @@ export {
   getSeekerDronePositions,
   pickEnemyKindForFloor,
   pushNotification,
+  RICOCHET_DISC_LOOP_RADIUS,
   resolveEquipChoice,
   rollDropEquipmentLevel,
+  SCOUT_ALERT_COOLDOWN,
+  SCOUT_CHASE_DIST,
+  SCOUT_KEEP_DIST,
+  SCOUT_SUMMON_CAP_PER_SCOUT,
+  SCOUT_SUMMON_MAX_PLAYER_DIST,
+  SHOOTER_AGGRO_RANGE,
 };
 
 export const CORRIDOR_VISION_RADIUS = 210;
@@ -284,14 +274,6 @@ export function upgradeSkillNode(state: GameState, nodeId: SkillNodeId): boolean
     maxLife: 1.0,
   });
   return true;
-}
-
-export const unlockSkillNode = upgradeSkillNode;
-
-export function openSkillTree(state: GameState): void {
-  if (state.status === 'playing') {
-    state.status = 'skill_tree';
-  }
 }
 
 export function closeSkillTree(state: GameState): void {

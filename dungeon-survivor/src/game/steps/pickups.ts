@@ -1,5 +1,5 @@
 import { emitSound, spawnParticles } from '../effects';
-import { type EquippedItem, createEquippedItem } from '../equipment';
+import { createEquippedItem, type EquippedItem } from '../equipment';
 import type { ComputedSkillModifiers } from '../skillTree';
 import type { GameState } from '../types';
 

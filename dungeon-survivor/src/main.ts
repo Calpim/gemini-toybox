@@ -8,12 +8,12 @@ import {
   startGame,
   stepGame,
   toggleSkillTree,
-  unlockSkillNode,
+  upgradeSkillNode,
 } from './game/engine';
-import { SKILL_TREE_NODES, canUnlockSkill } from './game/skillTree';
+import { canUpgradeSkill, SKILL_TREE_NODES } from './game/skillTree';
 import type { GameState } from './game/types';
 import { InputController } from './input/controller';
-import { renderGame, type HudSafeInsets } from './render/canvasRenderer';
+import { type HudSafeInsets, renderGame } from './render/canvasRenderer';
 import { renderHudMinimap } from './render/minimapRenderer';
 import {
   ICON_ALERT,
@@ -26,7 +26,7 @@ import {
   ICON_VOLUME_OFF,
   ICON_VOLUME_ON,
 } from './ui/icons';
-import { closeOpenSkillInfoPopover, renderModals, type PauseModalTab } from './ui/modals';
+import { closeOpenSkillInfoPopover, type PauseModalTab, renderModals } from './ui/modals';
 
 const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -217,7 +217,7 @@ function syncUi(forceModals = false): void {
     gearBtn.innerHTML = `${ICON_GEAR}<span>${gearLabel}</span>`;
   }
 
-  const canUnlockAny = SKILL_TREE_NODES.some((n) => canUnlockSkill(player.skillLevels, player.skillPoints, n.id));
+  const canUnlockAny = SKILL_TREE_NODES.some((n) => canUpgradeSkill(player.skillLevels, player.skillPoints, n.id));
   skillBtn.classList.toggle('has-sp', canUnlockAny);
   bottomPauseLeftBtn?.classList.toggle('has-sp', canUnlockAny);
   bottomSkillBadge?.classList.toggle('hidden', !canUnlockAny);
@@ -268,7 +268,7 @@ function syncUi(forceModals = false): void {
     renderModals(state, modalEls, {
       activeTab: activePauseTab,
       onUnlockSkill: (nodeId) => {
-        unlockSkillNode(state, nodeId);
+        upgradeSkillNode(state, nodeId);
         syncUi(true);
       },
       onCloseSkillTree: () => {

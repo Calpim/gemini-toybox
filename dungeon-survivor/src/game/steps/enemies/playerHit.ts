@@ -1,5 +1,5 @@
 import { emitSound, spawnParticles, triggerShake } from '../../effects';
-import { EQUIPMENT_CATALOG, MAX_TARGET_RANGE, getEquipmentDamage, getReactiveCoilStats } from '../../equipment';
+import { EQUIPMENT_CATALOG, getEquipmentDamage, getReactiveCoilStats, MAX_TARGET_RANGE } from '../../equipment';
 import { BASE_HIT_INVULN_DURATION, type ComputedSkillModifiers, TACTICAL_SPEED_BOOST_DURATION } from '../../skillTree';
 import type { EnemyState, GameState } from '../../types';
 import { damageEnemy, triggerChainLightning } from '../combatHelpers';

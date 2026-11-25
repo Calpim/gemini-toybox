@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { TILE_SIZE, tileCenterWorld } from '../core/dungeon';
 import {
+  createEnemyByKind,
+  createGameState,
+  getOrbitBitPositions,
+  getPlayerBaseAttackStats,
+  getSeekerDronePositions,
+  RICOCHET_DISC_LOOP_RADIUS,
+  stepGame,
+  upgradeSkillNode,
+} from './engine';
+import {
   ALL_EQUIPMENT_IDS,
-  MAX_EQUIPMENT_LEVEL,
-  MAX_TARGET_RANGE,
-  ORBIT_SHIELD_INNER_SLOW,
   createEquippedItem,
   getEquipmentCooldownMultiplier,
   getOrbitShieldAngularSpeed,
@@ -12,17 +19,10 @@ import {
   getPulseBladeStats,
   getReactiveCoilStats,
   getRicochetDiscStats,
+  MAX_EQUIPMENT_LEVEL,
+  MAX_TARGET_RANGE,
+  ORBIT_SHIELD_INNER_SLOW,
 } from './equipment';
-import {
-  RICOCHET_DISC_LOOP_RADIUS,
-  createEnemyByKind,
-  createGameState,
-  getOrbitBitPositions,
-  getPlayerBaseAttackStats,
-  getSeekerDronePositions,
-  stepGame,
-  upgradeSkillNode,
-} from './engine';
 import { MAX_SKILL_LEVEL } from './skillTree';
 
 describe('Player main weapon and sub-equipment combat simulation', () => {

@@ -1,26 +1,26 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
-  parseFeature,
-  buildTraceabilityGraph,
-  renderHtml,
-  loadFeaturesFromDir,
-  parseGlossary,
-  parseParameters,
-  parseFormulas,
-  parseOpenQuestions,
-  parseNonGoals,
-  parseStateTransitions,
-  parseInvariants,
-  parseDecisionLog,
-  parseOverrideTargets,
-  resolveDecisionAddendums,
   buildFormulaChartsData,
+  buildTraceabilityGraph,
   loadExtendedSpecs,
+  loadFeaturesFromDir,
+  parseDecisionLog,
+  parseFeature,
+  parseFormulas,
+  parseGlossary,
+  parseInvariants,
+  parseNonGoals,
+  parseOpenQuestions,
+  parseOverrideTargets,
+  parseParameters,
+  parseStateTransitions,
+  renderHtml,
+  resolveDecisionAddendums,
   validateExtendedSpecs,
   validateInvariantTests,
   validateNoLineNumberRefs,

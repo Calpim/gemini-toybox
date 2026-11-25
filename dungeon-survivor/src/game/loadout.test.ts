@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tileCenterWorld } from '../core/dungeon';
 import {
-  ALL_EQUIPMENT_IDS,
-  MAX_EQUIPMENT_LEVEL,
-  MAX_EQUIP_SLOTS,
-  MAX_EQUIP_SLOTS_CAP,
-  createEquippedItem,
-  getScrapExpandCost,
-} from './equipment';
-import {
   acquireEquipment,
   createGameState,
   getLevelUpSkillPoints,
@@ -21,11 +13,19 @@ import {
   upgradeSkillNode,
 } from './engine';
 import {
-  MAX_SKILL_LEVEL,
-  SKILL_PREREQ_LEVEL,
+  ALL_EQUIPMENT_IDS,
+  createEquippedItem,
+  getScrapExpandCost,
+  MAX_EQUIP_SLOTS,
+  MAX_EQUIP_SLOTS_CAP,
+  MAX_EQUIPMENT_LEVEL,
+} from './equipment';
+import {
   canUpgradeSkill,
   computeSkillModifiers,
   getSkillUpgradeCost,
+  MAX_SKILL_LEVEL,
+  SKILL_PREREQ_LEVEL,
 } from './skillTree';
 
 describe('Equipment, loadout, and growth simulation', () => {

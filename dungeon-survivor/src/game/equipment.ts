@@ -129,7 +129,7 @@ export function getOrbitShieldRadius(level: number, rangeMult = 1): number {
 }
 
 export function getOrbitShieldAngularSpeed(bitCount: number): number {
-  return Math.max(1.6, Math.min(5.2, 5.0 / Math.pow(Math.max(1, bitCount), 0.55)));
+  return Math.max(1.6, Math.min(5.2, 5.0 / Math.max(1, bitCount) ** 0.55));
 }
 
 export function getSeekerDroneCount(level: number, extraBits = 0): number {

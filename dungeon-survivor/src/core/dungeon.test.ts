@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { generateDungeon, getTile, isWallTile, tileCenterWorld } from './dungeon';
 import { hasLineOfSight, resolveCircleGridCollision } from './collision';
+import { generateDungeon, getTile, isWallTile, tileCenterWorld } from './dungeon';
 
 describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)', () => {
   it('[APP-MAP-01] generates wider rooms, clean 2-tile non-overlapping corridors by default, and reachable stairs in a distant room', () => {

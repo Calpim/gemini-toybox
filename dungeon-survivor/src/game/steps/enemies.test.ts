@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { TILE_SIZE, findRoomAtTile, tileCenterWorld } from '../../core/dungeon';
-import { createEquippedItem } from '../equipment';
+import { findRoomAtTile, TILE_SIZE, tileCenterWorld } from '../../core/dungeon';
 import {
+  createEnemyByKind,
+  createGameState,
+  getActiveBossLaserWidth,
+  getNormalEnemyShotStats,
+  getRunnerPackSize,
+  getStairsLockCount,
   SCOUT_ALERT_COOLDOWN,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
   SCOUT_SUMMON_CAP_PER_SCOUT,
   SCOUT_SUMMON_MAX_PLAYER_DIST,
   SHOOTER_AGGRO_RANGE,
-  createEnemyByKind,
-  createGameState,
-  getNormalEnemyShotStats,
-  getRunnerPackSize,
-  getStairsLockCount,
-  getActiveBossLaserWidth,
   stepGame,
   toggleSkillTree,
 } from '../engine';
+import { createEquippedItem } from '../equipment';
 
 describe('Enemy AI, spawning, and boss simulation', () => {
   it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter (4/6/8-way rotating barrage + knockback immunity)/scout archetypes', () => {

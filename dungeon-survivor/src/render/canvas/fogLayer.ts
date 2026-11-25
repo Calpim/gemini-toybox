@@ -1,4 +1,4 @@
-import { TILE_SIZE, findRoomAtTile } from '../../core/dungeon';
+import { findRoomAtTile, TILE_SIZE } from '../../core/dungeon';
 import { CORRIDOR_VISION_RADIUS } from '../../game/engine';
 import type { GameState } from '../../game/types';
 
