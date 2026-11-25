@@ -18,7 +18,7 @@
     もし 上り階段に到達する
     ならば 封印に阻まれることなく即座に次の階層へ進む
 
-  # split-from: BIZ-EXP-01 (EXP-01-c) / 関連: APP-MAP-01, GLS-07, PRM-14, INV-04, DEC-05, DEC-08
+  # split-from: BIZ-EXP-01 (EXP-01-c) / 関連: APP-MAP-01, GLS-07, PRM-14, INV-04, DEC-05, DEC-08, DEC-10, DEC-11, DEC-27
   @BIZ-EXP-09 @Confirmed
   シナリオ: 3/6/9Fでは守護中ボスを倒して階段封印を解除すると次の階層へ進める
     前提 プレイヤーが3/6/9Fの守護中ボス配置階にいる
@@ -26,7 +26,7 @@
     ならば 次の階層へ進む
 
   # split-from: BIZ-EXP-02 (EXP-02-a) / 関連: APP-MAP-02
-  # 保留: EXP-02-b（通路で自由移動する敵と出会うとシームレスに戦闘が始まる）は対応する APP シナリオが未定義のため、BIZ-EXP-10 としての独立化を保留
+  # 保留: 本文は入室覚醒のみに整理済み。旧 EXP-02-b（通路遭遇戦闘）のAPP化・BIZ-EXP-10としての独立化は OQ-10 として保留中
   # 保留台帳: OQ-10（APP層整備フェーズで specs/app/01-dungeon-map.feature へ通路遭遇戦闘シナリオを追加する時に独立化）
   @BIZ-EXP-02 @Confirmed
   シナリオ: 部屋に入ると部屋内の敵が全員迎撃状態になる

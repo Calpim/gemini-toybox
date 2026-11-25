@@ -73,7 +73,7 @@
     ならば 16種の SoundEventKind が種別ごとのスロットル付きで Web Audio API 合成再生され、同時に最大140個のパーティクル（spawnParticles）と決定論的カメラシェイク（triggerShake）が描画される
     かつ ポーズ画面ヘッダーのミュートボタン（#muteBtn）でいつでもサウンド ON/OFF を切り替えられる
 
-  @APP-MAP-10 @ref:BIZ-EXP-06 @Confirmed
+  @APP-MAP-10 @ref:BIZ-EXP-06 @ref:BIZ-EXP-11 @Confirmed
   シナリオ: 探索範囲に応じて自動縮尺調整される戦術レーダーミニマップとコックピットUIを表示する
     前提 HUD 右上に独立した戦術レーダーミニマップ（#minimapCanvas）が配置されている
     もし プレイヤーがフロアを探索して explored 範囲が広がる

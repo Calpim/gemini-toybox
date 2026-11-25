@@ -538,7 +538,7 @@
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (11)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (10)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (32)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (40)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -552,14 +552,14 @@
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">34</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">25</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">173</div></div>
-        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">34</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">179</div></div>
+        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">36</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">7</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">2</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 34 件のビジネス仕様と 25 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 157 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 165 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -810,7 +810,7 @@
         <details class="app-accordion">
           <summary class="app-accordion-summary">
             <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
-            <span class="app-accordion-meta">APP-MAP-02 (1件)</span>
+            <span class="app-accordion-meta">APP-MAP-02, APP-MAP-10 (2件)</span>
             <span class="app-accordion-hint"></span>
           </summary>
           <div class="app-branch">
@@ -828,6 +828,21 @@
                 <h4>PCキーボードとスマホ片手ジョイスティックで移動し、入室覚醒とESC/K/SKILL・GEARスイッチによる任意ポーズを実行する</h4>
                 <ul class="steps">
     <li><span class="kw">前提</span><span class="st-text">ゲーム状態が PLAYING であり、カメラがプレイヤー位置を追従している</span></li><li><span class="kw">かつ</span><span class="st-text">標準移動速度は 210 px/s（移動速度スキル廃止に伴い標準速度を事前強化した値・数値はAI仮提案）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">PCで WASD / 矢印キーを入力する、タッチ画面でドラッグする、または ESC / K / 上HUDピル・下部コックピットの SKILL / GEAR スイッチを押下する</span></li><li><span class="kw">ならば</span><span class="st-text">移動入力時は壁タイルとのAABB/円衝突で滑らかに押し戻され、入室した瞬間に部屋内の敵が全員迎撃状態（awake = true）へ遷移し、ポーズ操作時は時間を完全停止して「スキル」「装備・ギア」2タブ構成のポーズ画面（スキルカードはアイコン・名称・Lv・1行要点・SPコストに簡素化し詳細数値・現在効果・Lv別コスト表・前提はⓘインフォメーションポップオーバー［タップ／ホバー／Escape対応］へ集約、重複していた装備サマリーを整理した上で、仕様書リンク・スクラップ進捗・装備詳細表示・ミュートボタン・右上端固定の✕閉じるボタン付き）へ切り替わる</span></li>
+  </ul>
+              </div>
+              <div class="app-card" id="APP-MAP-10" data-status="Confirmed" data-layer="app">
+                <div class="card-head">
+                  <div class="id-group">
+                    <span class="id-pill id-app">APP-MAP-10</span>
+                    <span class="ref-pill">↳ ref: BIZ-EXP-11</span>
+                    <span class="file-pill">01-dungeon-map.feature</span>
+                  </div>
+                  <span class="badge badge-confirmed">Confirmed（決定済み）</span>
+                </div>
+                
+                <h4>探索範囲に応じて自動縮尺調整される戦術レーダーミニマップとコックピットUIを表示する</h4>
+                <ul class="steps">
+    <li><span class="kw">前提</span><span class="st-text">HUD 右上に独立した戦術レーダーミニマップ（#minimapCanvas）が配置されている</span></li><li><span class="kw">もし</span><span class="st-text">プレイヤーがフロアを探索して explored 範囲が広がる</span></li><li><span class="kw">ならば</span><span class="st-text">renderHudMinimap は探索初期の狭い範囲を大きくズーム表示し、探索済みタイル範囲の拡大に応じて自動で縮尺を調整しながら部屋・通路・階段・泉・宝箱・視界内の敵・自機コアを描画する</span></li><li><span class="kw">かつ</span><span class="st-text">上HUDのスキル／ギアピルまたは下部コックピットの左右スイッチ（左 SKILL［習得可能時 ! バッジ］／右 GEAR）から時間停止の2タブ構成ポーズ画面（SKILL 側はスキルタブ、GEAR 側は装備・ギアタブを直接表示、別タブ表示中に他方を押すとタブ切替・同タブ中なら閉じる、ESC/K は前回タブでトグル）へ遷移できる</span></li><li><span class="kw">かつ</span><span class="st-text">装備・ギアタブではスクラップ＆ビルド枠拡張進捗バー・メイン武器（コアショット）スペック・全サブ装備スロット詳細を確認できる</span></li>
   </ul>
               </div>
           </div>
@@ -1594,7 +1609,7 @@
           <div class="bg-box">
     <div class="bg-title">📋 背景: ハイブリッド成長ルールの決定経緯</div>
     <ul class="bg-steps">
-      <li>決定経緯: 先輩プレイバックおよび決定ログ（DEC-03, DEC-04, DEC-07, DEC-18, DEC-20, DEC-25）により、以下を確定済み：(1) 装備スロット初期2枠（5種から選択・最大5枠まで段階拡張可）、+1Lv以下重複自動強化 / +2Lv以上重複選択モーダル＆同一装備重複装着禁止（INV-11） (2) スキルツリーは Tier1・Tier2 最大Lv5 / 全Tier3統一最大Lv2・前提Lv3で次解放・段階SPコスト（Tier1=Lv1-3:1SP/Lv4-5:2SP 計7SP、Tier2=Lv1-3:1SP/Lv4:2SP/Lv5:3SP 計8SP、Tier3=Lv1:2SP/Lv2:3SP 計5SP、1系統計20SPでLv15で1系統/Lv25で2系統MAX）、初期1SP（PRM-34）・Lv2〜10=+1SP / Lv11〜=+2SP（PRM-35）・Lv4以降の大幅成長 (3) 初期ノーアイテム開始（自機ショットあり）・敵からの低確率ドロップ・所持最低レベル基準のドロップLv変動</li>
+      <li>決定経緯: 先輩プレイバックおよび決定ログ（DEC-03, DEC-04, DEC-07, DEC-11, DEC-16, DEC-18, DEC-20, DEC-25）により、以下を確定済み：(1) 装備スロット初期2枠（5種から選択・最大5枠まで段階拡張可）、+1Lv以下重複自動強化 / +2Lv以上重複選択モーダル＆同一装備重複装着禁止（INV-11） (2) スキルツリーは Tier1・Tier2 最大Lv5 / 全Tier3統一最大Lv2・前提Lv3で次解放・段階SPコスト（Tier1=Lv1-3:1SP/Lv4-5:2SP 計7SP、Tier2=Lv1-3:1SP/Lv4:2SP/Lv5:3SP 計8SP、Tier3=Lv1:2SP/Lv2:3SP 計5SP、1系統計20SPでLv15で1系統/Lv25で2系統MAX）、初期1SP（PRM-34）・Lv2〜10=+1SP / Lv11〜=+2SP（PRM-35）・Lv4以降の大幅成長 (3) 初期ノーアイテム開始（自機ショットあり）・敵からの低確率ドロップ・所持最低レベル基準のドロップLv変動</li>
     </ul>
   </div>
           <h3>探索で拾った装備とレベルアップ成長を組み合わせて強化する</h3>
@@ -1627,7 +1642,7 @@
   </div>
                 <h4>経験値ジェム回収でHUD経験値バーが進みスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、初期スキルポイントが 1（PRM-34 / Confirmed）であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、Lv2〜10 のためスキルポイント（SP）を +1 獲得（累計 2SP。Lv11 以降は +2SP 獲得：PRM-35）してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で未所持や同Lv以下重複時は自動装着・自動強化、枠満杯または高Lv重複時は選択モーダルへ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、初期スキルポイントが 1（PRM-34 / Confirmed）であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、Lv2〜10 のためスキルポイント（SP）を +1 獲得（累計 2SP。Lv11 以降は +2SP 獲得：PRM-35）してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で未所持や +1Lv 以下の重複時は自動装着・自動強化、枠満杯または同種 +2Lv 以上の重複時は選択モーダルへ遷移する</span></li>
   </ul>
               </div>
           </div>
@@ -2007,7 +2022,7 @@
   </div>
                 <h4>経験値ジェム回収でHUD経験値バーが進みスキルポイントを獲得し、宝箱から装備品を獲得する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、初期スキルポイントが 1（PRM-34 / Confirmed）であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、Lv2〜10 のためスキルポイント（SP）を +1 獲得（累計 2SP。Lv11 以降は +2SP 獲得：PRM-35）してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で未所持や同Lv以下重複時は自動装着・自動強化、枠満杯または高Lv重複時は選択モーダルへ遷移する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーの現在レベルが 1、初期スキルポイントが 1（PRM-34 / Confirmed）であり、HUD の HP バー直下に現在 EXP 進捗バー（EXP X/Y）が表示されている</span></li><li><span class="kw">もし</span><span class="st-text">敵がドロップした EXP ジェムを回収して必要経験値に到達する</span></li><li><span class="kw">ならば</span><span class="st-text">経験値バーの進捗に続いてレベルが 2 に上がり、Lv2〜10 のためスキルポイント（SP）を +1 獲得（累計 2SP。Lv11 以降は +2SP 獲得：PRM-35）してレベルアップ通知＆ツリーボタン強調表示が出る</span></li><li><span class="kw">かつ</span><span class="st-text">ダンジョン内の宝箱を開けると装備アイテムが出現し、接触で未所持や +1Lv 以下の重複時は自動装着・自動強化、枠満杯または同種 +2Lv 以上の重複時は選択モーダルへ遷移する</span></li>
   </ul>
               </div>
           </div>
@@ -2166,7 +2181,7 @@
         <td><strong>メイン武器（コアショット）</strong><div class="sub-code"><code class="inline-code">mainWeaponId</code> / <code class="inline-code">baseAttack</code></div></td>
         <td>装備ゼロ時でも自機から自動発射される固有のメイン武器（現行 <code class="inline-code">&#39;core_shot&#39;</code>、将来的に射撃/斬撃差し替えを想定）。プレイヤーLv単体や他系統SPでは強化されず、兵装（<code class="inline-code">arms</code>）スキルへの投資に応じて強化される。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-01">BIZ-CMB-01</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-01">APP-CMB-01</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-01">BIZ-CMB-01</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-CMB-01">APP-CMB-01</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#DEC-22">DEC-22</a><a class="ref-pill ref-link" href="#DEC-28">DEC-28</a><a class="ref-pill ref-link" href="#DEC-29">DEC-29</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-01" data-source-file="specs/glossary.md" data-item-id="GLS-01" title="元仕様ファイル specs/glossary.md (GLS-01)">specs/glossary.md#GLS-01</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2199,7 +2214,7 @@
         <td><strong>ハイブリッドスキルツリー</strong><div class="sub-code"><code class="inline-code">SkillNodeId</code> / <code class="inline-code">skillPoints</code></div></td>
         <td>兵装（<code class="inline-code">arms</code>: メイン武器専用）・防衛（<code class="inline-code">defense</code>: 索敵レンジ＆緊急防衛）・探索機動（<code class="inline-code">mobility</code>: 回収→ドロップ品質/率→緊急回避ブースト）の3系統×3段階（計9ノード、Tier1・Tier2はLv0〜5、全Tier3はLv0〜2）の成長システム。下位Lv3で上位を解放（UI表記: <code class="inline-code">兵装・ビット</code> / <code class="inline-code">迎撃・防衛</code> / <code class="inline-code">探索・機動</code>）。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-30">GLS-30</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-26">DEC-26</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-30">GLS-30</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#DEC-26">DEC-26</a><a class="ref-pill ref-link" href="#DEC-29">DEC-29</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/skillTree.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-04" data-source-file="specs/glossary.md" data-item-id="GLS-04" title="元仕様ファイル specs/glossary.md (GLS-04)">specs/glossary.md#GLS-04</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2243,7 +2258,7 @@
         <td><strong>Fog of War（部屋・通路視界）</strong><div class="sub-code"><code class="inline-code">CORRIDOR_VISION_RADIUS</code> / <code class="inline-code">explored</code></div></td>
         <td>通路滞在時は自機周囲の円形ライトのみ明るく、部屋入室時は該当部屋全体が点灯する段階的視界制御。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-06">BIZ-EXP-06</a><a class="ref-pill ref-link" href="#APP-MAP-06">APP-MAP-06</a><a class="ref-pill ref-link" href="#PRM-12">PRM-12</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-06">BIZ-EXP-06</a><a class="ref-pill ref-link" href="#BIZ-EXP-13">BIZ-EXP-13</a><a class="ref-pill ref-link" href="#BIZ-EXP-14">BIZ-EXP-14</a><a class="ref-pill ref-link" href="#APP-MAP-06">APP-MAP-06</a><a class="ref-pill ref-link" href="#PRM-12">PRM-12</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/render/canvasRenderer.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-08" data-source-file="specs/glossary.md" data-item-id="GLS-08" title="元仕様ファイル specs/glossary.md (GLS-08)">specs/glossary.md#GLS-08</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2252,7 +2267,7 @@
       <tr id="GLS-09" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-09" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-09">GLS-09</a></td>
         <td><strong>スクラップ＆ビルド</strong><div class="sub-code"><code class="inline-code">resolveEquipChoice</code> (<code class="inline-code">scrap_upgrade</code> / <code class="inline-code">scrap_expand</code>)</div></td>
-        <td>装備枠満杯時に未所持装備を入手した際、または所持中と同種かつ高Lvの装備を入手した際の処理。未所持取得時は既存入れ替え／所持装備1個強化（Lv8到達済み装備は選択不可）／枠拡張蓄積（段階コスト <code class="inline-code">1 / 2 / 3</code> 回で枠+1・最大5枠）から選び、同種高Lv取得時は同装備枠の入れ替え／他装備枠の強化／枠拡張蓄積から選択する（他装備枠への入れ替えは重複防止のため不可：<code class="inline-code">INV-11</code>。Lv8同種拾得時も枠拡張へ自動充当）。</td>
+        <td>装備枠満杯時に未所持装備を入手した際、または所持中と同種かつ+2Lv以上（ドロップLv &gt;= 装備中Lv + 2）の装備を入手した際の処理。未所持取得時は既存入れ替え／所持装備1個強化（Lv8到達済み装備は選択不可）／枠拡張蓄積（段階コスト <code class="inline-code">1 / 2 / 3</code> 回で枠+1・最大5枠）から選び、同種高Lv取得時は同装備枠の入れ替え／他装備枠の強化／枠拡張蓄積から選択する（他装備枠への入れ替えは重複防止のため不可：<code class="inline-code">INV-11</code>。Lv8同種拾得時も枠拡張へ自動充当）。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-16">DEC-16</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#INV-11">INV-11</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code></div><div class="source-cell">
@@ -2276,7 +2291,7 @@
         <td><strong>節目クリア正式演出（10F節目UI）</strong><div class="sub-code"><code class="inline-code">（再計画・未実装）</code></div></td>
         <td>10F毎大ボス撃破後の正式なクリア祝勝モーダル・報酬確定・エンドレス続行選択UI。暫定版の10F大ボス本体＋11Fへの自動エンドレス継続は実装済みだが、正式クリア演出仕様は未確定。</td>
         <td><span class="badge badge-disputed">Disputed（要調整）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#ST-10">ST-10</a><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-02">OQ-02</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#ST-10">ST-10</a><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-02">OQ-02</a></div></td>
         <td><div class="note-text"><code class="inline-code">specs/app/04-fountain-and-boss.feature</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-11" data-source-file="specs/glossary.md" data-item-id="GLS-11" title="元仕様ファイル specs/glossary.md (GLS-11)">specs/glossary.md#GLS-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2298,7 +2313,7 @@
         <td><strong>実効索敵上限レンジ</strong><div class="sub-code"><code class="inline-code">MAX_TARGET_RANGE</code></div></td>
         <td>広域索敵スキルを含めても超えないサブ装備および通常索敵の最大射程（180px）。2つ隣の部屋への壁越し・長通路スナイプを防止する（メイン武器コアショットのみ <code class="inline-code">arm_base</code> により視線が通る範囲で例外延長可能：<code class="inline-code">DEC-19</code>）。</td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/equipment.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-13" data-source-file="specs/glossary.md" data-item-id="GLS-13" title="元仕様ファイル specs/glossary.md (GLS-13)">specs/glossary.md#GLS-13</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2320,7 +2335,7 @@
         <td><strong>節目大ボス（GRAND BOSS）</strong><div class="sub-code"><code class="inline-code">isGrandBoss</code></div></td>
         <td>10F毎（10F, 20F...）の <code class="inline-code">22×22</code> ボスアリーナに出現する節目ボス。<code class="inline-code">tank</code> 基礎値ベースのプレイヤーLv連動HP（<code class="inline-code">PRM-30</code>）・ノックバック無効・行動CD 1.35s（初期1.3s）で4種行動（12方向環状[3発貫通]・拡散追尾6弾[非貫通]・壁2回反射極太段階膨張レーザー[幅22px・予兆0.72s・照射0.40s・膨張0.18s]・予兆0.55s無敵壁1回反射高速突進540px/s×0.72s＋通常着地8方向弾＆硬直1.05s）と独立3連時間差迫撃砲（0.24s間隔・CD2.6s・半径68px）を用い、覚醒中は 5.0秒間隔（初回2.0s短縮）でアリーナ内のみへ雑魚2〜3体（上限10体）を増援し、撃破で階段解放＋高Lv装備確定（M+2、35%でM+3）＋11F以降へ続く。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-27">DEC-27</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-27">DEC-27</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/core/dungeon.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-15" data-source-file="specs/glossary.md" data-item-id="GLS-15" title="元仕様ファイル specs/glossary.md (GLS-15)">specs/glossary.md#GLS-15</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2463,7 +2478,7 @@
         <td><strong>プロシージャルSE＆VFX</strong><div class="sub-code"><code class="inline-code">SoundManager</code> / <code class="inline-code">particles</code> / <code class="inline-code">shakeTimer</code></div></td>
         <td>Web Audio API による16種のプロシージャル効果音（種別スロットル・<code class="inline-code">localStorage</code> ミュート永続化・初回ジェスチャーアンロック）と、最大140個のパーティクル・決定論的画面シェイクの総称。エンジン層は <code class="inline-code">soundEvents</code> イベントキューを積む純粋設計。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/audio/soundManager.ts</code>, <code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/render/canvasRenderer.ts</code></div><div class="source-cell">
     <a class="source-link" href="../specs/glossary.md#GLS-28" data-source-file="specs/glossary.md" data-item-id="GLS-28" title="元仕様ファイル specs/glossary.md (GLS-28)">specs/glossary.md#GLS-28</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/glossary.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2472,7 +2487,7 @@
       <tr id="GLS-29" class="spec-row" data-section="glossary" data-status="Confirmed" data-item-id="GLS-29" data-source-file="specs/glossary.md">
         <td><a class="id-pill id-doc" href="#GLS-29">GLS-29</a></td>
         <td><strong>プレイ時間・リザルト・トーストUI</strong><div class="sub-code"><code class="inline-code">elapsedPlayTime</code> / <code class="inline-code">clearTime10F</code> / <code class="inline-code">#notificationStack</code> (<code class="inline-code">.cyber-toast</code>)</div></td>
-        <td>探索中（<code class="inline-code">playing</code> 時のみ加算）の経過時間 <code class="inline-code">MM:SS</code> と 10F 到達時のクリアタイム記録、敗北時の5項目縦リストリザルト（最終フロア・10Fクリア時間・最終レベル・プレイ時間・撃破数）、および上HUD直下の角丸ガラスカード＋左アクセントバーのDOMトースト通知UI（最新最大2件表示。Canvas側 <code class="inline-code">computeNotificationLayout</code> は互換維持）。</td>
+        <td>探索中（<code class="inline-code">playing</code> 時のみ加算）の経過時間 <code class="inline-code">MM:SS</code> と 10F 突破時（11F進行時）のクリアタイム記録、敗北時の5項目縦リストリザルト（最終フロア・10Fクリア時間・最終レベル・プレイ時間・撃破数）、および上HUD直下の角丸ガラスカード＋左アクセントバーのDOMトースト通知UI（最新最大2件表示。Canvas側 <code class="inline-code">computeNotificationLayout</code> は互換維持）。</td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a></div></td>
         <td><div class="note-text"><code class="inline-code">src/game/engine.ts</code>, <code class="inline-code">src/main.ts</code>, <code class="inline-code">src/styles/theme.css</code>, <code class="inline-code">src/render/canvasRenderer.ts</code>, <code class="inline-code">index.html</code></div><div class="source-cell">
@@ -2569,15 +2584,15 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="PRM-05" class="spec-row" data-section="parameters" data-status="Confirmed" data-item-id="PRM-05" data-source-file="specs/parameters.md">
+      <tr id="PRM-05" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-05" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-05">PRM-05</a></td>
         <td><span class="cat-pill">装備</span></td>
         <td><strong>装備スロット数 (<code class="inline-code">MAX_EQUIP_SLOTS</code> / 段階拡張コスト)</strong></td>
         <td><span class="param-val"><code class="inline-code">初期 2 / スクラップ 1・2・3 回で+1（2→3:1, 3→4:2, 4→5:3 / 上限 5）</code></span></td>
         <td><code class="inline-code">スロット</code></td>
-        <td><div class="note-text">初期は2枠でビルドの取捨選択を生みつつ、序盤は1〜2回で枠を広げやすくし上限5枠へ段階到達させるため（DEC-07, DEC-11）</div></td>
-        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a></div></td>
+        <td><div class="note-text">初期は2枠でビルドの取捨選択を生みつつ、序盤は1〜2回で枠を広げやすくし上限5枠へ段階到達させるため（初期2・上限5・3回基準はDEC-07確定済み、段階コスト1/2/3はDEC-11のAI仮数値のためOQ-06評価待ち）</div></td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#INV-03">INV-03</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L27-L38</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-05" data-source-file="specs/parameters.md" data-item-id="PRM-05" title="元仕様ファイル specs/parameters.md (PRM-05)">specs/parameters.md#PRM-05</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2699,7 +2714,7 @@
         <td><a class="id-pill id-doc" href="#PRM-14">PRM-14</a></td>
         <td><span class="cat-pill">敵・階段</span></td>
         <td><strong>守護中ボス補正・出現階層 (<code class="inline-code">GUARDIAN</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体・階段上配置) / tank基礎値（HP×2.4・速度×0.56・攻撃×1.45）に乗算［HP×2.9×(1+0.14×(playerLv-1)) / 攻撃×1.25］ / ノックバック無効 / CD 1.85s(初期1.15s) (8方向(2発貫通)・拡散追尾4(非貫通)・壁反射4(1発貫通)・予兆0.58s偏差突進480px/s×0.62s(突進中無敵・終了後硬直0.95s)+着地通常4方向弾(非貫通)) + 独立偏差迫撃砲(CD2.6s[覚醒時0.6s]・半径52px・予兆0.85s・DMG×1.2・壁越し可) / M+1（35%でM+2、M=所持最低装備Lv[未所持時1]・上限Lv8）確定ドロップ</code></span></td>
+        <td><span class="param-val"><code class="inline-code">3/6/9F (floor%10 ∈ {3,6,9}) / 階段部屋 &gt;= 11×9 (+3体・階段上配置) / tank基礎値（HP×2.4・速度×0.56・攻撃×1.45）に乗算［HP×2.9×(1+0.14×(playerLv-1)) / 攻撃×1.25］ / ノックバック無効 / CD 1.85s(初期1.15s) (8方向(2発貫通)・拡散追尾4(非貫通)・壁反射4(1発貫通)・予兆0.58s偏差突進480px/s×0.62s(突進中無敵・終了後硬直0.95s)+着地通常4方向弾(非貫通)) + 独立偏差迫撃砲(CD2.6s[覚醒時0.6s]・半径52px・予兆0.85s・DMG×1.2・壁越し可) / M+1（35%でM+2、M=所持最低装備Lv[未所持時1]・上限Lv8）確定ドロップ・45EXP・40HP</code></span></td>
         <td><code class="inline-code">階層・倍率・秒</code></td>
         <td><div class="note-text">中ボスを階段上へ配置して通路引き撃ちを防ぎつつ、無敵突進による射線突破と突進後硬直＋通常着地弾（ブレード反射＆追撃チャンス）の駆け引きを作るため（方針はDEC-27・数値係数はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
@@ -2731,7 +2746,7 @@
         <td><code class="inline-code">階層・タイル・%</code></td>
         <td><div class="note-text">10F毎に回復の泉による予兆と準備時間を与え、大部屋ボス戦からエンドレスへ繋げるため（DEC-10）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#DEC-06-addendum">DEC-06-addendum</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-02">OQ-02</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/core/dungeon.ts#L9-L23,L377-L424</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-16" data-source-file="specs/parameters.md" data-item-id="PRM-16" title="元仕様ファイル specs/parameters.md (PRM-16)">specs/parameters.md#PRM-16</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2773,7 +2788,7 @@
         <td><code class="inline-code">px・rad/s・倍率</code></td>
         <td><div class="note-text">シールド減速の過強抑制（0.72→0.86）と、ブレードの厚み付き三日月斬撃＋敵弾反射による攻防差別化のため（具体数値はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-02">BIZ-CMB-02</a><a class="ref-pill ref-link" href="#APP-CMB-02">APP-CMB-02</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/equipment.ts#L33,L44-L95,L129-L202</code>, <code class="inline-code">src/game/engine.ts#L1743-L1900</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-19" data-source-file="specs/parameters.md" data-item-id="PRM-19" title="元仕様ファイル specs/parameters.md (PRM-19)">specs/parameters.md#PRM-19</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2825,7 +2840,7 @@
         <td><a class="id-pill id-doc" href="#PRM-23">PRM-23</a></td>
         <td><span class="cat-pill">スキル</span></td>
         <td><strong>各スキルノード効果量（AI仮数値・<code class="inline-code">APP-GRW-02</code>）</strong></td>
-        <td><span class="param-val"><code class="inline-code">arm_base(+25/50/80/120/170%, 射程+20/40/60/85/110px, Lv3/Lv5チャージ弾拡大) / arm_parallel(追尾レーザー base_homing 2/3/4/6/8発[Lv1解放・曲線リボントレイル・周回約44px/0.26s→離脱約84px/0.13s→約1.75x急加速＆高旋回・単体非貫通・威力35%], メイン威力+0/8/16/25/35%) / arm_overclock(-22/45%, 弾速+100/200px/s, Lv1+貫通, Lv2貫通強化, 中央極太貫通チャージ弾[100%]＋両脇極細レーザー[Lv1: 2本 / Lv2: 4本・各60%威力・10px狭レーン]) / def_sensor(+8/16/24/38/55%) / def_pulse(6/8/10/14/18, 範囲100/108/116/132/150px, CD4.2/3.9/3.6/3.2/2.8s) / def_aegis(Lv1-2: 反撃22/42, CD7.0/4.5s) / mob_magnet(吸引+22/44/66/105/160%, 回復+10/20/30/50/75%) / mob_loot(宝+10/20/30/45/65%, 品質+1..5, EXP+8/16/24/42/68%) / mob_dash(Lv1-2: 1/2チャージ, 無敵合計1.30/1.60s[基礎1.0s置換・加算なし], 2.5s加速+24/38%, 回復CD4.5/3.5s)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">arm_base(+25/50/80/120/170%, 射程+20/40/60/85/110px, Lv3/Lv5チャージ弾拡大) / arm_parallel(追尾レーザー base_homing 2/3/4/6/8発[Lv1解放・曲線リボントレイル・周回約44px/0.26s→離脱約84px/0.13s→約1.75x急加速＆高旋回・単体非貫通・威力35%], メイン威力+0/8/16/25/35%) / arm_overclock(-22/45%, 弾速+100/200px/s, Lv1+貫通[真偽値・Lv2はCD短縮/弾速/脇レーザー2→4本/描画強化], 中央極太貫通チャージ弾[100%]＋両脇極細レーザー[Lv1: 2本 / Lv2: 4本・各60%威力・10px狭レーン]) / def_sensor(+8/16/24/38/55%) / def_pulse(6/8/10/14/18, 範囲100/108/116/132/150px, CD4.2/3.9/3.6/3.2/2.8s) / def_aegis(Lv1-2: 反撃22/42, CD7.0/4.5s) / mob_magnet(吸引+22/44/66/105/160%, 回復+10/20/30/50/75%) / mob_loot(宝+10/20/30/45/65%, ドロップ率加算+0.5/1.0/1.5/2.3/3.5%, 品質+1..5, EXP+8/16/24/42/68%) / mob_dash(Lv1-2: 1/2チャージ, 無敵合計1.30/1.60s[基礎1.0s置換・加算なし], 2.5s加速+24/38%, 回復CD4.5/3.5s)</code></span></td>
         <td><code class="inline-code">%・px・秒・DMG・回</code></td>
         <td><div class="note-text">兵装を10F（Lv15〜20前後）でサブ装備全体バフなしでも戦える主兵装特化へ強化し、全Tier3を最大Lv2へ統一してLv15（20SP）での1系統完成テンポとビルド特色を両立するため（数値はAI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
@@ -2839,8 +2854,8 @@
         <td><a class="id-pill id-doc" href="#PRM-24">PRM-24</a></td>
         <td><span class="cat-pill">スキル</span></td>
         <td><strong>トレジャー解析（<code class="inline-code">mob_loot</code>）ドロップ率・品質補正テーブル</strong></td>
-        <td><span class="param-val"><code class="inline-code">ドロップ率加算 +0.5/1.0/1.5/2.3/3.5% / 品質Tier +1/+2/+3/+4/+5（Tier毎にM-1確率 -4%・M+1確率 +3.6%・M+2確率 +2.4%） / 緊急回避ブースト加速持続 2.5s</code></span></td>
-        <td><code class="inline-code">%・Tier・秒</code></td>
+        <td><span class="param-val"><code class="inline-code">ドロップ率加算 +0.5/1.0/1.5/2.3/3.5% / 品質Tier +1/+2/+3/+4/+5（Tier毎にM-1確率 -4%・M+1確率 +3.6%・M+2確率 +2.4%）</code></span></td>
+        <td><code class="inline-code">%・Tier</code></td>
         <td><div class="note-text">Tier 2へ繰り上げた <code class="inline-code">mob_loot</code> でサブ装備収集の率と質を押し上げ、Tier 3 <code class="inline-code">mob_dash</code> のチャージ制ノーダメ回避＋無敵延長＋一時加速で締められるようにするため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-10">BIZ-GRW-10</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-26">DEC-26</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
@@ -2849,15 +2864,15 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="PRM-25" class="spec-row" data-section="parameters" data-status="Confirmed" data-item-id="PRM-25" data-source-file="specs/parameters.md">
+      <tr id="PRM-25" class="spec-row" data-section="parameters" data-status="Inferred" data-item-id="PRM-25" data-source-file="specs/parameters.md">
         <td><a class="id-pill id-doc" href="#PRM-25">PRM-25</a></td>
         <td><span class="cat-pill">戦闘</span></td>
         <td><strong>ドロップ装備レベル抽選確率 (<code class="inline-code">APP-GRW-07</code>)</strong></td>
-        <td><span class="param-val"><code class="inline-code">基礎(Tier0): 20%: max(1, M-1) / 50%: M / 22%: M+1 / 8%: M+2（mob_loot Lv5時: 0% / 40% / 40% / 20%）</code></span></td>
+        <td><span class="param-val"><code class="inline-code">基礎(Tier0): 20%: max(1, M-1) / 50%: M / 22%: M+1 / 8%: M+2（mob_loot Lv5時: 0% / 40% / 40% / 20%／装備未所持時は抽選せずLv1固定）</code></span></td>
         <td><code class="inline-code">確率</code></td>
-        <td><div class="note-text">所持最低Lvを基準としつつ、<code class="inline-code">mob_loot</code>（ドロップ品質上昇）への投資で低Lv引きを減らし高Lv上振れを狙えるようにするため（BIZ-GRW-07, DEC-04, DEC-12）</div></td>
-        <td><span class="badge badge-confirmed-ai">確定 (AI提案)</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a></div></td>
+        <td><div class="note-text">所持最低Lvを基準としつつ、<code class="inline-code">mob_loot</code>（ドロップ品質上昇）への投資で低Lv引きを減らし高Lv上振れを狙えるようにするため（BIZ-GRW-07, DEC-04, DEC-12。基礎Tier0はDEC-08承認済み、mob_loot Lv5補正はPRM-24依存のAI仮数値のためOQ-06評価待ち・未所持時はLv1固定）</div></td>
+        <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1046-L1066</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-25" data-source-file="specs/parameters.md" data-item-id="PRM-25" title="元仕様ファイル specs/parameters.md (PRM-25)">specs/parameters.md#PRM-25</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2885,7 +2900,7 @@
         <td><code class="inline-code">倍率・px・秒</code></td>
         <td><div class="note-text">重戦車タンクが距離維持・後退しながら、実速度ベースの自然な偏差放物線迫撃砲を撃つ駆け引きと、後半でランナーが群れで押し寄せる脅威（経験値過多抑制付き）を作るため（AI仮提案）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L265-L297,L373-L381,L568-L598,L2393-L2401,L2705-L2758,L3077-L3087</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-27" data-source-file="specs/parameters.md" data-item-id="PRM-27" title="元仕様ファイル specs/parameters.md (PRM-27)">specs/parameters.md#PRM-27</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2937,11 +2952,11 @@
         <td><a class="id-pill id-doc" href="#PRM-31">PRM-31</a></td>
         <td><span class="cat-pill">敵</span></td>
         <td><strong>スカウト追撃ランナー（<code class="inline-code">isAmbush</code>）速度・出現猶予・スカウト維持距離（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">速度 max(228, min(265, 224+(F-1)×4)) px/s / spawnDelay 0.45s / 出現距離 130〜320px / 1スカウトあたり生存上限 3体 / 再召喚CD 5.0s / 召喚停止距離 420px超 / スカウト距離維持 155〜185px（横移動）・覚醒時速度 min(165, base×1.45)</code></span></td>
+        <td><span class="param-val"><code class="inline-code">速度 max(228, min(265, 224+(F-1)×4)) px/s / spawnDelay 0.45s / 出現距離 130〜320px / 1スカウトあたり生存上限 3体 / 再召喚CD 5.0s / 召喚停止距離 420px超 / スカウト距離維持 155〜185px（横移動）・覚醒時速度 min(165, round(scout基礎速度×1.45)) [scout基礎速度=round(baseSpeed×1.05)]</code></span></td>
         <td><code class="inline-code">px/s・秒・px・体</code></td>
-        <td><div class="note-text">プレイヤー標準速度(210px/s)を上回りつつ、1F出現禁止・他敵覚醒廃止・射程強化Lv3で届く距離維持＆横移動＆高回転再召喚で斥候らしいウザさを維持するため（AI仮数値）</div></td>
+        <td><div class="note-text">プレイヤー標準速度(210px/s)を上回りつつ、1F出現禁止・他敵覚醒廃止・主兵装射程延長（arm_base Lv1以降）や広域索敵と噛み合う交戦距離（155〜185px）維持＆横移動＆高回転再召喚で斥候らしい厄介さを維持するため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#GLS-06">GLS-06</a><a class="ref-pill ref-link" href="#INV-05">INV-05</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#GLS-06">GLS-06</a><a class="ref-pill ref-link" href="#INV-05">INV-05</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L112-L118,L2507-L2666,L3063-L3119</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-31" data-source-file="specs/parameters.md" data-item-id="PRM-31" title="元仕様ファイル specs/parameters.md (PRM-31)">specs/parameters.md#PRM-31</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -2951,11 +2966,11 @@
         <td><a class="id-pill id-doc" href="#PRM-32">PRM-32</a></td>
         <td><span class="cat-pill">装備・報酬</span></td>
         <td><strong>Lv8到達・全枠カンスト時自動拡張＆オーバーフローボーナス（AI仮数値）</strong></td>
-        <td><span class="param-val"><code class="inline-code">枠5未満のLv8同種拾得: 自動枠拡張(+1進行) / 枠5到達後の同種Lv8拾得: +20HP / +25EXP / 全5枠Lv8到達時未所持拾得: +30HP / +40EXP</code></span></td>
+        <td><span class="param-val"><code class="inline-code">枠5未満のLv8同種拾得: 自動枠拡張(+1進行) / 枠5到達後の同種Lv8拾得: +20HP / +25EXP / 全5枠Lv8到達時未所持拾得: +30HP / +40EXP（現行全5種＋重複禁止[INV-11]構成では到達不能・将来6種目以降の装備追加時用フォールバック仕様）</code></span></td>
         <td><code class="inline-code">進行・HP・EXP</code></td>
         <td><div class="note-text">装備上限Lv8到達後の余剰装備をまず枠拡張へ自動活用し、最大5枠到達後にHP/EXPへ還元するため（AI仮数値）</div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-16">DEC-16</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#INV-09">INV-09</a><a class="ref-pill ref-link" href="#INV-11">INV-11</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-16">DEC-16</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L849-L942</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-32" data-source-file="specs/parameters.md" data-item-id="PRM-32" title="元仕様ファイル specs/parameters.md (PRM-32)">specs/parameters.md#PRM-32</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3112,7 +3127,7 @@
         <td><code class="inline-code">Lv</code>（現在レベル）, <code class="inline-code">PRM-04</code></td>
         <td><code class="inline-code">次Lv必要経験値 (EXP)</code> / <code class="inline-code">累積EXP (EXP)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#PRM-04">PRM-04</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#PRM-04">PRM-04</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L654,L828</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-01" data-source-file="specs/formulas.md" data-item-id="FML-01" title="元仕様ファイル specs/formulas.md (FML-01)">specs/formulas.md#FML-01</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3134,7 +3149,7 @@
       <tr id="FML-03" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-03" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-03">FML-03</a></td>
         <td><strong>メイン武器（コアショット）威力</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">mainDmg = round(PRM-17[基礎威力] * (1 + PRM-23[arm_base(Lv)]) * (1 + PRM-18[arm_parallel威力補正(Lv)]))</code>（<code class="inline-code">arm_parallel</code> 威力補正は <code class="inline-code">0/+0/+8/+16/+25/+35%</code>） / オーバークロック両脇極細レーザー <code class="inline-code">sideLaserDmg = max(1, round(mainDmg * 0.6))</code> / 誘導レーザー（<code class="inline-code">base_homing</code>）<code class="inline-code">homingDmg = round(mainDmg * PRM-18[誘導弾威力比=0.35])</code></div></td>
+        <td><div class="formula-expr"><code class="inline-code">mainDmg = round(PRM-17[基礎威力] * (1 + PRM-23[arm_base(Lv)]) * (1 + PRM-18[arm_parallel威力補正(Lv)]))</code>（<code class="inline-code">arm_parallel</code> 威力補正は <code class="inline-code">0/+0/+8/+16/+25/+35%</code>） / オーバークロック両脇極細レーザー <code class="inline-code">sideLaserDmg = max(1, round(mainDmg * 0.6))</code> / 誘導レーザー（<code class="inline-code">base_homing</code>）<code class="inline-code">homingDmg = homingCount &gt; 0 ? max(1, round(mainDmg * PRM-18[誘導弾威力比=0.35])) : 0</code></div></td>
         <td><code class="inline-code">arm_base Lv</code>, <code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">arm_overclock Lv</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">1発ダメージ (DMG)</code> / <code class="inline-code">両脇レーザーダメージ (DMG)</code> / <code class="inline-code">誘導レーザーダメージ (DMG)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
@@ -3160,7 +3175,7 @@
       <tr id="FML-05" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-05" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-05">FML-05</a></td>
         <td><strong>メイン武器（コアショット）射程・発射数・弾速・レーザー長</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">range = min(PRM-06, round(PRM-17[基礎射程] * (1 + PRM-23[def_sensor(Lv)]))) + PRM-23[arm_base射程加算(Lv)]</code>（要視線判定・最大290px超可） / <code class="inline-code">shotCount = overclockLv &gt;= 2 ? 5 : (overclockLv === 1 ? 3 : 1)</code>（通常時は楕円プラズマチャージショット1発・半径 <code class="inline-code">5→7.5[Lv3]→9.0[Lv5]</code>、<code class="inline-code">arm_overclock</code> 習得で中央極太貫通チャージ弾［100%威力］＋両脇極細貫通レーザー［Lv1: 左右2本 / Lv2: 左右4本・各60%威力・10px固定間隔・壁めり込みガード］のハイブリッド構成） / <code class="inline-code">homingCount = PRM-18[誘導レーザー数(Lv): 2/3/4/6/8発（Lv1解放）]</code>（滑らかな曲線リボントレイル：Phase1 タイト周回 約<code class="inline-code">44px</code>・約<code class="inline-code">0.26s</code> → Phase2 外側離脱 約<code class="inline-code">84px</code>・約<code class="inline-code">0.13s</code>［壁手前ガード］ → Phase3 弾自身座標 <code class="inline-code">(p.x, p.y)</code> 基準で最寄り視認敵へ高旋回＆約<code class="inline-code">1.75x</code> 急加速ダッシュ［単体ヒット・非貫通・要LoS］） / <code class="inline-code">speed = PRM-17[基礎弾速] + PRM-18[弾速加算(Lv)]</code> / 両脇極細シャープレーザー長 <code class="inline-code">PRM-18[約56〜92px]</code></div></td>
+        <td><div class="formula-expr"><code class="inline-code">range = min(PRM-06, round(PRM-17[基礎射程] * (1 + PRM-23[def_sensor(Lv)]))) + PRM-23[arm_base射程加算(Lv)]</code>（要視線判定・最大290px） / <code class="inline-code">shotCount = overclockLv &gt;= 2 ? 5 : (overclockLv === 1 ? 3 : 1)</code>（通常時は楕円プラズマチャージショット1発・半径 <code class="inline-code">5→7.5[Lv3]→9.0[Lv5]</code>、<code class="inline-code">arm_overclock</code> 習得で中央極太貫通チャージ弾［100%威力］＋両脇極細貫通レーザー［Lv1: 左右2本 / Lv2: 左右4本・各60%威力・10px固定間隔・壁めり込みガード］のハイブリッド構成） / <code class="inline-code">homingCount = PRM-18[誘導レーザー数(Lv): 2/3/4/6/8発（Lv1解放）]</code>（滑らかな曲線リボントレイル：Phase1 タイト周回 約<code class="inline-code">44px</code>・約<code class="inline-code">0.26s</code> → Phase2 外側離脱 約<code class="inline-code">84px</code>・約<code class="inline-code">0.13s</code>［壁手前ガード］ → Phase3 弾自身座標 <code class="inline-code">(p.x, p.y)</code> 基準で最寄り視認敵へ高旋回＆約<code class="inline-code">1.75x</code> 急加速ダッシュ［単体ヒット・非貫通・要LoS］） / <code class="inline-code">speed = PRM-17[基礎弾速] + PRM-18[弾速加算(Lv)]</code> / 両脇極細シャープレーザー長 <code class="inline-code">PRM-18[約56〜92px]</code></div></td>
         <td><code class="inline-code">arm_base Lv</code>, <code class="inline-code">arm_parallel Lv</code>, <code class="inline-code">arm_overclock Lv (0..2)</code>, <code class="inline-code">def_sensor Lv</code>, <code class="inline-code">PRM-06</code>, <code class="inline-code">PRM-17</code>, <code class="inline-code">PRM-18</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">射程 (px)</code> / <code class="inline-code">発射数 (発)</code> / <code class="inline-code">誘導レーザー数 (発)</code> / <code class="inline-code">弾速 (px/s)</code> / <code class="inline-code">レーザー長 (px)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
@@ -3199,11 +3214,11 @@
       <tr id="FML-08" class="spec-row" data-section="formulas" data-status="Inferred" data-item-id="FML-08" data-source-file="specs/formulas.md">
         <td><a class="id-pill id-doc" href="#FML-08">FML-08</a></td>
         <td><strong>ドロップ装備レベル抽選期待値 (<code class="inline-code">mob_loot</code> 品質補正)</strong></td>
-        <td><div class="formula-expr"><code class="inline-code">M = min(所持装備Lv) (未所持時 1)</code>, <code class="inline-code">t = PRM-24[dropQualityTier]</code>, <code class="inline-code">p_-1 = max(0, 0.20 - 0.04*t)</code>, <code class="inline-code">p_+1 = 0.22 + 0.036*t</code>, <code class="inline-code">p_+2 = 0.08 + 0.024*t</code>, <code class="inline-code">p_0 = 1 - p_-1 - p_+1 - p_+2</code> とし、<code class="inline-code">E[Lv] = p_-1 * max(1, M - 1) + p_0 * M + p_+1 * (M + 1) + p_+2 * (M + 2)</code></div></td>
-        <td><code class="inline-code">M</code>（所持最低装備Lv）, <code class="inline-code">t</code>（<code class="inline-code">mob_loot</code> Lv）, <code class="inline-code">PRM-07</code>, <code class="inline-code">PRM-24</code>, <code class="inline-code">PRM-25</code></td>
+        <td><div class="formula-expr">所持装備0個（未所持時）は抽選せず <code class="inline-code">1</code> 固定（<code class="inline-code">E[Lv] = 1</code>）。所持1個以上時は <code class="inline-code">M = min(所持装備Lv)</code>, <code class="inline-code">t = PRM-24[dropQualityTier]</code>, <code class="inline-code">p_-1 = max(0, 0.20 - 0.04*t)</code>, <code class="inline-code">p_+1 = 0.22 + 0.036*t</code>, <code class="inline-code">p_+2 = 0.08 + 0.024*t</code>, <code class="inline-code">p_0 = 1 - p_-1 - p_+1 - p_+2</code> とし、各分岐上限 <code class="inline-code">PRM-13 (Lv8)</code> クランプ込みで <code class="inline-code">E[Lv] = p_-1 * max(1, M - 1) + p_0 * M + p_+1 * min(PRM-13, M + 1) + p_+2 * min(PRM-13, M + 2)</code></div></td>
+        <td><code class="inline-code">M</code>（所持最低装備Lv）, <code class="inline-code">t</code>（<code class="inline-code">mob_loot</code> Lv）, <code class="inline-code">PRM-07</code>, <code class="inline-code">PRM-13</code>, <code class="inline-code">PRM-24</code>, <code class="inline-code">PRM-25</code></td>
         <td><code class="inline-code">期待ドロップLv (Lv)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#BIZ-GRW-10">BIZ-GRW-10</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#BIZ-GRW-10">BIZ-GRW-10</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#DEC-04">DEC-04</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#PRM-07">PRM-07</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#L1046-L1066</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-08" data-source-file="specs/formulas.md" data-item-id="FML-08" title="元仕様ファイル specs/formulas.md (FML-08)">specs/formulas.md#FML-08</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3242,7 +3257,7 @@
         <td><code class="inline-code">viewportW</code>, <code class="inline-code">viewportH</code>, <code class="inline-code">PRM-12</code>, <code class="inline-code">PRM-29</code></td>
         <td><code class="inline-code">ズーム倍率 (倍)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-06">BIZ-EXP-06</a><a class="ref-pill ref-link" href="#APP-MAP-06">APP-MAP-06</a><a class="ref-pill ref-link" href="#PRM-12">PRM-12</a><a class="ref-pill ref-link" href="#PRM-29">PRM-29</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-06">BIZ-EXP-06</a><a class="ref-pill ref-link" href="#APP-MAP-06">APP-MAP-06</a><a class="ref-pill ref-link" href="#PRM-12">PRM-12</a><a class="ref-pill ref-link" href="#PRM-29">PRM-29</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/render/canvasRenderer.ts#L43-L47</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-11" data-source-file="specs/formulas.md" data-item-id="FML-11" title="元仕様ファイル specs/formulas.md (FML-11)">specs/formulas.md#FML-11</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3255,7 +3270,7 @@
         <td><code class="inline-code">nodeId</code>, <code class="inline-code">Lv</code>, <code class="inline-code">PRM-10</code>, <code class="inline-code">PRM-23</code></td>
         <td><code class="inline-code">効果量 (% / px / 秒 / DMG)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="sub-code"><code class="inline-code">src/game/skillTree.ts#L166-L282</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-12" data-source-file="specs/formulas.md" data-item-id="FML-12" title="元仕様ファイル specs/formulas.md (FML-12)">specs/formulas.md#FML-12</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3334,7 +3349,7 @@
         <td>上HUDのスキル／ギアピル、下部コックピットの <code class="inline-code">SKILL</code> / <code class="inline-code">GEAR</code> スイッチ押下、または <code class="inline-code">ESC</code> / <code class="inline-code">K</code> キー入力</td>
         <td><code class="inline-code">skill_tree</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
         <td><div class="note-text">シミュレーションを完全停止して2タブ（「スキル」「装備・ギア」）構成のポーズモーダルを表示（<code class="inline-code">SKILL</code> 側はスキルタブ、<code class="inline-code">GEAR</code> 側は装備・ギアタブを直接開き、<code class="inline-code">ESC</code>/<code class="inline-code">K</code> は前回タブで開く）</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-01" data-source-file="specs/state-transitions.md" data-item-id="ST-01" title="元仕様ファイル specs/state-transitions.md (ST-01)">specs/state-transitions.md#ST-01</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3346,7 +3361,7 @@
         <td>閉じるボタン・<code class="inline-code">ESC</code> / <code class="inline-code">K</code> キー・または開いているのと同じタブ側のスイッチ（<code class="inline-code">SKILL</code> / <code class="inline-code">GEAR</code>）押下</td>
         <td><code class="inline-code">playing</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
         <td><div class="note-text">スキル配分・装備確認後に探索再開（別タブ側のスイッチまたはタブバー押下時はモーダル内でタブを切替）</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-02" data-source-file="specs/state-transitions.md" data-item-id="ST-02" title="元仕様ファイル specs/state-transitions.md (ST-02)">specs/state-transitions.md#ST-02</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3382,7 +3397,7 @@
         <td>階段に接触（通常階は無条件、3/6/9F守護中ボス階・10F毎大ボス階は <code class="inline-code">getStairsLockCount === 0</code> 後）</td>
         <td><code class="inline-code">playing（次階層 N+1F）</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#BIZ-EXP-09">BIZ-EXP-09</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#BIZ-EXP-08">BIZ-EXP-08</a><a class="ref-pill ref-link" href="#BIZ-EXP-09">BIZ-EXP-09</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
         <td><div class="note-text">ボス階は封印解除後に <code class="inline-code">advanceToNextFloor</code> 実行</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-05" data-source-file="specs/state-transitions.md" data-item-id="ST-05" title="元仕様ファイル specs/state-transitions.md (ST-05)">specs/state-transitions.md#ST-05</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3394,8 +3409,8 @@
         <td>敵接触または敵弾被弾により <code class="inline-code">player.hp &lt;= 0</code></td>
         <td><code class="inline-code">gameover</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a></div></td>
-        <td><div class="note-text">到達階層・撃破数サマリーを表示</div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a></div></td>
+        <td><div class="note-text">5項目縦リスト（最終フロア・10Fクリア時間・最終レベル・プレイ時間・撃破数）サマリーを表示</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-06" data-source-file="specs/state-transitions.md" data-item-id="ST-06" title="元仕様ファイル specs/state-transitions.md (ST-06)">specs/state-transitions.md#ST-06</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3418,7 +3433,7 @@
         <td>探索中の任意ポーズ操作（<code class="inline-code">ESC</code> / <code class="inline-code">K</code> / 上HUDピル・下部 <code class="inline-code">SKILL</code> / <code class="inline-code">GEAR</code> スイッチ）</td>
         <td><code class="inline-code">skill_tree（2タブポーズ画面）</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#OQ-04">OQ-04</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#OQ-04">OQ-04</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
         <td><div class="note-text">時間停止して「スキル」「装備・ギア」2タブでスキル強化・スクラップ進捗・装備詳細スペックを確認可能</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-08" data-source-file="specs/state-transitions.md" data-item-id="ST-08" title="元仕様ファイル specs/state-transitions.md (ST-08)">specs/state-transitions.md#ST-08</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3430,7 +3445,7 @@
         <td>安全前室の回復の泉接触（100%回復）→ 大ボスアリーナ交戦・撃破 → 階段接触</td>
         <td><code class="inline-code">playing（11F等へ暫定エンドレス進行）</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
         <td><div class="note-text">安全前室・回復の泉・大ボス戦・11F以降継続を実装済み</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-09" data-source-file="specs/state-transitions.md" data-item-id="ST-09" title="元仕様ファイル specs/state-transitions.md (ST-09)">specs/state-transitions.md#ST-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3442,7 +3457,7 @@
         <td>節目大ボス撃破後の正式なクリア祝勝モーダル／エンドレス継続選択UI</td>
         <td><span class="undef-pill">⚠️ 未定義</span></td>
         <td><span class="badge badge-disputed">Disputed（要調整）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-02">OQ-02</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#OQ-02">OQ-02</a></div></td>
         <td><div class="note-text">暫定版11F自動継続は実装済みだが、正式なクリア達成演出・続行選択UIは未定</div><div class="source-cell">
     <a class="source-link" href="../specs/state-transitions.md#ST-10" data-source-file="specs/state-transitions.md" data-item-id="ST-10" title="元仕様ファイル specs/state-transitions.md (ST-10)">specs/state-transitions.md#ST-10</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/state-transitions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3536,7 +3551,7 @@
         <td><code class="inline-code">getStairsLockCount(state) &gt; 0</code>（3/6/9F守護中ボスまたは10F毎大ボス <code class="inline-code">isRoomBoss</code> が生存）の間、<code class="inline-code">advanceToNextFloor</code> は実行されない。通常階は階段ロックなし</td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-MAP-01]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-08">BIZ-EXP-08</a><a class="ref-pill ref-link" href="#BIZ-EXP-09">BIZ-EXP-09</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#ST-05">ST-05</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-08">BIZ-EXP-08</a><a class="ref-pill ref-link" href="#BIZ-EXP-09">BIZ-EXP-09</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#ST-05">ST-05</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
         <td><div class="note-text">ボス撃破時に封印解除通知を出して解禁（増援・リポップ雑魚は無関係）</div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-04" data-source-file="specs/invariants.md" data-item-id="INV-04" title="元仕様ファイル specs/invariants.md (INV-04)">specs/invariants.md#INV-04</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3582,9 +3597,9 @@
         <td><a class="id-pill id-doc" href="#INV-08">INV-08</a></td>
         <td><span class="cat-pill">物理安定性</span></td>
         <td>1フレームの経過時間 <code class="inline-code">dt</code> はクランプされ、壁衝突は各軸ごとの押し戻しで壁貫通を起こさない</td>
-        <td><div class="sub-code"><code class="inline-code">src/main.ts#L145</code>, <code class="inline-code">src/core/collision.ts</code></div></td>
+        <td><div class="sub-code"><code class="inline-code">src/main.ts#L403</code>, <code class="inline-code">src/game/engine.ts#L1598</code>, <code class="inline-code">src/core/collision.ts</code></div></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text"><code class="inline-code">main.ts</code> では <code class="inline-code">0.05s</code>、<code class="inline-code">engine.ts</code> では <code class="inline-code">0.05s</code> 上限</div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-08" data-source-file="specs/invariants.md" data-item-id="INV-08" title="元仕様ファイル specs/invariants.md (INV-08)">specs/invariants.md#INV-08</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3596,7 +3611,7 @@
         <td>所持装備レベルは常に <code class="inline-code">1 &lt;= level &lt;= MAX_EQUIPMENT_LEVEL (8)</code> を満たし、Lv8装備への <code class="inline-code">scrap_upgrade</code> は拒否され、Lv8重複拾得は枠5未満なら自動枠拡張蓄積・枠5到達後はオーバーフローボーナスへ変換される</td>
         <td><div class="sub-code"><code class="inline-code">src/game/engine.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>, <code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>, <code class="inline-code">[INV-09 / APP-GRW-04]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-16">DEC-16</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-16">DEC-16</a></div></td>
         <td><div class="note-text">Lv8到達後の無意味な強化やリソース損失を防止</div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-09" data-source-file="specs/invariants.md" data-item-id="INV-09" title="元仕様ファイル specs/invariants.md (INV-09)">specs/invariants.md#INV-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3663,7 +3678,7 @@
         <td><a class="id-pill id-doc" href="#OQ-02">OQ-02</a></td>
         <td><strong>節目階層（10F毎）大ボス撃破後の正式なクリア祝勝モーダル・エンドレス選択UI仕様</strong></td>
         <td><span class="badge badge-disputed">Disputed（要調整）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#ST-10">ST-10</a><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#ST-10">ST-10</a><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#DEC-06-addendum">DEC-06-addendum</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-10-addendum">DEC-10-addendum</a></div></td>
         <td><div class="note-text">暫定版として10F大ボス＋11Fへの自動エンドレス継続は実装済み。正式な達成演出や選択UIを設計する時に決定</div></td>
         <td><div class="note-text">10Fボス撃破後、達成モーダルを出さず階段接触でそのまま11Fへ進行する</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-02" data-source-file="specs/open-questions.md" data-item-id="OQ-02" title="元仕様ファイル specs/open-questions.md (OQ-02)">specs/open-questions.md#OQ-02</a>
@@ -3685,7 +3700,7 @@
         <td><a class="id-pill id-doc" href="#OQ-04">OQ-04</a></td>
         <td><strong>探索中の任意ポーズ操作（<code class="inline-code">ESC</code> / <code class="inline-code">K</code> / SKILL・GEARスイッチでの2タブポーズ画面）</strong></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#ST-08">ST-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-10">APP-MAP-10</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#ST-08">ST-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
         <td><div class="note-text"><code class="inline-code">ESC</code> / <code class="inline-code">K</code> / SKILL・GEARスイッチで時間を完全停止し、「スキル」「装備・ギア」2タブでスキル強化・スクラップ進捗・装備詳細を確認できる構成で確定済み</div></td>
         <td><div class="note-text">音量設定以外のオプションやタイトル戻りメニュー等が必要になった場合に拡張</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-04" data-source-file="specs/open-questions.md" data-item-id="OQ-04" title="元仕様ファイル specs/open-questions.md (OQ-04)">specs/open-questions.md#OQ-04</a>
@@ -3696,9 +3711,9 @@
         <td><a class="id-pill id-doc" href="#OQ-06">OQ-06</a></td>
         <td><strong>AI決定のコード実値パラメータ・計算式係数（<code class="inline-code">Inferred</code>）のプレイテスト確認と <code class="inline-code">Confirmed</code> 昇格判断</strong></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#PRM-28">PRM-28</a><a class="ref-pill ref-link" href="#PRM-29">PRM-29</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-31">PRM-31</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#PRM-33">PRM-33</a><a class="ref-pill ref-link" href="#PRM-36">PRM-36</a><a class="ref-pill ref-link" href="#FML-01">FML-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#FML-10">FML-10</a><a class="ref-pill ref-link" href="#FML-11">FML-11</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#DEC-22">DEC-22</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#DEC-26">DEC-26</a><a class="ref-pill ref-link" href="#DEC-27">DEC-27</a></div></td>
-        <td><div class="note-text">仕様書へ実値を記載済み（<code class="inline-code">Inferred</code>）。先輩が実機プレイで手触りに納得した段階で <code class="inline-code">Confirmed</code> へ昇格（SP配分 <code class="inline-code">PRM-09</code>・初期SP <code class="inline-code">PRM-34</code>・Lv別獲得SP <code class="inline-code">PRM-35</code> は <code class="inline-code">DEC-25</code> で <code class="inline-code">Confirmed</code> 化済み、チャクラム回転半径 <code class="inline-code">PRM-36</code> 等が検証対象として残存）</div></td>
-        <td><div class="note-text">現行はAI決定の仮係数で動作中であり、バランス調整の余地が残る</div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-20">PRM-20</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-22">PRM-22</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a><a class="ref-pill ref-link" href="#PRM-26">PRM-26</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#PRM-28">PRM-28</a><a class="ref-pill ref-link" href="#PRM-29">PRM-29</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-31">PRM-31</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#PRM-33">PRM-33</a><a class="ref-pill ref-link" href="#PRM-36">PRM-36</a><a class="ref-pill ref-link" href="#FML-01">FML-01</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-07">FML-07</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a><a class="ref-pill ref-link" href="#FML-09">FML-09</a><a class="ref-pill ref-link" href="#FML-10">FML-10</a><a class="ref-pill ref-link" href="#FML-11">FML-11</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a><a class="ref-pill ref-link" href="#GLS-13">GLS-13</a><a class="ref-pill ref-link" href="#INV-08">INV-08</a><a class="ref-pill ref-link" href="#DEC-10-addendum">DEC-10-addendum</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#DEC-22">DEC-22</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#DEC-26">DEC-26</a><a class="ref-pill ref-link" href="#DEC-27">DEC-27</a><a class="ref-pill ref-link" href="#DEC-28">DEC-28</a><a class="ref-pill ref-link" href="#DEC-29">DEC-29</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a></div></td>
+        <td><div class="note-text">仕様書へ実値を記載済み（<code class="inline-code">Inferred</code>）。先輩が実機プレイで手触りに納得した段階で <code class="inline-code">Confirmed</code> へ昇格（SP配分 <code class="inline-code">PRM-09</code>・初期SP <code class="inline-code">PRM-34</code>・Lv別獲得SP <code class="inline-code">PRM-35</code> は <code class="inline-code">DEC-25</code> で <code class="inline-code">Confirmed</code> 化済み。確信が持てず昇格保留中の <code class="inline-code">GLS-13</code>, <code class="inline-code">INV-08</code>, <code class="inline-code">FML-01</code> および一部 <code class="inline-code">Inferred</code> 係数を含む <code class="inline-code">PRM-05</code>（段階コスト <code class="inline-code">1/2/3</code>）, <code class="inline-code">PRM-25</code>（<code class="inline-code">mob_loot Lv5</code> 補正）、チャクラム回転半径 <code class="inline-code">PRM-36</code> 等が検証対象として残存）</div></td>
+        <td><div class="note-text">現行はAI決定の仮係数・昇格保留項目を含んだ状態で動作中であり、バランス調整および昇格判断の余地が残る</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-06" data-source-file="specs/open-questions.md" data-item-id="OQ-06" title="元仕様ファイル specs/open-questions.md (OQ-06)">specs/open-questions.md#OQ-06</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/open-questions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3738,11 +3753,11 @@
       </tr>
       <tr id="OQ-10" class="spec-row" data-section="open-questions" data-status="Unknown" data-item-id="OQ-10" data-source-file="specs/open-questions.md">
         <td><a class="id-pill id-doc" href="#OQ-10">OQ-10</a></td>
-        <td><strong><code class="inline-code">BIZ-EXP-02</code> の主張 <code class="inline-code">EXP-02-b</code>（通路で自由移動する敵と出会うとシームレスに戦闘が始まる）は、対応する APP シナリオが存在しないため <code class="inline-code">BIZ-EXP-10</code> として独立できず保留中。独立には APP 層への通路遭遇戦闘シナリオの追加が先に必要</strong></td>
+        <td><strong>旧 <code class="inline-code">BIZ-EXP-02</code> の主張 <code class="inline-code">EXP-02-b</code>（通路で自由移動する敵と出会うとシームレスに戦闘が始まる）は、対応する APP シナリオが存在しないため <code class="inline-code">BIZ-EXP-10</code> として独立できず保留中。独立には APP 層への通路遭遇戦闘シナリオの追加が先に必要</strong></td>
         <td><span class="badge badge-unknown">Unknown（未確定）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-02">BIZ-EXP-02</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a></div></td>
         <td><div class="note-text">APP層整備フェーズで <code class="inline-code">specs/app/01-dungeon-map.feature</code> に通路遭遇戦闘のシナリオを追加する時</div></td>
-        <td><div class="note-text"><code class="inline-code">BIZ-EXP-02</code> は <code class="inline-code">02-a</code>（入室覚醒）と <code class="inline-code">02-b</code> が同居した「既知の混在」状態のまま残る</div><div class="source-cell">
+        <td><div class="note-text"><code class="inline-code">BIZ-EXP-02</code> 本文は入室覚醒のみに整理済みだが、旧 <code class="inline-code">EXP-02-b</code>（通路遭遇戦闘）の APP シナリオ化・<code class="inline-code">BIZ-EXP-10</code> としての独立化が引き続き保留中</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-10" data-source-file="specs/open-questions.md" data-item-id="OQ-10" title="元仕様ファイル specs/open-questions.md (OQ-10)">specs/open-questions.md#OQ-10</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/open-questions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3751,7 +3766,7 @@
         <td><a class="id-pill id-doc" href="#OQ-11">OQ-11</a></td>
         <td><strong>SE（16種の割り当て・音色・スロットル）／パーティクル・画面シェイク／ミュート永続化／10Fクリア記録の詳細仕様の再決定</strong></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#GLS-28">GLS-28</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#BIZ-EXP-15">BIZ-EXP-15</a><a class="ref-pill ref-link" href="#BIZ-EXP-16">BIZ-EXP-16</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#GLS-28">GLS-28</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a></div></td>
         <td><div class="note-text">SE/VFX詳細仕様決定Issue（#22）、またはプレイテストで詳細を確定・変更する時</div></td>
         <td><div class="note-text">現行のAI提案の割り当て・数値のまま動作する</div><div class="source-cell">
     <a class="source-link" href="../specs/open-questions.md#OQ-11" data-source-file="specs/open-questions.md" data-item-id="OQ-11" title="元仕様ファイル specs/open-questions.md (OQ-11)">specs/open-questions.md#OQ-11</a>
@@ -3864,9 +3879,9 @@
       <tr id="NG-09" class="spec-row" data-section="non-goals" data-status="Confirmed" data-item-id="NG-09" data-source-file="specs/non-goals.md">
         <td><a class="id-pill id-doc" href="#NG-09">NG-09</a></td>
         <td><strong>壁越し攻撃および部屋・通路規模を超える長距離スナイプ</strong></td>
-        <td><div class="note-text">壁による射線遮断と索敵上限距離により、2つ隣の部屋への一方的な遠距離スナイプを防ぐため（<code class="inline-code">BIZ-CMB-03</code>）</div></td>
+        <td><div class="note-text">壁による射線遮断と索敵上限距離により、2つ隣の部屋への一方的な遠距離スナイプを防ぐため（<code class="inline-code">BIZ-CMB-03</code>。ただし <code class="inline-code">DEC-19</code> により主兵装（<code class="inline-code">arm_base</code>）のみ視線あり前提で <code class="inline-code">PRM-06</code>（180px）を超えて最大 <code class="inline-code">290px</code> まで延長可）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#GLS-13">GLS-13</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a></div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#GLS-13">GLS-13</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a></div><div class="source-cell">
     <a class="source-link" href="../specs/non-goals.md#NG-09" data-source-file="specs/non-goals.md" data-item-id="NG-09" title="元仕様ファイル specs/non-goals.md (NG-09)">specs/non-goals.md#NG-09</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/non-goals.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3910,7 +3925,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(32件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(40件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -3956,6 +3971,17 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
+      <tr id="DEC-03-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-03-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-03-addendum">DEC-03-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-03</code> 原文のうち「SP消費総量連動強化」は <code class="inline-code">DEC-12</code> で廃止（兵装スキル専用へ移行）、「Lv1-3=1SP / Lv4=2SP / Lv5=3SP」は <code class="inline-code">DEC-18</code>・<code class="inline-code">DEC-20</code>・<code class="inline-code">DEC-25</code> により Tier1(<code class="inline-code">1/1/1/2/2</code>)・Tier2(<code class="inline-code">1/1/1/2/3</code>)・全Tier3(<code class="inline-code">2/3</code>) へ上書き済み。現在も維持されているのは「初期ノーアイテム開始（自機ショットあり）」のみ</strong><div class="note-text"><code class="inline-code">DEC-03</code> の原文を保持したまま、後続 <code class="inline-code">DEC-12</code>・<code class="inline-code">DEC-18</code>・<code class="inline-code">DEC-20</code>・<code class="inline-code">DEC-25</code> による廃止・上書きと現行有効範囲を明示する追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-03 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-03">DEC-03</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-06">BIZ-GRW-06</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a></div></td>
+        <td><div class="note-text">初期ノーアイテム開始やSPコスト体系を再改訂する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-03-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-03-addendum" title="元仕様ファイル specs/decisions.md (DEC-03-addendum)">specs/decisions.md#DEC-03-addendum</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
       <tr id="DEC-04" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-04" data-source-file="specs/decisions.md">
         <td><a class="id-pill id-doc" href="#DEC-04">DEC-04</a></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
@@ -3972,7 +3998,7 @@
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
         <td><strong>スカウト（旧トレーサー）追撃ランナーの発光視認化＆ドロップ廃止・部屋入口2タイル接続・階段守護中ボス封印を採用</strong><div class="note-text">暗がりでの視認確保、警告稼ぎ対策、1マス入口解消、階段部屋の緊張感演出のため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Inferred → Confirmed</div></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#GLS-06">GLS-06</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-01">BIZ-EXP-01</a><a class="ref-pill ref-link" href="#BIZ-EXP-07">BIZ-EXP-07</a><a class="ref-pill ref-link" href="#BIZ-EXP-08">BIZ-EXP-08</a><a class="ref-pill ref-link" href="#BIZ-EXP-09">BIZ-EXP-09</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#GLS-05">GLS-05</a><a class="ref-pill ref-link" href="#GLS-06">GLS-06</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a></div></td>
         <td><div class="note-text">階段守護部屋の難度が強すぎて進行詰まりが多発する場合</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-05" data-source-file="specs/decisions.md" data-item-id="DEC-05" title="元仕様ファイル specs/decisions.md (DEC-05)">specs/decisions.md#DEC-05</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -3994,7 +4020,7 @@
         <td><span class="date-pill">2026-11-17</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-17 追記・2026-11-24 同期）回復の泉・安全前室（<code class="inline-code">BIZ-BOS-01</code>／<code class="inline-code">APP-BOS-01</code>／<code class="inline-code">GLS-10</code>／<code class="inline-code">ST-09</code>／<code class="inline-code">OQ-01</code>）および10F大ボス本体の暫定戦闘仕様（<code class="inline-code">GLS-15</code>／<code class="inline-code">PRM-16</code>／<code class="inline-code">PRM-30</code>）は <code class="inline-code">DEC-10</code> 等で <code class="inline-code">Confirmed</code>（数値係数は <code class="inline-code">Inferred</code>）確定済み。<code class="inline-code">DEC-06</code> 時点で <code class="inline-code">Disputed</code> だったもののうち、現在も残る <code class="inline-code">Disputed</code> 対象は <code class="inline-code">BIZ-BOS-02</code>／<code class="inline-code">BIZ-BOS-03</code>／<code class="inline-code">APP-BOS-02</code>／<code class="inline-code">GLS-11</code>／<code class="inline-code">ST-10</code>／<code class="inline-code">OQ-02</code>（10F大ボス撃破後の正式なクリア祝勝モーダル・エンドレス継続選択UI仕様とそれに伴う暫定進行扱い）のみ</strong><div class="note-text"><code class="inline-code">DEC-06</code> の原文を保持したまま、現在の残存 <code class="inline-code">Disputed</code> 範囲を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-06 原文不変）</div></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#OQ-01">OQ-01</a><a class="ref-pill ref-link" href="#OQ-02">OQ-02</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#ST-10">ST-10</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-06">DEC-06</a><a class="ref-pill ref-link" href="#BIZ-BOS-01">BIZ-BOS-01</a><a class="ref-pill ref-link" href="#BIZ-BOS-02">BIZ-BOS-02</a><a class="ref-pill ref-link" href="#BIZ-BOS-03">BIZ-BOS-03</a><a class="ref-pill ref-link" href="#APP-BOS-01">APP-BOS-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#OQ-01">OQ-01</a><a class="ref-pill ref-link" href="#OQ-02">OQ-02</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-10-addendum">DEC-10-addendum</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-27">DEC-27</a><a class="ref-pill ref-link" href="#GLS-10">GLS-10</a><a class="ref-pill ref-link" href="#GLS-11">GLS-11</a><a class="ref-pill ref-link" href="#PRM-16">PRM-16</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#ST-09">ST-09</a><a class="ref-pill ref-link" href="#ST-10">ST-10</a></div></td>
         <td><div class="note-text">10F毎の節目階層設定自体を再検討する時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-06-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-06-addendum" title="元仕様ファイル specs/decisions.md (DEC-06-addendum)">specs/decisions.md#DEC-06-addendum</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -4011,6 +4037,17 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
+      <tr id="DEC-07-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-07-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-07-addendum">DEC-07-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-07</code> 原文のうち「拡張蓄積3回で枠+1」は <code class="inline-code">DEC-11</code> で段階コスト（<code class="inline-code">1/2/3</code> 回：2→3枠は1回、3→4枠は2回、4→5枠は3回）へ上書き済み。また「満杯時のみ」前提も <code class="inline-code">DEC-25</code> で同種 <code class="inline-code">+2Lv</code> 以上ドロップ時の空き枠有無を問わない装備選択モーダル化および同一装備重複禁止（<code class="inline-code">INV-11</code>）へ拡張済み</strong><div class="note-text"><code class="inline-code">DEC-07</code> の原文を保持したまま、後続 <code class="inline-code">DEC-11</code>・<code class="inline-code">DEC-25</code> による枠拡張コスト変更とモーダル発火条件・重複禁止の拡張を明示する追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-07 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-GRW-03">APP-GRW-03</a><a class="ref-pill ref-link" href="#APP-GRW-04">APP-GRW-04</a><a class="ref-pill ref-link" href="#GLS-09">GLS-09</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#INV-11">INV-11</a><a class="ref-pill ref-link" href="#ST-03">ST-03</a><a class="ref-pill ref-link" href="#ST-04">ST-04</a><a class="ref-pill ref-link" href="#ST-11">ST-11</a></div></td>
+        <td><div class="note-text">枠拡張コストやスクラップ＆ビルドの選択条件を再改訂する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-07-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-07-addendum" title="元仕様ファイル specs/decisions.md (DEC-07-addendum)">specs/decisions.md#DEC-07-addendum</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
       <tr id="DEC-08" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-08" data-source-file="specs/decisions.md">
         <td><a class="id-pill id-doc" href="#DEC-08">DEC-08</a></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
@@ -4019,6 +4056,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#PRM-01">PRM-01</a><a class="ref-pill ref-link" href="#PRM-02">PRM-02</a><a class="ref-pill ref-link" href="#PRM-04">PRM-04</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-08">PRM-08</a><a class="ref-pill ref-link" href="#PRM-12">PRM-12</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#INV-04">INV-04</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#ST-05">ST-05</a></div></td>
         <td><div class="note-text">今後のプレイテスト（<code class="inline-code">improvement-memo.md</code>）で数値再調整を行う時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-08" data-source-file="specs/decisions.md" data-item-id="DEC-08" title="元仕様ファイル specs/decisions.md (DEC-08)">specs/decisions.md#DEC-08</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-08-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-08-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-08-addendum">DEC-08-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-08</code> で承認した14件のうち <code class="inline-code">PRM-14, PRM-15, PRM-19, PRM-21, PRM-23, PRM-27</code>（および <code class="inline-code">mob_loot Lv5</code> 補正を含む <code class="inline-code">PRM-25</code>）は、後続 <code class="inline-code">DEC-10</code>〜<code class="inline-code">DEC-30</code> での再改定により現在 <code class="inline-code">Inferred</code>（<code class="inline-code">OQ-06</code> 管理）へ戻っている。また <code class="inline-code">PRM-06</code>／<code class="inline-code">PRM-17</code> の <code class="inline-code">180px</code> 上限は <code class="inline-code">DEC-19</code> で主兵装（<code class="inline-code">arm_base</code>）のみ視線あり前提で最大 <code class="inline-code">290px</code> まで例外延長が追加済み</strong><div class="note-text"><code class="inline-code">DEC-08</code> の原文を保持したまま、後続改定で <code class="inline-code">Inferred</code> へ戻ったパラメータ群と主兵装射程例外を明示する追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-08 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-15">PRM-15</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-19">PRM-19</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a><a class="ref-pill ref-link" href="#PRM-27">PRM-27</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="note-text"><code class="inline-code">OQ-06</code> の対象パラメータがプレイテストで <code class="inline-code">Confirmed</code> へ昇格した時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-08-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-08-addendum" title="元仕様ファイル specs/decisions.md (DEC-08-addendum)">specs/decisions.md#DEC-08-addendum</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
@@ -4066,6 +4114,17 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
+      <tr id="DEC-11-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-11-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-11-addendum">DEC-11-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-11</code> 原文のうち、(2) チャクラム単体ループは <code class="inline-code">DEC-25</code> で「ヒット位置起点の固定中心円周1周（<code class="inline-code">2π</code>、壁接触時ループ解除）」へ改定、(3) ボス高速突進は <code class="inline-code">DEC-27</code> で「突進中無敵（<code class="inline-code">def_aegis</code> 相打ちのみ貫通）・大ボス壁1回反射・終了後通常着地弾＋硬直」へ刷新、(6) 「Lv10重複の自動枠拡張充当」は <code class="inline-code">DEC-16</code>・<code class="inline-code">DEC-25</code> で <code class="inline-code">Lv8</code> 基準へ上書き済み</strong><div class="note-text"><code class="inline-code">DEC-11</code> の原文を保持したまま、後続 <code class="inline-code">DEC-16</code>・<code class="inline-code">DEC-25</code>・<code class="inline-code">DEC-27</code> による上書き・刷新を明示する追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-11 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-16">DEC-16</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#DEC-27">DEC-27</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-21">PRM-21</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#PRM-36">PRM-36</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="note-text">チャクラム軌道・ボス突進・カンスト自動枠拡張を再改訂する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-11-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-11-addendum" title="元仕様ファイル specs/decisions.md (DEC-11-addendum)">specs/decisions.md#DEC-11-addendum</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
       <tr id="DEC-12" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-12" data-source-file="specs/decisions.md">
         <td><a class="id-pill id-doc" href="#DEC-12">DEC-12</a></td>
         <td><span class="date-pill">2026-11-15</span><div class="sub-code">先輩</div></td>
@@ -4074,6 +4133,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#BIZ-GRW-07">BIZ-GRW-07</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-07">APP-GRW-07</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-24">PRM-24</a><a class="ref-pill ref-link" href="#PRM-25">PRM-25</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#FML-06">FML-06</a><a class="ref-pill ref-link" href="#FML-08">FML-08</a><a class="ref-pill ref-link" href="#FML-12">FML-12</a></div></td>
         <td><div class="note-text">武器枠レベル制（Issue #8）やメイン武器種差し替え実装・プレイテスト時</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-12" data-source-file="specs/decisions.md" data-item-id="DEC-12" title="元仕様ファイル specs/decisions.md (DEC-12)">specs/decisions.md#DEC-12</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-12-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-12-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-12-addendum">DEC-12-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-12</code> 原文のうち、(4)「戦術ステップ（全被弾対応＋発動後2.5秒一時加速）」は <code class="inline-code">DEC-18</code> で「緊急回避ブースト」へ改称・強制移動ワープ廃止のうえ、<code class="inline-code">DEC-26</code> で全攻撃ノーダメージ回避型（チャージ消費＋無敵延長＋一時加速）へ転換済み</strong><div class="note-text"><code class="inline-code">DEC-12</code> の原文を保持したまま、後続 <code class="inline-code">DEC-18</code>・<code class="inline-code">DEC-26</code> による <code class="inline-code">mob_dash</code> の改称・挙動転換を明示する追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-12 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-12">DEC-12</a><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-26">DEC-26</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#GLS-30">GLS-30</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-33">PRM-33</a></div></td>
+        <td><div class="note-text">探索・機動ツリーや <code class="inline-code">mob_dash</code> の役割を再改訂する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-12-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-12-addendum" title="元仕様ファイル specs/decisions.md (DEC-12-addendum)">specs/decisions.md#DEC-12-addendum</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
@@ -4132,6 +4202,17 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
+      <tr id="DEC-17-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-17-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-17-addendum">DEC-17-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-17</code> 原文のうち、(1)「HUD右端ミュートトグル」は <code class="inline-code">DEC-23</code> でポーズ画面ヘッダーへ移設済み、(5)「下部トースト」は <code class="inline-code">DEC-24</code> で上HUD直下の DOM 表示（<code class="inline-code">#notificationStack</code>・最新2件）へ移行済み</strong><div class="note-text"><code class="inline-code">DEC-17</code> の原文を保持したまま、後続 <code class="inline-code">DEC-23</code>・<code class="inline-code">DEC-24</code> によるミュートボタン配置と通知トースト位置の変更を明示する追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-17 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-17">DEC-17</a><a class="ref-pill ref-link" href="#DEC-23">DEC-23</a><a class="ref-pill ref-link" href="#DEC-24">DEC-24</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-MAP-08">APP-MAP-08</a><a class="ref-pill ref-link" href="#APP-MAP-09">APP-MAP-09</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#GLS-29">GLS-29</a><a class="ref-pill ref-link" href="#OQ-11">OQ-11</a></div></td>
+        <td><div class="note-text">HUDや通知表示レイアウトを再改訂する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-17-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-17-addendum" title="元仕様ファイル specs/decisions.md (DEC-17-addendum)">specs/decisions.md#DEC-17-addendum</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
       <tr id="DEC-18" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-18" data-source-file="specs/decisions.md">
         <td><a class="id-pill id-doc" href="#DEC-18">DEC-18</a></td>
         <td><span class="date-pill">2026-11-19</span><div class="sub-code">先輩</div></td>
@@ -4143,6 +4224,17 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
+      <tr id="DEC-18-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-18-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-18-addendum">DEC-18-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-18</code> 原文のうち、(2) <code class="inline-code">mob_dash</code>（緊急回避ブースト）は <code class="inline-code">DEC-26</code> で被弾後リカバリー型から「チャージ消費で全攻撃をノーダメージ回避＋無敵延長＋加速する切り札」へ転換済み、(3)「兵装Tier3（<code class="inline-code">arm_overclock</code>）は <code class="inline-code">Lv5</code> を維持」は <code class="inline-code">DEC-20</code> で他のTier3と同じ最大 <code class="inline-code">Lv2</code>・必要SP <code class="inline-code">2/3</code>（計5SP）統一へ上書き済み</strong><div class="note-text"><code class="inline-code">DEC-18</code> の原文を保持したまま、後続 <code class="inline-code">DEC-20</code>・<code class="inline-code">DEC-26</code> による <code class="inline-code">arm_overclock</code> 上限統一と <code class="inline-code">mob_dash</code> 回避仕様転換を明示する追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-18 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-18">DEC-18</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-26">DEC-26</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#GLS-04">GLS-04</a><a class="ref-pill ref-link" href="#GLS-30">GLS-30</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-10">PRM-10</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-33">PRM-33</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="note-text">Tier3上限Lvや <code class="inline-code">mob_dash</code> の回避仕様を再改訂する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-18-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-18-addendum" title="元仕様ファイル specs/decisions.md (DEC-18-addendum)">specs/decisions.md#DEC-18-addendum</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
       <tr id="DEC-19" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-19" data-source-file="specs/decisions.md">
         <td><a class="id-pill id-doc" href="#DEC-19">DEC-19</a></td>
         <td><span class="date-pill">2026-11-19</span><div class="sub-code">先輩</div></td>
@@ -4151,6 +4243,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-01">GLS-01</a><a class="ref-pill ref-link" href="#GLS-13">GLS-13</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-17">PRM-17</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-04">FML-04</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text">10F到達（Lv20前後）プレイテストで主兵装特化の攻略感および <code class="inline-code">PRM-18</code> / <code class="inline-code">PRM-23</code> の仮数値を確認した時（<code class="inline-code">OQ-06</code>）</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-19" data-source-file="specs/decisions.md" data-item-id="DEC-19" title="元仕様ファイル specs/decisions.md (DEC-19)">specs/decisions.md#DEC-19</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-19-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-19-addendum" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-19-addendum">DEC-19-addendum</a></td>
+        <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
+        <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-19</code>〜<code class="inline-code">DEC-22</code>・<code class="inline-code">DEC-28</code>・<code class="inline-code">DEC-29</code> に渡る主兵装・SP経済の連続改定の統合注記：現行の最新正本は、SP経済＝<code class="inline-code">DEC-25</code>（初期 <code class="inline-code">1SP</code>・Lv2〜10 <code class="inline-code">+1SP</code> / Lv11〜 <code class="inline-code">+2SP</code>・1系統 <code class="inline-code">20SP</code>［Tier1:7 / Tier2:8 / Tier3:5］）、主兵装＝<code class="inline-code">DEC-30</code>（平行ショット廃止・Tier1〜2は単発楕円プラズマチャージショット＋追尾レーザー <code class="inline-code">2/3/4/6/8発</code>、Tier3は中央極太貫通チャージ弾100%＋両脇極細レーザー2/4本60%・狭レーン <code class="inline-code">10px</code> 固定のハイブリッド進化）</strong><div class="note-text"><code class="inline-code">DEC-19</code>〜<code class="inline-code">DEC-22</code>・<code class="inline-code">DEC-28</code>・<code class="inline-code">DEC-29</code> の各原文を保持したまま、連続改定チェーンの最終正本（<code class="inline-code">DEC-25</code>／<code class="inline-code">DEC-30</code>）を1行で明示する統合追記</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-19 原文不変）</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-20">DEC-20</a><a class="ref-pill ref-link" href="#DEC-21">DEC-21</a><a class="ref-pill ref-link" href="#DEC-22">DEC-22</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a><a class="ref-pill ref-link" href="#DEC-28">DEC-28</a><a class="ref-pill ref-link" href="#DEC-29">DEC-29</a><a class="ref-pill ref-link" href="#DEC-30">DEC-30</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#PRM-34">PRM-34</a><a class="ref-pill ref-link" href="#PRM-35">PRM-35</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="note-text">主兵装構成またはSP経済をさらに再改訂する時</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-19-addendum" data-source-file="specs/decisions.md" data-item-id="DEC-19-addendum" title="元仕様ファイル specs/decisions.md (DEC-19-addendum)">specs/decisions.md#DEC-19-addendum</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
@@ -4236,7 +4339,7 @@
         <td><span class="date-pill">2026-11-23</span><div class="sub-code">先輩</div></td>
         <td><strong>ボス突進（無敵・壁反射・硬直・通常着地弾）と大ボス反射レーザー段階膨張極太化の方針確定（Issue #13）：(1) 守護中ボス・大ボスの突進について、予兆中（<code class="inline-code">windup</code>）は攻撃可能・突進中（<code class="inline-code">dashing</code>）は通常攻撃に対して無敵（ただし <code class="inline-code">def_aegis</code> 相打ち反撃のみ貫通）とし、速度・突進距離を引き上げ (2) 大ボス突進のみ壁衝突時に1回反射、中ボスは壁衝突または終端で停止 (3) 突進終了後は通常弾のみ（貫通弾なし）の着地弾を放ちつつ一定時間の硬直状態（<code class="inline-code">recovering</code>）へ入り、「避けきってブレード等で着地弾を反射しながら追撃する」リターンを作る (4) 大ボスの壁2回反射レーザーは幅 <code class="inline-code">22px</code> へ極太化し、予兆中に最終ビーム幅の半透明ガイド帯を表示、照射中は細い状態から <code class="inline-code">0.18s</code> かけて最大幅へ段階膨張（当たり判定連動）させる（具体秒数・速度値はプレイテスト評価まで <code class="inline-code">Inferred</code> として <code class="inline-code">OQ-06</code> 管理）</strong><div class="note-text">自動攻撃による突進迎撃の弱さを無敵突破で解消しつつ、避けきった際の硬直追撃・通常着地弾反射・あえて相打ち反撃を狙う駆け引きと、視認性・緊張感あるレーザー回避を成立させるため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed（突進無敵/相打ち貫通・大ボス壁1回反射・硬直＆通常着地弾・極太段階膨張レーザー方針） / Inferred（数値: `PRM-14`, `PRM-30`）</div></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-09">BIZ-EXP-09</a><a class="ref-pill ref-link" href="#APP-MAP-01">APP-MAP-01</a><a class="ref-pill ref-link" href="#APP-BOS-02">APP-BOS-02</a><a class="ref-pill ref-link" href="#GLS-07">GLS-07</a><a class="ref-pill ref-link" href="#GLS-15">GLS-15</a><a class="ref-pill ref-link" href="#PRM-14">PRM-14</a><a class="ref-pill ref-link" href="#PRM-30">PRM-30</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text">プレイテストで突進速度・硬直時間・レーザー膨張速度のバランスを見直す時（<code class="inline-code">OQ-06</code>）</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-27" data-source-file="specs/decisions.md" data-item-id="DEC-27" title="元仕様ファイル specs/decisions.md (DEC-27)">specs/decisions.md#DEC-27</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
@@ -4269,7 +4372,7 @@
         <td><span class="date-pill">2026-11-24</span><div class="sub-code">先輩</div></td>
         <td><strong>Tier3ハイブリッド進化（中央極太貫通チャージ弾＋両脇極細レーザー）およびスキルUI簡素化（Issue #27）の確定：(1) Tier 3（<code class="inline-code">arm_overclock</code>）習得後も極太チャージショットを消滅させず、「中央レーン＝極太貫通チャージ弾（100%威力）＋両脇レーン＝極細シャープ貫通レーザー（Lv1: 左右2本 / Lv2: 左右4本・各60%威力・10px間隔）」のハイブリッド進化へ改定する (2) スキル画面（ポーズモーダル）のノードカードをアイコン・名称・Lv・1行要点・SPコストへ簡素化し、詳細数値・Lv別コスト表・前提条件は <code class="inline-code">ⓘ</code> ポップオーバーへ集約、重複していたスキルタブ下部の <code class="inline-code">gear-summary</code> を廃止する</strong><div class="note-text">Tier 3 早期取得時にチャージショットの存在感が薄れる課題とスキル画面の文字過多（Issue #27）を解消し、見た目どおりの強弱（主砲100%＋脇レーザー60%）とモバイル視認性を両立するため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed (`DEC-29`) → Confirmed（ハイブリッド方針・UI簡素化） / Inferred（脇レーザー威力比60%: `PRM-18`, `PRM-23`, `FML-03`, `FML-05`）</div></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-EXP-11">BIZ-EXP-11</a><a class="ref-pill ref-link" href="#APP-MAP-02">APP-MAP-02</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#GLS-14">GLS-14</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text">プレイテストでハイブリッド進化の視認性・火力感およびモバイルスキル画面の操作性を確認した時（<code class="inline-code">OQ-06</code>）</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-30" data-source-file="specs/decisions.md" data-item-id="DEC-30" title="元仕様ファイル specs/decisions.md (DEC-30)">specs/decisions.md#DEC-30</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>

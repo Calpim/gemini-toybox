@@ -55,7 +55,7 @@
 
   # split-from: BIZ-CMB-06 (CMB-06-b)
   # 移管・参照統一: Lv単体・他系統SPでの非強化制約(CMB-06-a) → NG-06, DEC-03, DEC-12 / サブ装備への非乗算(CMB-06-c) → GLS-02, DEC-12, FML-06
-  # 関連: APP-CMB-06, GLS-01, PRM-17, PRM-18, FML-03, FML-04, FML-05, DEC-19 / 対応テスト: src/game/engine.test.ts ([APP-CMB-06])
+  # 関連: APP-CMB-06, GLS-01, PRM-17, PRM-18, FML-03, FML-04, FML-05, DEC-19, DEC-20, DEC-21, DEC-22, DEC-28, DEC-29, DEC-30 / 対応テスト: src/game/engine.test.ts ([APP-CMB-06])
   @BIZ-CMB-06 @Confirmed
   シナリオ: 自機のメイン武器は兵装スキル投資に応じて強化される
     前提 プレイヤーがサブ装備とは別枠で自機固有のメイン武器（コアショット）を持っている
