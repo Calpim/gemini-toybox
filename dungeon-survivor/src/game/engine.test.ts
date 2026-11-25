@@ -87,8 +87,10 @@ describe('Game simulation engine (core loop, floor progression, and vision)', ()
     // Defeating Guardian unlocks stairs AND guarantees a higher-level equip pickup drop
     state.player.equipment = [createEquippedItem('pulse_blade', 3)];
     roomBoss!.hp = 0;
-    state.player.x = state.map.rooms[0].cx * TILE_SIZE;
-    state.player.y = state.map.rooms[0].cy * TILE_SIZE;
+    const firstRoom = state.map.rooms[0];
+    expect(firstRoom).toBeDefined();
+    state.player.x = (firstRoom?.cx ?? 0) * TILE_SIZE;
+    state.player.y = (firstRoom?.cy ?? 0) * TILE_SIZE;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(getStairsLockCount(state)).toBe(0);
     expect(state.notifications.some((n) => n.text.includes('封印が解けた'))).toBe(true);
@@ -144,9 +146,10 @@ describe('Game simulation engine (core loop, floor progression, and vision)', ()
     }
 
     const enemy = state.enemies[0];
+    expect(enemy).toBeDefined();
     // Should have navigated around the wall (past tx=4 wall center) toward the player
-    expect(enemy.x).toBeLessThan(4 * TILE_SIZE);
-    expect(Math.hypot(enemy.x - state.player.x, enemy.y - state.player.y)).toBeLessThan(45);
+    expect(enemy?.x).toBeLessThan(4 * TILE_SIZE);
+    expect(Math.hypot((enemy?.x ?? 0) - state.player.x, (enemy?.y ?? 0) - state.player.y)).toBeLessThan(45);
   });
 
   it('[APP-MAP-04] respawns reinforcements away from player on long floor stays and scales tricky enemy types by floor', () => {
@@ -193,8 +196,9 @@ describe('Game simulation engine (core loop, floor progression, and vision)', ()
 
     const state = createGameState({ seed: 920 });
     const room0 = state.map.rooms[0];
+    expect(room0).toBeDefined();
     // Corner inside room 0 is visible when player stands in room 0
-    const roomCorner = tileCenterWorld(room0.x, room0.y);
+    const roomCorner = tileCenterWorld(room0?.x ?? 0, room0?.y ?? 0);
     expect(isPointInPlayerVision(state.map, state.player.x, state.player.y, roomCorner.x, roomCorner.y)).toBe(true);
 
     // When in a corridor (isolated non-room floor), vision is limited to CORRIDOR_VISION_RADIUS (210px)

@@ -156,8 +156,8 @@ class MockElement {
     const attrMatch = selector.match(/^(\.[a-zA-Z0-9_-]+)?\[([^=\]]+)="([^"]*)"\]$/);
     if (attrMatch) {
       const cls = attrMatch[1];
-      const attr = attrMatch[2];
-      const val = attrMatch[3];
+      const attr = attrMatch[2] ?? '';
+      const val = attrMatch[3] ?? '';
       if (cls && !this.classList.contains(cls.slice(1))) return false;
       return this.getAttribute(attr) === val;
     }
@@ -191,10 +191,11 @@ class MockElement {
       }
       return currentRoots;
     }
+    const singlePart = parts[0] ?? '';
     const out: MockElement[] = [];
     const walk = (node: MockElement) => {
       for (const child of node.children) {
-        if (child.matchesSelector(parts[0])) out.push(child);
+        if (child.matchesSelector(singlePart)) out.push(child);
         walk(child);
       }
     };
@@ -497,9 +498,9 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
 
     const levelRows = popover.querySelectorAll('.skill-popover-level-row');
     expect(levelRows).toHaveLength(5);
-    expect(levelRows[0].classList.contains('is-current')).toBe(true);
-    expect(levelRows[1].classList.contains('is-next')).toBe(true);
-    expect(levelRows[4].textContent).toContain('3 SP');
+    expect(levelRows[0]?.classList.contains('is-current')).toBe(true);
+    expect(levelRows[1]?.classList.contains('is-next')).toBe(true);
+    expect(levelRows[4]?.textContent).toContain('3 SP');
 
     // Second tap closes popover
     infoBtn.dispatch('pointerdown', { pointerType: 'touch' });

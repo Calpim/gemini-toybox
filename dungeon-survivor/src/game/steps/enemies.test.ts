@@ -107,7 +107,8 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     roomWakeState.pickups = [];
     roomWakeState.player.baseAttackCooldown = 999;
     const room0 = roomWakeState.map.rooms[0];
-    const farCorner = tileCenterWorld(room0.x, room0.y);
+    expect(room0).toBeDefined();
+    const farCorner = tileCenterWorld(room0?.x ?? 0, room0?.y ?? 0);
     const farNormal = createEnemyByKind(9020, 'normal', farCorner.x, farCorner.y, 2, 0);
     const farTurret = createEnemyByKind(9021, 'shooter', farCorner.x + 40, farCorner.y, 2, 0);
     roomWakeState.enemies = [farNormal, farTurret];
@@ -270,8 +271,12 @@ describe('Enemy AI, spawning, and boss simulation', () => {
 
     // Defeating a scout-spawned ambush runner yields zero EXP/heal/equip drops
     scoutState.pickups = [];
-    ambushRunners[0].hp = 0;
-    scoutState.enemies = [ambushRunners[0]];
+    const firstAmbush = ambushRunners[0];
+    expect(firstAmbush).toBeDefined();
+    if (firstAmbush) {
+      firstAmbush.hp = 0;
+      scoutState.enemies = [firstAmbush];
+    }
     stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
     expect(scoutState.stats.kills).toBeGreaterThanOrEqual(1);
     expect(scoutState.pickups.length).toBe(0);
@@ -333,7 +338,7 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     grandBoss!.attackCooldown = 0.01;
     stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 2: wall-reflecting lead laser
     expect((state.bossLasers ?? []).length).toBeGreaterThanOrEqual(1);
-    expect(state.bossLasers![0].points.length).toBeGreaterThanOrEqual(3);
+    expect(state.bossLasers?.[0]?.points.length).toBeGreaterThanOrEqual(3);
 
     // pattern 3: high-speed dash (windup -> dashing movement -> landing burst) + independent mortar
     state.enemyProjectiles = [];
@@ -434,9 +439,9 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     tank.attackCooldown = 0.01;
     stepGame(mortarState, { x: 0, y: 1 }, 0.02);
     expect(mortarState.mortarZones.length).toBe(1);
-    expect(mortarState.mortarZones[0].radius).toBe(52);
-    expect(mortarState.mortarZones[0].duration).toBeCloseTo(0.85, 2);
-    expect(mortarState.mortarZones[0].targetY).toBeGreaterThan(playerBeforeShotY + 70);
+    expect(mortarState.mortarZones[0]?.radius).toBe(52);
+    expect(mortarState.mortarZones[0]?.duration).toBeCloseTo(0.85, 2);
+    expect(mortarState.mortarZones[0]?.targetY).toBeGreaterThan(playerBeforeShotY + 70);
 
     // Normal enemy fires level-scaled spread shots when awake & in sight
     const normState = createGameState({ seed: 963 });
@@ -578,7 +583,7 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     expect(rBoss.dashBouncesLeft).toBe(0);
 
     // Step remaining dash duration until recovering + landing burst
-    const getDashState = () => bounceState.enemies[0].dashState;
+    const getDashState = () => bounceState.enemies[0]?.dashState;
     for (let f = 0; f < 55; f++) {
       stepGame(bounceState, { x: 0, y: 0 }, 0.016);
       if (getDashState() === 'recovering') break;
