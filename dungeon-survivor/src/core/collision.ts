@@ -8,7 +8,7 @@ export function resolveCircleGridCollision(
   x: number,
   y: number,
   radius: number,
-  map: DungeonMap
+  map: DungeonMap,
 ): { x: number; y: number } {
   let nx = x;
   let ny = y;
@@ -63,13 +63,7 @@ export function resolveCircleGridCollision(
  * Raycast line-of-sight check across the tile grid (APP-CMB-03).
  * Returns false if any wall tile blocks the straight segment between (x1, y1) and (x2, y2).
  */
-export function hasLineOfSight(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  map: DungeonMap
-): boolean {
+export function hasLineOfSight(x1: number, y1: number, x2: number, y2: number, map: DungeonMap): boolean {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const dist = Math.hypot(dx, dy);

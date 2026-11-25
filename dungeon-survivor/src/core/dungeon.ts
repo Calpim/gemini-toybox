@@ -90,14 +90,19 @@ export function findRoomAtTile(map: Pick<DungeonMap, 'rooms'>, tx: number, ty: n
 
 export function isTileInRoom(room: Room, tx: number, ty: number, margin = 0): boolean {
   return (
-    tx >= room.x - margin &&
-    tx < room.x + room.w + margin &&
-    ty >= room.y - margin &&
-    ty < room.y + room.h + margin
+    tx >= room.x - margin && tx < room.x + room.w + margin && ty >= room.y - margin && ty < room.y + room.h + margin
   );
 }
 
-function carveRect(tiles: TileType[], width: number, height: number, rx: number, ry: number, rw: number, rh: number): void {
+function carveRect(
+  tiles: TileType[],
+  width: number,
+  height: number,
+  rx: number,
+  ry: number,
+  rw: number,
+  rh: number,
+): void {
   const x0 = Math.max(1, rx);
   const y0 = Math.max(1, ry);
   const x1 = Math.min(width - 2, rx + rw - 1);
@@ -131,7 +136,7 @@ function hasCorridorWithin(
   height: number,
   tx: number,
   ty: number,
-  radius: number
+  radius: number,
 ): boolean {
   const minX = Math.max(1, tx - radius);
   const maxX = Math.min(width - 2, tx + radius);
@@ -154,7 +159,7 @@ function routeNonOverlappingCorridor(
   corridorMask: Uint8Array,
   roomA: Room,
   roomB: Room,
-  corridorWidth: number
+  corridorWidth: number,
 ): void {
   const totalStates = width * height * 5;
   const bestCost = new Float64Array(totalStates).fill(Infinity);
@@ -323,7 +328,13 @@ function routeNonOverlappingCorridor(
   }
 }
 
-export function computeBfsDistances(width: number, height: number, tiles: TileType[], startTx: number, startTy: number): Int32Array {
+export function computeBfsDistances(
+  width: number,
+  height: number,
+  tiles: TileType[],
+  startTx: number,
+  startTy: number,
+): Int32Array {
   const dist = new Int32Array(width * height).fill(-1);
   const startIdx = startTy * width + startTx;
   if (tiles[startIdx] === 'wall') return dist;
@@ -356,7 +367,7 @@ export function computeBfsDistances(width: number, height: number, tiles: TileTy
 function buildRoomMasks(
   width: number,
   height: number,
-  rooms: readonly Room[]
+  rooms: readonly Room[],
 ): { roomMask: Int16Array; nearRoomMask: Int16Array } {
   const roomMask = new Int16Array(width * height).fill(-1);
   const nearRoomMask = new Int16Array(width * height).fill(-1);
@@ -399,7 +410,7 @@ function generateBossFloor(floor: number, seed: number, corridorWidth: 1 | 2 | 3
     corridorMask,
     anteroom,
     arena,
-    corridorWidth
+    corridorWidth,
   );
 
   const startTile = { tx: 6, ty: anteroom.cy };
@@ -449,9 +460,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
 
   for (let attempt = 0; attempt < 260 && rooms.length < targetRooms; attempt++) {
     const needSpaciousGuardianRoom =
-      floorType === 'guardian' &&
-      rooms.length >= 1 &&
-      !rooms.slice(1).some((r) => r.w >= 11 && r.h >= 9);
+      floorType === 'guardian' && rooms.length >= 1 && !rooms.slice(1).some((r) => r.w >= 11 && r.h >= 9);
 
     const rw = needSpaciousGuardianRoom ? rng.int(11, 13) : rng.int(8, 13);
     const rh = needSpaciousGuardianRoom ? rng.int(9, 11) : rng.int(7, 11);
@@ -533,7 +542,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
       corridorMask,
       bestFromRoom,
       nextRoom,
-      corridorWidth
+      corridorWidth,
     );
   }
 
@@ -542,9 +551,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   const bfsDist = computeBfsDistances(width, height, tiles, startTile.tx, startTile.ty);
 
   const eligibleStairsRooms =
-    floorType === 'guardian'
-      ? rooms.slice(1).filter((r) => r.w >= 11 && r.h >= 9)
-      : rooms.slice(1);
+    floorType === 'guardian' ? rooms.slice(1).filter((r) => r.w >= 11 && r.h >= 9) : rooms.slice(1);
   const candidates = eligibleStairsRooms.length > 0 ? eligibleStairsRooms : rooms.slice(1);
 
   let stairsRoom = candidates[candidates.length - 1];

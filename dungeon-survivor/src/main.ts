@@ -180,21 +180,15 @@ function syncNotifications(): void {
     ...visible.map((n) => {
       const toast = document.createElement('div');
       const isBossLike = n.text.includes('ボス') || n.text.includes('増援') || n.text.includes('ガーディアン');
-      const variant =
-        n.kind === 'alert'
-          ? 'toast-alert'
-          : n.kind === 'levelup'
-          ? 'toast-levelup'
-          : 'toast-info';
+      const variant = n.kind === 'alert' ? 'toast-alert' : n.kind === 'levelup' ? 'toast-levelup' : 'toast-info';
       toast.className = `cyber-toast ${variant}`;
       toast.style.opacity = String(Math.max(0, Math.min(1, n.life * 2.5)));
-      const iconHtml =
-        n.kind === 'alert' ? ICON_ALERT : isBossLike ? ICON_BOSS : ICON_SPARK;
+      const iconHtml = n.kind === 'alert' ? ICON_ALERT : isBossLike ? ICON_BOSS : ICON_SPARK;
       toast.innerHTML = `<span class="toast-icon">${iconHtml}</span><span></span>`;
       const textSpan = toast.lastElementChild as HTMLElement;
       textSpan.textContent = n.text.replace(/^[⚠️⚠👾🎉📦✨⚡🛡🔥💥\s]+/u, '');
       return toast;
-    })
+    }),
   );
 }
 
@@ -223,9 +217,7 @@ function syncUi(forceModals = false): void {
     gearBtn.innerHTML = `${ICON_GEAR}<span>${gearLabel}</span>`;
   }
 
-  const canUnlockAny = SKILL_TREE_NODES.some((n) =>
-    canUnlockSkill(player.skillLevels, player.skillPoints, n.id)
-  );
+  const canUnlockAny = SKILL_TREE_NODES.some((n) => canUnlockSkill(player.skillLevels, player.skillPoints, n.id));
   skillBtn.classList.toggle('has-sp', canUnlockAny);
   bottomPauseLeftBtn?.classList.toggle('has-sp', canUnlockAny);
   bottomSkillBadge?.classList.toggle('hidden', !canUnlockAny);
@@ -242,8 +234,7 @@ function syncUi(forceModals = false): void {
     const goKey = `${floor}:${stats.clearTime10F ?? ''}:${player.level}:${Math.floor(stats.elapsedPlayTime ?? 0)}:${stats.kills}`;
     if (forceModals || goKey !== lastRenderedGameOverKey) {
       lastRenderedGameOverKey = goKey;
-      const clear10fText =
-        stats.clearTime10F !== undefined ? formatPlayTime(stats.clearTime10F) : '--:--';
+      const clear10fText = stats.clearTime10F !== undefined ? formatPlayTime(stats.clearTime10F) : '--:--';
       const rows: Array<{ label: string; value: string; muted?: boolean; highlight?: boolean }> = [
         { label: '最終フロア', value: `${floor}F` },
         { label: '10Fクリア時間', value: clear10fText, muted: stats.clearTime10F === undefined },
@@ -263,7 +254,7 @@ function syncUi(forceModals = false): void {
           v.textContent = value;
           row.append(l, v);
           return row;
-        })
+        }),
       );
     }
   } else {

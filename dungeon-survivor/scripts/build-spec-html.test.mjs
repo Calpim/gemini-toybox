@@ -81,7 +81,7 @@ describe('build-spec-html', () => {
   シナリオ: B1
     前提 A
 `,
-        'b.feature'
+        'b.feature',
       ),
     ];
     const app = [
@@ -92,7 +92,7 @@ describe('build-spec-html', () => {
   シナリオ: A1
     前提 A
 `,
-        'a.feature'
+        'a.feature',
       ),
     ];
     const graph = buildTraceabilityGraph(biz, app);
@@ -110,7 +110,7 @@ describe('build-spec-html', () => {
   シナリオ: B1
     前提 A
 `,
-        'b.feature'
+        'b.feature',
       ),
     ];
     const app = [
@@ -121,7 +121,7 @@ describe('build-spec-html', () => {
   シナリオ: A1
     前提 A
 `,
-        'a.feature'
+        'a.feature',
       ),
     ];
     const graph = buildTraceabilityGraph(biz, app);
@@ -139,7 +139,7 @@ describe('build-spec-html', () => {
 | --- | --- | --- | --- | --- | --- | --- |
 | GLS-X1 | テスト用語 | \`testTerm\` | 説明 | Disputed | BIZ-X1 | note |
 `,
-      '/tmp/specs/glossary.md'
+      '/tmp/specs/glossary.md',
     );
     assert.equal(glossary.relativePath, 'specs/glossary.md');
     assert.equal(glossary.items.length, 1);
@@ -154,7 +154,7 @@ describe('build-spec-html', () => {
 | PRM-X2 | 戦闘 | 予備 | \`10\` | \`px\` |  | Unknown | GLS-X1 | \`src/game/equipment.ts\` |
 | PRM-X3 | 戦闘 | 速度 | \`210\` | \`px/s\` | 快適テンポ | Confirmed (AI提案) | GLS-X1 | \`src/game/engine.ts\` |
 `,
-      '/tmp/specs/parameters.md'
+      '/tmp/specs/parameters.md',
     );
     assert.equal(params.items[0].id, 'PRM-X1');
     assert.equal(params.items[0].status, 'Inferred');
@@ -170,7 +170,7 @@ describe('build-spec-html', () => {
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | FML-X1 | テスト式 | \`x * PRM-X1\` | \`x\`, \`PRM-X1\` | \`値 (px)\` | Inferred | PRM-X1 | \`src/game/engine.ts\` |
 `,
-      '/tmp/specs/formulas.md'
+      '/tmp/specs/formulas.md',
     );
     assert.equal(formulas.relativePath, 'specs/formulas.md');
     assert.equal(formulas.items.length, 1);
@@ -184,7 +184,7 @@ describe('build-spec-html', () => {
 | --- | --- | --- | --- | --- | --- |
 | OQ-X1 | 未決論点 | Disputed | GLS-X1 | 次回判断時 | 暫定値で動作 |
 `,
-      '/tmp/specs/open-questions.md'
+      '/tmp/specs/open-questions.md',
     );
     assert.equal(openQuestions.relativePath, 'specs/open-questions.md');
     assert.equal(openQuestions.items[0].id, 'OQ-X1');
@@ -200,11 +200,11 @@ describe('build-spec-html', () => {
 | --- | --- | --- | --- | --- |
 | NG-X1 | 設置タレット | 放置されるため | Confirmed | DEC-X1 |
 `,
-      '/tmp/specs/non-goals.md'
+      '/tmp/specs/non-goals.md',
     );
     assert.equal(
       nonGoals.declaration,
-      'ここに書かれたものは未定義ではなく、意図的に存在しない。AIはこれらを補完・実装・仕様追加しない'
+      'ここに書かれたものは未定義ではなく、意図的に存在しない。AIはこれらを補完・実装・仕様追加しない',
     );
     assert.equal(nonGoals.items[0].id, 'NG-X1');
     assert.equal(nonGoals.items[0].status, 'Confirmed');
@@ -219,7 +219,7 @@ stateDiagram-v2
 | --- | --- | --- | --- | --- | --- | --- |
 | ST-X1 | playing | ポーズ | 未定義 | Unknown | PRM-X1 | 保留 |
 `,
-      '/tmp/specs/state-transitions.md'
+      '/tmp/specs/state-transitions.md',
     );
     assert.equal(transitions.mermaidBlocks.length, 1);
     assert.match(transitions.mermaidBlocks[0], /stateDiagram-v2/);
@@ -232,7 +232,7 @@ stateDiagram-v2
 | --- | --- | --- | --- | --- | --- | --- |
 | INV-X1 | HP | 0以上 | test | Confirmed | PRM-X1 | ok |
 `,
-      '/tmp/specs/invariants.md'
+      '/tmp/specs/invariants.md',
     );
     assert.equal(invariants.items[0].id, 'INV-X1');
 
@@ -242,7 +242,7 @@ stateDiagram-v2
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DEC-X1 | 2026-11-14 | 先輩 | 決定 | 理由 | Confirmed | Inferred → Confirmed | GLS-X1 | トリガー |
 `,
-      '/tmp/specs/decisions.md'
+      '/tmp/specs/decisions.md',
     );
     assert.equal(decisions.items[0].id, 'DEC-X1');
     assert.equal(decisions.items[0].transition, 'Inferred → Confirmed');
@@ -255,7 +255,7 @@ stateDiagram-v2
 | PRM-04 | プレイヤー | 経験値 | \`25\`（Lv毎に \`×1.22\`） | \`EXP\` |  | Inferred | BIZ-GRW-01 | engine.ts |
 | PRM-17 | 戦闘 | コアショット | \`威力 12 / CD 0.62s / 射程 140px / 発射数閾値 3, 7, 12 SP (最大 4発)\` | \`DMG\` |  | Inferred | APP-CMB-06 | engine.ts |
 `,
-      'specs/parameters.md'
+      'specs/parameters.md',
     );
     const modifiedParams = parseParameters(
       `| ID | カテゴリ | パラメータ名 | 現行値 | 単位・形式 | 狙い（体験目標） | 状態 | 関連ID | 元コード参照 |
@@ -263,7 +263,7 @@ stateDiagram-v2
 | PRM-04 | プレイヤー | 経験値 | \`50\`（Lv毎に \`×1.50\`） | \`EXP\` |  | Inferred | BIZ-GRW-01 | engine.ts |
 | PRM-17 | 戦闘 | コアショット | \`威力 20 / CD 0.50s / 射程 150px / 発射数閾値 2, 5, 10 SP (最大 4発)\` | \`DMG\` |  | Inferred | APP-CMB-06 | engine.ts |
 `,
-      'specs/parameters.md'
+      'specs/parameters.md',
     );
 
     const chartsBase = buildFormulaChartsData(baseParams);
@@ -295,13 +295,10 @@ stateDiagram-v2
     assert.equal(
       validation.brokenDocRefs.length,
       0,
-      `Broken extended doc refs: ${JSON.stringify(validation.brokenDocRefs)}`
+      `Broken extended doc refs: ${JSON.stringify(validation.brokenDocRefs)}`,
     );
     assert.ok(validation.disputedTerms.length >= 1, 'Expected at least 1 Disputed term for dashboard');
-    assert.ok(
-      validation.undefinedTransitions.length >= 1,
-      'Expected at least 1 未定義 transition for dashboard'
-    );
+    assert.ok(validation.undefinedTransitions.length >= 1, 'Expected at least 1 未定義 transition for dashboard');
 
     // Every formula row must reference at least one PRM-xx parameter
     for (const fml of extended.formulas.items) {
@@ -329,7 +326,7 @@ stateDiagram-v2
     // 2. Non-goals declaration appears verbatim & Confirmed (AI提案) badge renders
     assert.match(
       html,
-      /ここに書かれたものは未定義ではなく、意図的に存在しない。AIはこれらを補完・実装・仕様追加しない/
+      /ここに書かれたものは未定義ではなく、意図的に存在しない。AIはこれらを補完・実装・仕様追加しない/,
     );
     assert.match(html, /確定 \(AI提案\)/);
 
@@ -421,7 +418,7 @@ stateDiagram-v2
 | --- | --- | --- | --- | --- | --- | --- |
 | GLS-1 | T | a | def | Disputed | MISSING-ID-999 | note |
 `,
-        'specs/glossary.md'
+        'specs/glossary.md',
       ),
       parameters: null,
       formulas: null,
@@ -430,7 +427,7 @@ stateDiagram-v2
 | --- | --- | --- | --- | --- | --- | --- |
 | ST-1 | playing | ev | 未定義 | Unknown | GLS-1 | ok |
 `,
-        'specs/state-transitions.md'
+        'specs/state-transitions.md',
       ),
       invariants: null,
       openQuestions: null,
@@ -486,40 +483,36 @@ stateDiagram-v2
     const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extended);
     const decStart = html.indexOf('<section id="sec-decisions"');
     const decSlice = html.slice(decStart);
-    assert.match(decSlice, /id="DEC-10"[\s\S]*?badge-overridden">上書きあり<\/span>[\s\S]*?<\/tr>\s*<tr id="DEC-10-addendum" class="spec-row decision-addendum-row"/);
+    assert.match(
+      decSlice,
+      /id="DEC-10"[\s\S]*?badge-overridden">上書きあり<\/span>[\s\S]*?<\/tr>\s*<tr id="DEC-10-addendum" class="spec-row decision-addendum-row"/,
+    );
     assert.equal((decSlice.match(/<tr id="DEC-10-addendum"/g) || []).length, 1);
     assert.equal((decSlice.match(/<tr id="DEC-19-addendum"/g) || []).length, 1);
     for (const targetId of ['DEC-20', 'DEC-21', 'DEC-22', 'DEC-28', 'DEC-29']) {
       assert.match(
         decSlice,
         new RegExp(
-          `<tr id="${targetId}"(?:(?!<\\/tr>)[\\s\\S])*?badge-overridden">上書きあり<\\/span>(?:(?!<\\/tr>)[\\s\\S])*?href="#DEC-19-addendum"(?:(?!<\\/tr>)[\\s\\S])*?<\\/tr>`
-        )
+          `<tr id="${targetId}"(?:(?!<\\/tr>)[\\s\\S])*?badge-overridden">上書きあり<\\/span>(?:(?!<\\/tr>)[\\s\\S])*?href="#DEC-19-addendum"(?:(?!<\\/tr>)[\\s\\S])*?<\\/tr>`,
+        ),
       );
     }
 
     const addendumRows = extended.decisions.items.filter((item) => item.id.endsWith('-addendum'));
     assert.equal(addendumRows.length, 10);
     for (const addendum of addendumRows) {
-      assert.equal(
-        addendum.decider,
-        '同期（AI作成・先輩確認）',
-        `Expected sync decider for ${addendum.id}`
-      );
+      assert.equal(addendum.decider, '同期（AI作成・先輩確認）', `Expected sync decider for ${addendum.id}`);
       assert.match(
         decSlice,
         new RegExp(
-          `<tr id="${addendum.id}"(?:(?!<\\/tr>)[\\s\\S])*?<div class="sub-code">同期（AI作成・先輩確認）<\\/div>(?:(?!<\\/tr>)[\\s\\S])*?<\\/tr>`
-        )
+          `<tr id="${addendum.id}"(?:(?!<\\/tr>)[\\s\\S])*?<div class="sub-code">同期（AI作成・先輩確認）<\\/div>(?:(?!<\\/tr>)[\\s\\S])*?<\\/tr>`,
+        ),
       );
     }
   });
 
   it('handles explicit override-target markers (present, absent, and nonexistent target DEC)', () => {
-    assert.deepEqual(
-      parseOverrideTargets('補足（上書き対象: `DEC-02`、DEC-03, DEC-02）'),
-      ['DEC-02', 'DEC-03']
-    );
+    assert.deepEqual(parseOverrideTargets('補足（上書き対象: `DEC-02`、DEC-03, DEC-02）'), ['DEC-02', 'DEC-03']);
 
     // 1) マーカーあり: DEC-01-addendum の上書き対象 DEC-02, DEC-03 のみにバッジとリンクが付く（DEC-04 は refs にあるが付かない）
     const withMarker = parseDecisionLog(
@@ -531,7 +524,7 @@ stateDiagram-v2
 | DEC-04 | 2026-11-14 | 先輩 | 新正本 | 理由 | Confirmed | - | GLS-01 | - |
 | DEC-01-addendum | 2026-11-25 | 先輩 | 統合注記（上書き対象: DEC-02, DEC-03） | 理由 | Confirmed | 補足 | DEC-01, DEC-02, DEC-03, DEC-04 | - |
 `,
-      'specs/decisions.md'
+      'specs/decisions.md',
     );
     const res1 = resolveDecisionAddendums(withMarker);
     assert.deepEqual(res1.brokenOverrideTargets, []);
@@ -543,9 +536,18 @@ stateDiagram-v2
     const html1 = renderHtml(graph, 'Test', { decisions: withMarker });
     const slice1 = html1.slice(html1.indexOf('<section id="sec-decisions"'));
     assert.equal((slice1.match(/<tr id="DEC-01-addendum"/g) || []).length, 1);
-    assert.match(slice1, /<tr id="DEC-01"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
-    assert.match(slice1, /<tr id="DEC-02"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?href="#DEC-01-addendum"(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
-    assert.match(slice1, /<tr id="DEC-03"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?href="#DEC-01-addendum"(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
+    assert.match(
+      slice1,
+      /<tr id="DEC-01"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?<\/tr>/,
+    );
+    assert.match(
+      slice1,
+      /<tr id="DEC-02"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?href="#DEC-01-addendum"(?:(?!<\/tr>)[\s\S])*?<\/tr>/,
+    );
+    assert.match(
+      slice1,
+      /<tr id="DEC-03"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?href="#DEC-01-addendum"(?:(?!<\/tr>)[\s\S])*?<\/tr>/,
+    );
     assert.doesNotMatch(slice1, /<tr id="DEC-04"(?:(?!<\/tr>)[\s\S])*?上書きあり(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
 
     // 2) マーカーなし: 関連IDに他DECがあっても overrideAddendumsByTargetId は空で他DECにバッジが付かない
@@ -556,7 +558,7 @@ stateDiagram-v2
 | DEC-02 | 2026-11-14 | 先輩 | 元2 | 理由 | Confirmed | - | GLS-01 | - |
 | DEC-01-addendum | 2026-11-25 | 先輩 | マーカーなしの追記 | 理由 | Confirmed | 補足 | DEC-01, DEC-02 | - |
 `,
-      'specs/decisions.md'
+      'specs/decisions.md',
     );
     const res2 = resolveDecisionAddendums(withoutMarker);
     assert.equal(res2.overrideAddendumsByTargetId.size, 0);
@@ -571,18 +573,14 @@ stateDiagram-v2
 | DEC-01 | 2026-11-14 | 先輩 | 元1 | 理由 | Confirmed | - | GLS-01 | - |
 | DEC-01-addendum | 2026-11-25 | 先輩 | 注記（上書き対象: DEC-999） | 理由 | Confirmed | 補足 | DEC-01 | - |
 `,
-      'specs/decisions.md'
+      'specs/decisions.md',
     );
     const res3 = resolveDecisionAddendums(brokenMarker);
     assert.deepEqual(res3.brokenOverrideTargets, [
       { sourceId: 'DEC-01-addendum', sourceFile: 'specs/decisions.md', missingTarget: 'DEC-999' },
     ]);
     const val3 = validateExtendedSpecs(graph, { decisions: brokenMarker });
-    assert.ok(
-      val3.brokenDocRefs.some(
-        (b) => b.sourceId === 'DEC-01-addendum' && b.missingRef === 'DEC-999'
-      )
-    );
+    assert.ok(val3.brokenDocRefs.some((b) => b.sourceId === 'DEC-01-addendum' && b.missingRef === 'DEC-999'));
   });
 
   it('leaves addendums unmatched when baseId is missing from refs, base DEC does not exist, or naming does not match', () => {
@@ -596,7 +594,7 @@ stateDiagram-v2
 | DEC-99-addendum | 2026-11-25 | 先輩 | 元DEC不在 | 理由 | Confirmed | 補足 | DEC-99 | - |
 | CUSTOM-addendum | 2026-11-25 | 先輩 | 命名規則外 | 理由 | Confirmed | 補足 | DEC-01 | - |
 `,
-      'specs/decisions.md'
+      'specs/decisions.md',
     );
 
     const resolved = resolveDecisionAddendums(decisions);
@@ -604,14 +602,17 @@ stateDiagram-v2
     assert.ok(resolved.matchedAddendumIds.has('DEC-01-addendum'));
     assert.deepEqual(
       resolved.unmatchedAddendums.map((x) => x.id),
-      ['DEC-02-addendum', 'DEC-99-addendum', 'CUSTOM-addendum']
+      ['DEC-02-addendum', 'DEC-99-addendum', 'CUSTOM-addendum'],
     );
 
     const graph = buildTraceabilityGraph([], []);
     const html = renderHtml(graph, 'Test', { decisions });
     const decSlice = html.slice(html.indexOf('<section id="sec-decisions"'));
     // DEC-01-addendum is grouped right below DEC-01 (before DEC-02) with no duplicate
-    assert.match(decSlice, /id="DEC-01"[\s\S]*?上書きあり[\s\S]*?<\/tr>\s*<tr id="DEC-01-addendum" class="spec-row decision-addendum-row"[\s\S]*?<tr id="DEC-02"/);
+    assert.match(
+      decSlice,
+      /id="DEC-01"[\s\S]*?上書きあり[\s\S]*?<\/tr>\s*<tr id="DEC-01-addendum" class="spec-row decision-addendum-row"[\s\S]*?<tr id="DEC-02"/,
+    );
     assert.equal((decSlice.match(/<tr id="DEC-01-addendum"/g) || []).length, 1);
     // DEC-02 has no matched addendum, so no overridden badge
     assert.doesNotMatch(decSlice, /id="DEC-02"[\s\S]*?上書きあり[\s\S]*?<\/tr>/);
@@ -639,7 +640,7 @@ stateDiagram-v2
 | INV-BAD-FILE | 異常3 | 存在しないテストファイル | \`src/game/nonexistent.test.ts\` (\`[APP-MAP-01]\`) | Confirmed | APP-MAP-01 | fail |
 | INV-NO-TAG | 異常4 | タグ記載なし | \`src/game/engine.test.ts\` | Confirmed | APP-MAP-03 | fail |
 `,
-      'specs/invariants.md'
+      'specs/invariants.md',
     );
 
     const result = validateInvariantTests(mockInvariants, projectRoot);
@@ -655,7 +656,7 @@ stateDiagram-v2
         { invariantId: 'INV-BAD-COMP', tag: '[INV-09 / APP-FAKE-99]', reason: 'missing test tag in file' },
         { invariantId: 'INV-BAD-FILE', tag: '[APP-MAP-01]', reason: 'missing test file' },
         { invariantId: 'INV-NO-TAG', tag: null, reason: 'missing test tag' },
-      ]
+      ],
     );
   });
 
@@ -665,12 +666,12 @@ stateDiagram-v2
       fs.writeFileSync(
         path.join(tmpDir, 'bad.md'),
         `| ID | ref |\n| --- | --- |\n| X1 | \`src/game/engine.ts#L123\` |\n| X2 | \`src/game/engine.ts#L10-L20,L30\` |\n`,
-        'utf8'
+        'utf8',
       );
       fs.writeFileSync(
         path.join(tmpDir, 'clean.md'),
         `| ID | ref |\n| --- | --- |\n| C1 | \`src/game/engine.ts#stepGame\`, Lv10, #GLS-01 |\n`,
-        'utf8'
+        'utf8',
       );
       const result = validateNoLineNumberRefs(tmpDir, { specsDir: tmpDir });
       assert.equal(result.checkedFiles, 2);
@@ -710,7 +711,7 @@ stateDiagram-v2
           '| BAD_SYM | `src/game/engine.ts#nonExistentSymbolFoo` |',
           '| BAD_FILE | `src/game/nonexistent.ts#foo` |',
         ].join('\n') + '\n',
-        'utf8'
+        'utf8',
       );
       const result = validateSymbolRefs(projectRoot, { specsDir: tmpDir });
       assert.equal(result.checkedCount, 3);
@@ -732,7 +733,7 @@ stateDiagram-v2
             symbol: 'foo',
             reason: 'missing target file',
           },
-        ]
+        ],
       );
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });

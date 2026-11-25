@@ -1,9 +1,4 @@
-export type EquipmentId =
-  | 'pulse_blade'
-  | 'orbit_shield'
-  | 'seeker_drone'
-  | 'reactive_coil'
-  | 'ricochet_disc';
+export type EquipmentId = 'pulse_blade' | 'orbit_shield' | 'seeker_drone' | 'reactive_coil' | 'ricochet_disc';
 
 export type EquipmentCategory = '近接迎撃' | '公転ビット' | '自律ドローン' | 'カウンター' | '跳弾投擲';
 
@@ -90,7 +85,8 @@ export const EQUIPMENT_CATALOG: Record<EquipmentId, EquipmentDef> = {
     baseCooldown: 1.12,
     baseRange: 150,
     baseDamage: 18,
-    description: '追尾し敵間を跳ね回る単発円刃。次の敵がいなければヒット位置起点で1回転して再ヒット！（Lv6で跳弾数最大）',
+    description:
+      '追尾し敵間を跳ね回る単発円刃。次の敵がいなければヒット位置起点で1回転して再ヒット！（Lv6で跳弾数最大）',
   },
 };
 
@@ -144,7 +140,7 @@ export function getSeekerDroneCount(level: number, extraBits = 0): number {
 export function getSeekerDroneRange(
   level: number,
   baseRange = EQUIPMENT_CATALOG.seeker_drone.baseRange,
-  rangeMult = 1
+  rangeMult = 1,
 ): number {
   const lv = clampEquipmentLevel(level);
   return (baseRange + Math.max(0, lv - 6) * 8) * rangeMult;
@@ -153,7 +149,7 @@ export function getSeekerDroneRange(
 export function getPulseBladeStats(
   level: number,
   baseRange: number,
-  rangeMult: number
+  rangeMult: number,
 ): { range: number; halfArcRad: number; fullCircle: boolean; thickness: number } {
   const lv = clampEquipmentLevel(level);
   const evoLv = Math.min(MAX_EQUIPMENT_COUNT_EVO_LEVEL, lv);
@@ -170,7 +166,7 @@ export function getPulseBladeStats(
 export function getReactiveCoilStats(
   level: number,
   baseRange: number,
-  rangeMult: number
+  rangeMult: number,
 ): { range: number; maxTargets: number } {
   const lv = clampEquipmentLevel(level);
   const evoLv = Math.min(MAX_EQUIPMENT_COUNT_EVO_LEVEL, lv);
@@ -182,7 +178,7 @@ export function getReactiveCoilStats(
 
 export function getRicochetDiscStats(
   level: number,
-  rangeMult = 1
+  rangeMult = 1,
 ): {
   count: number;
   maxBounces: number;

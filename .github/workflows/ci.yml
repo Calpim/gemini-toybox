@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check (Biome)
+        run: npm run check
+
       - name: Typecheck
         run: npm run typecheck
 

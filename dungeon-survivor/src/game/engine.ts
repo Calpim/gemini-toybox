@@ -89,7 +89,7 @@ function spawnParticles(
   speedMin: number,
   speedMax: number,
   radius: number,
-  life: number
+  life: number,
 ): void {
   if (!state.particles) state.particles = [];
   const available = MAX_PARTICLES - state.particles.length;
@@ -134,12 +134,7 @@ function clearDiscLoopState(proj: ProjectileState): void {
   proj.loopExitAngle = undefined;
 }
 
-function scoreLoopCircleClearance(
-  map: DungeonMap,
-  cx: number,
-  cy: number,
-  radius: number
-): number {
+function scoreLoopCircleClearance(map: DungeonMap, cx: number, cy: number, radius: number): number {
   let score = !isWallAtWorld(map, cx, cy) ? 10 : 0;
   for (let k = 0; k < 8; k++) {
     const angle = (k * Math.PI) / 4;
@@ -155,7 +150,7 @@ function chooseDiscLoopCandidate(
   hitX: number,
   hitY: number,
   heading: number,
-  radius: number
+  radius: number,
 ): { cx: number; cy: number; startAngle: number; dir: 1 | -1 } {
   const candA = {
     cx: hitX + Math.cos(heading + Math.PI / 2) * radius,
@@ -207,7 +202,7 @@ export function isPointInPlayerVision(
   py: number,
   wx: number,
   wy: number,
-  corridorRadius = CORRIDOR_VISION_RADIUS
+  corridorRadius = CORRIDOR_VISION_RADIUS,
 ): boolean {
   const ptx = Math.floor(px / TILE_SIZE);
   const pty = Math.floor(py / TILE_SIZE);
@@ -239,7 +234,7 @@ export function pushNotification(
   kind: GameNotification['kind'],
   text: string,
   color: string,
-  life = 2.0
+  life = 2.0,
 ): void {
   if (kind === 'alert') {
     const existingAlert = state.notifications.find((n) => n.kind === 'alert' && n.life > 1.2);
@@ -263,12 +258,7 @@ export function pushNotification(
   }
 }
 
-function revealAroundPlayer(
-  map: DungeonMap,
-  explored: Uint8Array,
-  px: number,
-  py: number
-): void {
+function revealAroundPlayer(map: DungeonMap, explored: Uint8Array, px: number, py: number): void {
   const ptx = Math.floor(px / TILE_SIZE);
   const pty = Math.floor(py / TILE_SIZE);
   const room = findRoomAtTile(map, ptx, pty);
@@ -310,7 +300,7 @@ export function createEnemyByKind(
   x: number,
   y: number,
   floor: number,
-  aggroRange = MAX_TARGET_RANGE
+  aggroRange = MAX_TARGET_RANGE,
 ): EnemyState {
   const baseHp = 26 + (floor - 1) * 9;
   const baseSpeed = 78 + Math.min(48, (floor - 1) * 6);
@@ -441,7 +431,7 @@ function populateFloor(
   seed: number,
   startId: number,
   lootBonusRate = 0,
-  playerLevel = 1
+  playerLevel = 1,
 ): { enemies: EnemyState[]; pickups: PickupState[]; chests: ChestState[]; nextId: number } {
   const rng = createRng(seed ^ (floor * 0x517cc1b7));
   const enemies: EnemyState[] = [];
@@ -517,10 +507,7 @@ function populateFloor(
   }
 
   // 1. Place 1-2 treasure chests on distinct center tiles first
-  const targetChests = Math.min(
-    chestCandidates.length,
-    1 + (rng.next() < 0.45 + lootBonusRate ? 1 : 0)
-  );
+  const targetChests = Math.min(chestCandidates.length, 1 + (rng.next() < 0.45 + lootBonusRate ? 1 : 0));
   for (let c = 0; c < targetChests && chestCandidates.length > 0; c++) {
     const pickIdx = rng.int(0, chestCandidates.length - 1);
     const roomIdx = chestCandidates.splice(pickIdx, 1)[0];
@@ -637,7 +624,7 @@ function populateFloor(
                 wx + Math.cos(pAngle) * 24,
                 wy + Math.sin(pAngle) * 24,
                 spawned.radius,
-                map
+                map,
               );
               px = resolved.x;
               py = resolved.y;
@@ -781,7 +768,7 @@ export function advanceToNextFloor(state: GameState): void {
     state.seed,
     state.nextEntityId,
     mods.lootBonusRate,
-    state.player.level
+    state.player.level,
   );
   state.enemies = populated.enemies;
   state.pickups = populated.pickups;
@@ -806,13 +793,7 @@ export function advanceToNextFloor(state: GameState): void {
 
   if (state.floor === 11 && state.stats.clearTime10F === undefined) {
     state.stats.clearTime10F = state.stats.elapsedPlayTime ?? 0;
-    pushNotification(
-      state,
-      'levelup',
-      `10F CLEAR! タイム ${formatPlayTime(state.stats.clearTime10F)}`,
-      '#fde047',
-      4.5
-    );
+    pushNotification(state, 'levelup', `10F CLEAR! タイム ${formatPlayTime(state.stats.clearTime10F)}`, '#fde047', 4.5);
   }
 }
 
@@ -896,13 +877,7 @@ function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
       life: 1.0,
       maxLife: 1.0,
     });
-    pushNotification(
-      state,
-      'levelup',
-      `🎉 LEVEL UP! Lv${player.level} (+${gainedSp} SP)`,
-      '#38bdf8',
-      2.6
-    );
+    pushNotification(state, 'levelup', `🎉 LEVEL UP! Lv${player.level} (+${gainedSp} SP)`, '#38bdf8', 2.6);
   }
 }
 
@@ -989,10 +964,7 @@ export function acquireEquipment(state: GameState, droppedItem: EquippedItem): v
     return;
   }
 
-  if (
-    player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP &&
-    equipment.every((eq) => eq.level >= MAX_EQUIPMENT_LEVEL)
-  ) {
+  if (player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP && equipment.every((eq) => eq.level >= MAX_EQUIPMENT_LEVEL)) {
     player.hp = Math.min(player.maxHp, player.hp + 30);
     grantExpAndCheckLevelUp(state, 40);
     state.floatingTexts.push({
@@ -1015,10 +987,7 @@ export type EquipChoice =
   | { type: 'scrap_upgrade'; slotIndex: number }
   | { type: 'scrap_expand' };
 
-export function resolveEquipChoice(
-  state: GameState,
-  choice: EquipChoice
-): boolean {
+export function resolveEquipChoice(state: GameState, choice: EquipChoice): boolean {
   if (state.status !== 'equip_choice' || !state.pendingEquipDrop) {
     return false;
   }
@@ -1028,11 +997,7 @@ export function resolveEquipChoice(
     if (choice.slotIndex < 0 || choice.slotIndex >= state.player.equipment.length) {
       return false;
     }
-    if (
-      state.player.equipment.some(
-        (eq, idx) => idx !== choice.slotIndex && eq.id === dropped.id
-      )
-    ) {
+    if (state.player.equipment.some((eq, idx) => idx !== choice.slotIndex && eq.id === dropped.id)) {
       return false;
     }
     state.player.equipment[choice.slotIndex] = {
@@ -1132,7 +1097,7 @@ export function getActiveBossLaserWidth(laser: BossLaserState): number {
 export function rollDropEquipmentLevel(
   equipment: readonly EquippedItem[],
   rngNext: () => number,
-  dropQualityTier = 0
+  dropQualityTier = 0,
 ): number {
   if (equipment.length === 0) return 1;
   let minLevel = Infinity;
@@ -1159,14 +1124,8 @@ function pickChestDrop(state: GameState, chestId: number): { id: EquipmentId; le
   return { id, level };
 }
 
-function damageEnemy(
-  state: GameState,
-  enemy: EnemyState,
-  amount: number,
-  bypassDashInvuln = false
-): void {
-  const isDashInvuln =
-    Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
+function damageEnemy(state: GameState, enemy: EnemyState, amount: number, bypassDashInvuln = false): void {
+  const isDashInvuln = Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
   if (isDashInvuln && !bypassDashInvuln) {
     enemy.hitFlash = 0.06;
     spawnParticles(state, enemy.x, enemy.y, '#cbd5e1', 2, 30, 90, 1.8, 0.16);
@@ -1193,7 +1152,7 @@ function findNearestVisibleEnemy(
   range: number,
   state: GameState,
   excludeIds: readonly number[] = [],
-  allowExceedMaxRange = false
+  allowExceedMaxRange = false,
 ): EnemyState | null {
   let bestEnemy: EnemyState | null = null;
   let bestDist = allowExceedMaxRange ? range : Math.min(range, MAX_TARGET_RANGE);
@@ -1214,7 +1173,7 @@ function triggerChainLightning(
   sourceY: number,
   range: number,
   damage: number,
-  maxTargets = 3
+  maxTargets = 3,
 ): boolean {
   const first = findNearestVisibleEnemy(sourceX, sourceY, range, state);
   if (!first) return false;
@@ -1265,7 +1224,7 @@ function hasClearCorridorPath(
   bx: number,
   by: number,
   radius: number,
-  map: DungeonMap
+  map: DungeonMap,
 ): boolean {
   if (!hasLineOfSight(ax, ay, bx, by, map)) return false;
   const dx = bx - ax;
@@ -1275,8 +1234,7 @@ function hasClearCorridorPath(
   const nx = (-dy / len) * (radius * 0.75);
   const ny = (dx / len) * (radius * 0.75);
   return (
-    hasLineOfSight(ax + nx, ay + ny, bx + nx, by + ny, map) &&
-    hasLineOfSight(ax - nx, ay - ny, bx - nx, by - ny, map)
+    hasLineOfSight(ax + nx, ay + ny, bx + nx, by + ny, map) && hasLineOfSight(ax - nx, ay - ny, bx - nx, by - ny, map)
   );
 }
 
@@ -1291,12 +1249,7 @@ const BFS_NEIGHBORS: readonly [number, number][] = [
   [-1, -1],
 ];
 
-function findBfsSteerTarget(
-  enemy: EnemyState,
-  player: PlayerState,
-  map: DungeonMap,
-  bfsDist: Int32Array
-): Vec2 {
+function findBfsSteerTarget(enemy: EnemyState, player: PlayerState, map: DungeonMap, bfsDist: Int32Array): Vec2 {
   const etx = Math.floor(enemy.x / TILE_SIZE);
   const ety = Math.floor(enemy.y / TILE_SIZE);
   const ptx = Math.floor(player.x / TILE_SIZE);
@@ -1307,8 +1260,7 @@ function findBfsSteerTarget(
   }
 
   const currIdx = ety * map.width + etx;
-  const currDist =
-    etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? bfsDist[currIdx] : -1;
+  const currDist = etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? bfsDist[currIdx] : -1;
 
   let bestTx = etx;
   let bestTy = ety;
@@ -1337,17 +1289,11 @@ function findBfsSteerTarget(
   return tileCenterWorld(bestTx, bestTy);
 }
 
-function findScoutFleeTarget(
-  enemy: EnemyState,
-  player: PlayerState,
-  map: DungeonMap,
-  bfsDist: Int32Array
-): Vec2 {
+function findScoutFleeTarget(enemy: EnemyState, player: PlayerState, map: DungeonMap, bfsDist: Int32Array): Vec2 {
   const etx = Math.floor(enemy.x / TILE_SIZE);
   const ety = Math.floor(enemy.y / TILE_SIZE);
   const currIdx = ety * map.width + etx;
-  const currBfs =
-    etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? bfsDist[currIdx] : 0;
+  const currBfs = etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? bfsDist[currIdx] : 0;
 
   // If scout is inside a room, look for nearby corridor exits that lead away from (or not closer to) the player
   const scoutRoom = findRoomAtTile(map, etx, ety);
@@ -1409,11 +1355,8 @@ function findScoutFleeTarget(
     const nd = bfsDist[ny * map.width + nx];
     const bfsScore = nd >= 0 ? nd * TILE_SIZE : 0;
     const distScore = Math.hypot(nw.x - player.x, nw.y - player.y);
-    const exitBonus = preferredExit
-      ? -Math.hypot(nw.x - preferredExit.x, nw.y - preferredExit.y) * exitWeight
-      : 0;
-    const momentumBonus =
-      enemy.wanderDir && enemy.wanderDir.x === dx && enemy.wanderDir.y === dy ? 14 : 0;
+    const exitBonus = preferredExit ? -Math.hypot(nw.x - preferredExit.x, nw.y - preferredExit.y) * exitWeight : 0;
+    const momentumBonus = enemy.wanderDir && enemy.wanderDir.x === dx && enemy.wanderDir.y === dy ? 14 : 0;
 
     const total = bfsScore * 0.65 + distScore * 0.85 + exitBonus + momentumBonus;
     if (total > bestScore) {
@@ -1491,10 +1434,7 @@ export const getMainWeaponStats = getPlayerBaseAttackStats;
  * Attempts to consume a mob_dash charge to completely evade an incoming hit (no damage, extended invuln, speed boost).
  * Can evade all attack types including pierceDefense, mortars, boss lasers, and boss dashes.
  */
-function tryTacticalStepEvade(
-  state: GameState,
-  mods: ComputedSkillModifiers
-): boolean {
+function tryTacticalStepEvade(state: GameState, mods: ComputedSkillModifiers): boolean {
   const { player } = state;
   const charges = player.tacticalStepCharges ?? mods.tacticalMaxCharges;
   if (!mods.hasTacticalStep || charges <= 0) return false;
@@ -1526,7 +1466,7 @@ function applyPlayerHitDamage(
   shakeIntensity: number,
   shakeDuration: number,
   particleColor = '#f87171',
-  particleCount = 6
+  particleCount = 6,
 ): boolean {
   const { player } = state;
   player.hp = Math.max(0, player.hp - damage);
@@ -1553,11 +1493,7 @@ function applyPlayerHitDamage(
  * Attempts to trigger def_aegis parry against parryable hits (melee contact or normal enemy projectiles).
  * Piercing projectiles, parabolic mortars, and boss lasers bypass parry.
  */
-function tryAegisParry(
-  state: GameState,
-  mods: ComputedSkillModifiers,
-  counterTarget?: EnemyState
-): boolean {
+function tryAegisParry(state: GameState, mods: ComputedSkillModifiers, counterTarget?: EnemyState): boolean {
   const { player } = state;
   if (!mods.hasAegisParry || player.aegisCooldown > 0) return false;
   player.aegisCooldown = mods.aegisCooldown;
@@ -1622,10 +1558,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         player.tacticalStepCooldown = mods.tacticalStepCooldown;
       }
       player.tacticalStepCooldown -= clampedDt;
-      while (
-        player.tacticalStepCooldown <= 0 &&
-        (player.tacticalStepCharges ?? charges) < mods.tacticalMaxCharges
-      ) {
+      while (player.tacticalStepCooldown <= 0 && (player.tacticalStepCharges ?? charges) < mods.tacticalMaxCharges) {
         const updated = (player.tacticalStepCharges ?? charges) + 1;
         player.tacticalStepCharges = updated;
         if (updated < mods.tacticalMaxCharges) {
@@ -1653,8 +1586,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   // 1. Player movement & smooth wall collision (APP-MAP-02)
   const prevPlayerX = player.x;
   const prevPlayerY = player.y;
-  const activeSpeedBonus =
-    (player.tacticalSpeedTimer ?? 0) > 0 ? (player.tacticalSpeedBonus ?? 0) : 0;
+  const activeSpeedBonus = (player.tacticalSpeedTimer ?? 0) > 0 ? (player.tacticalSpeedBonus ?? 0) : 0;
   const moveSpeed = player.baseSpeed * (1 + activeSpeedBonus);
   const inputMag = Math.hypot(rawInput.x, rawInput.y);
   if (inputMag > 1e-4) {
@@ -1665,7 +1597,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       player.x + vx * clampedDt,
       player.y + vy * clampedDt,
       player.radius,
-      map
+      map,
     );
     player.x = resolved.x;
     player.y = resolved.y;
@@ -1714,13 +1646,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       return;
     }
     if ((state.stairsNoticeCooldown ?? 0) <= 0) {
-      pushNotification(
-        state,
-        'alert',
-        `🔒 階段は封印中！ボス（残り${lockCount}体）を倒せ！`,
-        '#f43f5e',
-        2.4
-      );
+      pushNotification(state, 'alert', `🔒 階段は封印中！ボス（残り${lockCount}体）を倒せ！`, '#f43f5e', 2.4);
       state.stairsNoticeCooldown = 2.0;
     }
   }
@@ -1741,23 +1667,16 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     const pulseRange = Math.min(MAX_TARGET_RANGE, mods.repulsorRange * mods.rangeMult);
     const nearby = state.enemies.filter(
       (e) =>
-        Math.hypot(e.x - player.x, e.y - player.y) <= pulseRange &&
-        hasLineOfSight(player.x, player.y, e.x, e.y, map)
+        Math.hypot(e.x - player.x, e.y - player.y) <= pulseRange && hasLineOfSight(player.x, player.y, e.x, e.y, map),
     );
     if (nearby.length > 0) {
       for (const e of nearby) {
-        const knockbackImmune =
-          e.kind === 'shooter' || Boolean(e.isRoomBoss) || Boolean(e.isGrandBoss);
+        const knockbackImmune = e.kind === 'shooter' || Boolean(e.isRoomBoss) || Boolean(e.isGrandBoss);
         if (!knockbackImmune) {
           const dx = e.x - player.x;
           const dy = e.y - player.y;
           const d = Math.max(1, Math.hypot(dx, dy));
-          const pushed = resolveCircleGridCollision(
-            e.x + (dx / d) * 38,
-            e.y + (dy / d) * 38,
-            e.radius,
-            map
-          );
+          const pushed = resolveCircleGridCollision(e.x + (dx / d) * 38, e.y + (dy / d) * 38, e.radius, map);
           e.x = pushed.x;
           e.y = pushed.y;
         }
@@ -1789,16 +1708,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const perpY = dirX;
       const laneSpacing = baseStats.armOverclockLevel >= 1 ? 10 : 14;
       const mainLife = Math.max(0.75, (baseStats.range + 60) / baseStats.speed);
-      const chargeRadius =
-        5 + (baseStats.armBaseLevel >= 5 ? 4.0 : baseStats.armBaseLevel >= 3 ? 2.5 : 0);
-      const sideLaserRadius =
-        4.0 + (baseStats.armBaseLevel >= 5 ? 0.8 : baseStats.armBaseLevel >= 3 ? 0.4 : 0);
+      const chargeRadius = 5 + (baseStats.armBaseLevel >= 5 ? 4.0 : baseStats.armBaseLevel >= 3 ? 2.5 : 0);
+      const sideLaserRadius = 4.0 + (baseStats.armBaseLevel >= 5 ? 0.8 : baseStats.armBaseLevel >= 3 ? 0.4 : 0);
       const sideLaserDamage = Math.max(1, Math.round(baseStats.damage * 0.6));
-      const mainColor = baseStats.pierce
-        ? '#2dd4bf'
-        : baseStats.armBaseLevel >= 3
-          ? '#6ee7b7'
-          : '#34d399';
+      const mainColor = baseStats.pierce ? '#2dd4bf' : baseStats.armBaseLevel >= 3 ? '#6ee7b7' : '#34d399';
 
       const centerIndex = Math.floor(baseStats.shotCount / 2);
       for (let s = 0; s < baseStats.shotCount; s++) {
@@ -1824,10 +1737,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           baseLevel: baseStats.armBaseLevel,
           overclockLevel: baseStats.armOverclockLevel,
           isCenterCharge,
-          visualTier: Math.max(
-            baseStats.armBaseLevel >= 3 ? 1 : 0,
-            baseStats.armOverclockLevel
-          ),
+          visualTier: Math.max(baseStats.armBaseLevel >= 3 ? 1 : 0, baseStats.armOverclockLevel),
           hitEnemyIds: [],
           color: mainColor,
         });
@@ -1959,10 +1869,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           if (diff <= blade.halfArcRad) {
             state.enemyProjectiles.splice(bIdx, 1);
             const inSpeed = Math.hypot(ep.vx, ep.vy);
-            const refAngle =
-              inSpeed > 1e-3
-                ? Math.atan2(-ep.vy, -ep.vx)
-                : Math.atan2(ep.y - player.y, ep.x - player.x);
+            const refAngle = inSpeed > 1e-3 ? Math.atan2(-ep.vy, -ep.vx) : Math.atan2(ep.y - player.y, ep.x - player.x);
             const refSpeed = Math.max(360, inSpeed * 1.6);
             state.projectiles.push({
               id: state.nextEntityId++,
@@ -2009,10 +1916,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         item.cooldown = def.baseCooldown * cdMult;
       }
     } else if (item.id === 'seeker_drone') {
-      const range = Math.min(
-        MAX_TARGET_RANGE,
-        getSeekerDroneRange(item.level, def.baseRange, mods.rangeMult)
-      );
+      const range = Math.min(MAX_TARGET_RANGE, getSeekerDroneRange(item.level, def.baseRange, mods.rangeMult));
       const target = findNearestVisibleEnemy(player.x, player.y, range, state);
       if (target) {
         const dronesToFire = Math.max(1, seekerDrones.length);
@@ -2131,9 +2035,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       continue;
     }
     if (!ep.pierceDefense && bits.length > 0) {
-      const blockedByBit = bits.some(
-        (bit) => Math.hypot(bit.x - ep.x, bit.y - ep.y) <= ep.radius + 10
-      );
+      const blockedByBit = bits.some((bit) => Math.hypot(bit.x - ep.x, bit.y - ep.y) <= ep.radius + 10);
       if (blockedByBit) {
         state.enemyProjectiles.splice(i, 1);
       }
@@ -2187,9 +2089,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             }
             clearDiscLoopState(proj);
             const target =
-              targetId !== undefined
-                ? state.enemies.find((e) => e.id === targetId && e.hp > 0)
-                : undefined;
+              targetId !== undefined ? state.enemies.find((e) => e.id === targetId && e.hp > 0) : undefined;
             const resumeAngle =
               target && Math.hypot(target.x - proj.x, target.y - proj.y) > 1e-6
                 ? Math.atan2(target.y - proj.y, target.x - proj.x)
@@ -2201,13 +2101,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
 
       if (runNormalMove) {
-        const homingTarget = findNearestVisibleEnemy(
-          proj.x,
-          proj.y,
-          170,
-          state,
-          proj.hitEnemyIds
-        );
+        const homingTarget = findNearestVisibleEnemy(proj.x, proj.y, 170, state, proj.hitEnemyIds);
         if (homingTarget) {
           const currAngle = Math.atan2(proj.vy, proj.vx);
           const desiredAngle = Math.atan2(homingTarget.y - proj.y, homingTarget.x - proj.x);
@@ -2292,7 +2186,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
               proj.homingRange ?? 220,
               state,
               proj.hitEnemyIds,
-              true
+              true,
             );
             if (immediateTarget) {
               const aimAngle = Math.atan2(immediateTarget.y - proj.y, immediateTarget.x - proj.x);
@@ -2342,7 +2236,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             proj.homingRange ?? 220,
             state,
             proj.hitEnemyIds,
-            true
+            true,
           );
           if (immediateTarget) {
             const aimAngle = Math.atan2(immediateTarget.y - proj.y, immediateTarget.x - proj.x);
@@ -2362,7 +2256,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           proj.homingRange ?? 220,
           state,
           proj.hitEnemyIds,
-          true
+          true,
         );
         if (homingTarget) {
           const currAngle = Math.atan2(proj.vy, proj.vx);
@@ -2393,10 +2287,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       proj.y += proj.vy * clampedDt;
     }
 
-    const isLoopingDisc =
-      proj.kind === 'disc' && proj.loopCenterX !== undefined && proj.loopCenterY !== undefined;
-    const exceededDist =
-      proj.maxDistance !== undefined && (proj.traveledDist ?? 0) >= proj.maxDistance;
+    const isLoopingDisc = proj.kind === 'disc' && proj.loopCenterX !== undefined && proj.loopCenterY !== undefined;
+    const exceededDist = proj.maxDistance !== undefined && (proj.traveledDist ?? 0) >= proj.maxDistance;
     if (proj.life <= 0 || (!isLoopingDisc && (exceededDist || isWallAtWorld(map, proj.x, proj.y)))) {
       state.projectiles.splice(i, 1);
       continue;
@@ -2458,7 +2350,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   // 9. Update enemies (with BFS corridor pathfinding, scout wander/alert, shooter 4/6/8-way rotating barrage, boss patterns, room-only repop)
   const rng = createRng(
-    (state.seed ^ (state.stats.kills * 7919) ^ (state.floor * 131) ^ Math.floor(state.elapsedFloorTime * 10)) >>> 0
+    (state.seed ^ (state.stats.kills * 7919) ^ (state.floor * 131) ^ Math.floor(state.elapsedFloorTime * 10)) >>> 0,
   );
 
   // 9a. Timed reinforcement respawn (room tiles only; boss floor spawns inside boss arena only while grand boss is active)
@@ -2466,9 +2358,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   state.respawnTimer -= clampedDt;
   const maxAlive = 26 + state.floor * 3;
   const isBossArenaFloor = map.floorType === 'boss';
-  const activeGrandBoss = isBossArenaFloor
-    ? state.enemies.find((e) => e.isGrandBoss && e.hp > 0)
-    : undefined;
+  const activeGrandBoss = isBossArenaFloor ? state.enemies.find((e) => e.isGrandBoss && e.hp > 0) : undefined;
   const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss && activeGrandBoss.awake);
 
   if (state.respawnTimer <= 0) {
@@ -2540,7 +2430,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                 extraPos.x,
                 extraPos.y,
                 state.floor,
-                MAX_TARGET_RANGE
+                MAX_TARGET_RANGE,
               );
               follower.isPackFollower = true;
               if (bossArena) follower.awake = true;
@@ -2553,7 +2443,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           'info',
           bossArena ? '👾 ボスアリーナに増援が出現！' : '👾 ダンジョン奥の部屋に新たな敵の気配…',
           '#c084fc',
-          2.2
+          2.2,
         );
       }
     }
@@ -2579,10 +2469,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     if (orbitItem && enemy.bitHitCooldown <= 0) {
       for (const bit of bits) {
-        if (
-          !isWallAtWorld(map, bit.x, bit.y) &&
-          Math.hypot(enemy.x - bit.x, enemy.y - bit.y) <= enemy.radius + 9
-        ) {
+        if (!isWallAtWorld(map, bit.x, bit.y) && Math.hypot(enemy.x - bit.x, enemy.y - bit.y) <= enemy.radius + 9) {
           damageEnemy(state, enemy, orbitDmg);
           enemy.bitHitCooldown = 0.35;
           break;
@@ -2594,20 +2481,19 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       state.stats.kills += 1;
       const wasRoomBoss = Boolean(enemy.isRoomBoss);
       const wasGrandBoss = Boolean(enemy.isGrandBoss);
-      const deathColor =
-        wasGrandBoss
-          ? '#fbbf24'
-          : wasRoomBoss
-            ? '#f43f5e'
-            : enemy.kind === 'runner'
-              ? '#fde047'
-              : enemy.kind === 'tank'
-                ? '#c084fc'
-                : enemy.kind === 'shooter'
-                  ? '#38bdf8'
-                  : enemy.kind === 'scout'
-                    ? '#fb923c'
-                    : '#fb7185';
+      const deathColor = wasGrandBoss
+        ? '#fbbf24'
+        : wasRoomBoss
+          ? '#f43f5e'
+          : enemy.kind === 'runner'
+            ? '#fde047'
+            : enemy.kind === 'tank'
+              ? '#c084fc'
+              : enemy.kind === 'shooter'
+                ? '#38bdf8'
+                : enemy.kind === 'scout'
+                  ? '#fb923c'
+                  : '#fb7185';
       if (wasRoomBoss || wasGrandBoss) {
         emitSound(state, 'boss_kill');
         triggerShake(state, wasGrandBoss ? 10 : 7.5, wasGrandBoss ? 0.38 : 0.28);
@@ -2659,11 +2545,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const equipDropChance = (0.015 + mods.equipDropBonus) * dropRateScale;
           if (rng.next() < equipDropChance) {
             const eqId = rng.pick(ALL_EQUIPMENT_IDS);
-            const itemLevel = rollDropEquipmentLevel(
-              player.equipment,
-              () => rng.next(),
-              mods.dropQualityTier
-            );
+            const itemLevel = rollDropEquipmentLevel(player.equipment, () => rng.next(), mods.dropQualityTier);
             state.pickups.push({
               id: state.nextEntityId++,
               kind: 'equip',
@@ -2687,7 +2569,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             ? `🏆 階層ボス撃破！階段から先（${state.floor + 1}F）へ進める！`
             : '🔓 中ボス撃破！階段の封印が解けた！',
           '#22d3ee',
-          3.2
+          3.2,
         );
         state.visualFx.push({
           kind: 'pulse',
@@ -2778,16 +2660,19 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                 }
               }
             }
-            const ambushCount = Math.min(
-              spawnCandidates.length,
-              remainingCap,
-              state.floor >= 3 ? 3 : 2
-            );
+            const ambushCount = Math.min(spawnCandidates.length, remainingCap, state.floor >= 3 ? 3 : 2);
             for (let s = 0; s < ambushCount; s++) {
               const pickIdx = rng.int(0, spawnCandidates.length - 1);
               const picked = spawnCandidates.splice(pickIdx, 1)[0];
               const pos = tileCenterWorld(picked.tx, picked.ty);
-              const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
+              const runner = createEnemyByKind(
+                state.nextEntityId++,
+                'runner',
+                pos.x,
+                pos.y,
+                state.floor,
+                MAX_TARGET_RANGE,
+              );
               runner.speed = Math.max(228, Math.min(265, Math.round(224 + (state.floor - 1) * 4)));
               runner.spawnDelay = 0.45;
               runner.awake = true;
@@ -2832,7 +2717,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                   ? '⚠️ 通路でスカウトと遭遇！高速の敵が迫る！'
                   : '⚠️ スカウトに発見された！高速の敵が迫る！',
                 '#f97316',
-                2.8
+                2.8,
               );
             }
           }
@@ -2864,10 +2749,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             const forward = validDirs.find((d) => d.dx === prevDx && d.dy === prevDy);
             const nonReverse = validDirs.filter((d) => !(d.dx === -prevDx && d.dy === -prevDy));
             const pool = nonReverse.length > 0 ? nonReverse : validDirs;
-            const chosen =
-              forward && rng.next() < 0.72
-                ? forward
-                : pool[rng.int(0, pool.length - 1)];
+            const chosen = forward && rng.next() < 0.72 ? forward : pool[rng.int(0, pool.length - 1)];
             enemy.wanderTarget = tileCenterWorld(chosen.tx, chosen.ty);
             enemy.wanderDir = { x: chosen.dx, y: chosen.dy };
           } else {
@@ -2885,7 +2767,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
               enemy.x + (wdx / wDist) * wanderSpeed * clampedDt,
               enemy.y + (wdy / wDist) * wanderSpeed * clampedDt,
               enemy.radius,
-              map
+              map,
             );
             enemy.x = resolved.x;
             enemy.y = resolved.y;
@@ -2897,9 +2779,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     // Normal enemy archetype: player-level-scaled weak ranged shot (prevents 1F bullet-hell while escalating later)
     if ((!enemy.kind || enemy.kind === 'normal') && enemy.awake) {
       const inSight =
-        distToPlayer > 1e-3 &&
-        distToPlayer <= 190 &&
-        hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+        distToPlayer > 1e-3 && distToPlayer <= 190 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
       if (!inSight) {
         enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.55);
       } else if (wasAwake) {
@@ -2960,12 +2840,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           let ty = player.y;
           const steps = 5;
           for (let s = 0; s < steps; s++) {
-            const stepped = resolveCircleGridCollision(
-              tx + leadDx / steps,
-              ty + leadDy / steps,
-              player.radius,
-              map
-            );
+            const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
             tx = stepped.x;
             ty = stepped.y;
           }
@@ -2991,8 +2866,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       const enemyTx = Math.floor(enemy.x / TILE_SIZE);
       const enemyTy = Math.floor(enemy.y / TILE_SIZE);
       const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
-      const canShooterFire =
-        distToPlayer > 1e-3 && ((sameRoom && distToPlayer <= 420) || distToPlayer <= 380);
+      const canShooterFire = distToPlayer > 1e-3 && ((sameRoom && distToPlayer <= 420) || distToPlayer <= 380);
       if (!canShooterFire) {
         enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
       } else if (wasAwake) {
@@ -3006,8 +2880,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const shotIdx = enemy.bossPatternIndex ?? 0;
           const baseOffset = shotIdx * angleStep;
           const pierceSlotA = rng.int(0, dirCount - 1);
-          const pierceSlotB =
-            dirCount >= 6 ? (pierceSlotA + rng.int(1, dirCount - 1)) % dirCount : -1;
+          const pierceSlotB = dirCount >= 6 ? (pierceSlotA + rng.int(1, dirCount - 1)) % dirCount : -1;
           for (let k = 0; k < dirCount; k++) {
             const angle = baseOffset + (k * Math.PI * 2) / dirCount;
             const isPiercing = k === pierceSlotA || k === pierceSlotB;
@@ -3040,8 +2913,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         enemy.dashState !== 'recovering'
       ) {
         enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? 0.6) - clampedDt);
-        const canBossMortar =
-          distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 780 : 400);
+        const canBossMortar = distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 780 : 400);
         if (canBossMortar && (enemy.mortarCooldown ?? 0) <= 0) {
           const mortarDuration = 0.85;
           const burstCount = isGrand ? 3 : 1;
@@ -3060,12 +2932,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
             let ty = player.y;
             const steps = 5;
             for (let s = 0; s < steps; s++) {
-              const stepped = resolveCircleGridCollision(
-                tx + leadDx / steps,
-                ty + leadDy / steps,
-                player.radius,
-                map
-              );
+              const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
               tx = stepped.x;
               ty = stepped.y;
             }
@@ -3099,7 +2966,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           enemy.x + enemy.dashDir.x * stepDist,
           enemy.y + enemy.dashDir.y * stepDist,
           enemy.radius,
-          map
+          map,
         );
         const moved = Math.hypot(resolvedDash.x - enemy.x, resolvedDash.y - enemy.y);
         enemy.x = resolvedDash.x;
@@ -3111,18 +2978,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         let endedDash = (enemy.dashTimer ?? 0) <= 0;
         if (hitWall) {
           if ((enemy.dashBouncesLeft ?? 0) > 0) {
-            const rx = resolveCircleGridCollision(
-              enemy.x + enemy.dashDir.x * stepDist,
-              enemy.y,
-              enemy.radius,
-              map
-            );
-            const ry = resolveCircleGridCollision(
-              enemy.x,
-              enemy.y + enemy.dashDir.y * stepDist,
-              enemy.radius,
-              map
-            );
+            const rx = resolveCircleGridCollision(enemy.x + enemy.dashDir.x * stepDist, enemy.y, enemy.radius, map);
+            const ry = resolveCircleGridCollision(enemy.x, enemy.y + enemy.dashDir.y * stepDist, enemy.radius, map);
             const blockedX =
               Math.abs(enemy.dashDir.x) > 1e-3 &&
               Math.abs(rx.x - enemy.x) < Math.abs(enemy.dashDir.x) * stepDist * 0.65;
@@ -3192,7 +3049,8 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
               const pierceStep = Math.floor(count / pierceCount);
               for (let k = 0; k < count; k++) {
                 const a = aimAngle + (k * Math.PI * 2) / count;
-                const isPiercing = ((k - pierceStart + count) % pierceStep === 0) &&
+                const isPiercing =
+                  (k - pierceStart + count) % pierceStep === 0 &&
                   Math.floor(((k - pierceStart + count) % count) / pierceStep) < pierceCount;
                 state.enemyProjectiles.push({
                   id: state.nextEntityId++,
@@ -3266,7 +3124,10 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
                   }
                   traveled += stepSize;
                 }
-                if (points.length === 1 || Math.hypot(lx - points[points.length - 1].x, ly - points[points.length - 1].y) > 4) {
+                if (
+                  points.length === 1 ||
+                  Math.hypot(lx - points[points.length - 1].x, ly - points[points.length - 1].y) > 4
+                ) {
                   points.push({ x: lx, y: ly });
                 }
                 if (!state.bossLasers) state.bossLasers = [];
@@ -3321,9 +3182,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
     const isBossDashLocked =
       enemy.isRoomBoss &&
-      (enemy.dashState === 'windup' ||
-        enemy.dashState === 'dashing' ||
-        enemy.dashState === 'recovering');
+      (enemy.dashState === 'windup' || enemy.dashState === 'dashing' || enemy.dashState === 'recovering');
 
     if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isBossDashLocked) {
       let steerX = player.x;
@@ -3342,9 +3201,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           ? Math.min(SCOUT_MAX_ALERT_SPEED, Math.round(enemy.speed * SCOUT_ALERT_SPEED_MULT))
           : enemy.speed;
       const effectiveSpeed =
-        orbitItem && distToPlayer <= player.orbitRadius
-          ? baseMoveSpeed * ORBIT_SHIELD_INNER_SLOW
-          : baseMoveSpeed;
+        orbitItem && distToPlayer <= player.orbitRadius ? baseMoveSpeed * ORBIT_SHIELD_INNER_SLOW : baseMoveSpeed;
 
       const sdx = steerX - enemy.x;
       const sdy = steerY - enemy.y;
@@ -3414,19 +3271,15 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         enemy.x + moveX * clampedDt,
         enemy.y + moveY * clampedDt,
         enemy.radius,
-        map
+        map,
       );
       enemy.x = resolved.x;
       enemy.y = resolved.y;
     }
 
     // Contact damage to player
-    if (
-      player.invulnTimer <= 0 &&
-      Math.hypot(player.x - enemy.x, player.y - enemy.y) <= player.radius + enemy.radius
-    ) {
-      const isDashingBoss =
-        Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
+    if (player.invulnTimer <= 0 && Math.hypot(player.x - enemy.x, player.y - enemy.y) <= player.radius + enemy.radius) {
+      const isDashingBoss = Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
 
       if (!isDashingBoss) {
         if (tryAegisParry(state, mods, enemy)) {
@@ -3472,18 +3325,14 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       // Trigger reactive coil counter immediately on hit if equipped
       const coil = player.equipment.find((e) => e.id === 'reactive_coil');
       if (coil) {
-        const coilStats = getReactiveCoilStats(
-          coil.level,
-          EQUIPMENT_CATALOG.reactive_coil.baseRange,
-          mods.rangeMult
-        );
+        const coilStats = getReactiveCoilStats(coil.level, EQUIPMENT_CATALOG.reactive_coil.baseRange, mods.rangeMult);
         triggerChainLightning(
           state,
           player.x,
           player.y,
           Math.min(MAX_TARGET_RANGE, coilStats.range),
           getEquipmentDamage(coil, 1),
-          coilStats.maxTargets
+          coilStats.maxTargets,
         );
       }
     }
@@ -3496,10 +3345,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   // 9b. Enemy projectiles hitting player
   for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
     const ep = state.enemyProjectiles[i];
-    if (
-      player.invulnTimer <= 0 &&
-      Math.hypot(player.x - ep.x, player.y - ep.y) <= player.radius + ep.radius
-    ) {
+    if (player.invulnTimer <= 0 && Math.hypot(player.x - ep.x, player.y - ep.y) <= player.radius + ep.radius) {
       state.enemyProjectiles.splice(i, 1);
       if (!ep.pierceDefense && tryAegisParry(state, mods)) {
         continue;
@@ -3534,8 +3380,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       });
       if (
         player.invulnTimer <= 0 &&
-        Math.hypot(player.x - zone.targetX, player.y - zone.targetY) <=
-          zone.radius + player.radius * 0.5
+        Math.hypot(player.x - zone.targetX, player.y - zone.targetY) <= zone.radius + player.radius * 0.5
       ) {
         if (!tryTacticalStepEvade(state, mods)) {
           if (applyPlayerHitDamage(state, zone.damage, 6.5, 0.2, '#f87171', 7)) {
@@ -3560,9 +3405,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           const aby = b.y - a.y;
           const abLenSq = abx * abx + aby * aby;
           const t =
-            abLenSq > 1e-6
-              ? Math.max(0, Math.min(1, ((player.x - a.x) * abx + (player.y - a.y) * aby) / abLenSq))
-              : 0;
+            abLenSq > 1e-6 ? Math.max(0, Math.min(1, ((player.x - a.x) * abx + (player.y - a.y) * aby) / abLenSq)) : 0;
           const cx = a.x + abx * t;
           const cy = a.y + aby * t;
           minDist = Math.min(minDist, Math.hypot(player.x - cx, player.y - cy));

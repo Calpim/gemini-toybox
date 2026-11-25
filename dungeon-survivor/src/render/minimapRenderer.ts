@@ -11,7 +11,7 @@ export function renderHudMinimap(
   width: number,
   height: number,
   state: GameState,
-  nowSec: number
+  nowSec: number,
 ): void {
   if (width <= 0 || height <= 0) return;
 
@@ -160,7 +160,7 @@ export function renderHudMinimap(
       toScreenX(room.x) + 0.5,
       toScreenY(room.y) + 0.5,
       Math.max(2, room.w * cell - 1),
-      Math.max(2, room.h * cell - 1)
+      Math.max(2, room.h * cell - 1),
     );
   }
 
@@ -193,13 +193,7 @@ export function renderHudMinimap(
     if (chest.opened) continue;
     const ctxTx = Math.floor(chest.x / TILE_SIZE);
     const ctxTy = Math.floor(chest.y / TILE_SIZE);
-    if (
-      ctxTx >= 0 &&
-      ctxTy >= 0 &&
-      ctxTx < map.width &&
-      ctxTy < map.height &&
-      explored[ctxTy * map.width + ctxTx]
-    ) {
+    if (ctxTx >= 0 && ctxTy >= 0 && ctxTx < map.width && ctxTy < map.height && explored[ctxTy * map.width + ctxTx]) {
       const cx = toScreenX(chest.x / TILE_SIZE);
       const cy = toScreenY(chest.y / TILE_SIZE);
       ctx.fillRect(cx - chestSize / 2, cy - chestSize / 2, chestSize, chestSize);
@@ -208,9 +202,7 @@ export function renderHudMinimap(
 
   // 9. Awake bosses/enemies currently in vision (subtle red dots)
   for (const enemy of state.enemies) {
-    const visible =
-      enemy.isAmbush ||
-      (enemy.awake && isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y));
+    const visible = enemy.isAmbush || (enemy.awake && isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y));
     if (!visible) continue;
 
     const ex = toScreenX(enemy.x / TILE_SIZE);

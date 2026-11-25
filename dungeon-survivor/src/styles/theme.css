@@ -15,9 +15,9 @@
   --text-main: #f8fafc;
   --text-sub: #cbd5e1;
   --text-muted: #94a3b8;
-  --font-display: 'Orbitron', 'Rajdhani', ui-monospace, SFMono-Regular, Menlo, sans-serif;
-  --font-mono: 'Rajdhani', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-sans: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', sans-serif;
+  --font-display: "Orbitron", "Rajdhani", ui-monospace, SFMono-Regular, Menlo, sans-serif;
+  --font-mono: "Rajdhani", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
 }
 
 * {
@@ -273,10 +273,30 @@ body {
   pointer-events: none;
 }
 
-.mm-cap.tl { top: -2px; left: -2px; border-width: 2.5px 0 0 2.5px; border-radius: 4px 0 0 0; }
-.mm-cap.tr { top: -2px; right: -2px; border-width: 2.5px 2.5px 0 0; border-radius: 0 4px 0 0; }
-.mm-cap.bl { bottom: -2px; left: -2px; border-width: 0 0 2.5px 2.5px; border-radius: 0 0 0 4px; }
-.mm-cap.br { bottom: -2px; right: -2px; border-width: 0 2.5px 2.5px 0; border-radius: 0 0 4px 0; }
+.mm-cap.tl {
+  top: -2px;
+  left: -2px;
+  border-width: 2.5px 0 0 2.5px;
+  border-radius: 4px 0 0 0;
+}
+.mm-cap.tr {
+  top: -2px;
+  right: -2px;
+  border-width: 2.5px 2.5px 0 0;
+  border-radius: 0 4px 0 0;
+}
+.mm-cap.bl {
+  bottom: -2px;
+  left: -2px;
+  border-width: 0 0 2.5px 2.5px;
+  border-radius: 0 0 0 4px;
+}
+.mm-cap.br {
+  bottom: -2px;
+  right: -2px;
+  border-width: 0 2.5px 2.5px 0;
+  border-radius: 0 0 4px 0;
+}
 
 #minimapCanvas {
   display: block;
@@ -308,7 +328,9 @@ body {
   letter-spacing: 0.04em;
   white-space: nowrap;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.16s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.16s ease;
 }
 
 .hud-pill-btn:active {
@@ -327,7 +349,12 @@ body {
 }
 
 .hud-pill-skill.has-sp {
-  background: linear-gradient(90deg, rgba(6, 182, 212, 0.34) 0%, rgba(99, 102, 241, 0.38) 55%, rgba(168, 85, 247, 0.34) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(6, 182, 212, 0.34) 0%,
+    rgba(99, 102, 241, 0.38) 55%,
+    rgba(168, 85, 247, 0.34) 100%
+  );
   color: #ffffff;
   border-color: #67e8f9;
   box-shadow:
@@ -383,7 +410,11 @@ body {
   color: #94a3b8;
   border: 1px solid rgba(100, 116, 139, 0.45);
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .hud-icon-btn:active {
@@ -443,7 +474,7 @@ body {
 }
 
 .cyber-toast::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 2px;
   border-radius: 7px;
@@ -452,7 +483,7 @@ body {
 }
 
 .cyber-toast::before {
-  content: '';
+  content: "";
   width: 3px;
   height: 16px;
   border-radius: 2px;
@@ -465,14 +496,13 @@ body {
   --toast-accent: #fb923c;
   color: #ffedd5;
   border-color: rgba(249, 115, 22, 0.85);
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(153, 27, 27, 0.55) 0px,
-      rgba(153, 27, 27, 0.55) 8px,
-      rgba(69, 10, 10, 0.88) 8px,
-      rgba(69, 10, 10, 0.88) 16px
-    );
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(153, 27, 27, 0.55) 0px,
+    rgba(153, 27, 27, 0.55) 8px,
+    rgba(69, 10, 10, 0.88) 8px,
+    rgba(69, 10, 10, 0.88) 16px
+  );
   box-shadow:
     0 0 16px rgba(239, 68, 68, 0.45),
     inset 0 0 10px rgba(249, 115, 22, 0.22);
@@ -585,7 +615,10 @@ body {
   cursor: pointer;
   pointer-events: auto;
   text-shadow: 0 0 8px rgba(34, 211, 238, 0.75);
-  transition: transform 0.1s ease, color 0.15s ease, text-shadow 0.15s ease;
+  transition:
+    transform 0.1s ease,
+    color 0.15s ease,
+    text-shadow 0.15s ease;
 }
 
 .cockpit-side-btn.left {
@@ -708,7 +741,7 @@ body {
   border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(9, 18, 38, 0.94) 0%, rgba(5, 11, 24, 0.96) 100%),
-    url('../assets/circuit-bg.webp') center / cover no-repeat;
+    url("../assets/circuit-bg.webp") center / cover no-repeat;
   background-blend-mode: normal, screen;
   border: 1.5px solid rgba(56, 189, 248, 0.58);
   box-shadow:
@@ -718,7 +751,7 @@ body {
 }
 
 .modal-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 50%;
@@ -793,7 +826,9 @@ body {
     0 0 12px rgba(34, 211, 238, 0.35),
     inset 0 0 8px rgba(34, 211, 238, 0.16);
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
 }
 
 .modal-close-icon:hover {
@@ -843,7 +878,9 @@ body {
   padding: 4px 10px;
   border-radius: 8px;
   background: rgba(15, 23, 42, 0.88);
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .spec-link:hover {
@@ -921,7 +958,7 @@ body {
 
 .tree-arrow::before,
 .tree-arrow::after {
-  content: '';
+  content: "";
   flex: 1;
   max-width: 60px;
   height: 1px;
@@ -935,18 +972,21 @@ body {
   border: 1.5px solid rgba(71, 85, 105, 0.65);
   background: linear-gradient(180deg, rgba(16, 27, 50, 0.9), rgba(10, 18, 36, 0.94));
   color: #e2e8f0;
-  transition: transform 0.12s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
 }
 
-.tree-node[data-branch='arms'] {
+.tree-node[data-branch="arms"] {
   --branch-accent: #f87171;
 }
 
-.tree-node[data-branch='defense'] {
+.tree-node[data-branch="defense"] {
   --branch-accent: #60a5fa;
 }
 
-.tree-node[data-branch='mobility'] {
+.tree-node[data-branch="mobility"] {
   --branch-accent: #34d399;
 }
 
@@ -962,7 +1002,7 @@ body {
     inset 0 0 14px rgba(56, 189, 248, 0.18);
 }
 
-.tree-node.available[data-branch='defense'] {
+.tree-node.available[data-branch="defense"] {
   border-color: #38bdf8;
   background: linear-gradient(180deg, rgba(14, 48, 88, 0.76), rgba(9, 25, 52, 0.92));
   box-shadow:
@@ -970,7 +1010,7 @@ body {
     inset 0 0 14px rgba(56, 189, 248, 0.2);
 }
 
-.tree-node.available[data-branch='mobility'] {
+.tree-node.available[data-branch="mobility"] {
   border-color: #34d399;
   background: linear-gradient(180deg, rgba(10, 62, 56, 0.74), rgba(8, 30, 34, 0.92));
   box-shadow:
@@ -989,7 +1029,7 @@ body {
   background: linear-gradient(180deg, rgba(28, 22, 26, 0.78), rgba(14, 15, 26, 0.88));
 }
 
-.tree-node.locked[data-lock-reason='prereq'] {
+.tree-node.locked[data-lock-reason="prereq"] {
   border-color: rgba(100, 116, 139, 0.42);
   background: linear-gradient(180deg, rgba(19, 24, 38, 0.84), rgba(11, 16, 29, 0.9));
 }
@@ -1051,17 +1091,17 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
-.tree-node[data-branch='arms']:not(.locked) .node-icon {
+.tree-node[data-branch="arms"]:not(.locked) .node-icon {
   border-color: rgba(248, 113, 113, 0.55);
   box-shadow: 0 0 8px rgba(248, 113, 113, 0.22);
 }
 
-.tree-node[data-branch='defense']:not(.locked) .node-icon {
+.tree-node[data-branch="defense"]:not(.locked) .node-icon {
   border-color: rgba(96, 165, 250, 0.55);
   box-shadow: 0 0 8px rgba(96, 165, 250, 0.22);
 }
 
-.tree-node[data-branch='mobility']:not(.locked) .node-icon {
+.tree-node[data-branch="mobility"]:not(.locked) .node-icon {
   border-color: rgba(52, 211, 153, 0.55);
   box-shadow: 0 0 8px rgba(52, 211, 153, 0.22);
 }
@@ -1168,7 +1208,7 @@ body {
   color: #f59e0b;
 }
 
-.tree-node[data-lock-reason='prereq'] .node-lock-icon {
+.tree-node[data-lock-reason="prereq"] .node-lock-icon {
   color: #94a3b8;
 }
 
@@ -1188,17 +1228,21 @@ body {
   background: rgba(8, 22, 46, 0.92);
   color: #7dd3fc;
   cursor: pointer;
-  transition: transform 0.12s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.12s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .node-info-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -5px;
 }
 
 .node-info-btn:hover,
-.node-info-btn[aria-expanded='true'] {
+.node-info-btn[aria-expanded="true"] {
   color: #ffffff;
   border-color: #67e8f9;
   background: rgba(14, 52, 92, 0.96);
@@ -1235,17 +1279,17 @@ body {
   color: #f8fafc;
 }
 
-.skill-popover[data-branch='arms'] {
+.skill-popover[data-branch="arms"] {
   border-color: rgba(248, 113, 113, 0.72);
   --pop-accent: #f87171;
 }
 
-.skill-popover[data-branch='defense'] {
+.skill-popover[data-branch="defense"] {
   border-color: rgba(96, 165, 250, 0.78);
   --pop-accent: #60a5fa;
 }
 
-.skill-popover[data-branch='mobility'] {
+.skill-popover[data-branch="mobility"] {
   border-color: rgba(52, 211, 153, 0.74);
   --pop-accent: #34d399;
 }
@@ -1495,7 +1539,10 @@ body {
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .pause-tab:hover {
@@ -1863,7 +1910,7 @@ body {
 
 .signal-lost-title::before,
 .signal-lost-title::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 6%;
   right: 6%;
@@ -2003,7 +2050,10 @@ body {
   background: linear-gradient(90deg, #0284c7, #6366f1);
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.38);
   cursor: pointer;
-  transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.12s ease,
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .btn:hover {
@@ -2043,7 +2093,9 @@ body {
     0 14px
   );
   filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.45)) drop-shadow(0 0 14px rgba(192, 38, 211, 0.4));
-  transition: transform 0.12s ease, filter 0.15s ease;
+  transition:
+    transform 0.12s ease,
+    filter 0.15s ease;
 }
 
 .cyber-cta-bezel:hover {
@@ -2091,7 +2143,7 @@ body {
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(8, 16, 34, 0.8) 0%, rgba(5, 11, 24, 0.94) 68%),
-    url('../assets/title-bg.webp') center / cover no-repeat;
+    url("../assets/title-bg.webp") center / cover no-repeat;
   border: 1.5px solid rgba(56, 189, 248, 0.65);
   box-shadow:
     0 0 32px rgba(34, 211, 238, 0.25),

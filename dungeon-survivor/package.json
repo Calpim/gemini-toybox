@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "check": "biome check .",
     "spec:build": "node scripts/build-spec-html.mjs",
     "spec:test": "node --test scripts/build-spec-html.test.mjs",
     "test": "npm run spec:test && vitest run",
@@ -13,6 +16,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.9",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"

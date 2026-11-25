@@ -7,12 +7,7 @@ import {
   getStairsLockCount,
   isPointInPlayerVision,
 } from '../game/engine';
-import {
-  EQUIPMENT_CATALOG,
-  MAX_TARGET_RANGE,
-  getOrbitShieldRadius,
-  getSeekerDroneRange,
-} from '../game/equipment';
+import { EQUIPMENT_CATALOG, MAX_TARGET_RANGE, getOrbitShieldRadius, getSeekerDroneRange } from '../game/equipment';
 import { computeSkillModifiers } from '../game/skillTree';
 import type { EnemyState, GameState } from '../game/types';
 import type { VirtualStickState } from '../input/controller';
@@ -57,7 +52,7 @@ export function computeTopSafeY(canvasWidth: number, hudBottom?: number): number
 export function computeNotificationLayout(
   canvasWidth: number,
   canvasHeight: number,
-  hintTop?: number
+  hintTop?: number,
 ): NotificationLayout {
   const isCompact = canvasWidth < 540;
   const defaultHintTop = canvasHeight - 38;
@@ -80,7 +75,7 @@ export function computeNotificationLayout(
 export function computeFloorBannerRect(
   canvasWidth: number,
   canvasHeight: number,
-  topSafeY: number
+  topSafeY: number,
 ): { x: number; y: number; width: number; height: number } {
   const width = Math.min(270, Math.max(180, canvasWidth - 32));
   const height = 42;
@@ -117,7 +112,7 @@ function traceCutCornerRect(
   y: number,
   w: number,
   h: number,
-  cut: number
+  cut: number,
 ): void {
   const c = Math.max(0, Math.min(cut, w * 0.25, h * 0.45));
   ctx.beginPath();
@@ -138,7 +133,7 @@ function drawWallEdgesAndNotches(
   tx: number,
   ty: number,
   px: number,
-  py: number
+  py: number,
 ): void {
   const openTop = getTile(map, tx, ty - 1) !== 'wall';
   const openBottom = getTile(map, tx, ty + 1) !== 'wall';
@@ -208,24 +203,10 @@ function drawWallEdgesAndNotches(
     drawOuterCornerSlash(px + 2, py + notch, px + notch, py + 2, px + TILE_SIZE - 2.5, py + TILE_SIZE - 2.5);
   }
   if (!openBottom && !openLeft && getTile(map, tx - 1, ty + 1) !== 'wall') {
-    drawOuterCornerSlash(
-      px + TILE_SIZE - notch,
-      py + 2,
-      px + TILE_SIZE - 2,
-      py + notch,
-      px,
-      py + TILE_SIZE - 2.5
-    );
+    drawOuterCornerSlash(px + TILE_SIZE - notch, py + 2, px + TILE_SIZE - 2, py + notch, px, py + TILE_SIZE - 2.5);
   }
   if (!openTop && !openRight && getTile(map, tx + 1, ty - 1) !== 'wall') {
-    drawOuterCornerSlash(
-      px + 2,
-      py + TILE_SIZE - notch,
-      px + notch,
-      py + TILE_SIZE - 2,
-      px + TILE_SIZE - 2.5,
-      py
-    );
+    drawOuterCornerSlash(px + 2, py + TILE_SIZE - notch, px + notch, py + TILE_SIZE - 2, px + TILE_SIZE - 2.5, py);
   }
   if (!openTop && !openLeft && getTile(map, tx - 1, ty - 1) !== 'wall') {
     drawOuterCornerSlash(
@@ -234,7 +215,7 @@ function drawWallEdgesAndNotches(
       px + TILE_SIZE - 2,
       py + TILE_SIZE - notch,
       px,
-      py
+      py,
     );
   }
 }
@@ -246,7 +227,7 @@ function drawFloorStardust(
   ty: number,
   px: number,
   py: number,
-  nowSec: number
+  nowSec: number,
 ): void {
   const nearWall =
     getTile(map, tx - 1, ty) === 'wall' ||
@@ -286,7 +267,7 @@ function drawPlayerCore(
   y: number,
   radius: number,
   facingAngle: number,
-  nowSec: number
+  nowSec: number,
 ): void {
   const pulse = 0.82 + 0.18 * Math.sin(nowSec * 5.2);
 
@@ -369,25 +350,20 @@ function drawPlayerCore(
   ctx.restore();
 }
 
-function drawEnemyBody(
-  ctx: CanvasRenderingContext2D,
-  enemy: EnemyState,
-  nowSec: number
-): void {
+function drawEnemyBody(ctx: CanvasRenderingContext2D, enemy: EnemyState, nowSec: number): void {
   const kind = enemy.kind ?? 'normal';
   const flash = enemy.hitFlash > 0;
 
   // Pre-baked outer neon halo (zero shadowBlur)
-  const glowColor: GlowColor =
-    enemy.isGrandBoss
-      ? 'rose'
-      : kind === 'tank'
+  const glowColor: GlowColor = enemy.isGrandBoss
+    ? 'rose'
+    : kind === 'tank'
       ? 'purple'
       : kind === 'runner' || kind === 'scout'
-      ? 'amber'
-      : kind === 'shooter'
-      ? 'pink'
-      : 'rose';
+        ? 'amber'
+        : kind === 'shooter'
+          ? 'pink'
+          : 'rose';
   drawGlowSprite(
     ctx,
     glowColor,
@@ -395,7 +371,7 @@ function drawEnemyBody(
     enemy.y,
     enemy.radius * (enemy.isRoomBoss ? 2.5 : 2.1),
     enemy.awake ? 0.44 : 0.24,
-    true
+    true,
   );
 
   ctx.save();
@@ -487,20 +463,14 @@ function drawEnemyBody(
 
   if (kind === 'tank') {
     // Heavy armored neon hexagon
-    ctx.fillStyle = flash
-      ? '#ffffff'
-      : enemy.isGrandBoss
-      ? '#9f1239'
-      : enemy.awake
-      ? '#6d28d9'
-      : '#3b0764';
+    ctx.fillStyle = flash ? '#ffffff' : enemy.isGrandBoss ? '#9f1239' : enemy.awake ? '#6d28d9' : '#3b0764';
     ctx.strokeStyle = enemy.isGrandBoss
       ? '#fda4af'
       : enemy.isRoomBoss
-      ? '#fde047'
-      : enemy.awake
-      ? '#e9d5ff'
-      : '#7c3aed';
+        ? '#fde047'
+        : enemy.awake
+          ? '#e9d5ff'
+          : '#7c3aed';
     ctx.lineWidth = enemy.isRoomBoss ? 3.5 : 2.6;
     ctx.beginPath();
     for (let s = 0; s < 6; s++) {
@@ -515,9 +485,7 @@ function drawEnemyBody(
     ctx.stroke();
 
     // Inner tech hexagon + core ring
-    ctx.strokeStyle = enemy.isGrandBoss
-      ? 'rgba(253, 224, 71, 0.65)'
-      : 'rgba(221, 214, 254, 0.55)';
+    ctx.strokeStyle = enemy.isGrandBoss ? 'rgba(253, 224, 71, 0.65)' : 'rgba(221, 214, 254, 0.55)';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     for (let s = 0; s < 6; s++) {
@@ -617,9 +585,7 @@ function drawEnemyBody(
   } else if (kind === 'scout') {
     // Wandering scout with neon radar ring
     const pulse = 0.65 + 0.35 * Math.sin(nowSec * 6);
-    ctx.strokeStyle = enemy.awake
-      ? `rgba(249, 115, 22, ${0.8 * pulse})`
-      : `rgba(250, 204, 21, ${0.5 * pulse})`;
+    ctx.strokeStyle = enemy.awake ? `rgba(249, 115, 22, ${0.8 * pulse})` : `rgba(250, 204, 21, ${0.5 * pulse})`;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.arc(0, 0, enemy.radius + 5 + pulse * 3, 0, Math.PI * 2);
@@ -669,11 +635,7 @@ function drawEnemyBody(
     ctx.fillStyle = enemy.isGrandBoss ? '#fda4af' : '#fde047';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(
-      enemy.isGrandBoss ? 'GRAND BOSS' : 'GUARDIAN',
-      enemy.x,
-      enemy.y - enemy.radius - 14
-    );
+    ctx.fillText(enemy.isGrandBoss ? 'GRAND BOSS' : 'GUARDIAN', enemy.x, enemy.y - enemy.radius - 14);
     ctx.restore();
   }
 
@@ -694,7 +656,7 @@ export function renderGame(
   state: GameState,
   stick: VirtualStickState,
   nowSec: number,
-  insets: HudSafeInsets = {}
+  insets: HudSafeInsets = {},
 ): void {
   const { map, player, explored } = state;
   const mods = computeSkillModifiers(player.skillLevels);
@@ -752,9 +714,7 @@ export function renderGame(
           const locked = stairsLockCount > 0;
           drawGlowSprite(ctx, locked ? 'rose' : 'cyan', center.x, center.y, TILE_SIZE * 0.95, 0.45 * pulse, true);
           ctx.save();
-          ctx.fillStyle = locked
-            ? `rgba(244, 63, 94, ${0.22 * pulse})`
-            : `rgba(34, 211, 238, ${0.2 * pulse})`;
+          ctx.fillStyle = locked ? `rgba(244, 63, 94, ${0.22 * pulse})` : `rgba(34, 211, 238, ${0.2 * pulse})`;
           ctx.beginPath();
           ctx.arc(center.x, center.y, TILE_SIZE * 0.48, 0, Math.PI * 2);
           ctx.fill();
@@ -787,9 +747,7 @@ export function renderGame(
             drawGlowSprite(ctx, 'emerald', center.x, center.y, TILE_SIZE * 0.9, 0.42 * pulse, true);
           }
           ctx.save();
-          ctx.fillStyle = used
-            ? 'rgba(51, 65, 85, 0.35)'
-            : `rgba(45, 212, 191, ${0.26 * pulse})`;
+          ctx.fillStyle = used ? 'rgba(51, 65, 85, 0.35)' : `rgba(45, 212, 191, ${0.26 * pulse})`;
           ctx.beginPath();
           ctx.arc(center.x, center.y, TILE_SIZE * 0.46, 0, Math.PI * 2);
           ctx.fill();
@@ -898,10 +856,10 @@ export function renderGame(
       player.y,
       Math.min(
         MAX_TARGET_RANGE,
-        getSeekerDroneRange(droneEquip.level, EQUIPMENT_CATALOG.seeker_drone.baseRange, mods.rangeMult)
+        getSeekerDroneRange(droneEquip.level, EQUIPMENT_CATALOG.seeker_drone.baseRange, mods.rangeMult),
       ),
       0,
-      Math.PI * 2
+      Math.PI * 2,
     );
     ctx.stroke();
   }
@@ -1248,7 +1206,7 @@ export function renderGame(
           proj.y,
           glowRadius,
           isBigCharge ? 0.62 : 0.48,
-          true
+          true,
         );
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
@@ -1268,7 +1226,7 @@ export function renderGame(
             ? 'rgba(34, 211, 238, 0.58)'
             : isBigCharge
               ? 'rgba(52, 211, 153, 0.52)'
-              : 'rgba(52, 211, 153, 0.36)'
+              : 'rgba(52, 211, 153, 0.36)',
         );
         tailGrad.addColorStop(1, isOverclockCharge ? 'rgba(207, 250, 254, 0.9)' : 'rgba(167, 243, 208, 0.82)');
         ctx.fillStyle = tailGrad;
@@ -1399,7 +1357,7 @@ export function renderGame(
       ep.y,
       ep.radius * (ep.pierceDefense ? 2.8 : 2.2),
       ep.pierceDefense ? 0.55 : 0.4,
-      true
+      true,
     );
     if (ep.pierceDefense) {
       ctx.fillStyle = 'rgba(232, 121, 249, 0.28)';
@@ -1484,14 +1442,14 @@ export function renderGame(
     const bannerText = isBoss
       ? `BOSS FLOOR ${state.floor}F`
       : isGuardian
-      ? `GUARDIAN ${state.floor}F`
-      : `FLOOR ${state.floor}F`;
+        ? `GUARDIAN ${state.floor}F`
+        : `FLOOR ${state.floor}F`;
     const borderColor = isBoss ? '#f43f5e' : isGuardian ? '#facc15' : '#38bdf8';
     const glowStroke = isBoss
       ? 'rgba(244, 63, 94, 0.32)'
       : isGuardian
-      ? 'rgba(250, 204, 21, 0.32)'
-      : 'rgba(56, 189, 248, 0.34)';
+        ? 'rgba(250, 204, 21, 0.32)'
+        : 'rgba(56, 189, 248, 0.34)';
     const banner = computeFloorBannerRect(width, height, topSafeY);
 
     ctx.save();
@@ -1538,7 +1496,7 @@ function renderFogOverlay(
   zoom: number,
   camX: number,
   camY: number,
-  state: GameState
+  state: GameState,
 ): void {
   const fCanvas = getFogCanvas(width, height);
   if (!fCanvas) return;
@@ -1635,7 +1593,7 @@ function renderNotifications(
   width: number,
   height: number,
   state: GameState,
-  hintTop?: number
+  hintTop?: number,
 ): void {
   if (state.notifications.length === 0) return;
 
@@ -1694,12 +1652,7 @@ function renderNotifications(
   ctx.restore();
 }
 
-function renderMinimap(
-  ctx: CanvasRenderingContext2D,
-  canvasWidth: number,
-  state: GameState,
-  topSafeY: number
-): void {
+function renderMinimap(ctx: CanvasRenderingContext2D, canvasWidth: number, state: GameState, topSafeY: number): void {
   const { map, explored, player } = state;
   const stairsLocked = getStairsLockCount(state) > 0;
   const isNarrow = canvasWidth < 540;
@@ -1727,10 +1680,10 @@ function renderMinimap(
             ? '#fb7185'
             : '#22d3ee'
           : t === 'fountain'
-          ? state.fountainUsed
-            ? '#475569'
-            : '#2dd4bf'
-          : 'rgba(148, 163, 184, 0.45)';
+            ? state.fountainUsed
+              ? '#475569'
+              : '#2dd4bf'
+            : 'rgba(148, 163, 184, 0.45)';
       ctx.fillRect(ox + tx * cell, oy + ty * cell, cell, cell);
     }
   }
