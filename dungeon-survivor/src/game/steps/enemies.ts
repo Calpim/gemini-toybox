@@ -6,7 +6,6 @@ import type { ComputedSkillModifiers } from '../skillTree';
 import type { EnemyState, GameState, Vec2 } from '../types';
 import { damageEnemy } from './combatHelpers';
 import {
-  stepEnemyMovement,
   stepNormalEnemyAttack,
   stepScoutBehavior,
   stepShooterEnemyAttack,
@@ -14,6 +13,7 @@ import {
 } from './enemies/archetypes';
 import { stepBossBehavior, stepBossLasers, stepMortarZones } from './enemies/boss';
 import { type EnemiesStepDeps, handleEnemyDeath, stepFloorRespawn } from './enemies/lifecycle';
+import { stepEnemyMovement } from './enemies/movement';
 import { handleEnemyContactWithPlayer, stepEnemyProjectilesOnPlayer } from './enemies/playerHit';
 
 export {
