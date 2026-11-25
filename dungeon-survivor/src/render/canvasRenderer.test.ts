@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../game/engine';
-import {
-  computeFloorBannerRect,
-  computeNotificationLayout,
-  computeTopSafeY,
-  renderGame,
-} from './canvasRenderer';
+import { computeFloorBannerRect, computeNotificationLayout, computeTopSafeY, renderGame } from './canvasRenderer';
 import { renderHudMinimap } from './minimapRenderer';
 
 function createMockCtx(options: { includeGradients?: boolean } = {}) {
@@ -128,7 +123,7 @@ describe('canvasRenderer HUD safe layout', () => {
       state,
       { active: false, originX: 0, originY: 0, currentX: 0, currentY: 0, maxRadius: 48 },
       1.0,
-      { hudBottom, hintTop }
+      { hudBottom, hintTop },
     );
 
     const bannerText = fillTextCalls.find((c) => c.text.includes('FLOOR 1F'));
@@ -155,9 +150,7 @@ describe('canvasRenderer HUD safe layout', () => {
   it('skips legacy in-canvas minimap and notifications when hideCanvasMinimap and hideCanvasNotifications are set', () => {
     const state = createGameState({ seed: 202 });
     state.floorBannerTimer = 1.5;
-    state.notifications = [
-      { id: 1, kind: 'alert', text: 'HIDDEN_ALERT', color: '#f97316', life: 2.0, maxLife: 2.0 },
-    ];
+    state.notifications = [{ id: 1, kind: 'alert', text: 'HIDDEN_ALERT', color: '#f97316', life: 2.0, maxLife: 2.0 }];
 
     const stick = { active: false, originX: 0, originY: 0, currentX: 0, currentY: 0, maxRadius: 48 };
     const hudBottom = 106;
@@ -218,8 +211,8 @@ describe('canvasRenderer HUD safe layout', () => {
         state,
         { active: false, originX: 0, originY: 0, currentX: 0, currentY: 0, maxRadius: 48 },
         2.5,
-        { hideCanvasMinimap: true, hideCanvasNotifications: true }
-      )
+        { hideCanvasMinimap: true, hideCanvasNotifications: true },
+      ),
     ).not.toThrow();
   });
 });

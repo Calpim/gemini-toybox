@@ -86,7 +86,7 @@ function placeVertically(
   height: number,
   viewportHeight: number,
   margin: number,
-  gap: number
+  gap: number,
 ): { top: number; placement: 'bottom' | 'top' | 'center' } {
   if (anchorRect.bottom + gap + height <= viewportHeight - margin) {
     return { top: Math.round(anchorRect.bottom + gap), placement: 'bottom' };
@@ -100,7 +100,7 @@ function placeVertically(
 export function computePopoverPosition(
   anchorRect: PopoverRect,
   popSize: { width: number; height: number },
-  viewport: { width: number; height: number }
+  viewport: { width: number; height: number },
 ): PopoverLayout {
   const margin = 12;
   const gap = 10;
@@ -143,7 +143,7 @@ export function computePopoverPosition(
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className?: string,
-  text?: string
+  text?: string,
 ): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -191,7 +191,7 @@ function buildPopoverContent(popoverEl: HTMLElement, state: GameState, nodeId: S
   const metaEl = el(
     'div',
     'skill-popover-meta',
-    `${getBranchLabel(spec.branch)} · Tier ${spec.tier} · Lv${spec.currentLevel}/${spec.maxLevel}${isMax ? ' (MAX)' : ''}`
+    `${getBranchLabel(spec.branch)} · Tier ${spec.tier} · Lv${spec.currentLevel}/${spec.maxLevel}${isMax ? ' (MAX)' : ''}`,
   );
   titleText.append(titleEl, metaEl);
   titleGroup.append(iconBox, titleText);
@@ -234,7 +234,7 @@ function buildPopoverContent(popoverEl: HTMLElement, state: GameState, nodeId: S
   const breakdownHead = el('div', 'skill-popover-levels-head');
   breakdownHead.append(
     el('span', 'skill-popover-section-label', 'レベル別効果 ＆ SPコスト'),
-    el('span', 'skill-popover-total-sp', `合計 ${spec.totalCost} SP`)
+    el('span', 'skill-popover-total-sp', `合計 ${spec.totalCost} SP`),
   );
   breakdownSection.appendChild(breakdownHead);
 
@@ -245,7 +245,7 @@ function buildPopoverContent(popoverEl: HTMLElement, state: GameState, nodeId: S
     const isReached = row.level <= spec.currentLevel;
     const item = el(
       'div',
-      `skill-popover-level-row${isCurrent ? ' is-current' : ''}${isNext ? ' is-next' : ''}${isReached ? ' is-reached' : ''}`
+      `skill-popover-level-row${isCurrent ? ' is-current' : ''}${isNext ? ' is-next' : ''}${isReached ? ' is-reached' : ''}`,
     );
     const lvCol = el('span', 'skill-popover-lv-tag', `Lv${row.level}`);
     const costCol = el('span', 'skill-popover-sp-tag', `${row.cost} SP`);
@@ -325,7 +325,7 @@ function getOrCreatePopoverController(skillModal: HTMLElement): PopoverControlle
       const layout = computePopoverPosition(
         anchorRect,
         { width: popRect.width, height: popRect.height },
-        { width: vw, height: vh }
+        { width: vw, height: vh },
       );
       popoverEl.style.left = `${layout.left}px`;
       popoverEl.style.top = `${layout.top}px`;
@@ -456,7 +456,7 @@ function getOrCreatePopoverController(skillModal: HTMLElement): PopoverControlle
         ctrl.close(false);
       }
     },
-    { passive: true }
+    { passive: true },
   );
 
   if (typeof window !== 'undefined') {
@@ -509,7 +509,9 @@ function renderGearTabContent(container: HTMLElement, state: GameState): void {
   const { player } = state;
   const isMaxSlots = player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP;
   const expandCost = getScrapExpandCost(player.maxEquipSlots);
-  const progress = isMaxSlots ? 100 : Math.min(100, Math.round((player.scrapExpandProgress / Math.max(1, expandCost)) * 100));
+  const progress = isMaxSlots
+    ? 100
+    : Math.min(100, Math.round((player.scrapExpandProgress / Math.max(1, expandCost)) * 100));
   const remaining = Math.max(0, expandCost - player.scrapExpandProgress);
 
   const scrapTitleRight = isMaxSlots
@@ -532,7 +534,10 @@ function renderGearTabContent(container: HTMLElement, state: GameState): void {
     if (eq) {
       const def = EQUIPMENT_CATALOG[eq.id];
       const evo = getEquipmentEvolutionSummary(eq.id, eq.level);
-      const lvLabel = eq.level >= MAX_EQUIPMENT_LEVEL ? `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} MAX` : `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL}`;
+      const lvLabel =
+        eq.level >= MAX_EQUIPMENT_LEVEL
+          ? `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} MAX`
+          : `Lv${eq.level}/${MAX_EQUIPMENT_LEVEL}`;
       const chipsHtml = getEquipmentNumericChips(eq, state)
         .map((c) => `<span class="stat-chip">${c}</span>`)
         .join('');
@@ -591,11 +596,7 @@ function renderGearTabContent(container: HTMLElement, state: GameState): void {
   `;
 }
 
-export function renderModals(
-  state: GameState,
-  els: ModalElements,
-  handlers: ModalHandlers
-): void {
+export function renderModals(state: GameState, els: ModalElements, handlers: ModalHandlers): void {
   const ctrl = getOrCreatePopoverController(els.skillModal);
   ctrl.state = state;
 
@@ -640,9 +641,7 @@ export function renderModals(
       heading.append(dot, headingLabel);
       col.appendChild(heading);
 
-      const nodes = SKILL_TREE_NODES.filter((n) => n.branch === branch.id).sort(
-        (a, b) => a.tier - b.tier
-      );
+      const nodes = SKILL_TREE_NODES.filter((n) => n.branch === branch.id).sort((a, b) => a.tier - b.tier);
       nodes.forEach((node, idx) => {
         if (idx > 0) {
           col.appendChild(el('div', 'tree-arrow', `↓ 前提 Lv${SKILL_PREREQ_LEVEL}+`));
@@ -652,22 +651,11 @@ export function renderModals(
         const maxLv = getSkillMaxLevel(node.id);
         const isMax = currLv >= maxLv;
         const nextCost = getSkillUpgradeCost(currLv, node.id);
-        const isAvailable = canUpgradeSkill(
-          state.player.skillLevels,
-          state.player.skillPoints,
-          node.id
-        );
+        const isAvailable = canUpgradeSkill(state.player.skillLevels, state.player.skillPoints, node.id);
         const prereqMet =
-          node.requires === null ||
-          getSkillLevel(state.player.skillLevels, node.requires) >= SKILL_PREREQ_LEVEL;
+          node.requires === null || getSkillLevel(state.player.skillLevels, node.requires) >= SKILL_PREREQ_LEVEL;
 
-        const cardState = isMax
-          ? 'unlocked'
-          : isAvailable
-            ? 'available'
-            : currLv > 0
-              ? 'unlocked'
-              : 'locked';
+        const cardState = isMax ? 'unlocked' : isAvailable ? 'available' : currLv > 0 ? 'unlocked' : 'locked';
         const card = el('div', `tree-node ${cardState}`);
         card.dataset.branch = node.branch;
         card.dataset.tier = String(node.tier);
@@ -681,9 +669,7 @@ export function renderModals(
         actionBtn.disabled = !isAvailable;
         actionBtn.setAttribute(
           'aria-label',
-          isMax
-            ? `${node.name} Lv${currLv}/${maxLv} MAX`
-            : `${node.name} Lv${currLv}/${maxLv} (-${nextCost} SP)`
+          isMax ? `${node.name} Lv${currLv}/${maxLv} MAX` : `${node.name} Lv${currLv}/${maxLv} (-${nextCost} SP)`,
         );
 
         const headRow = el('div', 'node-head');
@@ -828,9 +814,7 @@ export function renderModals(
       const row = document.createElement('div');
       row.className = isDuplicateDrop && isSameEquipment ? 'slot-btn dup-match' : 'slot-btn';
       const matchTag =
-        isDuplicateDrop && isSameEquipment
-          ? `<span class="slot-match-tag">所持中・入替で+${levelDiff}Lv</span>`
-          : '';
+        isDuplicateDrop && isSameEquipment ? `<span class="slot-match-tag">所持中・入替で+${levelDiff}Lv</span>` : '';
       row.innerHTML = `
         <span><strong>枠${idx + 1}/${state.player.maxEquipSlots}</strong> ${def.name} Lv${eq.level}/${MAX_EQUIPMENT_LEVEL} <small style="color:#94a3b8">(${evo})</small>${matchTag}</span>
       `;
@@ -845,12 +829,8 @@ export function renderModals(
         replaceBtn.disabled = true;
         replaceBtn.textContent = '重複不可';
       } else {
-        replaceBtn.textContent = isDuplicateDrop
-          ? `入れ替える (Lv${eq.level}→Lv${dropItem.level})`
-          : '入れ替える';
-        replaceBtn.addEventListener('click', () =>
-          handlers.onResolveEquip({ type: 'replace', slotIndex: idx })
-        );
+        replaceBtn.textContent = isDuplicateDrop ? `入れ替える (Lv${eq.level}→Lv${dropItem.level})` : '入れ替える';
+        replaceBtn.addEventListener('click', () => handlers.onResolveEquip({ type: 'replace', slotIndex: idx }));
       }
 
       const upgradeBtn = document.createElement('button');
@@ -864,9 +844,7 @@ export function renderModals(
         upgradeBtn.textContent = '入替で強化';
       } else {
         upgradeBtn.textContent = `Lv+1 (${eq.level}→${eq.level + 1})`;
-        upgradeBtn.addEventListener('click', () =>
-          handlers.onResolveEquip({ type: 'scrap_upgrade', slotIndex: idx })
-        );
+        upgradeBtn.addEventListener('click', () => handlers.onResolveEquip({ type: 'scrap_upgrade', slotIndex: idx }));
       }
 
       actions.appendChild(replaceBtn);

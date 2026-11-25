@@ -211,7 +211,9 @@ export function buildTraceabilityGraph(businessFeatures, appFeatures) {
 }
 
 export function normalizeSpecStatus(raw) {
-  const s = String(raw || '').trim().toLowerCase();
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase();
   if (s === 'confirmed' || /^confirmed\s*[（(]ai提案[）)]$/.test(s) || /^確定\s*[（(]ai提案[）)]$/.test(s)) {
     return 'Confirmed';
   }
@@ -222,7 +224,9 @@ export function normalizeSpecStatus(raw) {
 }
 
 export function parseStatusOrigin(raw) {
-  const s = String(raw || '').trim().toLowerCase();
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase();
   if (/ai提案/.test(s)) return 'ai';
   return 'human';
 }
@@ -545,11 +549,7 @@ export function parseOverrideTargets(text) {
 
 export function resolveDecisionAddendums(decisions) {
   const items = decisions?.items || [];
-  const baseIds = new Set(
-    items
-      .filter((item) => item.id && !item.id.endsWith('-addendum'))
-      .map((item) => item.id)
-  );
+  const baseIds = new Set(items.filter((item) => item.id && !item.id.endsWith('-addendum')).map((item) => item.id));
   const addendumsByBaseId = new Map();
   const overrideAddendumsByTargetId = new Map();
   const brokenOverrideTargets = [];
@@ -674,11 +674,7 @@ export function extractFormulaParamValues(parameters) {
   const coreMinCdMultMatch = prm18.match(/最小CD倍率\s*(\d+(?:\.\d+)?)/);
   const coreSpRangeMatch = prm18.match(/射程\+(\d+(?:\.\d+)?)/);
   const coreSpDmg = coreSpDmgMatch ? Number(coreSpDmgMatch[1]) : hasLegacySpScaling ? 1.8 : 0;
-  const coreSpCdStep = coreSpCdStepMatch
-    ? Number(coreSpCdStepMatch[1])
-    : hasLegacySpScaling
-      ? 0.015
-      : 0;
+  const coreSpCdStep = coreSpCdStepMatch ? Number(coreSpCdStepMatch[1]) : hasLegacySpScaling ? 0.015 : 0;
   const coreSpCdCap = coreSpCdCapMatch ? Number(coreSpCdCapMatch[1]) : 0.24;
   const coreMinCd = coreMinCdMatch ? Number(coreMinCdMatch[1]) : 0.24;
   const coreMinCdMult = coreMinCdMultMatch ? Number(coreMinCdMultMatch[1]) : 0.6;
@@ -691,12 +687,9 @@ export function extractFormulaParamValues(parameters) {
   };
   const armParallelExtraShots = parsePlusCurve(
     prm18.match(/arm_parallel(?:平行)?追加弾数\(([^)]+)\)/)?.[1],
-    [0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0],
   );
-  const armParallelDmgPct = parsePlusCurve(
-    prm18.match(/威力補正\(([^)]+)\)/)?.[1],
-    [0, 0, 6, 6, 14, 20]
-  );
+  const armParallelDmgPct = parsePlusCurve(prm18.match(/威力補正\(([^)]+)\)/)?.[1], [0, 0, 6, 6, 14, 20]);
 
   const prm23 = getVal('PRM-23');
   const parsePctCurve = (label, fallback) => {
@@ -721,9 +714,8 @@ export function extractFormulaParamValues(parameters) {
   const mobLootExpPct =
     expNums && expNums.length >= 5 ? [0, ...expNums.slice(0, 5).map(Number)] : [0, 8, 16, 24, 42, 68];
   const armBaseRangeBonus = parsePlusCurve(
-    prm18.match(/arm_base主兵装射程加算\(([^)]+)\)/)?.[1] ||
-      prm23.match(/arm_base\([^)]*射程([^),]+)/)?.[1],
-    [0, 20, 40, 60, 85, 110]
+    prm18.match(/arm_base主兵装射程加算\(([^)]+)\)/)?.[1] || prm23.match(/arm_base\([^)]*射程([^),]+)/)?.[1],
+    [0, 20, 40, 60, 85, 110],
   );
   const ocLv1Match =
     prm18.match(/発射本数[^)\n]*Lv1:\s*(?:最低\s*)?(\d+)本/) ||
@@ -799,7 +791,7 @@ export function buildFormulaChartsData(parameters) {
     for (const sp of [0, 1, 2, 3, 5, 7, 9, 12, 14, 16]) {
       const damage = Math.round(p.coreBaseDmg + sp * p.coreSpDmg);
       const cooldown = Number(
-        Math.max(p.coreMinCd, p.coreBaseCd - Math.min(p.coreSpCdCap, sp * p.coreSpCdStep)).toFixed(3)
+        Math.max(p.coreMinCd, p.coreBaseCd - Math.min(p.coreSpCdCap, sp * p.coreSpCdStep)).toFixed(3),
       );
       const range = Math.min(p.maxTargetRange, Math.round(p.coreBaseRange + sp * p.coreSpRange));
       const bonusShots = p.coreShotThresholds.filter((t) => sp >= t).length;
@@ -836,10 +828,9 @@ export function buildFormulaChartsData(parameters) {
       const ocReduction = (p.armOverclockPct[lv] ?? 0) / 100;
       const damage = Math.round(p.coreBaseDmg * baseMult * parallelMult);
       const cooldown = Number(
-        Math.max(p.coreMinCd, p.coreBaseCd * Math.max(p.coreMinCdMult, 1 - ocReduction)).toFixed(3)
+        Math.max(p.coreMinCd, p.coreBaseCd * Math.max(p.coreMinCdMult, 1 - ocReduction)).toFixed(3),
       );
-      const range =
-        Math.min(p.maxTargetRange, p.coreBaseRange) + (p.armBaseRangeBonus[lv] ?? 0);
+      const range = Math.min(p.maxTargetRange, p.coreBaseRange) + (p.armBaseRangeBonus[lv] ?? 0);
       const baseShots = 1 + (p.armParallelExtraShots[lv] ?? 0);
       const shotCount =
         ocLv >= 2
@@ -879,11 +870,9 @@ export function buildFormulaChartsData(parameters) {
   let tier2Cum = 0;
   let tier3Cum = 0;
   for (let lv = 0; lv <= p.maxSkillLv; lv++) {
-    const tier1Cost =
-      p.tier1Costs[lv] ?? (lv === 0 ? 0 : lv <= 3 ? p.tier1CostLv1_4 : p.tier1CostLv5);
+    const tier1Cost = p.tier1Costs[lv] ?? (lv === 0 ? 0 : lv <= 3 ? p.tier1CostLv1_4 : p.tier1CostLv5);
     const tier2Cost =
-      p.tier2Costs[lv] ??
-      (lv === 0 ? 0 : lv <= 3 ? p.spCostLv1_3 : lv === 4 ? p.spCostLv4 : p.spCostLv5);
+      p.tier2Costs[lv] ?? (lv === 0 ? 0 : lv <= 3 ? p.spCostLv1_3 : lv === 4 ? p.spCostLv4 : p.spCostLv5);
     const tier3Cost = lv <= p.tier3MaxLv ? (p.tier3Costs[lv] ?? 0) : null;
     tier1Cum += tier1Cost;
     tier2Cum += tier2Cost;
@@ -1034,11 +1023,7 @@ export function validateExtendedSpecs(graph, extendedSpecs) {
   const disputedTerms = (extendedSpecs?.glossary?.items || []).filter((item) => item.status === 'Disputed');
   const undefinedTransitions = (extendedSpecs?.stateTransitions?.items || []).filter((item) => item.isUndefined);
 
-  const allCombined = [
-    ...(graph?.bizScenarios || []),
-    ...(graph?.appScenarios || []),
-    ...allDocItems,
-  ];
+  const allCombined = [...(graph?.bizScenarios || []), ...(graph?.appScenarios || []), ...allDocItems];
 
   const statusTotals = {
     Confirmed: allCombined.filter((x) => x.status === 'Confirmed').length,
@@ -1144,8 +1129,7 @@ export function validateInvariantTests(invariants, projectRoot) {
         checkedCount += 1;
         const requiredTokens = tokenizeTagBlock(tagInner);
         const found =
-          requiredTokens.length > 0 &&
-          fileTagSets.some((tokenSet) => requiredTokens.every((tok) => tokenSet.has(tok)));
+          requiredTokens.length > 0 && fileTagSets.some((tokenSet) => requiredTokens.every((tok) => tokenSet.has(tok)));
         if (!found) {
           brokenInvariantTests.push({
             invariantId: item.id || '(NO-ID)',
@@ -1262,9 +1246,7 @@ export function validateSymbolRefs(projectRoot, options = {}) {
       continue;
     }
 
-    const declRegex = new RegExp(
-      `\\b(?:function|const|let|var|class|interface|type|enum)\\s+${entry.symbol}\\b`
-    );
+    const declRegex = new RegExp(`\\b(?:function|const|let|var|class|interface|type|enum)\\s+${entry.symbol}\\b`);
     const memberRegex = new RegExp(`\\b${entry.symbol}\\s*[:=(]`);
     if (!declRegex.test(content) && !memberRegex.test(content)) {
       brokenSymbolRefs.push({
@@ -1369,7 +1351,7 @@ function renderGlossarySection(glossary) {
         <td>${renderStatusBadge(item.status)}</td>
         <td>${renderRefLinks(item.refs)}</td>
         <td>${item.sourceNote ? `<div class="note-text">${renderInlineCodeText(item.sourceNote)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
+      </tr>`,
     )
     .join('');
 
@@ -1409,7 +1391,7 @@ function renderParametersSection(parameters) {
         <td>${renderStatusBadge(item.status, item.statusOrigin)}</td>
         <td>${renderRefLinks(item.refs)}</td>
         <td>${item.codeRef ? `<div class="sub-code">${renderInlineCodeText(item.codeRef)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
+      </tr>`,
     )
     .join('');
 
@@ -1445,7 +1427,7 @@ function renderFormulasSection(formulas, parameters) {
           (row) =>
             `<tr>${chart.columns
               .map((col) => `<td><code>${escapeHtml(String(row[col.key] ?? ''))}</code></td>`)
-              .join('')}</tr>`
+              .join('')}</tr>`,
         )
         .join('');
       const payloadJson = escapeHtml(JSON.stringify(chart));
@@ -1486,7 +1468,7 @@ function renderFormulasSection(formulas, parameters) {
         <td>${renderStatusBadge(item.status)}</td>
         <td>${renderRefLinks(item.refs)}</td>
         <td>${item.codeRef ? `<div class="sub-code">${renderInlineCodeText(item.codeRef)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
+      </tr>`,
     )
     .join('');
 
@@ -1526,7 +1508,7 @@ function renderOpenQuestionsSection(openQuestions) {
         <td>${renderRefLinks(item.refs)}</td>
         <td><div class="note-text">${renderInlineCodeText(item.trigger)}</div></td>
         <td><div class="note-text">${renderInlineCodeText(item.impact)}</div>${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
+      </tr>`,
     )
     .join('');
 
@@ -1562,7 +1544,7 @@ function renderNonGoalsSection(nonGoals) {
         <td><div class="note-text">${renderInlineCodeText(item.reason)}</div></td>
         <td>${renderStatusBadge(item.status)}</td>
         <td>${renderRefLinks(item.refs)}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
+      </tr>`,
     )
     .join('');
 
@@ -1602,7 +1584,7 @@ function renderStateTransitionsSection(stateTransitions) {
         <td>${renderStatusBadge(item.status)}</td>
         <td>${renderRefLinks(item.refs)}</td>
         <td>${item.note ? `<div class="note-text">${renderInlineCodeText(item.note)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
+      </tr>`,
     )
     .join('');
 
@@ -1654,7 +1636,7 @@ function renderInvariantsSection(invariants) {
         <td>${renderStatusBadge(item.status)}</td>
         <td>${renderRefLinks(item.refs)}</td>
         <td>${item.note ? `<div class="note-text">${renderInlineCodeText(item.note)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
+      </tr>`,
     )
     .join('');
 
@@ -1683,7 +1665,10 @@ function renderDecisionsSection(decisions) {
   if (!decisions) return '';
   const { addendumsByBaseId, overrideAddendumsByTargetId, matchedAddendumIds } = resolveDecisionAddendums(decisions);
 
-  const renderDecisionRow = (item, { isOverridden = false, isAddendum = false, baseId = '', overrideLinks = [] } = {}) => {
+  const renderDecisionRow = (
+    item,
+    { isOverridden = false, isAddendum = false, baseId = '', overrideLinks = [] } = {},
+  ) => {
     const rowClasses = [
       'spec-row',
       isOverridden ? 'decision-overridden-row' : '',
@@ -1698,7 +1683,7 @@ function renderDecisionsSection(decisions) {
             ? `<div class="override-link-list">${overrideLinks
                 .map(
                   (ad) =>
-                    `<a class="ref-pill ref-link override-addendum-link" href="#${escapeHtml(ad.id)}">↳ ${escapeHtml(ad.id)}</a>`
+                    `<a class="ref-pill ref-link override-addendum-link" href="#${escapeHtml(ad.id)}">↳ ${escapeHtml(ad.id)}</a>`,
                 )
                 .join('')}</div>`
             : ''
@@ -1753,11 +1738,7 @@ function renderDecisionsSection(decisions) {
   </section>`;
 }
 
-export function renderHtml(
-  graph,
-  title = 'Dungeon Survivor — 仕様書ビューア',
-  extendedSpecs = null
-) {
+export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビューア', extendedSpecs = null) {
   const { stats, bizScenarios, unlinkedBiz, orphanApps } = graph;
   const extValidation = extendedSpecs ? validateExtendedSpecs(graph, extendedSpecs) : null;
   const hasExtended = Boolean(
@@ -1769,7 +1750,7 @@ export function renderHtml(
         extendedSpecs.invariants ||
         extendedSpecs.openQuestions ||
         extendedSpecs.nonGoals ||
-        extendedSpecs.decisions)
+        extendedSpecs.decisions),
   );
 
   const traceCards = bizScenarios
@@ -1791,16 +1772,16 @@ export function renderHtml(
                 ${app.isFirstInFeature ? renderBackgroundBox(app.featureBackground) : ''}
                 <h4>${escapeHtml(app.name)}</h4>
                 ${renderSteps(app.steps)}
-              </div>`
+              </div>`,
               )
               .join('')
           : `<div class="empty-link">⚠️ 紐づくアプリGherkin（@ref:${escapeHtml(biz.id)}）がまだありません</div>`;
 
       const statusesInGroup = new Set([biz.status, ...biz.linkedApps.map((a) => a.status)]);
       return `
-      <section class="trace-group" data-biz-status="${escapeHtml(biz.status)}" data-has-inferred="${
-        statusesInGroup.has('Inferred')
-      }" data-has-disputed="${statusesInGroup.has('Disputed')}" data-has-unknown="${statusesInGroup.has('Unknown')}">
+      <section class="trace-group" data-biz-status="${escapeHtml(biz.status)}" data-has-inferred="${statusesInGroup.has(
+        'Inferred',
+      )}" data-has-disputed="${statusesInGroup.has('Disputed')}" data-has-unknown="${statusesInGroup.has('Unknown')}">
         <div class="biz-card" id="${escapeHtml(biz.id)}">
           <div class="card-head">
             <div class="id-group">
@@ -1842,9 +1823,7 @@ export function renderHtml(
       ? `<div class="warn-banner">
           <strong>⚠️ 拡張仕様ID参照リンク切れ検知 (${extValidation.brokenDocRefs.length}件):</strong>
           ${escapeHtml(
-            extValidation.brokenDocRefs
-              .map((b) => `${b.sourceId}(${b.sourceFile}) -> ${b.missingRef}`)
-              .join(', ')
+            extValidation.brokenDocRefs.map((b) => `${b.sourceId}(${b.sourceFile}) -> ${b.missingRef}`).join(', '),
           )}
         </div>`
       : `<div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 ${extValidation.allDocItemsCount} 件の関連IDにリンク切れはありません</div>`
@@ -1872,7 +1851,7 @@ export function renderHtml(
                     </div>
                     <div class="dash-item-desc">${renderInlineCodeText(t.definition)}</div>
                     ${renderSourceLink(t.sourceFile, t.id)}
-                  </li>`
+                  </li>`,
                 )
                 .join('')}
             </ul>`
@@ -1899,7 +1878,7 @@ export function renderHtml(
                     </div>
                     ${tr.note ? `<div class="dash-item-desc">${renderInlineCodeText(tr.note)}</div>` : ''}
                     ${renderSourceLink(tr.sourceFile, tr.id)}
-                  </li>`
+                  </li>`,
                 )
                 .join('')}
             </ul>`
@@ -2945,7 +2924,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       outPath,
     });
   console.log(
-    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, LineNumRefs=${lineNumberRefValidation.lineNumberRefs.length}, SymbolRefs=${symbolRefValidation.checkedCount}, SymbolRefBroken=${symbolRefValidation.brokenSymbolRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
+    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, LineNumRefs=${lineNumberRefValidation.lineNumberRefs.length}, SymbolRefs=${symbolRefValidation.checkedCount}, SymbolRefBroken=${symbolRefValidation.brokenSymbolRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`,
   );
   if (
     graph.stats.brokenCount > 0 ||

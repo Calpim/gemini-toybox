@@ -57,8 +57,7 @@ export class SoundManager {
   unlock(): void {
     if (typeof window === 'undefined') return;
     const AudioCtx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return;
     if (!this.ctx) {
       this.ctx = new AudioCtx();
@@ -117,7 +116,7 @@ export class SoundManager {
     freqEnd: number,
     duration: number,
     gainPeak: number,
-    delay = 0
+    delay = 0,
   ): void {
     const t0 = ctx.currentTime + delay;
     const osc = ctx.createOscillator();
@@ -142,7 +141,7 @@ export class SoundManager {
     duration: number,
     gainPeak: number,
     filterType: BiquadFilterType = 'bandpass',
-    delay = 0
+    delay = 0,
   ): void {
     const t0 = ctx.currentTime + delay;
     const src = ctx.createBufferSource();

@@ -1,18 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import indexHtmlRaw from '../../index.html?raw';
 import { createGameState } from '../game/engine';
-import {
-  SKILL_PREREQ_LEVEL,
-  SKILL_TREE_NODES,
-  getSkillDetailedSpec,
-} from '../game/skillTree';
+import { SKILL_PREREQ_LEVEL, SKILL_TREE_NODES, getSkillDetailedSpec } from '../game/skillTree';
 import { getSkillIcon } from './icons';
-import {
-  closeOpenSkillInfoPopover,
-  computePopoverPosition,
-  renderModals,
-  type ModalElements,
-} from './modals';
+import { closeOpenSkillInfoPopover, computePopoverPosition, renderModals, type ModalElements } from './modals';
 
 interface MockListener {
   (event: MockEvent): void;
@@ -96,7 +87,7 @@ class MockElement {
           this.attributes.set(`data-${toKebab(prop)}`, String(val));
           return true;
         },
-      }
+      },
     );
   }
 
@@ -223,10 +214,7 @@ class MockElement {
     this.listeners.set(type, list);
   }
 
-  dispatch(
-    type: string,
-    opts: { pointerType?: string; key?: string; bubbles?: boolean } = {}
-  ): MockEvent {
+  dispatch(type: string, opts: { pointerType?: string; key?: string; bubbles?: boolean } = {}): MockEvent {
     const event: MockEvent = {
       type,
       target: this,
@@ -457,9 +445,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     expect(armBaseCard.querySelector('.node-icon')?.innerHTML).toContain('<svg');
     expect(armBaseCard.querySelector('.node-title')?.textContent).toBe('出力強化');
     expect(armBaseCard.querySelector('.node-lv')?.textContent).toBe('Lv2/5');
-    expect(armBaseCard.querySelector('.node-tagline')?.textContent).toBe(
-      'メイン威力＆射程UP・チャージ弾化'
-    );
+    expect(armBaseCard.querySelector('.node-tagline')?.textContent).toBe('メイン威力＆射程UP・チャージ弾化');
     expect(armBaseCard.querySelector('.node-cost')?.textContent).toBe('-1 SP');
 
     // Locked prerequisite card still keeps its ⓘ info button enabled!
@@ -593,7 +579,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     const mobPos = computePopoverPosition(
       { left: 310, right: 336, top: 200, bottom: 226 },
       { width: 351, height: 300 },
-      { width: 375, height: 667 }
+      { width: 375, height: 667 },
     );
     expect(mobPos.left).toBe(12);
     expect(mobPos.left + Math.min(351, mobPos.maxWidth)).toBeLessThanOrEqual(375 - 12);
@@ -604,7 +590,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     const mobFlip = computePopoverPosition(
       { left: 260, right: 286, top: 430, bottom: 456 },
       { width: 296, height: 280 },
-      { width: 320, height: 568 }
+      { width: 320, height: 568 },
     );
     expect(mobFlip.left).toBe(12);
     expect(mobFlip.top).toBeGreaterThanOrEqual(12);
@@ -615,7 +601,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     const landscapePos = computePopoverPosition(
       { left: 560, right: 586, top: 180, bottom: 206 },
       { width: 340, height: 340 },
-      { width: 667, height: 375 }
+      { width: 667, height: 375 },
     );
     expect(landscapePos.top).toBeGreaterThanOrEqual(12);
     expect(landscapePos.left).toBeGreaterThanOrEqual(12);
@@ -625,7 +611,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     const deskRight = computePopoverPosition(
       { left: 410, right: 436, top: 220, bottom: 246 },
       { width: 360, height: 340 },
-      { width: 1280, height: 720 }
+      { width: 1280, height: 720 },
     );
     expect(deskRight.placement).toBe('right');
     expect(deskRight.left).toBe(446);
@@ -633,7 +619,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     const deskLeftFlip = computePopoverPosition(
       { left: 1020, right: 1046, top: 520, bottom: 546 },
       { width: 360, height: 340 },
-      { width: 1280, height: 720 }
+      { width: 1280, height: 720 },
     );
     expect(deskLeftFlip.placement).toBe('left');
     expect(deskLeftFlip.left).toBe(650);
@@ -660,9 +646,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
 
     expect(raw.gearTabBody.innerHTML).toContain('コアショット（メイン武器）');
     expect(raw.gearTabBody.innerHTML).toContain('パルスブレード');
-    expect(raw.skillColumns.querySelector('[data-node-id="arm_base"] .node-cost')?.textContent).toBe(
-      'MAX'
-    );
+    expect(raw.skillColumns.querySelector('[data-node-id="arm_base"] .node-cost')?.textContent).toBe('MAX');
   });
 
   it('refreshes open popover content when skill is upgraded and closes via popover close button', () => {

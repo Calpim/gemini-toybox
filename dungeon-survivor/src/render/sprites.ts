@@ -45,12 +45,7 @@ export function getWallTileImage(): HTMLImageElement | null {
  * Procedural dark metallic sci-fi armor panel used when wall-tile.webp
  * is still loading or running in headless/Node environments.
  */
-export function drawProceduralWallPanel(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number
-): void {
+export function drawProceduralWallPanel(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
   const pad = Math.max(2, size * 0.08);
   const inner = Math.max(4, size - pad * 2);
   const bevel = Math.max(2, size * 0.14);
@@ -116,12 +111,7 @@ function getWallFallbackCanvas(): HTMLCanvasElement | null {
  * Draws a sci-fi metallic wall tile using the loaded WebP sprite when ready,
  * falling back to a cached offscreen or direct procedural panel.
  */
-export function drawWallTile(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number
-): void {
+export function drawWallTile(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
   const img = getWallTileImage();
   if (img && typeof ctx.drawImage === 'function') {
     ctx.drawImage(img, x, y, size, size);
@@ -177,7 +167,7 @@ export function drawGlowSprite(
   y: number,
   radius: number,
   alpha = 1,
-  additive = false
+  additive = false,
 ): void {
   if (radius <= 0 || alpha <= 0) return;
 

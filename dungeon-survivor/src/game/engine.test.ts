@@ -302,10 +302,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     state.chests = [];
     state.pickups = [];
     state.enemies = [];
-    state.player.equipment = [
-      createEquippedItem('orbit_shield', 6),
-      createEquippedItem('seeker_drone', 6),
-    ];
+    state.player.equipment = [createEquippedItem('orbit_shield', 6), createEquippedItem('seeker_drone', 6)];
     expect(getOrbitBitPositions(state).length).toBe(6);
     expect(getSeekerDronePositions(state).length).toBe(4);
     state.player.equipment[0].level = MAX_EQUIPMENT_LEVEL;
@@ -457,9 +454,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     }
     const hpAfterFirstHit = soloDiscState.enemies[0].hp;
     expect(hpAfterFirstHit).toBe(182); // 1 hit only (baseDamage 18), entering hit-originated loop
-    const soloLoopDisc = soloDiscState.projectiles.find(
-      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 903
-    );
+    const soloLoopDisc = soloDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 903);
     expect(soloLoopDisc).toBeDefined();
     expect(soloLoopDisc!.loopRadius).toBe(RICOCHET_DISC_LOOP_RADIUS);
     const fixedLoopCenterX = soloLoopDisc!.loopCenterX!;
@@ -474,9 +469,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     for (let f = 0; f < 10; f++) {
       stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
     }
-    const midLoopDisc = soloDiscState.projectiles.find(
-      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 903
-    );
+    const midLoopDisc = soloDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 903);
     expect(midLoopDisc).toBeDefined();
     expect(midLoopDisc!.loopCenterX).toBe(fixedLoopCenterX);
     expect(midLoopDisc!.loopCenterY).toBe(fixedLoopCenterY);
@@ -515,13 +508,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     for (let f = 0; f < 15; f++) {
       stepGame(bossDiscState, { x: 0, y: 0 }, 1 / 60);
     }
-    const bossLoopDisc = bossDiscState.projectiles.find(
-      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 904
-    );
+    const bossLoopDisc = bossDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 904);
     expect(bossLoopDisc).toBeDefined();
     const distFromLoopCenter = Math.hypot(
       bossLoopDisc!.x - bossLoopDisc!.loopCenterX!,
-      bossLoopDisc!.y - bossLoopDisc!.loopCenterY!
+      bossLoopDisc!.y - bossLoopDisc!.loopCenterY!,
     );
     expect(distFromLoopCenter).toBeCloseTo(RICOCHET_DISC_LOOP_RADIUS, 1);
     const orbitTangentialSpeed = Math.hypot(bossLoopDisc!.vx, bossLoopDisc!.vy);
@@ -599,10 +590,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(skilledStats.homingShots).toBe(2);
 
     // Sub-equipment counts/damage/cooldown stay purely determined by equipment level (not arms skills)
-    state.player.equipment = [
-      createEquippedItem('orbit_shield', 1),
-      createEquippedItem('seeker_drone', 1),
-    ];
+    state.player.equipment = [createEquippedItem('orbit_shield', 1), createEquippedItem('seeker_drone', 1)];
     expect(getOrbitBitPositions(state).length).toBe(1);
     expect(getSeekerDronePositions(state).length).toBe(1);
 
@@ -631,27 +619,9 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
   it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Tier-based SP costs (Tier1:7, Tier2:8, Tier3:5 = 20SP), Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
     expect(MAX_SKILL_LEVEL).toBe(5);
     expect(SKILL_PREREQ_LEVEL).toBe(3);
-    expect([0, 1, 2, 3, 4, 5].map((lv) => getSkillUpgradeCost(lv, 'arm_base'))).toEqual([
-      1,
-      1,
-      1,
-      2,
-      2,
-      Infinity,
-    ]);
-    expect([0, 1, 2, 3, 4, 5].map((lv) => getSkillUpgradeCost(lv, 'arm_parallel'))).toEqual([
-      1,
-      1,
-      1,
-      2,
-      3,
-      Infinity,
-    ]);
-    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'arm_overclock'))).toEqual([
-      2,
-      3,
-      Infinity,
-    ]);
+    expect([0, 1, 2, 3, 4, 5].map((lv) => getSkillUpgradeCost(lv, 'arm_base'))).toEqual([1, 1, 1, 2, 2, Infinity]);
+    expect([0, 1, 2, 3, 4, 5].map((lv) => getSkillUpgradeCost(lv, 'arm_parallel'))).toEqual([1, 1, 1, 2, 3, Infinity]);
+    expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'arm_overclock'))).toEqual([2, 3, Infinity]);
     expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'def_aegis'))).toEqual([2, 3, Infinity]);
     expect([0, 1, 2].map((lv) => getSkillUpgradeCost(lv, 'mob_dash'))).toEqual([2, 3, Infinity]);
 
@@ -659,13 +629,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.skillPoints).toBe(1);
     state.enemies = [];
     state.chests = [];
-    state.player.equipment = [
-      createEquippedItem('orbit_shield'),
-      createEquippedItem('seeker_drone'),
-    ];
-    state.pickups = [
-      { id: 700, kind: 'exp', x: state.player.x, y: state.player.y, value: 30 },
-    ];
+    state.player.equipment = [createEquippedItem('orbit_shield'), createEquippedItem('seeker_drone')];
+    state.pickups = [{ id: 700, kind: 'exp', x: state.player.x, y: state.player.y, value: 30 }];
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.level).toBe(2);
@@ -752,10 +717,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
 
     const state = createGameState({ seed: 606 });
     expect(state.player.maxEquipSlots).toBe(2);
-    state.player.equipment = [
-      createEquippedItem('pulse_blade'),
-      createEquippedItem('seeker_drone'),
-    ];
+    state.player.equipment = [createEquippedItem('pulse_blade'), createEquippedItem('seeker_drone')];
     expect(state.player.equipment.length).toBe(MAX_EQUIP_SLOTS);
 
     // Same-or-lower level duplicate item auto-levels up without opening modal
@@ -829,9 +791,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     const minY = startRoom.y * 40;
     const maxY = (startRoom.y + startRoom.h) * 40;
 
-    const chestInStartRoom = state.chests.find(
-      (c) => c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY
-    );
+    const chestInStartRoom = state.chests.find((c) => c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY);
     expect(chestInStartRoom).toBeUndefined();
     expect(state.chests.length).toBeGreaterThanOrEqual(1);
 
@@ -946,11 +906,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     for (const spawned of state.enemies) {
       expect(Math.hypot(spawned.x - state.player.x, spawned.y - state.player.y)).toBeGreaterThanOrEqual(260);
       // Corridor respawn suppressed: must spawn inside a room tile
-      const r = findRoomAtTile(
-        state.map,
-        Math.floor(spawned.x / TILE_SIZE),
-        Math.floor(spawned.y / TILE_SIZE)
-      );
+      const r = findRoomAtTile(state.map, Math.floor(spawned.x / TILE_SIZE), Math.floor(spawned.y / TILE_SIZE));
       expect(r).not.toBeNull();
     }
     expect(state.notifications.some((n) => n.kind === 'info')).toBe(true);
@@ -985,12 +941,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       rooms: [],
       tiles: new Array(state.map.width * state.map.height).fill('floor' as const),
     };
-    expect(
-      isPointInPlayerVision(testMap, 200, 200, 200 + CORRIDOR_VISION_RADIUS - 10, 200)
-    ).toBe(true);
-    expect(
-      isPointInPlayerVision(testMap, 200, 200, 200 + CORRIDOR_VISION_RADIUS + 20, 200)
-    ).toBe(false);
+    expect(isPointInPlayerVision(testMap, 200, 200, 200 + CORRIDOR_VISION_RADIUS - 10, 200)).toBe(true);
+    expect(isPointInPlayerVision(testMap, 200, 200, 200 + CORRIDOR_VISION_RADIUS + 20, 200)).toBe(false);
   });
 
   it('[APP-MAP-07] prevents overlapping initial enemy spawns and runs tank/runner/shooter (4/6/8-way rotating barrage + knockback immunity)/scout archetypes', () => {
@@ -1022,7 +974,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
       'shooter',
       shootState.player.x + SHOOTER_AGGRO_RANGE + 70,
       shootState.player.y,
-      2
+      2,
     );
     expect(dormantTurret.aggroRange).toBeGreaterThanOrEqual(SHOOTER_AGGRO_RANGE);
     shootState.enemies = [dormantTurret];
@@ -1103,8 +1055,8 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
             Math.floor(e.x / 40) >= r.x &&
             Math.floor(e.x / 40) < r.x + r.w &&
             Math.floor(e.y / 40) >= r.y &&
-            Math.floor(e.y / 40) < r.y + r.h
-        )
+            Math.floor(e.y / 40) < r.y + r.h,
+        ),
     );
     expect(corridorScouts.length).toBeGreaterThanOrEqual(1);
 
@@ -1124,13 +1076,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(Math.hypot(wanderScout.x - wanderStart.x, wanderScout.y - wanderStart.y)).toBeGreaterThan(5);
 
     const spotScout = createEnemyByKind(9011, 'scout', scoutState.player.x + 100, scoutState.player.y, 2);
-    const nearbyAlly = createEnemyByKind(
-      9012,
-      'normal',
-      spotScout.x + 180,
-      spotScout.y,
-      2
-    );
+    const nearbyAlly = createEnemyByKind(9012, 'normal', spotScout.x + 180, spotScout.y, 2);
     scoutState.enemies = [spotScout, nearbyAlly];
     stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
     expect(spotScout.awake).toBe(true);
@@ -1156,7 +1102,13 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(secondScoutRunners.length).toBeGreaterThanOrEqual(2);
 
     // Stop summoning if player runs beyond SCOUT_SUMMON_MAX_PLAYER_DIST
-    const farScout = createEnemyByKind(9014, 'scout', scoutState.player.x + SCOUT_SUMMON_MAX_PLAYER_DIST + 60, scoutState.player.y, 2);
+    const farScout = createEnemyByKind(
+      9014,
+      'scout',
+      scoutState.player.x + SCOUT_SUMMON_MAX_PLAYER_DIST + 60,
+      scoutState.player.y,
+      2,
+    );
     farScout.awake = true;
     farScout.alertCooldown = 0;
     scoutState.enemies = [farScout];
@@ -1258,10 +1210,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     // Lv8 duplicate pickup auto-allocates into slot expansion when maxEquipSlots < MAX_EQUIP_SLOTS_CAP
     state.player.maxEquipSlots = 2;
     state.player.scrapExpandProgress = 0;
-    state.player.equipment = [
-      createEquippedItem('pulse_blade', 8),
-      createEquippedItem('orbit_shield', 5),
-    ];
+    state.player.equipment = [createEquippedItem('pulse_blade', 8), createEquippedItem('orbit_shield', 5)];
     acquireEquipment(state, createEquippedItem('pulse_blade', 8));
     expect(state.player.maxEquipSlots).toBe(3); // cost 2->3 is 1 scrap
     expect(state.player.scrapExpandProgress).toBe(0);
@@ -1286,10 +1235,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     expect(state.player.equipment[0].level).toBe(8);
 
     state.player.maxEquipSlots = 2;
-    state.player.equipment = [
-      createEquippedItem('pulse_blade', 8),
-      createEquippedItem('orbit_shield', 5),
-    ];
+    state.player.equipment = [createEquippedItem('pulse_blade', 8), createEquippedItem('orbit_shield', 5)];
     acquireEquipment(state, createEquippedItem('seeker_drone', 1));
     expect(state.status).toBe('equip_choice');
     expect(resolveEquipChoice(state, { type: 'scrap_upgrade', slotIndex: 0 })).toBe(false);
@@ -1475,10 +1421,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
   });
 
   it('[APP-GRW-07 & APP-GRW-02] improves drop quality with mob_loot and triggers tactical step + temporary speed boost on projectile hit', () => {
-    const minLv2 = [
-      createEquippedItem('pulse_blade', 2),
-      createEquippedItem('orbit_shield', 6),
-    ];
+    const minLv2 = [createEquippedItem('pulse_blade', 2), createEquippedItem('orbit_shield', 6)];
     // At dropQualityTier 0, r=0.1 rolls M-1 (1). At tier 5, M-1 is eliminated (0%) so r=0.1 rolls M (2)
     expect(rollDropEquipmentLevel(minLv2, () => 0.1, 0)).toBe(1);
     expect(rollDropEquipmentLevel(minLv2, () => 0.1, 5)).toBe(2);
@@ -1673,10 +1616,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     pierceState.pickups = [];
     pierceState.map.tiles.fill('floor');
     pierceState.player.baseAttackCooldown = 999;
-    pierceState.player.equipment = [
-      createEquippedItem('pulse_blade', 3),
-      createEquippedItem('orbit_shield', 4),
-    ];
+    pierceState.player.equipment = [createEquippedItem('pulse_blade', 3), createEquippedItem('orbit_shield', 4)];
     const shooter = createEnemyByKind(9903, 'shooter', pierceState.player.x + 150, pierceState.player.y, 2);
     shooter.awake = true;
     shooter.attackCooldown = 0.01;
@@ -2219,10 +2159,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     // 2. Same/lower-level duplicate auto-upgrades, while higher-Lv duplicate allows other-slot scrap_upgrade & scrap_expand
     const fullSlotState = createGameState({ seed: 2024 });
     fullSlotState.player.maxEquipSlots = 2;
-    fullSlotState.player.equipment = [
-      createEquippedItem('pulse_blade', 2),
-      createEquippedItem('seeker_drone', 2),
-    ];
+    fullSlotState.player.equipment = [createEquippedItem('pulse_blade', 2), createEquippedItem('seeker_drone', 2)];
     // Lower/equal level duplicate -> auto Lv+1
     acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 2));
     expect(fullSlotState.status).toBe('playing');
@@ -2284,9 +2221,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     for (let f = 0; f < 10; f++) {
       stepGame(preferClearState, { x: 0, y: 0 }, 1 / 60);
     }
-    const clearSideDisc = preferClearState.projectiles.find(
-      (p) => p.kind === 'disc' && p.loopTargetEnemyId === 9959
-    );
+    const clearSideDisc = preferClearState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 9959);
     expect(clearSideDisc).toBeDefined();
     expect(clearSideDisc!.loopCenterY!).toBeLessThan(cCenter.y);
     expect(clearSideDisc!.loopDir).toBe(-1);
@@ -2720,7 +2655,11 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     bounceState.pickups = [];
     bounceState.map.tiles.fill('floor');
     // Put a vertical wall column at tile x = 12
-    const pTile = findRoomAtTile(bounceState.map, Math.floor(bounceState.player.x / TILE_SIZE), Math.floor(bounceState.player.y / TILE_SIZE));
+    const pTile = findRoomAtTile(
+      bounceState.map,
+      Math.floor(bounceState.player.x / TILE_SIZE),
+      Math.floor(bounceState.player.y / TILE_SIZE),
+    );
     const baseTx = Math.floor(bounceState.player.x / TILE_SIZE);
     const baseTy = Math.floor(bounceState.player.y / TILE_SIZE);
     const wallTx = baseTx + 3;
@@ -2785,10 +2724,7 @@ describe('Game simulation engine (Phase 1 & Phase 2-A updated)', () => {
     laserSample.elapsed = 0.72; // just fired
     const initialActiveWidth = getActiveBossLaserWidth(laserSample);
     expect(initialActiveWidth).toBeCloseTo(22 * 0.28, 3);
-    laserSample.elapsed = 0.90; // >= windup + 0.18s -> full width
+    laserSample.elapsed = 0.9; // >= windup + 0.18s -> full width
     expect(getActiveBossLaserWidth(laserSample)).toBeCloseTo(22, 3);
   });
 });
-
-
-

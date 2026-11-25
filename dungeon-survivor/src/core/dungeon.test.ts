@@ -148,7 +148,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
           gMap.stairsTile.tx >= r.x &&
           gMap.stairsTile.tx < r.x + r.w &&
           gMap.stairsTile.ty >= r.y &&
-          gMap.stairsTile.ty < r.y + r.h
+          gMap.stairsTile.ty < r.y + r.h,
       );
       expect(stairsRoom).toBeDefined();
       expect(stairsRoom!.w).toBeGreaterThanOrEqual(11);

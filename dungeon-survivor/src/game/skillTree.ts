@@ -119,7 +119,8 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: 'オーバークロック',
     requires: 'arm_parallel',
     tagline: '貫通チャージ弾＋両脇極細レーザー追加',
-    description: 'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通化＆両脇に極細レーザー(左右2本 / Lv2で4本・各60%威力)を追加',
+    description:
+      'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通化＆両脇に極細レーザー(左右2本 / Lv2で4本・各60%威力)を追加',
     detailNote:
       'メイン武器CD短縮(最小0.20s)＆弾速UPに加え、中央の極太チャージ弾(100%威力・貫通)の両脇へ極細貫通レーザー(各60%威力・10px間隔)を展開します。',
   },
@@ -131,8 +132,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     requires: null,
     tagline: '迎撃・装備の索敵レンジを拡大',
     description: '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px）',
-    detailNote:
-      '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで）。',
+    detailNote: '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで）。',
   },
   {
     id: 'def_pulse',
@@ -152,7 +152,8 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: 'オートパリィ盾',
     requires: 'def_pulse',
     tagline: '通常弾・近接をパリィし反撃＋無敵',
-    description: '通常弾・近接をパリィ無効化＋反撃＆無敵1.0s（Lv1: CD7.0s/22 → Lv2: CD4.5s/42、貫通/迫撃砲/レーザー不可・突進は相打ち）',
+    description:
+      '通常弾・近接をパリィ無効化＋反撃＆無敵1.0s（Lv1: CD7.0s/22 → Lv2: CD4.5s/42、貫通/迫撃砲/レーザー不可・突進は相打ち）',
     detailNote:
       '通常弾・近接接触をパリィ無効化し反撃＋無敵1.0s。貫通弾・迫撃砲・レーザーは無効化不可（ボス突進は被弾しつつ相打ち反撃）。',
   },
@@ -164,8 +165,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     requires: null,
     tagline: 'アイテム吸引範囲と回復効果を強化',
     description: '吸引範囲＆回復オーブ強化（Lv4: 回復+50% / Lv5: 吸引+160% & 回復+75%）',
-    detailNote:
-      '基礎吸引距離(95px)の倍率と、回復オーブ取得時のHP回復量を乗算で強化します。',
+    detailNote: '基礎吸引距離(95px)の倍率と、回復オーブ取得時のHP回復量を乗算で強化します。',
   },
   {
     id: 'mob_loot',
@@ -175,8 +175,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     requires: 'mob_magnet',
     tagline: '装備ドロップ率・品質とEXPを強化',
     description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（サブ装備固めの要）',
-    detailNote:
-      '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
+    detailNote: '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
   },
   {
     id: 'mob_dash',
@@ -185,7 +184,8 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: '緊急回避ブースト',
     requires: 'mob_loot',
     tagline: '全攻撃をノーダメ回避＋無敵・加速',
-    description: '全攻撃をチャージ消費でノーダメ回避＋無敵延長＆2.5s移動加速（Lv1: 1回/1.30s/+24% → Lv2: 2回/1.60s/+38%）',
+    description:
+      '全攻撃をチャージ消費でノーダメ回避＋無敵延長＆2.5s移動加速（Lv1: 1回/1.30s/+24% → Lv2: 2回/1.60s/+38%）',
     detailNote:
       '被弾時にチャージ消費で全攻撃(貫通・迫撃砲・レーザー・突進含む)をノーダメ回避し、無敵延長＋2.5s移動加速（パリィ盾が通常攻撃を優先し温存）。',
   },
@@ -203,11 +203,7 @@ export function getSkillLevel(levels: SkillLevelMap, nodeId: SkillNodeId): numbe
   return Math.max(0, Math.min(getSkillMaxLevel(nodeId), levels[nodeId] ?? 0));
 }
 
-export function canUpgradeSkill(
-  levels: SkillLevelMap,
-  skillPoints: number,
-  nodeId: SkillNodeId
-): boolean {
+export function canUpgradeSkill(levels: SkillLevelMap, skillPoints: number, nodeId: SkillNodeId): boolean {
   const currLevel = getSkillLevel(levels, nodeId);
   const maxLevel = getSkillMaxLevel(nodeId);
   if (currLevel >= maxLevel) return false;
@@ -387,10 +383,7 @@ function getSkillLevelDetailSummary(nodeId: SkillNodeId, level: number): string 
   }
 }
 
-export function getSkillDetailedSpec(
-  nodeId: SkillNodeId,
-  levels: SkillLevelMap
-): SkillDetailedSpec {
+export function getSkillDetailedSpec(nodeId: SkillNodeId, levels: SkillLevelMap): SkillDetailedSpec {
   const node = getSkillNode(nodeId);
   const currentLevel = getSkillLevel(levels, nodeId);
   const maxLevel = getSkillMaxLevel(nodeId);
@@ -430,8 +423,7 @@ export function getSkillDetailedSpec(
     detailNote: node.detailNote,
     currentLevel,
     maxLevel,
-    currentEffect:
-      currentLevel > 0 ? getSkillLevelDetailSummary(nodeId, currentLevel) : '未習得',
+    currentEffect: currentLevel > 0 ? getSkillLevelDetailSummary(nodeId, currentLevel) : '未習得',
     nextCost,
     totalCost,
     requires,
