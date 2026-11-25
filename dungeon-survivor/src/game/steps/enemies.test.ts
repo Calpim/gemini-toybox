@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { findRoomAtTile, TILE_SIZE, tileCenterWorld } from '../../core/dungeon';
-import { mustAt } from '../../testUtils';
+import { mustAt, mustDefined } from '../../testUtils';
 import {
   createEnemyByKind,
   createGameState,
@@ -295,7 +295,8 @@ describe('Enemy AI, spawning, and boss simulation', () => {
 
     // Fountain heals 100% HP once
     state.player.hp = 25;
-    const fountainWorld = tileCenterWorld(state.map.fountainTile!.tx, state.map.fountainTile!.ty);
+    const fountainTile = mustDefined(state.map.fountainTile, 'state.map.fountainTile');
+    const fountainWorld = tileCenterWorld(fountainTile.tx, fountainTile.ty);
     state.player.x = fountainWorld.x;
     state.player.y = fountainWorld.y;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
@@ -308,23 +309,25 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     expect(state.player.hp).toBe(40);
 
     // Grand Boss exists with buffed HP (6.8x tank base), locks stairs, and cycles 4 patterns incl. windup->dashing
-    const grandBoss = state.enemies.find((e) => e.isGrandBoss);
-    expect(grandBoss).toBeDefined();
-    expect(grandBoss!.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 10).maxHp * 6.8));
+    const grandBoss = mustDefined(
+      state.enemies.find((e) => e.isGrandBoss),
+      'grandBoss',
+    );
+    expect(grandBoss.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 10).maxHp * 6.8));
     expect(getStairsLockCount(state)).toBe(1);
 
-    state.enemies = [grandBoss!];
+    state.enemies = [grandBoss];
     state.player.baseAttackCooldown = 999;
-    state.player.x = grandBoss!.x - 160;
-    state.player.y = grandBoss!.y;
-    grandBoss!.awake = true;
-    grandBoss!.attackCooldown = 0.01;
+    state.player.x = grandBoss.x - 160;
+    state.player.y = grandBoss.y;
+    grandBoss.awake = true;
+    grandBoss.attackCooldown = 0.01;
     stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 0: 12-way ring (with piercing shots)
     expect(state.enemyProjectiles.length).toBeGreaterThanOrEqual(12);
     expect(state.enemyProjectiles.some((p) => p.pierceDefense)).toBe(true);
 
     state.enemyProjectiles = [];
-    grandBoss!.attackCooldown = 0.01;
+    grandBoss.attackCooldown = 0.01;
     stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 1: 6 spread homing orbs (non-piercing)
     const homingOrbs = state.enemyProjectiles.filter((p) => (p.homingRate ?? 0) > 0);
     expect(homingOrbs.length).toBe(6);
@@ -332,7 +335,7 @@ describe('Enemy AI, spawning, and boss simulation', () => {
 
     state.enemyProjectiles = [];
     state.bossLasers = [];
-    grandBoss!.attackCooldown = 0.01;
+    grandBoss.attackCooldown = 0.01;
     stepGame(state, { x: 0, y: 0 }, 0.02); // pattern 2: wall-reflecting lead laser
     expect((state.bossLasers ?? []).length).toBeGreaterThanOrEqual(1);
     expect(state.bossLasers?.[0]?.points.length).toBeGreaterThanOrEqual(3);
@@ -340,27 +343,29 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     // pattern 3: high-speed dash (windup -> dashing movement -> landing burst) + independent mortar
     state.enemyProjectiles = [];
     state.mortarZones = [];
-    grandBoss!.mortarCooldown = 0.01;
-    grandBoss!.attackCooldown = 0.01;
+    grandBoss.mortarCooldown = 0.01;
+    grandBoss.attackCooldown = 0.01;
     state.player.invulnTimer = 3.0;
     stepGame(state, { x: 0, y: 0 }, 0.02);
     expect(state.mortarZones.length).toBeGreaterThanOrEqual(1);
-    expect(grandBoss!.dashState).toBe('windup');
-    const preDashX = grandBoss!.x;
+    expect(grandBoss.dashState).toBe('windup');
+    const preDashX = grandBoss.x;
     for (let f = 0; f < 80; f++) {
       stepGame(state, { x: 0, y: 0 }, 0.02);
     }
-    expect(Math.abs(grandBoss!.x - preDashX)).toBeGreaterThan(50);
+    expect(Math.abs(grandBoss.x - preDashX)).toBeGreaterThan(50);
     expect(state.enemyProjectiles.length).toBeGreaterThanOrEqual(8);
 
     // Defeating Grand Boss unlocks stairs, drops high-level gear, and advances endlessly to 11F
     state.player.equipment = [createEquippedItem('orbit_shield', 4)];
-    grandBoss!.hp = 0;
+    grandBoss.hp = 0;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(getStairsLockCount(state)).toBe(0);
-    const grandDrop = state.pickups.find((p) => p.kind === 'equip');
-    expect(grandDrop).toBeDefined();
-    expect(grandDrop!.itemLevel).toBeGreaterThanOrEqual(6);
+    const grandDrop = mustDefined(
+      state.pickups.find((p) => p.kind === 'equip'),
+      'grandDrop',
+    );
+    expect(grandDrop.itemLevel).toBeGreaterThanOrEqual(6);
 
     const stairsWorld = tileCenterWorld(state.map.stairsTile.tx, state.map.stairsTile.ty);
     state.player.x = stairsWorld.x;
@@ -382,12 +387,14 @@ describe('Enemy AI, spawning, and boss simulation', () => {
 
     // Guardian on 3F has buffed HP (2.9x) and ignores def_pulse knockback
     const floor3 = createGameState({ seed: 960, startFloor: 3 });
-    const guardian = floor3.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss);
-    expect(guardian).toBeDefined();
-    expect(guardian!.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.9));
+    const guardian = mustDefined(
+      floor3.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss),
+      'guardian',
+    );
+    expect(guardian.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.9));
     const guardianStairs = tileCenterWorld(floor3.map.stairsTile.tx, floor3.map.stairsTile.ty);
-    expect(guardian!.x).toBeCloseTo(guardianStairs.x, 1);
-    expect(guardian!.y).toBeCloseTo(guardianStairs.y, 1);
+    expect(guardian.x).toBeCloseTo(guardianStairs.x, 1);
+    expect(guardian.y).toBeCloseTo(guardianStairs.y, 1);
 
     const kbState = createGameState({ seed: 961 });
     kbState.chests = [];

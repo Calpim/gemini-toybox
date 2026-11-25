@@ -332,13 +332,13 @@ export function parseGlossary(content, filePath = 'specs/glossary.md') {
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => ({
-    id: r['ID'] || '',
-    term: r['用語'] || '',
-    alias: r['別名・コード表記'] || r['別名'] || '',
-    definition: r['定義'] || '',
-    status: normalizeSpecStatus(r['状態']),
-    refs: parseRefsList(r['関連ID']),
-    sourceNote: r['出典・備考'] || r['出典'] || r['備考'] || '',
+    id: r.ID || '',
+    term: r.用語 || '',
+    alias: r['別名・コード表記'] || r.別名 || '',
+    definition: r.定義 || '',
+    status: normalizeSpecStatus(r.状態),
+    refs: parseRefsList(r.関連ID),
+    sourceNote: r['出典・備考'] || r.出典 || r.備考 || '',
     sourceFile: relPath,
   }));
   return {
@@ -354,16 +354,16 @@ export function parseParameters(content, filePath = 'specs/parameters.md') {
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => ({
-    id: r['ID'] || '',
-    category: r['カテゴリ'] || '',
-    name: r['パラメータ名'] || r['名前'] || '',
-    value: r['現行値'] || r['値'] || '',
-    unit: r['単位・形式'] || r['単位'] || '',
-    goal: r['狙い（体験目標）'] || r['狙い'] || '',
-    status: normalizeSpecStatus(r['状態']),
-    statusOrigin: parseStatusOrigin(r['状態']),
-    refs: parseRefsList(r['関連ID']),
-    codeRef: r['元コード参照'] || r['出典'] || '',
+    id: r.ID || '',
+    category: r.カテゴリ || '',
+    name: r.パラメータ名 || r.名前 || '',
+    value: r.現行値 || r.値 || '',
+    unit: r['単位・形式'] || r.単位 || '',
+    goal: r['狙い（体験目標）'] || r.狙い || '',
+    status: normalizeSpecStatus(r.状態),
+    statusOrigin: parseStatusOrigin(r.状態),
+    refs: parseRefsList(r.関連ID),
+    codeRef: r.元コード参照 || r.出典 || '',
     sourceFile: relPath,
   }));
   return {
@@ -379,14 +379,14 @@ export function parseFormulas(content, filePath = 'specs/formulas.md') {
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => ({
-    id: r['ID'] || '',
-    name: r['名称'] || '',
-    formula: r['式'] || '',
-    inputs: r['入力（パラメータIDで参照）'] || r['入力'] || '',
-    output: r['出力と単位'] || r['出力'] || '',
-    status: normalizeSpecStatus(r['状態']),
-    refs: parseRefsList(r['関連ID']),
-    codeRef: r['元コード参照'] || r['出典'] || '',
+    id: r.ID || '',
+    name: r.名称 || '',
+    formula: r.式 || '',
+    inputs: r['入力（パラメータIDで参照）'] || r.入力 || '',
+    output: r.出力と単位 || r.出力 || '',
+    status: normalizeSpecStatus(r.状態),
+    refs: parseRefsList(r.関連ID),
+    codeRef: r.元コード参照 || r.出典 || '',
     sourceFile: relPath,
   }));
   return {
@@ -402,12 +402,12 @@ export function parseOpenQuestions(content, filePath = 'specs/open-questions.md'
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => ({
-    id: r['ID'] || '',
-    topic: r['論点'] || '',
-    status: normalizeSpecStatus(r['状態（Unknown｜Disputed）'] || r['状態']),
-    refs: parseRefsList(r['関連ID']),
-    trigger: r['決めるタイミング・トリガー'] || r['トリガー'] || '',
-    impact: r['保留している間の影響'] || r['影響'] || '',
+    id: r.ID || '',
+    topic: r.論点 || '',
+    status: normalizeSpecStatus(r['状態（Unknown｜Disputed）'] || r.状態),
+    refs: parseRefsList(r.関連ID),
+    trigger: r['決めるタイミング・トリガー'] || r.トリガー || '',
+    impact: r.保留している間の影響 || r.影響 || '',
     sourceFile: relPath,
   }));
   return {
@@ -434,11 +434,11 @@ export function parseNonGoals(content, filePath = 'specs/non-goals.md') {
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => ({
-    id: r['ID'] || '',
-    item: r['やらないこと'] || '',
-    reason: r['理由'] || '',
-    status: normalizeSpecStatus(r['状態']),
-    refs: parseRefsList(r['関連ID']),
+    id: r.ID || '',
+    item: r.やらないこと || '',
+    reason: r.理由 || '',
+    status: normalizeSpecStatus(r.状態),
+    refs: parseRefsList(r.関連ID),
     sourceFile: relPath,
   }));
   return {
@@ -456,16 +456,16 @@ export function parseStateTransitions(content, filePath = 'specs/state-transitio
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => {
-    const to = r['遷移先'] || '';
+    const to = r.遷移先 || '';
     return {
-      id: r['ID'] || '',
-      from: r['遷移元'] || '',
-      trigger: r['トリガー・条件'] || r['トリガー'] || '',
+      id: r.ID || '',
+      from: r.遷移元 || '',
+      trigger: r['トリガー・条件'] || r.トリガー || '',
       to,
       isUndefined: to === '未定義' || to.includes('未定義'),
-      status: normalizeSpecStatus(r['状態']),
-      refs: parseRefsList(r['関連ID']),
-      note: r['備考'] || '',
+      status: normalizeSpecStatus(r.状態),
+      refs: parseRefsList(r.関連ID),
+      note: r.備考 || '',
       sourceFile: relPath,
     };
   });
@@ -483,13 +483,13 @@ export function parseInvariants(content, filePath = 'specs/invariants.md') {
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => ({
-    id: r['ID'] || '',
-    category: r['分類'] || r['カテゴリ'] || '',
-    condition: r['不変条件'] || '',
-    verification: r['検証箇所'] || '',
-    status: normalizeSpecStatus(r['状態']),
-    refs: parseRefsList(r['関連ID']),
-    note: r['備考'] || '',
+    id: r.ID || '',
+    category: r.分類 || r.カテゴリ || '',
+    condition: r.不変条件 || '',
+    verification: r.検証箇所 || '',
+    status: normalizeSpecStatus(r.状態),
+    refs: parseRefsList(r.関連ID),
+    note: r.備考 || '',
     sourceFile: relPath,
   }));
   return {
@@ -505,15 +505,15 @@ export function parseDecisionLog(content, filePath = 'specs/decisions.md') {
   const tables = parseMarkdownTables(content);
   const rows = tables.flatMap(mapTableRowsByHeader);
   const items = rows.map((r) => ({
-    id: r['ID'] || '',
-    date: r['日付'] || '',
-    decider: r['決定者'] || '',
-    decision: r['決定事項'] || '',
-    reason: r['理由・背景'] || r['理由'] || '',
-    status: normalizeSpecStatus(r['状態']),
-    transition: r['状態遷移'] || '',
-    refs: parseRefsList(r['関連ID']),
-    revisitTrigger: r['再検討トリガー'] || '',
+    id: r.ID || '',
+    date: r.日付 || '',
+    decider: r.決定者 || '',
+    decision: r.決定事項 || '',
+    reason: r['理由・背景'] || r.理由 || '',
+    status: normalizeSpecStatus(r.状態),
+    transition: r.状態遷移 || '',
+    refs: parseRefsList(r.関連ID),
+    revisitTrigger: r.再検討トリガー || '',
     sourceFile: relPath,
   }));
   return {
@@ -557,7 +557,7 @@ export function resolveDecisionAddendums(decisions) {
   const matchedAddendumIds = new Set();
 
   for (const item of items) {
-    if (!item.id || !item.id.endsWith('-addendum')) continue;
+    if (!item.id?.endsWith('-addendum')) continue;
     const match = item.id.match(/^(DEC-\d+)-addendum$/);
     const baseId = match ? match[1] : null;
     const hasBaseInRefs = Boolean(baseId && Array.isArray(item.refs) && item.refs.includes(baseId));
@@ -1306,7 +1306,7 @@ function renderSteps(steps) {
 }
 
 function renderBackgroundBox(bg) {
-  if (!bg || !bg.steps || bg.steps.length === 0) return '';
+  if (!bg?.steps || bg.steps.length === 0) return '';
   const title = bg.name ? `背景: ${bg.name}` : '背景・決定経緯';
   return `<div class="bg-box">
     <div class="bg-title">📋 ${escapeHtml(title)}</div>

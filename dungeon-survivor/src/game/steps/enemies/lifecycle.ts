@@ -136,7 +136,7 @@ export function stepFloorRespawn(state: GameState, clampedDt: number, rng: Retur
   const maxAlive = 26 + state.floor * 3;
   const isBossArenaFloor = map.floorType === 'boss';
   const activeGrandBoss = isBossArenaFloor ? state.enemies.find((e) => e.isGrandBoss && e.hp > 0) : undefined;
-  const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss && activeGrandBoss.awake);
+  const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss?.awake);
 
   if (state.respawnTimer <= 0) {
     state.respawnTimer = isBossArenaFloor ? 5.0 : Math.max(9, 14 - (state.floor - 1) * 0.8);

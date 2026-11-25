@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createGameState } from '../game/engine';
+import { mustDefined } from '../testUtils';
 import { computeFloorBannerRect, computeNotificationLayout, computeTopSafeY, renderGame } from './canvasRenderer';
 import { renderHudMinimap } from './minimapRenderer';
 
@@ -126,10 +127,12 @@ describe('canvasRenderer HUD safe layout', () => {
       { hudBottom, hintTop },
     );
 
-    const bannerText = fillTextCalls.find((c) => c.text.includes('FLOOR 1F'));
-    expect(bannerText).toBeDefined();
-    expect(bannerText!.y).toBeGreaterThan(350);
-    expect(bannerText!.y).toBeLessThan(460);
+    const bannerText = mustDefined(
+      fillTextCalls.find((c) => c.text.includes('FLOOR 1F')),
+      'bannerText',
+    );
+    expect(bannerText.y).toBeGreaterThan(350);
+    expect(bannerText.y).toBeLessThan(460);
 
     const renderedTexts = fillTextCalls.map((c) => c.text);
     expect(renderedTexts).not.toContain('OLDEST');
@@ -137,9 +140,18 @@ describe('canvasRenderer HUD safe layout', () => {
     expect(renderedTexts).toContain('MSG_3');
     expect(renderedTexts).toContain('LATEST_4');
 
-    const latestCall = fillTextCalls.find((c) => c.text === 'LATEST_4')!;
-    const msg3Call = fillTextCalls.find((c) => c.text === 'MSG_3')!;
-    const msg2Call = fillTextCalls.find((c) => c.text === 'MSG_2')!;
+    const latestCall = mustDefined(
+      fillTextCalls.find((c) => c.text === 'LATEST_4'),
+      'latestCall',
+    );
+    const msg3Call = mustDefined(
+      fillTextCalls.find((c) => c.text === 'MSG_3'),
+      'msg3Call',
+    );
+    const msg2Call = mustDefined(
+      fillTextCalls.find((c) => c.text === 'MSG_2'),
+      'msg2Call',
+    );
 
     // Latest notification is closest to the hint bar, stacking upwards
     expect(latestCall.y).toBeLessThan(hintTop);

@@ -704,13 +704,13 @@ stateDiagram-v2
     try {
       fs.writeFileSync(
         path.join(tmpDir, 'refs.md'),
-        [
+        `${[
           '| ID | ref |',
           '| --- | --- |',
           '| OK1 | `src/game/engine.ts#stepGame` |',
           '| BAD_SYM | `src/game/engine.ts#nonExistentSymbolFoo` |',
           '| BAD_FILE | `src/game/nonexistent.ts#foo` |',
-        ].join('\n') + '\n',
+        ].join('\n')}\n`,
         'utf8',
       );
       const result = validateSymbolRefs(projectRoot, { specsDir: tmpDir });

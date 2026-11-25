@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TILE_SIZE, tileCenterWorld } from '../core/dungeon';
-import { mustAt } from '../testUtils';
+import { mustAt, mustDefined } from '../testUtils';
 import {
   createEnemyByKind,
   createGameState,
@@ -293,11 +293,13 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     }
     const hpAfterFirstHit = mustAt(soloDiscState.enemies, 0, 'soloDiscState.enemies').hp;
     expect(hpAfterFirstHit).toBe(182); // 1 hit only (baseDamage 18), entering hit-originated loop
-    const soloLoopDisc = soloDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 903);
-    expect(soloLoopDisc).toBeDefined();
-    expect(soloLoopDisc!.loopRadius).toBe(RICOCHET_DISC_LOOP_RADIUS);
-    const fixedLoopCenterX = soloLoopDisc!.loopCenterX!;
-    const fixedLoopCenterY = soloLoopDisc!.loopCenterY!;
+    const soloLoopDisc = mustDefined(
+      soloDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 903),
+      'soloLoopDisc',
+    );
+    expect(soloLoopDisc.loopRadius).toBe(RICOCHET_DISC_LOOP_RADIUS);
+    const fixedLoopCenterX = mustDefined(soloLoopDisc.loopCenterX, 'soloLoopDisc.loopCenterX');
+    const fixedLoopCenterY = mustDefined(soloLoopDisc.loopCenterY, 'soloLoopDisc.loopCenterY');
     expect(fixedLoopCenterX).toBeTypeOf('number');
     expect(fixedLoopCenterY).toBeTypeOf('number');
 
@@ -309,10 +311,12 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     for (let f = 0; f < 10; f++) {
       stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
     }
-    const midLoopDisc = soloDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 903);
-    expect(midLoopDisc).toBeDefined();
-    expect(midLoopDisc!.loopCenterX).toBe(fixedLoopCenterX);
-    expect(midLoopDisc!.loopCenterY).toBe(fixedLoopCenterY);
+    const midLoopDisc = mustDefined(
+      soloDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 903),
+      'midLoopDisc',
+    );
+    expect(midLoopDisc.loopCenterX).toBe(fixedLoopCenterX);
+    expect(midLoopDisc.loopCenterY).toBe(fixedLoopCenterY);
 
     // Finish revolution and pursue moved enemy to re-hit
     for (let f = 0; f < 50; f++) {
@@ -348,14 +352,16 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     for (let f = 0; f < 15; f++) {
       stepGame(bossDiscState, { x: 0, y: 0 }, 1 / 60);
     }
-    const bossLoopDisc = bossDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 904);
-    expect(bossLoopDisc).toBeDefined();
+    const bossLoopDisc = mustDefined(
+      bossDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 904),
+      'bossLoopDisc',
+    );
     const distFromLoopCenter = Math.hypot(
-      bossLoopDisc!.x - bossLoopDisc!.loopCenterX!,
-      bossLoopDisc!.y - bossLoopDisc!.loopCenterY!,
+      bossLoopDisc.x - mustDefined(bossLoopDisc.loopCenterX, 'bossLoopDisc.loopCenterX'),
+      bossLoopDisc.y - mustDefined(bossLoopDisc.loopCenterY, 'bossLoopDisc.loopCenterY'),
     );
     expect(distFromLoopCenter).toBeCloseTo(RICOCHET_DISC_LOOP_RADIUS, 1);
-    const orbitTangentialSpeed = Math.hypot(bossLoopDisc!.vx, bossLoopDisc!.vy);
+    const orbitTangentialSpeed = Math.hypot(bossLoopDisc.vx, bossLoopDisc.vy);
     expect(orbitTangentialSpeed).toBeLessThan(400);
 
     // 6. Pulse blade triggers on incoming enemy projectiles even with no enemy in range and reflects them
@@ -379,9 +385,11 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     ];
     stepGame(reflectState, { x: 0, y: 0 }, 1 / 60);
     expect(reflectState.enemyProjectiles.length).toBe(0);
-    const reflected = reflectState.projectiles.find((p) => p.kind === 'reflected');
-    expect(reflected).toBeDefined();
-    expect(reflected!.vx).toBeGreaterThan(0);
+    const reflected = mustDefined(
+      reflectState.projectiles.find((p) => p.kind === 'reflected'),
+      'reflected',
+    );
+    expect(reflected.vx).toBeGreaterThan(0);
   });
 
   it('[APP-CMB-06] scales player Main Weapon (Core Shot) via arms skills only, NOT by player.level or non-arms SP, and keeps sub-equipment free from arms multipliers', () => {
@@ -815,46 +823,54 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
       },
     ];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    let homing = state.projectiles.find((p) => p.kind === 'base_homing');
-    expect(homing).toBeDefined();
-    expect(Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y)).toBeCloseTo(44, 1);
-    expect(homing!.trail?.length).toBeGreaterThanOrEqual(2);
+    let homing = mustDefined(
+      state.projectiles.find((p) => p.kind === 'base_homing'),
+      'homing',
+    );
+    expect(Math.hypot(homing.x - state.player.x, homing.y - state.player.y)).toBeCloseTo(44, 1);
+    expect(homing.trail?.length).toBeGreaterThanOrEqual(2);
 
     // Phase 1: Step through part of the 0.26s orbit (8 frames = ~0.133s)
     for (let i = 0; i < 8; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
-    homing = state.projectiles.find((p) => p.kind === 'base_homing');
-    expect(homing).toBeDefined();
-    expect(homing!.orbitTimer).toBeGreaterThan(0);
-    expect(homing!.expandTimer).toBeCloseTo(0.13, 3);
-    expect(Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y)).toBeCloseTo(44, 1);
+    homing = mustDefined(
+      state.projectiles.find((p) => p.kind === 'base_homing'),
+      'homing (phase 1)',
+    );
+    expect(homing.orbitTimer).toBeGreaterThan(0);
+    expect(homing.expandTimer).toBeCloseTo(0.13, 3);
+    expect(Math.hypot(homing.x - state.player.x, homing.y - state.player.y)).toBeCloseTo(44, 1);
 
     // Finish Phase 1 (8 more frames -> total 17 frames = 0.283s > 0.26s), enter Phase 2 (expand)
     for (let i = 0; i < 8; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
-    homing = state.projectiles.find((p) => p.kind === 'base_homing');
-    expect(homing).toBeDefined();
-    expect(homing!.orbitTimer).toBe(0);
-    expect(homing!.expandTimer).toBeGreaterThan(0);
+    homing = mustDefined(
+      state.projectiles.find((p) => p.kind === 'base_homing'),
+      'homing (phase 2)',
+    );
+    expect(homing.orbitTimer).toBe(0);
+    expect(homing.expandTimer).toBeGreaterThan(0);
 
     // Finish Phase 2 (8 more frames -> 0.133s > 0.13s) -> expands to ~84px and enters fast Phase 3 dash
     for (let i = 0; i < 8; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
-    homing = state.projectiles.find((p) => p.kind === 'base_homing');
-    expect(homing).toBeDefined();
-    expect(homing!.orbitTimer).toBe(0);
-    expect(homing!.expandTimer).toBe(0);
-    const distAfterExpand = Math.hypot(homing!.x - state.player.x, homing!.y - state.player.y);
+    homing = mustDefined(
+      state.projectiles.find((p) => p.kind === 'base_homing'),
+      'homing (phase 3)',
+    );
+    expect(homing.orbitTimer).toBe(0);
+    expect(homing.expandTimer).toBe(0);
+    const distAfterExpand = Math.hypot(homing.x - state.player.x, homing.y - state.player.y);
     expect(distAfterExpand).toBeGreaterThanOrEqual(80);
     expect(distAfterExpand).toBeLessThanOrEqual(115);
     // Velocity should accelerate sharply to dash speed (>= 540) and point toward enemy
-    expect(Math.hypot(homing!.vx, homing!.vy)).toBeGreaterThanOrEqual(540);
-    expect(homing!.vx).toBeGreaterThan(0);
-    expect(homing!.trail?.length).toBeLessThanOrEqual(12);
-    expect(homing!.trail?.length).toBeGreaterThanOrEqual(6);
+    expect(Math.hypot(homing.vx, homing.vy)).toBeGreaterThanOrEqual(540);
+    expect(homing.vx).toBeGreaterThan(0);
+    expect(homing.trail?.length).toBeLessThanOrEqual(12);
+    expect(homing.trail?.length).toBeGreaterThanOrEqual(6);
 
     // 2. Close enemy on the 44px orbit ring gets intercepted during Phase 1
     state.projectiles = [];
@@ -892,8 +908,11 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     for (let i = 0; i < 12; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
-    const closeEnemy = state.enemies.find((e) => e.id === 9953);
-    expect(closeEnemy!.hp).toBeLessThan(100);
+    const closeEnemy = mustDefined(
+      state.enemies.find((e) => e.id === 9953),
+      'closeEnemy',
+    );
+    expect(closeEnemy.hp).toBeLessThan(100);
   });
 
   it('[BUG-30] skips pierceDefense shots in pulse_blade/orbit_shield and bypasses def_aegis parry for pierceDefense, mortar, and bossLaser', () => {
