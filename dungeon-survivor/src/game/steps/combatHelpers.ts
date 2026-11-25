@@ -72,7 +72,7 @@ export function triggerChainLightning(
     for (const candidate of state.enemies) {
       if (hitIds.has(candidate.id) || candidate.hp <= 0) continue;
       const d = Math.hypot(candidate.x - curr.x, candidate.y - curr.y);
-      if (d <= nextDist && hasLineOfSight(curr.x, curr.y, candidate.x, candidate.y, state.map)) {
+      if (d <= nextDist && hasLineOfSight(curr.x, curr.y, candidate.x, curr.y, state.map)) {
         nextDist = d;
         nextTarget = candidate;
       }
