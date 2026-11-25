@@ -520,6 +520,29 @@ export function parseDecisionLog(content, filePath = 'specs/decisions.md') {
   };
 }
 
+export function parseOverrideTargets(text) {
+  const str = String(text || '');
+  const targets = [];
+  const seen = new Set();
+  const markerRegex = /上書き対象\s*[:：]\s*([^。；;\n）)]+)/g;
+  let m;
+  while ((m = markerRegex.exec(str)) !== null) {
+    const rawList = m[1].trim();
+    if (!rawList) continue;
+    const tokens = rawList
+      .split(/[\s,、]+/)
+      .map((t) => t.replace(/^`|`$/g, '').trim())
+      .filter(Boolean);
+    for (const tok of tokens) {
+      if (!seen.has(tok)) {
+        seen.add(tok);
+        targets.push(tok);
+      }
+    }
+  }
+  return targets;
+}
+
 export function resolveDecisionAddendums(decisions) {
   const items = decisions?.items || [];
   const baseIds = new Set(
@@ -528,6 +551,8 @@ export function resolveDecisionAddendums(decisions) {
       .map((item) => item.id)
   );
   const addendumsByBaseId = new Map();
+  const overrideAddendumsByTargetId = new Map();
+  const brokenOverrideTargets = [];
   const unmatchedAddendums = [];
   const matchedAddendumIds = new Set();
 
@@ -547,10 +572,31 @@ export function resolveDecisionAddendums(decisions) {
     } else {
       unmatchedAddendums.push(item);
     }
+
+    const overrideTargets = parseOverrideTargets(item.decision);
+    for (const targetId of overrideTargets) {
+      if (!baseIds.has(targetId)) {
+        brokenOverrideTargets.push({
+          sourceId: item.id,
+          sourceFile: item.sourceFile || '',
+          missingTarget: targetId,
+        });
+      } else if (targetId !== baseId) {
+        if (!overrideAddendumsByTargetId.has(targetId)) {
+          overrideAddendumsByTargetId.set(targetId, []);
+        }
+        const list = overrideAddendumsByTargetId.get(targetId);
+        if (!list.includes(item)) {
+          list.push(item);
+        }
+      }
+    }
   }
 
   return {
     addendumsByBaseId,
+    overrideAddendumsByTargetId,
+    brokenOverrideTargets,
     unmatchedAddendums,
     matchedAddendumIds,
   };
@@ -976,6 +1022,15 @@ export function validateExtendedSpecs(graph, extendedSpecs) {
     }
   }
 
+  const { brokenOverrideTargets } = resolveDecisionAddendums(extendedSpecs?.decisions);
+  for (const b of brokenOverrideTargets) {
+    brokenDocRefs.push({
+      sourceId: b.sourceId,
+      sourceFile: b.sourceFile,
+      missingRef: b.missingTarget,
+    });
+  }
+
   const disputedTerms = (extendedSpecs?.glossary?.items || []).filter((item) => item.status === 'Disputed');
   const undefinedTransitions = (extendedSpecs?.stateTransitions?.items || []).filter((item) => item.isUndefined);
 
@@ -995,6 +1050,7 @@ export function validateExtendedSpecs(graph, extendedSpecs) {
   return {
     validIds,
     brokenDocRefs,
+    brokenOverrideTargets,
     disputedTerms,
     undefinedTransitions,
     allDocItemsCount: allDocItems.length,
@@ -1625,9 +1681,9 @@ function renderInvariantsSection(invariants) {
 
 function renderDecisionsSection(decisions) {
   if (!decisions) return '';
-  const { addendumsByBaseId, matchedAddendumIds } = resolveDecisionAddendums(decisions);
+  const { addendumsByBaseId, overrideAddendumsByTargetId, matchedAddendumIds } = resolveDecisionAddendums(decisions);
 
-  const renderDecisionRow = (item, { isOverridden = false, isAddendum = false, baseId = '' } = {}) => {
+  const renderDecisionRow = (item, { isOverridden = false, isAddendum = false, baseId = '', overrideLinks = [] } = {}) => {
     const rowClasses = [
       'spec-row',
       isOverridden ? 'decision-overridden-row' : '',
@@ -1636,9 +1692,21 @@ function renderDecisionsSection(decisions) {
       .filter(Boolean)
       .join(' ');
     const parentAttr = isAddendum && baseId ? ` data-parent-id="${escapeHtml(baseId)}"` : '';
+    const overrideHtml = isOverridden
+      ? `<div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div>${
+          overrideLinks.length > 0
+            ? `<div class="override-link-list">${overrideLinks
+                .map(
+                  (ad) =>
+                    `<a class="ref-pill ref-link override-addendum-link" href="#${escapeHtml(ad.id)}">↳ ${escapeHtml(ad.id)}</a>`
+                )
+                .join('')}</div>`
+            : ''
+        }`
+      : '';
     const idCell = isAddendum
       ? `<span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>`
-      : `<a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>${isOverridden ? '<div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div>' : ''}`;
+      : `<a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>${overrideHtml}`;
 
     return `
       <tr id="${escapeHtml(item.id)}" class="${rowClasses}" data-section="decisions" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}"${parentAttr}>
@@ -1655,7 +1723,9 @@ function renderDecisionsSection(decisions) {
   for (const item of decisions.items) {
     if (matchedAddendumIds.has(item.id)) continue;
     const attached = addendumsByBaseId.get(item.id) || [];
-    renderedRows.push(renderDecisionRow(item, { isOverridden: attached.length > 0 }));
+    const overrideRefs = overrideAddendumsByTargetId.get(item.id) || [];
+    const isOverridden = attached.length > 0 || overrideRefs.length > 0;
+    renderedRows.push(renderDecisionRow(item, { isOverridden, overrideLinks: overrideRefs }));
     for (const addendum of attached) {
       renderedRows.push(renderDecisionRow(addendum, { isAddendum: true, baseId: item.id }));
     }
@@ -2170,6 +2240,7 @@ export function renderHtml(
     .decision-addendum-row { background: rgba(56, 189, 248, 0.05); }
     .decision-addendum-row td:first-child { padding-left: 22px; border-left: 3px solid rgba(56, 189, 248, 0.55); }
     .addendum-indent { color: #38bdf8; font-weight: 700; margin-right: 4px; }
+    .override-link-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     h3 { margin: 4px 0 10px; font-size: 17px; color: #f8fafc; }
     h4 { margin: 4px 0 10px; font-size: 15px; color: #f1f5f9; }
     .steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
