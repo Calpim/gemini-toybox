@@ -1,9 +1,9 @@
 import { hasLineOfSight, resolveCircleGridCollision } from '../../../core/collision';
 import {
-  TILE_SIZE,
   type findRoomAtTile,
   isTileInRoom,
   isWallTile,
+  TILE_SIZE,
   tileCenterWorld,
   tileIndex,
 } from '../../../core/dungeon';

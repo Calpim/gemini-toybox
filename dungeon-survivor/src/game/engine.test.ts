@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { TILE_SIZE, findRoomAtTile, tileCenterWorld } from '../core/dungeon';
+import { findRoomAtTile, TILE_SIZE, tileCenterWorld } from '../core/dungeon';
 import { computeCameraZoom } from '../render/canvasRenderer';
-import { MAX_TARGET_RANGE, createEquippedItem } from './equipment';
 import {
-  CORRIDOR_VISION_RADIUS,
   advanceToNextFloor,
+  CORRIDOR_VISION_RADIUS,
   createEnemyByKind,
-  startGame,
   createGameState,
   formatPlayTime,
   getStairsLockCount,
   isPointInPlayerVision,
   pickEnemyKindForFloor,
+  startGame,
   stepGame,
   toggleSkillTree,
 } from './engine';
+import { createEquippedItem, MAX_TARGET_RANGE } from './equipment';
 
 describe('Game simulation engine (core loop, floor progression, and vision)', () => {
   it('[APP-MAP-03] does not regenerate HP over time and heals only on recovery orb pickup', () => {

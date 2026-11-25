@@ -1,5 +1,5 @@
 import { hasLineOfSight } from '../../../core/collision';
-import { type DungeonMap, TILE_SIZE, findRoomAtTile, isWallTile, tileCenterWorld } from '../../../core/dungeon';
+import { type DungeonMap, findRoomAtTile, isWallTile, TILE_SIZE, tileCenterWorld } from '../../../core/dungeon';
 import type { EnemyState, PlayerState, Vec2 } from '../../types';
 
 export function hasClearCorridorPath(

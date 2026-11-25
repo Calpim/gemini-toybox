@@ -10,10 +10,10 @@ import {
   toggleSkillTree,
   unlockSkillNode,
 } from './game/engine';
-import { SKILL_TREE_NODES, canUnlockSkill } from './game/skillTree';
+import { canUnlockSkill, SKILL_TREE_NODES } from './game/skillTree';
 import type { GameState } from './game/types';
 import { InputController } from './input/controller';
-import { renderGame, type HudSafeInsets } from './render/canvasRenderer';
+import { type HudSafeInsets, renderGame } from './render/canvasRenderer';
 import { renderHudMinimap } from './render/minimapRenderer';
 import {
   ICON_ALERT,
@@ -26,7 +26,7 @@ import {
   ICON_VOLUME_OFF,
   ICON_VOLUME_ON,
 } from './ui/icons';
-import { closeOpenSkillInfoPopover, renderModals, type PauseModalTab } from './ui/modals';
+import { closeOpenSkillInfoPopover, type PauseModalTab, renderModals } from './ui/modals';
 
 const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;

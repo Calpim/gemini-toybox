@@ -1,5 +1,5 @@
 import { hasLineOfSight } from '../../core/collision';
-import { TILE_SIZE, computeBfsDistances, findRoomAtTile, isTileInRoom, isWallAtWorld } from '../../core/dungeon';
+import { computeBfsDistances, findRoomAtTile, isTileInRoom, isWallAtWorld, TILE_SIZE } from '../../core/dungeon';
 import { createRng } from '../../core/rng';
 import { type EquippedItem, getEquipmentDamage } from '../equipment';
 import type { ComputedSkillModifiers } from '../skillTree';
@@ -17,6 +17,7 @@ import { stepEnemyMovement } from './enemies/movement';
 import { handleEnemyContactWithPlayer, stepEnemyProjectilesOnPlayer } from './enemies/playerHit';
 
 export {
+  getNormalEnemyShotStats,
   type NormalEnemyShotStats,
   SCOUT_ALERT_COOLDOWN,
   SCOUT_ALERT_SPEED_MULT,
@@ -25,7 +26,6 @@ export {
   SCOUT_MAX_ALERT_SPEED,
   SCOUT_SUMMON_CAP_PER_SCOUT,
   SCOUT_SUMMON_MAX_PLAYER_DIST,
-  getNormalEnemyShotStats,
 } from './enemies/archetypes';
 export { getActiveBossLaserWidth } from './enemies/boss';
 export type { EnemiesStepDeps } from './enemies/lifecycle';

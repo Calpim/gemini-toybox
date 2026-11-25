@@ -1,4 +1,4 @@
-import { TILE_SIZE, isWallAtWorld, isWallTile, type DungeonMap } from './dungeon';
+import { type DungeonMap, isWallAtWorld, isWallTile, TILE_SIZE } from './dungeon';
 
 /**
  * Smooth circle-vs-tile-grid collision resolution (APP-MAP-02).

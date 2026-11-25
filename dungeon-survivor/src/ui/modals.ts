@@ -1,9 +1,7 @@
-import { getPlayerBaseAttackStats, type EquipChoice } from '../game/engine';
+import { type EquipChoice, getPlayerBaseAttackStats } from '../game/engine';
 import {
   EQUIPMENT_CATALOG,
-  MAX_EQUIPMENT_LEVEL,
-  MAX_EQUIP_SLOTS_CAP,
-  MAX_TARGET_RANGE,
+  type EquippedItem,
   getEquipmentCooldownMultiplier,
   getEquipmentDamage,
   getEquipmentEvolutionSummary,
@@ -13,22 +11,24 @@ import {
   getRicochetDiscStats,
   getScrapExpandCost,
   getSeekerDroneRange,
-  type EquippedItem,
+  MAX_EQUIP_SLOTS_CAP,
+  MAX_EQUIPMENT_LEVEL,
+  MAX_TARGET_RANGE,
 } from '../game/equipment';
 import {
-  SKILL_PREREQ_LEVEL,
-  SKILL_TREE_NODES,
   canUpgradeSkill,
   computeSkillModifiers,
   getSkillDetailedSpec,
   getSkillLevel,
   getSkillMaxLevel,
   getSkillUpgradeCost,
+  SKILL_PREREQ_LEVEL,
+  SKILL_TREE_NODES,
   type SkillBranch,
   type SkillNodeId,
 } from '../game/skillTree';
 import type { GameState } from '../game/types';
-import { ICON_CLOSE, ICON_GEAR, ICON_INFO, ICON_LOCK, ICON_TREE, getSkillIcon } from './icons';
+import { getSkillIcon, ICON_CLOSE, ICON_GEAR, ICON_INFO, ICON_LOCK, ICON_TREE } from './icons';
 
 export type PauseModalTab = 'skill' | 'gear';
 

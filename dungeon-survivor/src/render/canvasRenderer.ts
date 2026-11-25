@@ -12,11 +12,11 @@ import {
 import { renderEnemies, renderPlayerAndAura, renderPlayerSupportGear } from './canvas/entitiesLayer';
 import { renderFogOverlay } from './canvas/fogLayer';
 import {
-  type HudSafeInsets,
-  type NotificationLayout,
   computeFloorBannerRect,
   computeNotificationLayout,
   computeTopSafeY,
+  type HudSafeInsets,
+  type NotificationLayout,
   renderFloorBanner,
   renderMinimap,
   renderNotifications,
@@ -25,11 +25,11 @@ import {
 import { renderMapTilesAndInteractables } from './canvas/mapLayer';
 
 export {
-  type HudSafeInsets,
-  type NotificationLayout,
   computeFloorBannerRect,
   computeNotificationLayout,
   computeTopSafeY,
+  type HudSafeInsets,
+  type NotificationLayout,
 };
 
 export const TARGET_VIEW_WORLD_WIDTH = 840; // ~21 tiles across on desktop/web

@@ -4,7 +4,6 @@ import { emitSound } from '../effects';
 import {
   EQUIPMENT_CATALOG,
   type EquippedItem,
-  MAX_TARGET_RANGE,
   getEquipmentCooldownMultiplier,
   getEquipmentDamage,
   getOrbitBitCount,
@@ -14,6 +13,7 @@ import {
   getReactiveCoilStats,
   getRicochetDiscStats,
   getSeekerDroneRange,
+  MAX_TARGET_RANGE,
 } from '../equipment';
 import type { ComputedSkillModifiers } from '../skillTree';
 import type { GameState, MainWeaponId, PlayerState, Vec2 } from '../types';

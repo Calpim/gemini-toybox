@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import indexHtmlRaw from '../../index.html?raw';
 import { createGameState } from '../game/engine';
-import { SKILL_PREREQ_LEVEL, SKILL_TREE_NODES, getSkillDetailedSpec } from '../game/skillTree';
+import { getSkillDetailedSpec, SKILL_PREREQ_LEVEL, SKILL_TREE_NODES } from '../game/skillTree';
 import { getSkillIcon } from './icons';
-import { closeOpenSkillInfoPopover, computePopoverPosition, renderModals, type ModalElements } from './modals';
+import { closeOpenSkillInfoPopover, computePopoverPosition, type ModalElements, renderModals } from './modals';
 
-interface MockListener {
-  (event: MockEvent): void;
-}
+type MockListener = (event: MockEvent) => void;
 
 interface MockEvent {
   type: string;

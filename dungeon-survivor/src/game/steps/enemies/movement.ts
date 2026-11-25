@@ -1,5 +1,5 @@
 import { hasLineOfSight, resolveCircleGridCollision } from '../../../core/collision';
-import { TILE_SIZE, isWallTile } from '../../../core/dungeon';
+import { isWallTile, TILE_SIZE } from '../../../core/dungeon';
 import { type EquippedItem, ORBIT_SHIELD_INNER_SLOW } from '../../equipment';
 import type { EnemyState, GameState } from '../../types';
 import { SCOUT_ALERT_SPEED_MULT, SCOUT_CHASE_DIST, SCOUT_KEEP_DIST, SCOUT_MAX_ALERT_SPEED } from './archetypes';

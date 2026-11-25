@@ -1,8 +1,8 @@
 import { getOrbitBitPositions, getSeekerDronePositions, isPointInPlayerVision } from '../../game/engine';
-import { EQUIPMENT_CATALOG, MAX_TARGET_RANGE, getOrbitShieldRadius, getSeekerDroneRange } from '../../game/equipment';
+import { EQUIPMENT_CATALOG, getOrbitShieldRadius, getSeekerDroneRange, MAX_TARGET_RANGE } from '../../game/equipment';
 import type { computeSkillModifiers } from '../../game/skillTree';
 import type { EnemyState, GameState } from '../../game/types';
-import { type GlowColor, drawGlowSprite } from '../sprites';
+import { drawGlowSprite, type GlowColor } from '../sprites';
 import { setLineDashSafe } from './primitives';
 
 function drawPlayerCore(
