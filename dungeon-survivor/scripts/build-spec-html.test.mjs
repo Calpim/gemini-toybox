@@ -23,6 +23,7 @@ import {
   validateExtendedSpecs,
   validateInvariantTests,
   validateNoLineNumberRefs,
+  validateSymbolRefs,
 } from './build-spec-html.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -584,5 +585,52 @@ stateDiagram-v2
     const result = validateNoLineNumberRefs(projectRoot);
     assert.ok(result.checkedFiles >= 14, `Expected >= 14 spec files, got ${result.checkedFiles}`);
     assert.deepEqual(result.lineNumberRefs, []);
+  });
+
+  it('validates all actual project symbol code references (src/...#symbol) with zero broken links', () => {
+    const result = validateSymbolRefs(projectRoot);
+    assert.equal(result.checkedCount, 84);
+    assert.deepEqual(result.brokenSymbolRefs, []);
+  });
+
+  it('detects missing symbols and missing target files in validateSymbolRefs', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spec-symref-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'refs.md'),
+        [
+          '| ID | ref |',
+          '| --- | --- |',
+          '| OK1 | `src/game/engine.ts#stepGame` |',
+          '| BAD_SYM | `src/game/engine.ts#nonExistentSymbolFoo` |',
+          '| BAD_FILE | `src/game/nonexistent.ts#foo` |',
+        ].join('\n') + '\n',
+        'utf8'
+      );
+      const result = validateSymbolRefs(projectRoot, { specsDir: tmpDir });
+      assert.equal(result.checkedCount, 3);
+      assert.equal(result.brokenSymbolRefs.length, 2);
+      assert.deepEqual(
+        result.brokenSymbolRefs.map((b) => ({
+          targetFile: b.targetFile,
+          symbol: b.symbol,
+          reason: b.reason,
+        })),
+        [
+          {
+            targetFile: 'src/game/engine.ts',
+            symbol: 'nonExistentSymbolFoo',
+            reason: 'missing symbol declaration',
+          },
+          {
+            targetFile: 'src/game/nonexistent.ts',
+            symbol: 'foo',
+            reason: 'missing target file',
+          },
+        ]
+      );
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

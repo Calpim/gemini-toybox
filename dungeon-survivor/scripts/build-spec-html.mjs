@@ -1152,6 +1152,78 @@ export function validateNoLineNumberRefs(projectRoot, options = {}) {
   };
 }
 
+export function validateSymbolRefs(projectRoot, options = {}) {
+  const specsDir = options.specsDir ? path.resolve(options.specsDir) : path.join(projectRoot, 'specs');
+  const files = collectSpecFilesRecursive(specsDir).filter((f) => f.endsWith('.md'));
+  const uniqueRefs = new Map();
+  const symbolRefRegex = /\b(src\/[A-Za-z0-9_./-]+\.ts)#([A-Za-z_][A-Za-z0-9_]*)/g;
+
+  for (const fullPath of files) {
+    const specFile = path.relative(projectRoot, fullPath).replaceAll('\\', '/');
+    const lines = fs.readFileSync(fullPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      symbolRefRegex.lastIndex = 0;
+      let m;
+      while ((m = symbolRefRegex.exec(line)) !== null) {
+        const targetFile = m[1];
+        const symbol = m[2];
+        const ref = `${targetFile}#${symbol}`;
+        if (!uniqueRefs.has(ref)) {
+          uniqueRefs.set(ref, {
+            specFile,
+            line: i + 1,
+            ref,
+            targetFile,
+            symbol,
+          });
+        }
+      }
+    }
+  }
+
+  const fileCache = new Map();
+  const getTargetContent = (targetFile) => {
+    if (fileCache.has(targetFile)) return fileCache.get(targetFile);
+    const fullPath = path.join(projectRoot, targetFile);
+    if (!fs.existsSync(fullPath)) {
+      fileCache.set(targetFile, null);
+      return null;
+    }
+    const content = fs.readFileSync(fullPath, 'utf8');
+    fileCache.set(targetFile, content);
+    return content;
+  };
+
+  const brokenSymbolRefs = [];
+  for (const entry of uniqueRefs.values()) {
+    const content = getTargetContent(entry.targetFile);
+    if (content === null) {
+      brokenSymbolRefs.push({
+        ...entry,
+        reason: 'missing target file',
+      });
+      continue;
+    }
+
+    const declRegex = new RegExp(
+      `\\b(?:function|const|let|var|class|interface|type|enum)\\s+${entry.symbol}\\b`
+    );
+    const memberRegex = new RegExp(`\\b${entry.symbol}\\s*[:=(]`);
+    if (!declRegex.test(content) && !memberRegex.test(content)) {
+      brokenSymbolRefs.push({
+        ...entry,
+        reason: 'missing symbol declaration',
+      });
+    }
+  }
+
+  return {
+    checkedCount: uniqueRefs.size,
+    brokenSymbolRefs,
+  };
+}
+
 function escapeHtml(str) {
   return String(str)
     .replaceAll('&', '&amp;')
@@ -2770,12 +2842,21 @@ export function generateSpecHtml({ projectRoot, outPath }) {
   const extValidation = validateExtendedSpecs(graph, extendedSpecs);
   const invariantTestValidation = validateInvariantTests(extendedSpecs.invariants, projectRoot);
   const lineNumberRefValidation = validateNoLineNumberRefs(projectRoot);
+  const symbolRefValidation = validateSymbolRefs(projectRoot);
   const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extendedSpecs);
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, html, 'utf8');
 
-  return { graph, extendedSpecs, extValidation, invariantTestValidation, lineNumberRefValidation, outPath };
+  return {
+    graph,
+    extendedSpecs,
+    extValidation,
+    invariantTestValidation,
+    lineNumberRefValidation,
+    symbolRefValidation,
+    outPath,
+  };
 }
 
 // CLI entry point
@@ -2787,18 +2868,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       ? path.resolve(process.argv[outArgIndex + 1])
       : path.join(projectRoot, 'docs', 'specs.html');
 
-  const { graph, extValidation, invariantTestValidation, lineNumberRefValidation } = generateSpecHtml({
-    projectRoot,
-    outPath,
-  });
+  const { graph, extValidation, invariantTestValidation, lineNumberRefValidation, symbolRefValidation } =
+    generateSpecHtml({
+      projectRoot,
+      outPath,
+    });
   console.log(
-    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, LineNumRefs=${lineNumberRefValidation.lineNumberRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
+    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, LineNumRefs=${lineNumberRefValidation.lineNumberRefs.length}, SymbolRefs=${symbolRefValidation.checkedCount}, SymbolRefBroken=${symbolRefValidation.brokenSymbolRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
   );
   if (
     graph.stats.brokenCount > 0 ||
     extValidation.brokenDocRefs.length > 0 ||
     invariantTestValidation.brokenInvariantTests.length > 0 ||
-    lineNumberRefValidation.lineNumberRefs.length > 0
+    lineNumberRefValidation.lineNumberRefs.length > 0 ||
+    symbolRefValidation.brokenSymbolRefs.length > 0
   ) {
     console.error('Traceability issues found:', {
       unlinkedBiz: graph.unlinkedBiz,
@@ -2806,6 +2889,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       brokenDocRefs: extValidation.brokenDocRefs,
       brokenInvariantTests: invariantTestValidation.brokenInvariantTests,
       lineNumberRefs: lineNumberRefValidation.lineNumberRefs,
+      brokenSymbolRefs: symbolRefValidation.brokenSymbolRefs,
     });
     process.exitCode = 1;
   }
