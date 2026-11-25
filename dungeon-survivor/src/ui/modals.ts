@@ -475,7 +475,7 @@ export function closeOpenSkillInfoPopover(skillModal?: HTMLElement): boolean {
   const targetModal = skillModal ?? activePopoverModal;
   if (!targetModal) return false;
   const ctrl = popoverControllers.get(targetModal);
-  if (!ctrl || !ctrl.openNodeId) return false;
+  if (!ctrl?.openNodeId) return false;
   ctrl.close(true);
   return true;
 }

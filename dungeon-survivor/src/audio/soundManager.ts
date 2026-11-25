@@ -74,7 +74,7 @@ export class SoundManager {
       return;
     }
     const ctx = this.ctx;
-    if (!ctx || ctx.state !== 'running') {
+    if (ctx?.state !== 'running') {
       events.length = 0;
       return;
     }

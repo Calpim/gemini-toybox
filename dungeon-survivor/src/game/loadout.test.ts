@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tileCenterWorld } from '../core/dungeon';
-import { mustAt } from '../testUtils';
+import { mustAt, mustDefined } from '../testUtils';
 import {
   acquireEquipment,
   createGameState,
@@ -608,10 +608,12 @@ describe('Equipment, loadout, and growth simulation', () => {
     for (let f = 0; f < 10; f++) {
       stepGame(preferClearState, { x: 0, y: 0 }, 1 / 60);
     }
-    const clearSideDisc = preferClearState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 9959);
-    expect(clearSideDisc).toBeDefined();
-    expect(clearSideDisc!.loopCenterY!).toBeLessThan(cCenter.y);
-    expect(clearSideDisc!.loopDir).toBe(-1);
+    const clearSideDisc = mustDefined(
+      preferClearState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 9959),
+      'clearSideDisc',
+    );
+    expect(mustDefined(clearSideDisc.loopCenterY, 'clearSideDisc.loopCenterY')).toBeLessThan(cCenter.y);
+    expect(clearSideDisc.loopDir).toBe(-1);
 
     // When both loop sides collide with walls, loop cancels cleanly and disc keeps moving without sticking
     const wallDiscState = createGameState({ seed: 2025 });
