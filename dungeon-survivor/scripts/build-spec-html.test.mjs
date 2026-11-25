@@ -17,6 +17,7 @@ import {
   parseStateTransitions,
   parseInvariants,
   parseDecisionLog,
+  parseOverrideTargets,
   resolveDecisionAddendums,
   buildFormulaChartsData,
   loadExtendedSpecs,
@@ -456,6 +457,7 @@ stateDiagram-v2
 
     assert.equal(resolved.unmatchedAddendums.length, 0);
     assert.equal(resolved.matchedAddendumIds.size, 10);
+    assert.deepEqual(resolved.brokenOverrideTargets, []);
     for (const baseId of [
       'DEC-03',
       'DEC-06',
@@ -473,11 +475,98 @@ stateDiagram-v2
       assert.equal(list[0].id, `${baseId}-addendum`);
     }
 
+    for (const targetId of ['DEC-20', 'DEC-21', 'DEC-22', 'DEC-28', 'DEC-29']) {
+      const overrides = resolved.overrideAddendumsByTargetId.get(targetId);
+      assert.ok(overrides && overrides.length === 1, `Expected 1 override addendum for ${targetId}`);
+      assert.equal(overrides[0].id, 'DEC-19-addendum');
+    }
+    assert.equal(resolved.overrideAddendumsByTargetId.has('DEC-25'), false);
+    assert.equal(resolved.overrideAddendumsByTargetId.has('DEC-30'), false);
+
     const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extended);
     const decStart = html.indexOf('<section id="sec-decisions"');
     const decSlice = html.slice(decStart);
     assert.match(decSlice, /id="DEC-10"[\s\S]*?badge-overridden">上書きあり<\/span>[\s\S]*?<\/tr>\s*<tr id="DEC-10-addendum" class="spec-row decision-addendum-row"/);
     assert.equal((decSlice.match(/<tr id="DEC-10-addendum"/g) || []).length, 1);
+    assert.equal((decSlice.match(/<tr id="DEC-19-addendum"/g) || []).length, 1);
+    for (const targetId of ['DEC-20', 'DEC-21', 'DEC-22', 'DEC-28', 'DEC-29']) {
+      assert.match(
+        decSlice,
+        new RegExp(
+          `<tr id="${targetId}"(?:(?!<\\/tr>)[\\s\\S])*?badge-overridden">上書きあり<\\/span>(?:(?!<\\/tr>)[\\s\\S])*?href="#DEC-19-addendum"(?:(?!<\\/tr>)[\\s\\S])*?<\\/tr>`
+        )
+      );
+    }
+  });
+
+  it('handles explicit override-target markers (present, absent, and nonexistent target DEC)', () => {
+    assert.deepEqual(
+      parseOverrideTargets('補足（上書き対象: `DEC-02`、DEC-03, DEC-02）'),
+      ['DEC-02', 'DEC-03']
+    );
+
+    // 1) マーカーあり: DEC-01-addendum の上書き対象 DEC-02, DEC-03 のみにバッジとリンクが付く（DEC-04 は refs にあるが付かない）
+    const withMarker = parseDecisionLog(
+      `| ID | 日付 | 決定者 | 決定事項 | 理由・背景 | 状態 | 状態遷移 | 関連ID | 再検討トリガー |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DEC-01 | 2026-11-14 | 先輩 | 元1 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-02 | 2026-11-14 | 先輩 | 元2 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-03 | 2026-11-14 | 先輩 | 元3 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-04 | 2026-11-14 | 先輩 | 新正本 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-01-addendum | 2026-11-25 | 先輩 | 統合注記（上書き対象: DEC-02, DEC-03） | 理由 | Confirmed | 補足 | DEC-01, DEC-02, DEC-03, DEC-04 | - |
+`,
+      'specs/decisions.md'
+    );
+    const res1 = resolveDecisionAddendums(withMarker);
+    assert.deepEqual(res1.brokenOverrideTargets, []);
+    assert.equal(res1.overrideAddendumsByTargetId.get('DEC-02')?.[0]?.id, 'DEC-01-addendum');
+    assert.equal(res1.overrideAddendumsByTargetId.get('DEC-03')?.[0]?.id, 'DEC-01-addendum');
+    assert.equal(res1.overrideAddendumsByTargetId.has('DEC-04'), false);
+
+    const graph = buildTraceabilityGraph([], []);
+    const html1 = renderHtml(graph, 'Test', { decisions: withMarker });
+    const slice1 = html1.slice(html1.indexOf('<section id="sec-decisions"'));
+    assert.equal((slice1.match(/<tr id="DEC-01-addendum"/g) || []).length, 1);
+    assert.match(slice1, /<tr id="DEC-01"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
+    assert.match(slice1, /<tr id="DEC-02"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?href="#DEC-01-addendum"(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
+    assert.match(slice1, /<tr id="DEC-03"(?:(?!<\/tr>)[\s\S])*?badge-overridden">上書きあり<\/span>(?:(?!<\/tr>)[\s\S])*?href="#DEC-01-addendum"(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
+    assert.doesNotMatch(slice1, /<tr id="DEC-04"(?:(?!<\/tr>)[\s\S])*?上書きあり(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
+
+    // 2) マーカーなし: 関連IDに他DECがあっても overrideAddendumsByTargetId は空で他DECにバッジが付かない
+    const withoutMarker = parseDecisionLog(
+      `| ID | 日付 | 決定者 | 決定事項 | 理由・背景 | 状態 | 状態遷移 | 関連ID | 再検討トリガー |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DEC-01 | 2026-11-14 | 先輩 | 元1 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-02 | 2026-11-14 | 先輩 | 元2 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-01-addendum | 2026-11-25 | 先輩 | マーカーなしの追記 | 理由 | Confirmed | 補足 | DEC-01, DEC-02 | - |
+`,
+      'specs/decisions.md'
+    );
+    const res2 = resolveDecisionAddendums(withoutMarker);
+    assert.equal(res2.overrideAddendumsByTargetId.size, 0);
+    const html2 = renderHtml(graph, 'Test', { decisions: withoutMarker });
+    const slice2 = html2.slice(html2.indexOf('<section id="sec-decisions"'));
+    assert.doesNotMatch(slice2, /<tr id="DEC-02"(?:(?!<\/tr>)[\s\S])*?上書きあり(?:(?!<\/tr>)[\s\S])*?<\/tr>/);
+
+    // 3) 存在しないDEC: brokenOverrideTargets と validateExtendedSpecs.brokenDocRefs に検出される
+    const brokenMarker = parseDecisionLog(
+      `| ID | 日付 | 決定者 | 決定事項 | 理由・背景 | 状態 | 状態遷移 | 関連ID | 再検討トリガー |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DEC-01 | 2026-11-14 | 先輩 | 元1 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-01-addendum | 2026-11-25 | 先輩 | 注記（上書き対象: DEC-999） | 理由 | Confirmed | 補足 | DEC-01 | - |
+`,
+      'specs/decisions.md'
+    );
+    const res3 = resolveDecisionAddendums(brokenMarker);
+    assert.deepEqual(res3.brokenOverrideTargets, [
+      { sourceId: 'DEC-01-addendum', sourceFile: 'specs/decisions.md', missingTarget: 'DEC-999' },
+    ]);
+    const val3 = validateExtendedSpecs(graph, { decisions: brokenMarker });
+    assert.ok(
+      val3.brokenDocRefs.some(
+        (b) => b.sourceId === 'DEC-01-addendum' && b.missingRef === 'DEC-999'
+      )
+    );
   });
 
   it('leaves addendums unmatched when baseId is missing from refs, base DEC does not exist, or naming does not match', () => {
