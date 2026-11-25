@@ -2584,7 +2584,7 @@
         <td><span class="muted-text empty-goal">（空欄・人間確認待ち）</span></td>
         <td><span class="badge badge-confirmed-ai">確定 (AI提案)</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#FML-01">FML-01</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#createGameState</code>, <code class="inline-code">src/game/engine.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#createGameState</code>, <code class="inline-code">src/game/leveling.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-04" data-source-file="specs/parameters.md" data-item-id="PRM-04" title="元仕様ファイル specs/parameters.md (PRM-04)">specs/parameters.md#PRM-04</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3018,7 +3018,7 @@
         <td><div class="note-text">序盤（Lv2〜10）は+1SPで堅実に育成し、中盤以降（Lv11〜）は+2SPで2系統目以降の完成テンポを高めるため（Lv10=10SP, Lv15=20SP, Lv25=40SP。DEC-25）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-34">PRM-34</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#FML-14">FML-14</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#getLevelUpSkillPoints</code>, <code class="inline-code">src/game/engine.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/leveling.ts#getLevelUpSkillPoints</code>, <code class="inline-code">src/game/leveling.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-35" data-source-file="specs/parameters.md" data-item-id="PRM-35" title="元仕様ファイル specs/parameters.md (PRM-35)">specs/parameters.md#PRM-35</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3133,7 +3133,7 @@
         <td><code class="inline-code">次Lv必要経験値 (EXP)</code> / <code class="inline-code">累積EXP (EXP)</code></td>
         <td><span class="badge badge-inferred">Inferred（AI仮提案・要確認）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#PRM-04">PRM-04</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#createGameState</code>, <code class="inline-code">src/game/engine.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#createGameState</code>, <code class="inline-code">src/game/leveling.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-01" data-source-file="specs/formulas.md" data-item-id="FML-01" title="元仕様ファイル specs/formulas.md (FML-01)">specs/formulas.md#FML-01</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3302,7 +3302,7 @@
         <td><code class="inline-code">獲得SP (SP)</code> / <code class="inline-code">累計獲得SP (SP)</code></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-GRW-01">BIZ-GRW-01</a><a class="ref-pill ref-link" href="#BIZ-GRW-05">BIZ-GRW-05</a><a class="ref-pill ref-link" href="#APP-GRW-01">APP-GRW-01</a><a class="ref-pill ref-link" href="#APP-GRW-05">APP-GRW-05</a><a class="ref-pill ref-link" href="#PRM-09">PRM-09</a><a class="ref-pill ref-link" href="#PRM-34">PRM-34</a><a class="ref-pill ref-link" href="#PRM-35">PRM-35</a><a class="ref-pill ref-link" href="#FML-02">FML-02</a><a class="ref-pill ref-link" href="#DEC-25">DEC-25</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#createGameState</code>, <code class="inline-code">src/game/engine.ts#getLevelUpSkillPoints</code>, <code class="inline-code">src/game/engine.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/game/engine.ts#createGameState</code>, <code class="inline-code">src/game/leveling.ts#getLevelUpSkillPoints</code>, <code class="inline-code">src/game/leveling.ts#grantExpAndCheckLevelUp</code></div><div class="source-cell">
     <a class="source-link" href="../specs/formulas.md#FML-14" data-source-file="specs/formulas.md" data-item-id="FML-14" title="元仕様ファイル specs/formulas.md (FML-14)">specs/formulas.md#FML-14</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/formulas.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
