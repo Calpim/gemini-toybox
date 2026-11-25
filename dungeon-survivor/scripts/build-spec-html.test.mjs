@@ -633,10 +633,10 @@ stateDiagram-v2
     const mockInvariants = parseInvariants(
       `| ID | 分類 | 不変条件 | 検証箇所 | 状態 | 関連ID | 備考 |
 | --- | --- | --- | --- | --- | --- | --- |
-| INV-OK | 正常 | 正常参照 | \`src/game/engine.test.ts\` (\`[APP-MAP-03]\`, \`[INV-09 / APP-GRW-04]\`) | Confirmed | APP-MAP-03 | ok |
+| INV-OK | 正常 | 正常参照 | \`src/game/engine.test.ts\` (\`[APP-MAP-03]\`), \`src/game/loadout.test.ts\` (\`[INV-09 / APP-GRW-04]\`) | Confirmed | APP-MAP-03 | ok |
 | INV-SKIP | 対象外 | テストファイル参照なし | \`src/main.ts#L403\`, \`src/core/collision.ts\` | Inferred | APP-MAP-02 | skip |
 | INV-BAD-SINGLE | 異常1 | 存在しない単一タグ | \`src/game/engine.test.ts\` (\`[APP-FAKE-99]\`) | Confirmed | APP-MAP-03 | fail |
-| INV-BAD-COMP | 異常2 | 片方不在の複合タグ | \`src/game/engine.test.ts\` (\`[INV-09 / APP-FAKE-99]\`) | Confirmed | APP-MAP-03 | fail |
+| INV-BAD-COMP | 異常2 | 片方不在の複合タグ | \`src/game/loadout.test.ts\` (\`[INV-09 / APP-FAKE-99]\`) | Confirmed | APP-MAP-03 | fail |
 | INV-BAD-FILE | 異常3 | 存在しないテストファイル | \`src/game/nonexistent.test.ts\` (\`[APP-MAP-01]\`) | Confirmed | APP-MAP-01 | fail |
 | INV-NO-TAG | 異常4 | タグ記載なし | \`src/game/engine.test.ts\` | Confirmed | APP-MAP-03 | fail |
 `,
