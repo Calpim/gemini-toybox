@@ -497,6 +497,22 @@ stateDiagram-v2
         )
       );
     }
+
+    const addendumRows = extended.decisions.items.filter((item) => item.id.endsWith('-addendum'));
+    assert.equal(addendumRows.length, 10);
+    for (const addendum of addendumRows) {
+      assert.equal(
+        addendum.decider,
+        '同期（AI作成・先輩確認）',
+        `Expected sync decider for ${addendum.id}`
+      );
+      assert.match(
+        decSlice,
+        new RegExp(
+          `<tr id="${addendum.id}"(?:(?!<\\/tr>)[\\s\\S])*?<div class="sub-code">同期（AI作成・先輩確認）<\\/div>(?:(?!<\\/tr>)[\\s\\S])*?<\\/tr>`
+        )
+      );
+    }
   });
 
   it('handles explicit override-target markers (present, absent, and nonexistent target DEC)', () => {
