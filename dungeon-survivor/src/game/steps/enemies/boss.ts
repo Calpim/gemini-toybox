@@ -242,10 +242,8 @@ export function stepBossBehavior(
               }
               traveled += stepSize;
             }
-            if (
-              points.length === 1 ||
-              Math.hypot(lx - points[points.length - 1].x, ly - points[points.length - 1].y) > 4
-            ) {
+            const lastPt = points[points.length - 1];
+            if (points.length === 1 || !lastPt || Math.hypot(lx - lastPt.x, ly - lastPt.y) > 4) {
               points.push({ x: lx, y: ly });
             }
             if (!state.bossLasers) state.bossLasers = [];
@@ -302,6 +300,7 @@ export function stepMortarZones(state: GameState, mods: ComputedSkillModifiers, 
   const { player } = state;
   for (let i = state.mortarZones.length - 1; i >= 0; i--) {
     const zone = state.mortarZones[i];
+    if (!zone) continue;
     zone.elapsed += clampedDt;
     if (zone.elapsed >= zone.duration) {
       state.mortarZones.splice(i, 1);
@@ -338,12 +337,14 @@ export function stepBossLasers(state: GameState, mods: ComputedSkillModifiers, c
   if (state.bossLasers && state.bossLasers.length > 0) {
     for (let i = state.bossLasers.length - 1; i >= 0; i--) {
       const laser = state.bossLasers[i];
+      if (!laser) continue;
       laser.elapsed += clampedDt;
       if (laser.elapsed >= laser.windup && !laser.hitPlayer && player.invulnTimer <= 0) {
         let minDist = Infinity;
         for (let p = 0; p < laser.points.length - 1; p++) {
           const a = laser.points[p];
           const b = laser.points[p + 1];
+          if (!a || !b) continue;
           const abx = b.x - a.x;
           const aby = b.y - a.y;
           const abLenSq = abx * abx + aby * aby;

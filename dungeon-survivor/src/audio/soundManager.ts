@@ -84,6 +84,7 @@ export class SoundManager {
     let playedCount = 0;
     for (let i = 0; i < events.length; i++) {
       const kind = events[i];
+      if (!kind) continue;
       const minGap = MIN_INTERVAL_MS[kind] ?? 30;
       const prev = this.lastPlayedAt.get(kind) ?? 0;
       if (nowMs - prev < minGap) continue;

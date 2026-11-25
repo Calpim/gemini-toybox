@@ -167,8 +167,9 @@ export function populateFloor(
   }
 
   // Boss floor (10F, 20F...): Room 0 is safe fountain anteroom; Room 1 is Grand Boss Arena
-  if (isBossFloor(floor) && map.rooms.length >= 2) {
-    const arena = map.rooms[1];
+  const bossArena = map.rooms[1];
+  if (isBossFloor(floor) && bossArena) {
+    const arena = bossArena;
     const bossPos = tileCenterWorld(arena.cx, arena.cy);
     occupiedTiles.add(tileIndex(map, arena.cx, arena.cy));
 
@@ -199,13 +200,17 @@ export function populateFloor(
     for (let j = freeTiles.length - 1; j > 0; j--) {
       const swapIdx = rng.int(0, j);
       const tmp = freeTiles[j];
-      freeTiles[j] = freeTiles[swapIdx];
-      freeTiles[swapIdx] = tmp;
+      const swapped = freeTiles[swapIdx];
+      if (tmp && swapped) {
+        freeTiles[j] = swapped;
+        freeTiles[swapIdx] = tmp;
+      }
     }
 
     const minionCount = Math.min(freeTiles.length, 4 + Math.min(4, Math.floor(floor / 10)));
     for (let m = 0; m < minionCount; m++) {
       const tile = freeTiles[m];
+      if (!tile) continue;
       occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
       const pos = tileCenterWorld(tile.tx, tile.ty);
       const kind = pickEnemyKindForFloor(floor, rng.next());
@@ -220,6 +225,7 @@ export function populateFloor(
   const chestCandidates: number[] = [];
   for (let i = 1; i < map.rooms.length; i++) {
     const room = map.rooms[i];
+    if (!room) continue;
     const isStairsRoom = room.cx === map.stairsTile.tx && room.cy === map.stairsTile.ty;
     if (!isStairsRoom) {
       chestCandidates.push(i);
@@ -231,7 +237,9 @@ export function populateFloor(
   for (let c = 0; c < targetChests && chestCandidates.length > 0; c++) {
     const pickIdx = rng.int(0, chestCandidates.length - 1);
     const roomIdx = chestCandidates.splice(pickIdx, 1)[0];
+    if (roomIdx === undefined) continue;
     const room = map.rooms[roomIdx];
+    if (!room) continue;
     const pos = tileCenterWorld(room.cx, room.cy);
     chests.push({
       id: nextId++,
@@ -247,6 +255,7 @@ export function populateFloor(
   // 2. Populate rooms with non-overlapping heal orbs & enemies
   for (let i = 1; i < map.rooms.length; i++) {
     const room = map.rooms[i];
+    if (!room) continue;
     const isStairsRoom = room.cx === map.stairsTile.tx && room.cy === map.stairsTile.ty;
 
     const freeTiles: { tx: number; ty: number }[] = [];
@@ -262,22 +271,27 @@ export function populateFloor(
     for (let j = freeTiles.length - 1; j > 0; j--) {
       const swapIdx = rng.int(0, j);
       const tmp = freeTiles[j];
-      freeTiles[j] = freeTiles[swapIdx];
-      freeTiles[swapIdx] = tmp;
+      const swapped = freeTiles[swapIdx];
+      if (tmp && swapped) {
+        freeTiles[j] = swapped;
+        freeTiles[swapIdx] = tmp;
+      }
     }
 
     let tileCursor = 0;
     if (rng.next() < 0.3 + lootBonusRate * 0.4 && tileCursor < freeTiles.length) {
       const tile = freeTiles[tileCursor++];
-      occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
-      const pos = tileCenterWorld(tile.tx, tile.ty);
-      pickups.push({
-        id: nextId++,
-        kind: 'heal',
-        x: pos.x,
-        y: pos.y,
-        value: 25,
-      });
+      if (tile) {
+        occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
+        const pos = tileCenterWorld(tile.tx, tile.ty);
+        pickups.push({
+          id: nextId++,
+          kind: 'heal',
+          x: pos.x,
+          y: pos.y,
+          value: 25,
+        });
+      }
     }
 
     const extraStairsMobs = isStairsRoom ? (guardianFloor ? 3 : 1) : 0;
@@ -306,10 +320,11 @@ export function populateFloor(
         continue;
       }
 
-      if (tileCursor < freeTiles.length) {
-        const tile = freeTiles[tileCursor++];
-        occupiedTiles.add(tileIndex(map, tile.tx, tile.ty));
-        const pos = tileCenterWorld(tile.tx, tile.ty);
+      const nextTile = freeTiles[tileCursor];
+      if (nextTile) {
+        tileCursor++;
+        occupiedTiles.add(tileIndex(map, nextTile.tx, nextTile.ty));
+        const pos = tileCenterWorld(nextTile.tx, nextTile.ty);
         wx = pos.x;
         wy = pos.y;
       } else {
@@ -332,8 +347,9 @@ export function populateFloor(
           for (let p = 1; p < packSize; p++) {
             let px: number;
             let py: number;
-            if (tileCursor < freeTiles.length) {
-              const pTile = freeTiles[tileCursor++];
+            const pTile = freeTiles[tileCursor];
+            if (pTile) {
+              tileCursor++;
               occupiedTiles.add(tileIndex(map, pTile.tx, pTile.ty));
               const pPos = tileCenterWorld(pTile.tx, pTile.ty);
               px = pPos.x;
@@ -378,6 +394,7 @@ export function populateFloor(
   for (let p = 0; p < targetPatrols; p++) {
     const pickIdx = rng.int(0, corridorTiles.length - 1);
     const picked = corridorTiles.splice(pickIdx, 1)[0];
+    if (!picked) continue;
     occupiedTiles.add(tileIndex(map, picked.tx, picked.ty));
     const pos = tileCenterWorld(picked.tx, picked.ty);
     enemies.push(createEnemyByKind(nextId++, 'scout', pos.x, pos.y, floor, MAX_TARGET_RANGE));

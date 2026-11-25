@@ -765,9 +765,9 @@ export function renderModals(state: GameState, els: ModalElements, handlers: Mod
     const dropItem = state.pendingEquipDrop.item;
     const dropDef = EQUIPMENT_CATALOG[dropItem.id];
     const dropEvo = getEquipmentEvolutionSummary(dropItem.id, dropItem.level);
-    const existingIdx = state.player.equipment.findIndex((eq) => eq.id === dropItem.id);
-    const isDuplicateDrop = existingIdx !== -1;
-    const existingLv = isDuplicateDrop ? state.player.equipment[existingIdx].level : 0;
+    const existingItem = state.player.equipment.find((eq) => eq.id === dropItem.id);
+    const isDuplicateDrop = existingItem !== undefined;
+    const existingLv = existingItem ? existingItem.level : 0;
     const levelDiff = dropItem.level - existingLv;
 
     const titleEl = document.getElementById('equipModalTitle');

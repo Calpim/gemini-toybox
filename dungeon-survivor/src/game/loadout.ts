@@ -155,7 +155,7 @@ export function resolveEquipChoice(state: GameState, choice: EquipChoice): boole
       return false;
     }
     const target = state.player.equipment[choice.slotIndex];
-    if (target.level >= MAX_EQUIPMENT_LEVEL) {
+    if (!target || target.level >= MAX_EQUIPMENT_LEVEL) {
       return false;
     }
     target.level = clampEquipmentLevel(target.level + 1);

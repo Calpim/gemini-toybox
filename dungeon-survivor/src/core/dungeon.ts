@@ -59,7 +59,7 @@ export function getTile(map: DungeonMap, tx: number, ty: number): TileType {
   if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) {
     return 'wall';
   }
-  return map.tiles[ty * map.width + tx];
+  return map.tiles[ty * map.width + tx] ?? 'wall';
 }
 
 export function isWallTile(map: DungeonMap, tx: number, ty: number): boolean {
@@ -173,17 +173,23 @@ function routeNonOverlappingCorridor(
     let idx = heapState.length - 1;
     while (idx > 0) {
       const parent = (idx - 1) >> 1;
-      if (heapCost[parent] <= heapCost[idx]) break;
-      [heapState[parent], heapState[idx]] = [heapState[idx], heapState[parent]];
-      [heapCost[parent], heapCost[idx]] = [heapCost[idx], heapCost[parent]];
+      const parentCost = heapCost[parent] ?? Infinity;
+      const curCost = heapCost[idx] ?? Infinity;
+      if (parentCost <= curCost) break;
+      const parentState = heapState[parent] ?? 0;
+      const curState = heapState[idx] ?? 0;
+      heapState[parent] = curState;
+      heapState[idx] = parentState;
+      heapCost[parent] = curCost;
+      heapCost[idx] = parentCost;
       idx = parent;
     }
   };
   const popHeap = (): [number, number] => {
-    const topS = heapState[0];
-    const topC = heapCost[0];
-    const lastS = heapState.pop()!;
-    const lastC = heapCost.pop()!;
+    const topS = heapState[0] ?? 0;
+    const topC = heapCost[0] ?? Infinity;
+    const lastS = heapState.pop() ?? 0;
+    const lastC = heapCost.pop() ?? Infinity;
     if (heapState.length > 0) {
       heapState[0] = lastS;
       heapCost[0] = lastC;
@@ -193,11 +199,17 @@ function routeNonOverlappingCorridor(
         let smallest = idx;
         const left = idx * 2 + 1;
         const right = left + 1;
-        if (left < len && heapCost[left] < heapCost[smallest]) smallest = left;
-        if (right < len && heapCost[right] < heapCost[smallest]) smallest = right;
+        if (left < len && (heapCost[left] ?? Infinity) < (heapCost[smallest] ?? Infinity)) smallest = left;
+        if (right < len && (heapCost[right] ?? Infinity) < (heapCost[smallest] ?? Infinity)) smallest = right;
         if (smallest === idx) break;
-        [heapState[idx], heapState[smallest]] = [heapState[smallest], heapState[idx]];
-        [heapCost[idx], heapCost[smallest]] = [heapCost[smallest], heapCost[idx]];
+        const idxState = heapState[idx] ?? 0;
+        const smallState = heapState[smallest] ?? 0;
+        const idxCost = heapCost[idx] ?? Infinity;
+        const smallCost = heapCost[smallest] ?? Infinity;
+        heapState[idx] = smallState;
+        heapState[smallest] = idxState;
+        heapCost[idx] = smallCost;
+        heapCost[smallest] = idxCost;
         idx = smallest;
       }
     }
@@ -215,7 +227,7 @@ function routeNonOverlappingCorridor(
   let reachedState = -1;
   while (heapState.length > 0) {
     const [curState, curCost] = popHeap();
-    if (curCost > bestCost[curState]) continue;
+    if (curCost > (bestCost[curState] ?? Infinity)) continue;
 
     const curIdx = Math.floor(curState / 5);
     const curDir = curState % 5;
@@ -228,8 +240,10 @@ function routeNonOverlappingCorridor(
     const cy = Math.floor(curIdx / width);
 
     for (let d = 0; d < 4; d++) {
-      const nx = cx + CARDINAL_DIRS[d][0];
-      const ny = cy + CARDINAL_DIRS[d][1];
+      const dir = CARDINAL_DIRS[d];
+      if (!dir) continue;
+      const nx = cx + dir[0];
+      const ny = cy + dir[1];
       if (nx < 1 || ny < 1 || nx >= width - 1 || ny >= height - 1) continue;
 
       const nIdx = ny * width + nx;
@@ -291,7 +305,7 @@ function routeNonOverlappingCorridor(
       const turnCost = curDir !== 4 && curDir !== d ? 6 : 0;
       const nextCost = curCost + tileCost + turnCost;
       const nextState = nIdx * 5 + d;
-      if (nextCost < bestCost[nextState]) {
+      if (nextCost < (bestCost[nextState] ?? Infinity)) {
         bestCost[nextState] = nextCost;
         prevState[nextState] = curState;
         pushHeap(nextState, nextCost);
@@ -305,7 +319,7 @@ function routeNonOverlappingCorridor(
   let trace = reachedState;
   while (trace !== -1) {
     pathTiles.push(Math.floor(trace / 5));
-    trace = prevState[trace];
+    trace = prevState[trace] ?? -1;
   }
 
   for (const idx of pathTiles) {
@@ -345,9 +359,10 @@ export function computeBfsDistances(
 
   while (head < queue.length) {
     const idx = queue[head++];
+    if (idx === undefined) break;
     const cx = idx % width;
     const cy = Math.floor(idx / width);
-    const d = dist[idx];
+    const d = dist[idx] ?? 0;
 
     for (const [dx, dy] of CARDINAL_DIRS) {
       const nx = cx + dx;
@@ -510,18 +525,24 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   // True Prim's MST so rooms connect cleanly without long criss-crossing edges,
   // routed via weighted Dijkstra to prevent overlapping/adjacent corridor blobs.
   const corridorMask = new Uint8Array(width * height);
-  const connectedIds = new Set<number>([rooms[0].id]);
+  const firstRoom = rooms[0];
+  if (!firstRoom) {
+    throw new Error('generateDungeon: rooms array is unexpectedly empty');
+  }
+  const connectedIds = new Set<number>([firstRoom.id]);
   const remaining = rooms.slice(1);
 
   while (remaining.length > 0) {
     let bestRemIdx = 0;
-    let bestFromRoom = rooms[0];
+    let bestFromRoom = firstRoom;
     let bestDist = Infinity;
 
     for (let rIdx = 0; rIdx < remaining.length; rIdx++) {
       const cand = remaining[rIdx];
+      if (!cand) continue;
       for (const connId of connectedIds) {
         const from = rooms[connId];
+        if (!from) continue;
         const d = Math.hypot(cand.cx - from.cx, cand.cy - from.cy);
         if (d < bestDist) {
           bestDist = d;
@@ -532,6 +553,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
     }
 
     const nextRoom = remaining.splice(bestRemIdx, 1)[0];
+    if (!nextRoom) break;
     connectedIds.add(nextRoom.id);
     routeNonOverlappingCorridor(
       tiles,
@@ -546,7 +568,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
     );
   }
 
-  const startRoom = rooms[0];
+  const startRoom = firstRoom;
   const startTile = { tx: startRoom.cx, ty: startRoom.cy };
   const bfsDist = computeBfsDistances(width, height, tiles, startTile.tx, startTile.ty);
 
@@ -557,11 +579,14 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
   let stairsRoom = candidates[candidates.length - 1];
   let maxDist = -1;
   for (const r of candidates) {
-    const d = bfsDist[r.cy * width + r.cx];
+    const d = bfsDist[r.cy * width + r.cx] ?? -1;
     if (d > maxDist) {
       maxDist = d;
       stairsRoom = r;
     }
+  }
+  if (!stairsRoom) {
+    throw new Error('generateDungeon: no candidate room available for stairs');
   }
 
   const stairsTile = { tx: stairsRoom.cx, ty: stairsRoom.cy };

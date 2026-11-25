@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { findRoomAtTile, TILE_SIZE, tileCenterWorld } from '../core/dungeon';
 import { computeCameraZoom } from '../render/canvasRenderer';
+import { mustAt } from '../testUtils';
 import {
   advanceToNextFloor,
   CORRIDOR_VISION_RADIUS,
@@ -87,8 +88,9 @@ describe('Game simulation engine (core loop, floor progression, and vision)', ()
     // Defeating Guardian unlocks stairs AND guarantees a higher-level equip pickup drop
     state.player.equipment = [createEquippedItem('pulse_blade', 3)];
     roomBoss!.hp = 0;
-    state.player.x = state.map.rooms[0].cx * TILE_SIZE;
-    state.player.y = state.map.rooms[0].cy * TILE_SIZE;
+    const firstRoom = mustAt(state.map.rooms, 0, 'state.map.rooms');
+    state.player.x = firstRoom.cx * TILE_SIZE;
+    state.player.y = firstRoom.cy * TILE_SIZE;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(getStairsLockCount(state)).toBe(0);
     expect(state.notifications.some((n) => n.text.includes('封印が解けた'))).toBe(true);
@@ -143,7 +145,7 @@ describe('Game simulation engine (core loop, floor progression, and vision)', ()
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
 
-    const enemy = state.enemies[0];
+    const enemy = mustAt(state.enemies, 0, 'state.enemies');
     // Should have navigated around the wall (past tx=4 wall center) toward the player
     expect(enemy.x).toBeLessThan(4 * TILE_SIZE);
     expect(Math.hypot(enemy.x - state.player.x, enemy.y - state.player.y)).toBeLessThan(45);
@@ -192,7 +194,7 @@ describe('Game simulation engine (core loop, floor progression, and vision)', ()
     expect(computeCameraZoom(1440, 900)).toBeCloseTo(1440 / 840, 3);
 
     const state = createGameState({ seed: 920 });
-    const room0 = state.map.rooms[0];
+    const room0 = mustAt(state.map.rooms, 0, 'state.map.rooms');
     // Corner inside room 0 is visible when player stands in room 0
     const roomCorner = tileCenterWorld(room0.x, room0.y);
     expect(isPointInPlayerVision(state.map, state.player.x, state.player.y, roomCorner.x, roomCorner.y)).toBe(true);

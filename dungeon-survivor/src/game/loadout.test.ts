@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tileCenterWorld } from '../core/dungeon';
+import { mustAt } from '../testUtils';
 import {
   acquireEquipment,
   createGameState,
@@ -164,8 +165,8 @@ describe('Equipment, loadout, and growth simulation', () => {
     // Replace slot 0 on next unowned drop (preserving drop level)
     acquireEquipment(state, createEquippedItem('ricochet_disc', 4));
     expect(resolveEquipChoice(state, { type: 'replace', slotIndex: 0 })).toBe(true);
-    expect(state.player.equipment[0].id).toBe('ricochet_disc');
-    expect(state.player.equipment[0].level).toBe(4);
+    expect(state.player.equipment[0]?.id).toBe('ricochet_disc');
+    expect(state.player.equipment[0]?.level).toBe(4);
 
     // Scrap & Build: progressive 1 / 2 / 3 cost unlocks slots 2->3 (1), 3->4 (2), 4->5 (3)
     expect(getScrapExpandCost(2)).toBe(1);
@@ -198,7 +199,7 @@ describe('Equipment, loadout, and growth simulation', () => {
     const state = createGameState({ seed: 707 });
     expect(state.player.equipment).toEqual([]);
 
-    const startRoom = state.map.rooms[0];
+    const startRoom = mustAt(state.map.rooms, 0, 'state.map.rooms');
     const minX = startRoom.x * 40;
     const maxX = (startRoom.x + startRoom.w) * 40;
     const minY = startRoom.y * 40;
@@ -293,7 +294,7 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(state.player.equipment.length).toBe(0);
 
     // Direct contact equips the dropped item at its rolled level
-    state.pickups[0].x = state.player.x;
+    mustAt(state.pickups, 0, 'state.pickups').x = state.player.x;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.pickups.length).toBe(0);
     expect(state.player.equipment).toHaveLength(1);
@@ -322,14 +323,14 @@ describe('Equipment, loadout, and growth simulation', () => {
     state.player.hp = 50;
     const expBefore = state.stats.totalExp;
     acquireEquipment(state, createEquippedItem('pulse_blade', 8));
-    expect(state.player.equipment[0].level).toBe(8);
+    expect(state.player.equipment[0]?.level).toBe(8);
     expect(state.player.hp).toBe(70);
     expect(state.stats.totalExp).toBe(expBefore + 25);
 
     // scrap_upgrade rejects Lv8 slot
-    state.player.equipment[0].level = 7;
+    mustAt(state.player.equipment, 0, 'state.player.equipment').level = 7;
     acquireEquipment(state, createEquippedItem('pulse_blade', 1));
-    expect(state.player.equipment[0].level).toBe(8);
+    expect(state.player.equipment[0]?.level).toBe(8);
 
     state.player.maxEquipSlots = 2;
     state.player.equipment = [createEquippedItem('pulse_blade', 8), createEquippedItem('orbit_shield', 5)];
@@ -338,7 +339,7 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(resolveEquipChoice(state, { type: 'scrap_upgrade', slotIndex: 0 })).toBe(false);
     expect(state.status).toBe('equip_choice');
     expect(resolveEquipChoice(state, { type: 'scrap_upgrade', slotIndex: 1 })).toBe(true);
-    expect(state.player.equipment[1].level).toBe(6);
+    expect(state.player.equipment[1]?.level).toBe(6);
   });
 
   it('[APP-GRW-07 & APP-GRW-02] improves drop quality with mob_loot and triggers tactical step + temporary speed boost on projectile hit', () => {
@@ -549,12 +550,12 @@ describe('Equipment, loadout, and growth simulation', () => {
     // Lower/equal level duplicate -> auto Lv+1
     acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 2));
     expect(fullSlotState.status).toBe('playing');
-    expect(fullSlotState.player.equipment[0].level).toBe(3);
+    expect(fullSlotState.player.equipment[0]?.level).toBe(3);
 
     // +1 level duplicate item also auto-levels up without opening modal
     acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 4));
     expect(fullSlotState.status).toBe('playing');
-    expect(fullSlotState.player.equipment[0].level).toBe(4);
+    expect(fullSlotState.player.equipment[0]?.level).toBe(4);
 
     // +2 or higher level duplicate -> modal, blocks replacing other slot, allows scrap_upgrade on other slot
     acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 6));
@@ -563,8 +564,8 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(fullSlotState.status).toBe('equip_choice');
     expect(resolveEquipChoice(fullSlotState, { type: 'scrap_upgrade', slotIndex: 1 })).toBe(true);
     expect(fullSlotState.status).toBe('playing');
-    expect(fullSlotState.player.equipment[0].level).toBe(4);
-    expect(fullSlotState.player.equipment[1].level).toBe(3);
+    expect(fullSlotState.player.equipment[0]?.level).toBe(4);
+    expect(fullSlotState.player.equipment[1]?.level).toBe(3);
 
     // Higher-level duplicate also allows scrap_expand
     acquireEquipment(fullSlotState, createEquippedItem('pulse_blade', 6));
@@ -657,14 +658,14 @@ describe('Equipment, loadout, and growth simulation', () => {
 
     for (let f = 0; f < 30; f++) {
       stepGame(wallDiscState, { x: 0, y: 0 }, 1 / 60);
-      wallDiscState.player.equipment[0].cooldown = 5;
+      mustAt(wallDiscState.player.equipment, 0, 'wallDiscState.player.equipment').cooldown = 5;
       const disc = wallDiscState.projectiles.find((p) => p.kind === 'disc');
       if (!disc) break;
       if (disc.loopCenterX !== undefined) {
         if (!sawLoopStart) {
           sawLoopStart = true;
           // Move enemy out of the narrow corridor after hit so post-exit flight distance is clearly observed
-          wallDiscState.enemies[0].x = pCenter.x - 100;
+          mustAt(wallDiscState.enemies, 0, 'wallDiscState.enemies').x = pCenter.x - 100;
         }
       } else if (sawLoopStart) {
         exitedLoopOnWall = true;

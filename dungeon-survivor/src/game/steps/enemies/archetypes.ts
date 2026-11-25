@@ -118,6 +118,7 @@ export function stepScoutBehavior({
         for (let s = 0; s < ambushCount; s++) {
           const pickIdx = rng.int(0, spawnCandidates.length - 1);
           const picked = spawnCandidates.splice(pickIdx, 1)[0];
+          if (!picked) continue;
           const pos = tileCenterWorld(picked.tx, picked.ty);
           const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
           runner.speed = Math.max(228, Math.min(265, Math.round(224 + (state.floor - 1) * 4)));
@@ -197,8 +198,10 @@ export function stepScoutBehavior({
         const nonReverse = validDirs.filter((d) => !(d.dx === -prevDx && d.dy === -prevDy));
         const pool = nonReverse.length > 0 ? nonReverse : validDirs;
         const chosen = forward && rng.next() < 0.72 ? forward : pool[rng.int(0, pool.length - 1)];
-        enemy.wanderTarget = tileCenterWorld(chosen.tx, chosen.ty);
-        enemy.wanderDir = { x: chosen.dx, y: chosen.dy };
+        if (chosen) {
+          enemy.wanderTarget = tileCenterWorld(chosen.tx, chosen.ty);
+          enemy.wanderDir = { x: chosen.dx, y: chosen.dy };
+        }
       } else {
         enemy.wanderTarget = null;
       }

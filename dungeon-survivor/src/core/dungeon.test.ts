@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { mustAt } from '../testUtils';
 import { hasLineOfSight, resolveCircleGridCollision } from './collision';
 import { generateDungeon, getTile, isWallTile, tileCenterWorld } from './dungeon';
 
@@ -102,7 +103,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
         [-1, 0],
         [0, 1],
         [0, -1],
-      ]) {
+      ] as const) {
         const nx = cur.tx + dx;
         const ny = cur.ty + dy;
         const key = `${nx},${ny}`;
@@ -120,7 +121,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
     const map = generateDungeon({ floor: 1, seed: 42 });
     const start = tileCenterWorld(map.startTile.tx, map.startTile.ty);
     // Find an adjacent wall direction from start room
-    const room = map.rooms[0];
+    const room = mustAt(map.rooms, 0, 'map.rooms');
     const topWallY = room.y * 40 - 4; // inside wall right above room top edge
     const resolved = resolveCircleGridCollision(start.x, topWallY, 13, map);
     expect(resolved.y).toBeGreaterThanOrEqual(room.y * 40 + 13 - 0.01);
@@ -160,9 +161,9 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
       expect(bMap.floorType).toBe('boss');
       expect(bMap.rooms).toHaveLength(2);
       const [anteroom, arena] = bMap.rooms;
-      expect(anteroom.w).toBeGreaterThanOrEqual(8);
-      expect(arena.w).toBeGreaterThanOrEqual(20);
-      expect(arena.h).toBeGreaterThanOrEqual(20);
+      expect(anteroom?.w).toBeGreaterThanOrEqual(8);
+      expect(arena?.w).toBeGreaterThanOrEqual(20);
+      expect(arena?.h).toBeGreaterThanOrEqual(20);
       expect(bMap.fountainTile).not.toBeNull();
       expect(getTile(bMap, bMap.fountainTile!.tx, bMap.fountainTile!.ty)).toBe('fountain');
       expect(getTile(bMap, bMap.stairsTile.tx, bMap.stairsTile.ty)).toBe('stairs');
@@ -178,7 +179,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
           [-1, 0],
           [0, 1],
           [0, -1],
-        ]) {
+        ] as const) {
           const nx = cur.tx + dx;
           const ny = cur.ty + dy;
           const key = `${nx},${ny}`;

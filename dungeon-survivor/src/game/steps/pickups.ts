@@ -20,6 +20,7 @@ export function stepPickupsAndFx(
   const magnetRange = 95 * mods.pickupMagnetMult;
   for (let i = state.pickups.length - 1; i >= 0; i--) {
     const p = state.pickups[i];
+    if (!p) continue;
     const dx = player.x - p.x;
     const dy = player.y - p.y;
     const dist = Math.hypot(dx, dy);
@@ -70,6 +71,7 @@ export function stepPickupsAndFx(
   if (state.particles) {
     for (let i = state.particles.length - 1; i >= 0; i--) {
       const pt = state.particles[i];
+      if (!pt) continue;
       pt.x += pt.vx * clampedDt;
       pt.y += pt.vy * clampedDt;
       pt.vx *= 0.92;
@@ -81,6 +83,7 @@ export function stepPickupsAndFx(
 
   for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
     const ft = state.floatingTexts[i];
+    if (!ft) continue;
     ft.y -= 26 * clampedDt;
     ft.life -= clampedDt;
     if (ft.life <= 0) state.floatingTexts.splice(i, 1);
@@ -88,12 +91,14 @@ export function stepPickupsAndFx(
 
   for (let i = state.visualFx.length - 1; i >= 0; i--) {
     const fx = state.visualFx[i];
+    if (!fx) continue;
     fx.life -= clampedDt;
     if (fx.life <= 0) state.visualFx.splice(i, 1);
   }
 
   for (let i = state.notifications.length - 1; i >= 0; i--) {
     const n = state.notifications[i];
+    if (!n) continue;
     n.life -= clampedDt;
     if (n.life <= 0) state.notifications.splice(i, 1);
   }
