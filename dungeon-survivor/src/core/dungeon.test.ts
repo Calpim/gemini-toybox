@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { mustAt } from '../testUtils';
 import { hasLineOfSight, resolveCircleGridCollision } from './collision';
 import { generateDungeon, getTile, isWallTile, tileCenterWorld } from './dungeon';
 
@@ -120,11 +121,10 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
     const map = generateDungeon({ floor: 1, seed: 42 });
     const start = tileCenterWorld(map.startTile.tx, map.startTile.ty);
     // Find an adjacent wall direction from start room
-    const room = map.rooms[0];
-    expect(room).toBeDefined();
-    const topWallY = (room?.y ?? 0) * 40 - 4; // inside wall right above room top edge
+    const room = mustAt(map.rooms, 0, 'map.rooms');
+    const topWallY = room.y * 40 - 4; // inside wall right above room top edge
     const resolved = resolveCircleGridCollision(start.x, topWallY, 13, map);
-    expect(resolved.y).toBeGreaterThanOrEqual((room?.y ?? 0) * 40 + 13 - 0.01);
+    expect(resolved.y).toBeGreaterThanOrEqual(room.y * 40 + 13 - 0.01);
   });
 
   it('[APP-CMB-03] blocks line of sight when a wall tile sits between two points', () => {

@@ -576,7 +576,7 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
     floorType === 'guardian' ? rooms.slice(1).filter((r) => r.w >= 11 && r.h >= 9) : rooms.slice(1);
   const candidates = eligibleStairsRooms.length > 0 ? eligibleStairsRooms : rooms.slice(1);
 
-  let stairsRoom = candidates[candidates.length - 1] ?? firstRoom;
+  let stairsRoom = candidates[candidates.length - 1];
   let maxDist = -1;
   for (const r of candidates) {
     const d = bfsDist[r.cy * width + r.cx] ?? -1;
@@ -584,6 +584,9 @@ export function generateDungeon(options: GenerateDungeonOptions): DungeonMap {
       maxDist = d;
       stairsRoom = r;
     }
+  }
+  if (!stairsRoom) {
+    throw new Error('generateDungeon: no candidate room available for stairs');
   }
 
   const stairsTile = { tx: stairsRoom.cx, ty: stairsRoom.cy };

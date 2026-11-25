@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TILE_SIZE, tileCenterWorld } from '../core/dungeon';
+import { mustAt } from '../testUtils';
 import {
   createEnemyByKind,
   createGameState,
@@ -71,18 +72,18 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     state.player.baseAttackCooldown = 0;
     state.player.skillLevels = { def_sensor: MAX_SKILL_LEVEL };
     state.player.equipment = [createEquippedItem('seeker_drone')];
-    if (state.enemies[0]) state.enemies[0].x = state.player.x + MAX_TARGET_RANGE + 15;
+    mustAt(state.enemies, 0, 'state.enemies').x = state.player.x + MAX_TARGET_RANGE + 15;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.projectiles.length).toBe(0);
 
     // Wall occlusion blocks targeting inside range
-    if (state.enemies[0]) state.enemies[0].x = state.player.x + 80;
+    mustAt(state.enemies, 0, 'state.enemies').x = state.player.x + 80;
     const wallTx = Math.floor((state.player.x + 40) / TILE_SIZE);
     const wallTy = Math.floor(state.player.y / TILE_SIZE);
     state.map.tiles[wallTy * state.map.width + wallTx] = 'wall';
     state.projectiles = [];
     state.player.baseAttackCooldown = 0;
-    if (state.player.equipment[0]) state.player.equipment[0].cooldown = 0;
+    mustAt(state.player.equipment, 0, 'state.player.equipment').cooldown = 0;
 
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.projectiles.length).toBe(0);
@@ -142,8 +143,8 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     state.player.equipment = [createEquippedItem('orbit_shield', 6), createEquippedItem('seeker_drone', 6)];
     expect(getOrbitBitPositions(state).length).toBe(6);
     expect(getSeekerDronePositions(state).length).toBe(4);
-    if (state.player.equipment[0]) state.player.equipment[0].level = MAX_EQUIPMENT_LEVEL;
-    if (state.player.equipment[1]) state.player.equipment[1].level = MAX_EQUIPMENT_LEVEL;
+    mustAt(state.player.equipment, 0, 'state.player.equipment').level = MAX_EQUIPMENT_LEVEL;
+    mustAt(state.player.equipment, 1, 'state.player.equipment').level = MAX_EQUIPMENT_LEVEL;
     expect(getOrbitBitPositions(state).length).toBe(6);
     expect(getSeekerDronePositions(state).length).toBe(4);
     expect(getOrbitShieldRadius(MAX_EQUIPMENT_LEVEL, 1)).toBeGreaterThan(getOrbitShieldRadius(6, 1));
@@ -191,10 +192,9 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     expect(bladeState.enemies[0]?.hp).toBeLessThan(300);
     expect(bladeState.enemies[1]?.hp).toBe(300);
 
-    if (bladeState.player.equipment[0]) {
-      bladeState.player.equipment[0].level = 10;
-      bladeState.player.equipment[0].cooldown = 0;
-    }
+    const bladeEquip = mustAt(bladeState.player.equipment, 0, 'bladeState.player.equipment');
+    bladeEquip.level = 10;
+    bladeEquip.cooldown = 0;
     stepGame(bladeState, { x: 0, y: 0 }, 1 / 60);
     expect(bladeState.enemies[1]?.hp).toBe(300); // Still directional fan, never 360° behind
     expect(bladeState.visualFx.some((fx) => fx.kind === 'slash' && !fx.fullCircle)).toBe(true);
@@ -291,7 +291,7 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     for (let f = 0; f < 10; f++) {
       stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
     }
-    const hpAfterFirstHit = soloDiscState.enemies[0]?.hp ?? 0;
+    const hpAfterFirstHit = mustAt(soloDiscState.enemies, 0, 'soloDiscState.enemies').hp;
     expect(hpAfterFirstHit).toBe(182); // 1 hit only (baseDamage 18), entering hit-originated loop
     const soloLoopDisc = soloDiscState.projectiles.find((p) => p.kind === 'disc' && p.loopTargetEnemyId === 903);
     expect(soloLoopDisc).toBeDefined();
@@ -302,11 +302,10 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     expect(fixedLoopCenterY).toBeTypeOf('number');
 
     // Move enemy while keeping item on cooldown; loop center stays fixed at hit-origin circle
-    if (soloDiscState.player.equipment[0]) soloDiscState.player.equipment[0].cooldown = 5;
-    if (soloDiscState.enemies[0]) {
-      soloDiscState.enemies[0].x += 30;
-      soloDiscState.enemies[0].y -= 15;
-    }
+    mustAt(soloDiscState.player.equipment, 0, 'soloDiscState.player.equipment').cooldown = 5;
+    const soloEnemy = mustAt(soloDiscState.enemies, 0, 'soloDiscState.enemies');
+    soloEnemy.x += 30;
+    soloEnemy.y -= 15;
     for (let f = 0; f < 10; f++) {
       stepGame(soloDiscState, { x: 0, y: 0 }, 1 / 60);
     }
@@ -521,17 +520,14 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     expect(piercingShots.length).toBeGreaterThanOrEqual(1);
 
     // Move a piercing shot directly onto player's blade & orbit shield radius; it must NOT be reflected or cleared
-    const pShot = piercingShots[0];
-    expect(pShot).toBeDefined();
-    if (pShot) {
-      pShot.x = pierceState.player.x + 40;
-      pShot.y = pierceState.player.y;
-      pShot.vx = -50;
-      pShot.vy = 0;
-    }
-    if (pierceState.player.equipment[0]) pierceState.player.equipment[0].cooldown = 0;
+    const pShot = mustAt(piercingShots, 0, 'piercingShots');
+    pShot.x = pierceState.player.x + 40;
+    pShot.y = pierceState.player.y;
+    pShot.vx = -50;
+    pShot.vy = 0;
+    mustAt(pierceState.player.equipment, 0, 'pierceState.player.equipment').cooldown = 0;
     stepGame(pierceState, { x: 0, y: 0 }, 0.016);
-    expect(pierceState.enemyProjectiles.some((ep) => ep.id === pShot?.id)).toBe(true);
+    expect(pierceState.enemyProjectiles.some((ep) => ep.id === pShot.id)).toBe(true);
     expect(pierceState.projectiles.some((p) => p.kind === 'reflected')).toBe(false);
 
     // 4. Awakened tank fires mortar in the same room even when a wall blocks LOS, and awakened shooter keeps firing within 380px
@@ -539,18 +535,15 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     losBlockedState.chests = [];
     losBlockedState.pickups = [];
     losBlockedState.player.baseAttackCooldown = 999;
-    const room = losBlockedState.map.rooms[0];
-    expect(room).toBeDefined();
-    const rx = room?.x ?? 0;
-    const ry = room?.y ?? 0;
-    const pCenter = tileCenterWorld(rx + 1, ry + 1);
-    const wallTx = rx + 2;
-    const wallTy = ry + 1;
+    const room = mustAt(losBlockedState.map.rooms, 0, 'losBlockedState.map.rooms');
+    const pCenter = tileCenterWorld(room.x + 1, room.y + 1);
+    const wallTx = room.x + 2;
+    const wallTy = room.y + 1;
     losBlockedState.map.tiles[wallTy * losBlockedState.map.width + wallTx] = 'wall';
     losBlockedState.player.x = pCenter.x;
     losBlockedState.player.y = pCenter.y;
 
-    const eCenter = tileCenterWorld(rx + 3, ry + 1);
+    const eCenter = tileCenterWorld(room.x + 3, room.y + 1);
     const blockedTank = createEnemyByKind(9904, 'tank', eCenter.x, eCenter.y, 2);
     blockedTank.awake = true;
     blockedTank.attackCooldown = 0.01;
@@ -638,7 +631,7 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
       expect(bp.baseLevel).toBe(5);
     }
     const yCoords = baseProjs.map((p) => p.y).sort((a, b) => a - b);
-    expect((yCoords[4] ?? 0) - (yCoords[0] ?? 0)).toBeCloseTo(40, 1); // 10px * 4 = 40px
+    expect(mustAt(yCoords, 4, 'yCoords') - mustAt(yCoords, 0, 'yCoords')).toBeCloseTo(40, 1); // 10px * 4 = 40px
 
     // Homing shots have 35% damage and start in 44px orbit (0.26s) + expand (0.13s)
     expect(homingProjs[0]?.damage).toBe(stats.homingDamage);
@@ -726,7 +719,7 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     const sideDmg1 = Math.max(1, Math.round(oc1Stats.damage * 0.6));
     const laserProjs = state.projectiles.filter((p) => p.kind === 'base').sort((a, b) => a.y - b.y);
     expect(laserProjs).toHaveLength(3);
-    expect((laserProjs[2]?.y ?? 0) - (laserProjs[0]?.y ?? 0)).toBeCloseTo(20, 1);
+    expect(mustAt(laserProjs, 2, 'laserProjs').y - mustAt(laserProjs, 0, 'laserProjs').y).toBeCloseTo(20, 1);
     expect(laserProjs[0]?.isCenterCharge).toBe(false);
     expect(laserProjs[0]?.radius).toBeCloseTo(4.8, 2);
     expect(laserProjs[0]?.damage).toBe(sideDmg1);
@@ -912,7 +905,7 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     bladeState.map.tiles.fill('floor');
     bladeState.player.baseAttackCooldown = 999;
     bladeState.player.equipment = [createEquippedItem('pulse_blade', 3)];
-    if (bladeState.player.equipment[0]) bladeState.player.equipment[0].cooldown = 0;
+    mustAt(bladeState.player.equipment, 0, 'bladeState.player.equipment').cooldown = 0;
     bladeState.enemyProjectiles = [
       {
         id: 8801,
@@ -945,13 +938,12 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
     shieldState.player.equipment = [createEquippedItem('orbit_shield', 1)];
     const bits = getOrbitBitPositions(shieldState);
     expect(bits.length).toBeGreaterThanOrEqual(1);
-    const firstBit = bits[0];
-    expect(firstBit).toBeDefined();
+    const firstBit = mustAt(bits, 0, 'bits');
     shieldState.enemyProjectiles = [
       {
         id: 8802,
-        x: firstBit?.x ?? 0,
-        y: firstBit?.y ?? 0,
+        x: firstBit.x,
+        y: firstBit.y,
         vx: 0,
         vy: 0,
         radius: 5,
@@ -962,8 +954,8 @@ describe('Player main weapon and sub-equipment combat simulation', () => {
       },
       {
         id: 8803,
-        x: firstBit?.x ?? 0,
-        y: firstBit?.y ?? 0,
+        x: firstBit.x,
+        y: firstBit.y,
         vx: 0,
         vy: 0,
         radius: 5,

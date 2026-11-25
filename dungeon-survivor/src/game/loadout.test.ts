@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tileCenterWorld } from '../core/dungeon';
+import { mustAt } from '../testUtils';
 import {
   acquireEquipment,
   createGameState,
@@ -198,12 +199,11 @@ describe('Equipment, loadout, and growth simulation', () => {
     const state = createGameState({ seed: 707 });
     expect(state.player.equipment).toEqual([]);
 
-    const startRoom = state.map.rooms[0];
-    expect(startRoom).toBeDefined();
-    const minX = (startRoom?.x ?? 0) * 40;
-    const maxX = ((startRoom?.x ?? 0) + (startRoom?.w ?? 0)) * 40;
-    const minY = (startRoom?.y ?? 0) * 40;
-    const maxY = ((startRoom?.y ?? 0) + (startRoom?.h ?? 0)) * 40;
+    const startRoom = mustAt(state.map.rooms, 0, 'state.map.rooms');
+    const minX = startRoom.x * 40;
+    const maxX = (startRoom.x + startRoom.w) * 40;
+    const minY = startRoom.y * 40;
+    const maxY = (startRoom.y + startRoom.h) * 40;
 
     const chestInStartRoom = state.chests.find((c) => c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY);
     expect(chestInStartRoom).toBeUndefined();
@@ -294,7 +294,7 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(state.player.equipment.length).toBe(0);
 
     // Direct contact equips the dropped item at its rolled level
-    if (state.pickups[0]) state.pickups[0].x = state.player.x;
+    mustAt(state.pickups, 0, 'state.pickups').x = state.player.x;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.pickups.length).toBe(0);
     expect(state.player.equipment).toHaveLength(1);
@@ -328,7 +328,7 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(state.stats.totalExp).toBe(expBefore + 25);
 
     // scrap_upgrade rejects Lv8 slot
-    if (state.player.equipment[0]) state.player.equipment[0].level = 7;
+    mustAt(state.player.equipment, 0, 'state.player.equipment').level = 7;
     acquireEquipment(state, createEquippedItem('pulse_blade', 1));
     expect(state.player.equipment[0]?.level).toBe(8);
 
@@ -658,14 +658,14 @@ describe('Equipment, loadout, and growth simulation', () => {
 
     for (let f = 0; f < 30; f++) {
       stepGame(wallDiscState, { x: 0, y: 0 }, 1 / 60);
-      if (wallDiscState.player.equipment[0]) wallDiscState.player.equipment[0].cooldown = 5;
+      mustAt(wallDiscState.player.equipment, 0, 'wallDiscState.player.equipment').cooldown = 5;
       const disc = wallDiscState.projectiles.find((p) => p.kind === 'disc');
       if (!disc) break;
       if (disc.loopCenterX !== undefined) {
         if (!sawLoopStart) {
           sawLoopStart = true;
           // Move enemy out of the narrow corridor after hit so post-exit flight distance is clearly observed
-          if (wallDiscState.enemies[0]) wallDiscState.enemies[0].x = pCenter.x - 100;
+          mustAt(wallDiscState.enemies, 0, 'wallDiscState.enemies').x = pCenter.x - 100;
         }
       } else if (sawLoopStart) {
         exitedLoopOnWall = true;

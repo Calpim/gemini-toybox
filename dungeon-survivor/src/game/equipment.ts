@@ -29,7 +29,11 @@ export const ORBIT_SHIELD_INNER_SLOW = 0.86;
 
 export function getScrapExpandCost(currentMaxSlots: number): number {
   const tier = Math.max(0, Math.floor(currentMaxSlots - MAX_EQUIP_SLOTS));
-  return SCRAP_EXPAND_COSTS[Math.min(SCRAP_EXPAND_COSTS.length - 1, tier)] ?? 3;
+  const cost = SCRAP_EXPAND_COSTS[Math.min(SCRAP_EXPAND_COSTS.length - 1, tier)];
+  if (cost === undefined) {
+    throw new Error('SCRAP_EXPAND_COSTS must not be empty');
+  }
+  return cost;
 }
 
 export function clampEquipmentLevel(level: number): number {

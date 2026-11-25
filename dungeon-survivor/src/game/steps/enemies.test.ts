@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { findRoomAtTile, TILE_SIZE, tileCenterWorld } from '../../core/dungeon';
+import { mustAt } from '../../testUtils';
 import {
   createEnemyByKind,
   createGameState,
@@ -106,9 +107,8 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     roomWakeState.chests = [];
     roomWakeState.pickups = [];
     roomWakeState.player.baseAttackCooldown = 999;
-    const room0 = roomWakeState.map.rooms[0];
-    expect(room0).toBeDefined();
-    const farCorner = tileCenterWorld(room0?.x ?? 0, room0?.y ?? 0);
+    const room0 = mustAt(roomWakeState.map.rooms, 0, 'roomWakeState.map.rooms');
+    const farCorner = tileCenterWorld(room0.x, room0.y);
     const farNormal = createEnemyByKind(9020, 'normal', farCorner.x, farCorner.y, 2, 0);
     const farTurret = createEnemyByKind(9021, 'shooter', farCorner.x + 40, farCorner.y, 2, 0);
     roomWakeState.enemies = [farNormal, farTurret];
@@ -271,12 +271,9 @@ describe('Enemy AI, spawning, and boss simulation', () => {
 
     // Defeating a scout-spawned ambush runner yields zero EXP/heal/equip drops
     scoutState.pickups = [];
-    const firstAmbush = ambushRunners[0];
-    expect(firstAmbush).toBeDefined();
-    if (firstAmbush) {
-      firstAmbush.hp = 0;
-      scoutState.enemies = [firstAmbush];
-    }
+    const firstAmbush = mustAt(ambushRunners, 0, 'ambushRunners');
+    firstAmbush.hp = 0;
+    scoutState.enemies = [firstAmbush];
     stepGame(scoutState, { x: 0, y: 0 }, 1 / 60);
     expect(scoutState.stats.kills).toBeGreaterThanOrEqual(1);
     expect(scoutState.pickups.length).toBe(0);
