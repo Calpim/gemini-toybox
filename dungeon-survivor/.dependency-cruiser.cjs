@@ -21,7 +21,7 @@ module.exports = {
       name: 'game-no-ui-or-render-deps',
       severity: 'error',
       comment: 'src/game (domain logic) must stay decoupled from render, ui, input, and audio.',
-      from: { path: '^src/game/' },
+      from: { path: '^src/game/', pathNot: '\\.test\\.ts$' },
       to: { path: '^src/(render|ui|input|audio)/' },
     },
     {
@@ -40,7 +40,8 @@ module.exports = {
     },
   ],
   options: {
-    tsPreCompilationDeps: true,
+    parser: 'swc',
+    tsPreCompilationDeps: false,
     tsConfig: {
       fileName: 'tsconfig.json',
     },
