@@ -32,6 +32,9 @@ jobs:
       - name: Check (Biome)
         run: npm run check:ci
 
+      - name: Check dead code (Knip)
+        run: npm run knip
+
       - name: Typecheck
         run: npm run typecheck
 

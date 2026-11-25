@@ -13,11 +13,9 @@ import { getLevelUpSkillPoints, grantExpAndCheckLevelUp } from './leveling';
 import {
   acquireEquipment,
   type EquipChoice,
-  getMainWeaponStats,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
   getSeekerDronePositions,
-  type PlayerBaseAttackStats,
   pickChestDrop,
   resolveEquipChoice,
   rollDropEquipmentLevel,
@@ -42,12 +40,9 @@ import { stepPlayerCombat } from './steps/combat';
 import {
   getActiveBossLaserWidth,
   getNormalEnemyShotStats,
-  type NormalEnemyShotStats,
   SCOUT_ALERT_COOLDOWN,
-  SCOUT_ALERT_SPEED_MULT,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
-  SCOUT_MAX_ALERT_SPEED,
   SCOUT_SUMMON_CAP_PER_SCOUT,
   SCOUT_SUMMON_MAX_PLAYER_DIST,
   stepEnemies,
@@ -63,24 +58,19 @@ export {
   type EquipChoice,
   getActiveBossLaserWidth,
   getLevelUpSkillPoints,
-  getMainWeaponStats,
   getNormalEnemyShotStats,
   getOrbitBitPositions,
   getPlayerBaseAttackStats,
   getRunnerPackSize,
   getSeekerDronePositions,
-  type NormalEnemyShotStats,
-  type PlayerBaseAttackStats,
   pickEnemyKindForFloor,
   pushNotification,
   RICOCHET_DISC_LOOP_RADIUS,
   resolveEquipChoice,
   rollDropEquipmentLevel,
   SCOUT_ALERT_COOLDOWN,
-  SCOUT_ALERT_SPEED_MULT,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
-  SCOUT_MAX_ALERT_SPEED,
   SCOUT_SUMMON_CAP_PER_SCOUT,
   SCOUT_SUMMON_MAX_PLAYER_DIST,
   SHOOTER_AGGRO_RANGE,
@@ -284,14 +274,6 @@ export function upgradeSkillNode(state: GameState, nodeId: SkillNodeId): boolean
     maxLife: 1.0,
   });
   return true;
-}
-
-export const unlockSkillNode = upgradeSkillNode;
-
-export function openSkillTree(state: GameState): void {
-  if (state.status === 'playing') {
-    state.status = 'skill_tree';
-  }
 }
 
 export function closeSkillTree(state: GameState): void {

@@ -296,5 +296,3 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
     spentSp: player.spentSkillPoints,
   };
 }
-
-export const getMainWeaponStats = getPlayerBaseAttackStats;

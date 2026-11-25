@@ -8,9 +8,9 @@ import {
   startGame,
   stepGame,
   toggleSkillTree,
-  unlockSkillNode,
+  upgradeSkillNode,
 } from './game/engine';
-import { canUnlockSkill, SKILL_TREE_NODES } from './game/skillTree';
+import { canUpgradeSkill, SKILL_TREE_NODES } from './game/skillTree';
 import type { GameState } from './game/types';
 import { InputController } from './input/controller';
 import { type HudSafeInsets, renderGame } from './render/canvasRenderer';
@@ -217,7 +217,7 @@ function syncUi(forceModals = false): void {
     gearBtn.innerHTML = `${ICON_GEAR}<span>${gearLabel}</span>`;
   }
 
-  const canUnlockAny = SKILL_TREE_NODES.some((n) => canUnlockSkill(player.skillLevels, player.skillPoints, n.id));
+  const canUnlockAny = SKILL_TREE_NODES.some((n) => canUpgradeSkill(player.skillLevels, player.skillPoints, n.id));
   skillBtn.classList.toggle('has-sp', canUnlockAny);
   bottomPauseLeftBtn?.classList.toggle('has-sp', canUnlockAny);
   bottomSkillBadge?.classList.toggle('hidden', !canUnlockAny);
@@ -268,7 +268,7 @@ function syncUi(forceModals = false): void {
     renderModals(state, modalEls, {
       activeTab: activePauseTab,
       onUnlockSkill: (nodeId) => {
-        unlockSkillNode(state, nodeId);
+        upgradeSkillNode(state, nodeId);
         syncUi(true);
       },
       onCloseSkillTree: () => {

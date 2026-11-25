@@ -18,12 +18,9 @@ import { handleEnemyContactWithPlayer, stepEnemyProjectilesOnPlayer } from './en
 
 export {
   getNormalEnemyShotStats,
-  type NormalEnemyShotStats,
   SCOUT_ALERT_COOLDOWN,
-  SCOUT_ALERT_SPEED_MULT,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
-  SCOUT_MAX_ALERT_SPEED,
   SCOUT_SUMMON_CAP_PER_SCOUT,
   SCOUT_SUMMON_MAX_PLAYER_DIST,
 } from './enemies/archetypes';

@@ -16,7 +16,6 @@ import {
   computeNotificationLayout,
   computeTopSafeY,
   type HudSafeInsets,
-  type NotificationLayout,
   renderFloorBanner,
   renderMinimap,
   renderNotifications,
@@ -24,13 +23,7 @@ import {
 } from './canvas/hudOverlay';
 import { renderMapTilesAndInteractables } from './canvas/mapLayer';
 
-export {
-  computeFloorBannerRect,
-  computeNotificationLayout,
-  computeTopSafeY,
-  type HudSafeInsets,
-  type NotificationLayout,
-};
+export { computeFloorBannerRect, computeNotificationLayout, computeTopSafeY, type HudSafeInsets };
 
 export const TARGET_VIEW_WORLD_WIDTH = 840; // ~21 tiles across on desktop/web
 
