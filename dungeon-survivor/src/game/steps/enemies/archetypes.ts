@@ -43,19 +43,33 @@ export function getNormalEnemyShotStats(playerLevel: number): NormalEnemyShotSta
   return { shotCount: 1, cooldown: 3.2, speed: 115, damageMult: 0.55 };
 }
 
-export function stepScoutBehavior(
-  state: GameState,
-  enemy: EnemyState,
-  etx: number,
-  ety: number,
-  ptx: number,
-  pty: number,
-  distToPlayer: number,
-  playerRoom: ReturnType<typeof findRoomAtTile>,
-  clampedDt: number,
-  rng: ReturnType<typeof createRng>,
-  alertSpawns: EnemyState[],
-): void {
+export interface StepScoutBehaviorParams {
+  state: GameState;
+  enemy: EnemyState;
+  etx: number;
+  ety: number;
+  ptx: number;
+  pty: number;
+  distToPlayer: number;
+  playerRoom: ReturnType<typeof findRoomAtTile>;
+  clampedDt: number;
+  rng: ReturnType<typeof createRng>;
+  alertSpawns: EnemyState[];
+}
+
+export function stepScoutBehavior({
+  state,
+  enemy,
+  etx,
+  ety,
+  ptx,
+  pty,
+  distToPlayer,
+  playerRoom,
+  clampedDt,
+  rng,
+  alertSpawns,
+}: StepScoutBehaviorParams): void {
   const { player, map } = state;
   if (enemy.awake) {
     if ((enemy.alertCooldown ?? 0) <= 0 && distToPlayer <= SCOUT_SUMMON_MAX_PLAYER_DIST) {

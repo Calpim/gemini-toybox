@@ -120,7 +120,19 @@ export function stepEnemies(
 
     // Scout archetype: patrol corridors/rooms freely while unalerted; on alert summon fast runners up to per-scout cap while in range
     if (enemy.kind === 'scout') {
-      stepScoutBehavior(state, enemy, etx, ety, ptx, pty, distToPlayer, playerRoom, clampedDt, rng, alertSpawns);
+      stepScoutBehavior({
+        state,
+        enemy,
+        etx,
+        ety,
+        ptx,
+        pty,
+        distToPlayer,
+        playerRoom,
+        clampedDt,
+        rng,
+        alertSpawns,
+      });
     }
 
     // Normal enemy archetype: player-level-scaled weak ranged shot (prevents 1F bullet-hell while escalating later)
