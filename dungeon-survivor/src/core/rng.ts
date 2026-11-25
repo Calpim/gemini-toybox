@@ -23,7 +23,11 @@ export function createRng(seed: number): Rng {
       return Math.floor(next() * (maxInclusive - min + 1)) + min;
     },
     pick<T>(items: readonly T[]): T {
-      return items[Math.floor(next() * items.length)];
+      const item = items[Math.floor(next() * items.length)];
+      if (item === undefined) {
+        throw new Error('Rng.pick called with empty array');
+      }
+      return item;
     },
   };
 }

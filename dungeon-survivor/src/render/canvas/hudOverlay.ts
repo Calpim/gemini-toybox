@@ -109,6 +109,7 @@ export function renderNotifications(
 
   for (let i = startIdx; i >= minIdx; i--) {
     const n = state.notifications[i];
+    if (!n) continue;
     const alpha = Math.min(1, n.life * 2.5);
     const padX = layout.isCompact ? 28 : 34;
     const tw = Math.min(layout.maxWidth, Math.max(layout.minWidth, ctx.measureText(n.text).width + padX));

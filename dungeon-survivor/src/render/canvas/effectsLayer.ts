@@ -57,14 +57,17 @@ export function renderMortarZones(ctx: CanvasRenderingContext2D, state: GameStat
 
 export function renderBossLasers(ctx: CanvasRenderingContext2D, state: GameState): void {
   for (const laser of state.bossLasers ?? []) {
-    if (laser.points.length < 2) continue;
+    const firstPt = laser.points[0];
+    if (!firstPt || laser.points.length < 2) continue;
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(laser.points[0].x, laser.points[0].y);
+    ctx.moveTo(firstPt.x, firstPt.y);
     for (let p = 1; p < laser.points.length; p++) {
-      ctx.lineTo(laser.points[p].x, laser.points[p].y);
+      const pt = laser.points[p];
+      if (!pt) continue;
+      ctx.lineTo(pt.x, pt.y);
     }
     if (laser.elapsed < laser.windup) {
       const progress = Math.max(0, Math.min(1, laser.elapsed / Math.max(0.01, laser.windup)));
@@ -159,7 +162,7 @@ export function renderVisualFxAndParticles(ctx: CanvasRenderingContext2D, state:
       ctx.beginPath();
       ctx.arc(fx.x, fx.y, fx.radius * (1 - alpha * 0.4), 0, Math.PI * 2);
       ctx.stroke();
-    } else if (fx.kind === 'lightning' && fx.points && fx.points.length >= 2) {
+    } else if (fx.kind === 'lightning' && fx.points && fx.points.length >= 2 && fx.points[0]) {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
@@ -167,7 +170,9 @@ export function renderVisualFxAndParticles(ctx: CanvasRenderingContext2D, state:
       ctx.beginPath();
       ctx.moveTo(fx.points[0].x, fx.points[0].y);
       for (let idx = 1; idx < fx.points.length; idx++) {
-        ctx.lineTo(fx.points[idx].x, fx.points[idx].y);
+        const pt = fx.points[idx];
+        if (!pt) continue;
+        ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
 
@@ -359,13 +364,15 @@ export function renderProjectiles(ctx: CanvasRenderingContext2D, state: GameStat
       const trail = proj.trail;
       const traceRibbon = () => {
         ctx.beginPath();
-        if (trail && trail.length >= 2) {
+        if (trail && trail.length >= 2 && trail[0]) {
           ctx.moveTo(trail[0].x, trail[0].y);
           for (let t = 1; t < trail.length; t++) {
-            ctx.lineTo(trail[t].x, trail[t].y);
+            const pt = trail[t];
+            if (!pt) continue;
+            ctx.lineTo(pt.x, pt.y);
           }
           const last = trail[trail.length - 1];
-          if (last.x !== proj.x || last.y !== proj.y) {
+          if (last && (last.x !== proj.x || last.y !== proj.y)) {
             ctx.lineTo(proj.x, proj.y);
           }
         } else {
