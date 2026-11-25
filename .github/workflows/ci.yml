@@ -2,6 +2,9 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -27,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Check (Biome)
-        run: npm run check
+        run: npm run check:ci
 
       - name: Typecheck
         run: npm run typecheck
@@ -37,3 +40,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Check specs.html sync
+        run: git diff --exit-code docs/specs.html

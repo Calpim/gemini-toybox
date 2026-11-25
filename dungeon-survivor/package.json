@@ -13,6 +13,7 @@
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check .",
+    "check:ci": "biome ci .",
     "spec:build": "node scripts/build-spec-html.mjs",
     "spec:test": "node --test scripts/build-spec-html.test.mjs",
     "test": "npm run spec:test && vitest run",

@@ -36,6 +36,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn"
+      },
       "suspicious": {
         "noAssignInExpressions": "warn",
         "noMisleadingCharacterClass": "warn"
@@ -43,6 +46,6 @@
     }
   },
   "assist": {
-    "enabled": false
+    "enabled": true
   }
 }
