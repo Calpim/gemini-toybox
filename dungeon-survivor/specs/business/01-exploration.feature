@@ -34,7 +34,7 @@
     もし 部屋に入る
     ならば 部屋内の敵が全員迎撃状態になる
 
-  # split-from: BIZ-EXP-02 (EXP-02-c) / 関連: APP-MAP-02, GLS-14, OQ-04, DEC-10（具体キー操作は APP-MAP-02 / GLS-14 参照）
+  # split-from: BIZ-EXP-02 (EXP-02-c) / 関連: APP-MAP-02, GLS-14, OQ-04, DEC-10, DEC-17, DEC-23, DEC-24, DEC-30（具体キー操作は APP-MAP-02 / GLS-14 参照）
   @BIZ-EXP-11 @Confirmed
   シナリオ: 探索中の任意ポーズ操作で時間を止めてスキルと装備状態を確認できる
     前提 プレイヤーがダンジョンを探索している
