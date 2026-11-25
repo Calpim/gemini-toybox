@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -20,6 +22,7 @@ import {
   loadExtendedSpecs,
   validateExtendedSpecs,
   validateInvariantTests,
+  validateNoLineNumberRefs,
 } from './build-spec-html.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -548,5 +551,38 @@ stateDiagram-v2
         { invariantId: 'INV-NO-TAG', tag: null, reason: 'missing test tag' },
       ]
     );
+  });
+
+  it('detects line-number code references (#L123 etc.) in dummy spec files without false positives on symbol refs', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spec-lineref-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'bad.md'),
+        `| ID | ref |\n| --- | --- |\n| X1 | \`src/game/engine.ts#L123\` |\n| X2 | \`src/game/engine.ts#L10-L20,L30\` |\n`,
+        'utf8'
+      );
+      fs.writeFileSync(
+        path.join(tmpDir, 'clean.md'),
+        `| ID | ref |\n| --- | --- |\n| C1 | \`src/game/engine.ts#stepGame\`, Lv10, #GLS-01 |\n`,
+        'utf8'
+      );
+      const result = validateNoLineNumberRefs(tmpDir, { specsDir: tmpDir });
+      assert.equal(result.checkedFiles, 2);
+      assert.equal(result.lineNumberRefs.length, 2);
+      assert.equal(result.lineNumberRefs[0].file, 'bad.md');
+      assert.equal(result.lineNumberRefs[0].line, 3);
+      assert.equal(result.lineNumberRefs[0].match, '#L123');
+      assert.equal(result.lineNumberRefs[1].file, 'bad.md');
+      assert.equal(result.lineNumberRefs[1].line, 4);
+      assert.match(result.lineNumberRefs[1].match, /#L10-L20,L30/);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('ensures zero line-number code references (#L...) remain in actual project specs/', () => {
+    const result = validateNoLineNumberRefs(projectRoot);
+    assert.ok(result.checkedFiles >= 14, `Expected >= 14 spec files, got ${result.checkedFiles}`);
+    assert.deepEqual(result.lineNumberRefs, []);
   });
 });

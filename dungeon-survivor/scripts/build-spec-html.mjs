@@ -1108,6 +1108,50 @@ export function validateInvariantTests(invariants, projectRoot) {
   };
 }
 
+function collectSpecFilesRecursive(dirPath, result = []) {
+  if (!fs.existsSync(dirPath)) return result;
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+  for (const entry of entries) {
+    const full = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      collectSpecFilesRecursive(full, result);
+    } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.feature'))) {
+      result.push(full);
+    }
+  }
+  return result;
+}
+
+export function validateNoLineNumberRefs(projectRoot, options = {}) {
+  const specsDir = options.specsDir ? path.resolve(options.specsDir) : path.join(projectRoot, 'specs');
+  const files = collectSpecFilesRecursive(specsDir);
+  const lineNumberRefs = [];
+  const lineRefRegex = /(?:#L\d+(?:[-,]L?\d+)*|\b(?:src|scripts|specs)\/[^\s`)|]+,L\d+(?:[-,]L?\d+)*)/g;
+
+  for (const fullPath of files) {
+    const relPath = path.relative(projectRoot, fullPath).replaceAll('\\', '/');
+    const lines = fs.readFileSync(fullPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      lineRefRegex.lastIndex = 0;
+      let m;
+      while ((m = lineRefRegex.exec(line)) !== null) {
+        lineNumberRefs.push({
+          file: relPath,
+          line: i + 1,
+          match: m[0],
+          text: line.trim(),
+        });
+      }
+    }
+  }
+
+  return {
+    checkedFiles: files.length,
+    lineNumberRefs,
+  };
+}
+
 function escapeHtml(str) {
   return String(str)
     .replaceAll('&', '&amp;')
@@ -2725,12 +2769,13 @@ export function generateSpecHtml({ projectRoot, outPath }) {
   const extendedSpecs = loadExtendedSpecs(projectRoot);
   const extValidation = validateExtendedSpecs(graph, extendedSpecs);
   const invariantTestValidation = validateInvariantTests(extendedSpecs.invariants, projectRoot);
+  const lineNumberRefValidation = validateNoLineNumberRefs(projectRoot);
   const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extendedSpecs);
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, html, 'utf8');
 
-  return { graph, extendedSpecs, extValidation, invariantTestValidation, outPath };
+  return { graph, extendedSpecs, extValidation, invariantTestValidation, lineNumberRefValidation, outPath };
 }
 
 // CLI entry point
@@ -2742,20 +2787,25 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       ? path.resolve(process.argv[outArgIndex + 1])
       : path.join(projectRoot, 'docs', 'specs.html');
 
-  const { graph, extValidation, invariantTestValidation } = generateSpecHtml({ projectRoot, outPath });
+  const { graph, extValidation, invariantTestValidation, lineNumberRefValidation } = generateSpecHtml({
+    projectRoot,
+    outPath,
+  });
   console.log(
-    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
+    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, LineNumRefs=${lineNumberRefValidation.lineNumberRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
   );
   if (
     graph.stats.brokenCount > 0 ||
     extValidation.brokenDocRefs.length > 0 ||
-    invariantTestValidation.brokenInvariantTests.length > 0
+    invariantTestValidation.brokenInvariantTests.length > 0 ||
+    lineNumberRefValidation.lineNumberRefs.length > 0
   ) {
     console.error('Traceability issues found:', {
       unlinkedBiz: graph.unlinkedBiz,
       orphanApps: graph.orphanApps,
       brokenDocRefs: extValidation.brokenDocRefs,
       brokenInvariantTests: invariantTestValidation.brokenInvariantTests,
+      lineNumberRefs: lineNumberRefValidation.lineNumberRefs,
     });
     process.exitCode = 1;
   }
