@@ -354,6 +354,12 @@ export function stepEnemies(
   let bfsDist: Int32Array | null = null;
   const ptx = Math.floor(player.x / TILE_SIZE);
   const pty = Math.floor(player.y / TILE_SIZE);
+  const getBfsDist = (): Int32Array => {
+    if (!bfsDist) {
+      bfsDist = computeBfsDistances(map.width, map.height, map.tiles, ptx, pty);
+    }
+    return bfsDist;
+  };
   const playerRoom = findRoomAtTile(map, ptx, pty);
   const alertSpawns: EnemyState[] = [];
 
@@ -380,109 +386,7 @@ export function stepEnemies(
     }
 
     if (enemy.hp <= 0) {
-      state.stats.kills += 1;
-      const wasRoomBoss = Boolean(enemy.isRoomBoss);
-      const wasGrandBoss = Boolean(enemy.isGrandBoss);
-      const deathColor = wasGrandBoss
-        ? '#fbbf24'
-        : wasRoomBoss
-          ? '#f43f5e'
-          : enemy.kind === 'runner'
-            ? '#fde047'
-            : enemy.kind === 'tank'
-              ? '#c084fc'
-              : enemy.kind === 'shooter'
-                ? '#38bdf8'
-                : enemy.kind === 'scout'
-                  ? '#fb923c'
-                  : '#fb7185';
-      if (wasRoomBoss || wasGrandBoss) {
-        emitSound(state, 'boss_kill');
-        triggerShake(state, wasGrandBoss ? 10 : 7.5, wasGrandBoss ? 0.38 : 0.28);
-        spawnParticles(state, enemy.x, enemy.y, deathColor, wasGrandBoss ? 24 : 18, 60, 210, 3.6, 0.55);
-      } else {
-        emitSound(state, 'kill');
-        spawnParticles(state, enemy.x, enemy.y, deathColor, 8, 45, 145, 2.6, 0.34);
-      }
-
-      // Scout-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
-      if (!enemy.isAmbush) {
-        const isPackExtra = Boolean(enemy.isPackFollower);
-        const dropRateScale = isPackExtra ? 0.4 : 1.0;
-        state.pickups.push({
-          id: state.nextEntityId++,
-          kind: 'exp',
-          x: enemy.x,
-          y: enemy.y,
-          value: wasGrandBoss ? 120 : wasRoomBoss ? 45 : isPackExtra ? 4 : 10,
-        });
-        if (wasRoomBoss || rng.next() < (0.22 + mods.lootBonusRate * 0.4) * dropRateScale) {
-          state.pickups.push({
-            id: state.nextEntityId++,
-            kind: 'heal',
-            x: enemy.x + 10,
-            y: enemy.y + 6,
-            value: wasGrandBoss ? 60 : wasRoomBoss ? 40 : 25,
-          });
-        }
-        if (wasRoomBoss) {
-          const eqId = rng.pick(ALL_EQUIPMENT_IDS);
-          let minEquippedLv = 1;
-          if (player.equipment.length > 0) {
-            minEquippedLv = Math.min(...player.equipment.map((eq) => eq.level));
-          }
-          const bonus = (wasGrandBoss ? 2 : 1) + (rng.next() < 0.35 ? 1 : 0);
-          const itemLevel = clampEquipmentLevel(minEquippedLv + bonus);
-          state.pickups.push({
-            id: state.nextEntityId++,
-            kind: 'equip',
-            x: enemy.x - 10,
-            y: enemy.y + 6,
-            value: 1,
-            equipmentId: eqId,
-            itemLevel,
-          });
-        } else {
-          // Low-probability enemy equipment drop (1.5% base + mob_loot bonus) scaled to player's lowest equipment level & drop quality (APP-GRW-07)
-          const equipDropChance = (0.015 + mods.equipDropBonus) * dropRateScale;
-          if (rng.next() < equipDropChance) {
-            const eqId = rng.pick(ALL_EQUIPMENT_IDS);
-            const itemLevel = deps.rollDropEquipmentLevel(player.equipment, () => rng.next(), mods.dropQualityTier);
-            state.pickups.push({
-              id: state.nextEntityId++,
-              kind: 'equip',
-              x: enemy.x - 10,
-              y: enemy.y + 6,
-              value: 1,
-              equipmentId: eqId,
-              itemLevel,
-            });
-          }
-        }
-      }
-      state.enemies.splice(i, 1);
-      if (wasRoomBoss && deps.getStairsLockCount(state) === 0) {
-        const stairsWorld = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
-        emitSound(state, 'stairs_unlock');
-        pushNotification(
-          state,
-          'info',
-          wasGrandBoss
-            ? `🏆 階層ボス撃破！階段から先（${state.floor + 1}F）へ進める！`
-            : '🔓 中ボス撃破！階段の封印が解けた！',
-          '#22d3ee',
-          3.2,
-        );
-        state.visualFx.push({
-          kind: 'pulse',
-          x: stairsWorld.x,
-          y: stairsWorld.y,
-          radius: 84,
-          color: '#22d3ee',
-          life: 0.65,
-          maxLife: 0.65,
-        });
-      }
+      handleEnemyDeath(state, enemy, i, mods, rng, deps);
       continue;
     }
 
@@ -518,725 +422,34 @@ export function stepEnemies(
 
     // Scout archetype: patrol corridors/rooms freely while unalerted; on alert summon fast runners up to per-scout cap while in range
     if (enemy.kind === 'scout') {
-      if (enemy.awake) {
-        if ((enemy.alertCooldown ?? 0) <= 0 && distToPlayer <= SCOUT_SUMMON_MAX_PLAYER_DIST) {
-          const activeSummons =
-            state.enemies.filter((e) => e.isAmbush && e.summonerId === enemy.id).length +
-            alertSpawns.filter((e) => e.isAmbush && e.summonerId === enemy.id).length;
-          const remainingCap = SCOUT_SUMMON_CAP_PER_SCOUT - activeSummons;
-          if (remainingCap > 0) {
-            enemy.alertCooldown = SCOUT_ALERT_COOLDOWN;
-
-            // Spawn up to 2-3 fast awake runners nearby (130-320px away) that outpace player baseSpeed
-            const spawnCandidates: { tx: number; ty: number }[] = [];
-            const occupied = new Set<number>();
-            for (const existing of state.enemies) {
-              occupied.add(tileIndex(map, Math.floor(existing.x / TILE_SIZE), Math.floor(existing.y / TILE_SIZE)));
-            }
-            for (const spawned of alertSpawns) {
-              occupied.add(tileIndex(map, Math.floor(spawned.x / TILE_SIZE), Math.floor(spawned.y / TILE_SIZE)));
-            }
-            const minSy = Math.max(1, pty - 9);
-            const maxSy = Math.min(map.height - 2, pty + 9);
-            const minSx = Math.max(1, ptx - 9);
-            const maxSx = Math.min(map.width - 2, ptx + 9);
-            for (let ty = minSy; ty <= maxSy; ty++) {
-              for (let tx = minSx; tx <= maxSx; tx++) {
-                if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
-                const c = tileCenterWorld(tx, ty);
-                const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
-                if (dPlayer >= 130 && dPlayer <= 320) {
-                  spawnCandidates.push({ tx, ty });
-                }
-              }
-            }
-            if (spawnCandidates.length === 0) {
-              for (let ty = 1; ty < map.height - 1; ty++) {
-                for (let tx = 1; tx < map.width - 1; tx++) {
-                  if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
-                  const c = tileCenterWorld(tx, ty);
-                  const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
-                  if (dPlayer >= 90 && dPlayer <= 380) {
-                    spawnCandidates.push({ tx, ty });
-                  }
-                }
-              }
-            }
-            const ambushCount = Math.min(spawnCandidates.length, remainingCap, state.floor >= 3 ? 3 : 2);
-            for (let s = 0; s < ambushCount; s++) {
-              const pickIdx = rng.int(0, spawnCandidates.length - 1);
-              const picked = spawnCandidates.splice(pickIdx, 1)[0];
-              const pos = tileCenterWorld(picked.tx, picked.ty);
-              const runner = createEnemyByKind(
-                state.nextEntityId++,
-                'runner',
-                pos.x,
-                pos.y,
-                state.floor,
-                MAX_TARGET_RANGE,
-              );
-              runner.speed = Math.max(228, Math.min(265, Math.round(224 + (state.floor - 1) * 4)));
-              runner.spawnDelay = 0.45;
-              runner.awake = true;
-              runner.isAmbush = true;
-              runner.summonerId = enemy.id;
-              alertSpawns.push(runner);
-              state.visualFx.push({
-                kind: 'pulse',
-                x: pos.x,
-                y: pos.y,
-                radius: 36,
-                color: '#f59e0b',
-                life: 0.35,
-                maxLife: 0.35,
-              });
-            }
-
-            if (ambushCount > 0) {
-              const inCorridorEncounter = playerRoom === null;
-              state.visualFx.push({
-                kind: 'pulse',
-                x: enemy.x,
-                y: enemy.y,
-                radius: 130,
-                color: '#f97316',
-                life: 0.45,
-                maxLife: 0.45,
-              });
-              state.floatingTexts.push({
-                x: enemy.x,
-                y: enemy.y - enemy.radius - 10,
-                text: inCorridorEncounter ? 'ENCOUNTER!!' : 'ALERT!!',
-                color: '#fb923c',
-                life: 1.0,
-                maxLife: 1.0,
-              });
-              emitSound(state, 'alert');
-              pushNotification(
-                state,
-                'alert',
-                inCorridorEncounter
-                  ? '⚠️ 通路でスカウトと遭遇！高速の敵が迫る！'
-                  : '⚠️ スカウトに発見された！高速の敵が迫る！',
-                '#f97316',
-                2.8,
-              );
-            }
-          }
-        }
-      } else if (enemy.speed > 0) {
-        enemy.wanderTimer = (enemy.wanderTimer ?? 0) - clampedDt;
-        const arrived = enemy.wanderTarget
-          ? Math.hypot(enemy.wanderTarget.x - enemy.x, enemy.wanderTarget.y - enemy.y) <= 8
-          : true;
-        if (!enemy.wanderTarget || arrived || (enemy.wanderTimer ?? 0) <= 0) {
-          const dirs: readonly [number, number][] = [
-            [1, 0],
-            [-1, 0],
-            [0, 1],
-            [0, -1],
-          ];
-          const prevDx = enemy.wanderDir?.x ?? 0;
-          const prevDy = enemy.wanderDir?.y ?? 0;
-          const validDirs: { dx: number; dy: number; tx: number; ty: number }[] = [];
-          for (const [ox, oy] of dirs) {
-            const ntx = etx + ox;
-            const nty = ety + oy;
-            if (ntx <= 0 || nty <= 0 || ntx >= map.width - 1 || nty >= map.height - 1) continue;
-            if (!isWallTile(map, ntx, nty)) {
-              validDirs.push({ dx: ox, dy: oy, tx: ntx, ty: nty });
-            }
-          }
-          if (validDirs.length > 0) {
-            const forward = validDirs.find((d) => d.dx === prevDx && d.dy === prevDy);
-            const nonReverse = validDirs.filter((d) => !(d.dx === -prevDx && d.dy === -prevDy));
-            const pool = nonReverse.length > 0 ? nonReverse : validDirs;
-            const chosen = forward && rng.next() < 0.72 ? forward : pool[rng.int(0, pool.length - 1)];
-            enemy.wanderTarget = tileCenterWorld(chosen.tx, chosen.ty);
-            enemy.wanderDir = { x: chosen.dx, y: chosen.dy };
-          } else {
-            enemy.wanderTarget = null;
-          }
-          enemy.wanderTimer = 1.1;
-        }
-        if (enemy.wanderTarget) {
-          const wdx = enemy.wanderTarget.x - enemy.x;
-          const wdy = enemy.wanderTarget.y - enemy.y;
-          const wDist = Math.hypot(wdx, wdy);
-          if (wDist > 1e-3) {
-            const wanderSpeed = enemy.speed * 0.78;
-            const resolved = resolveCircleGridCollision(
-              enemy.x + (wdx / wDist) * wanderSpeed * clampedDt,
-              enemy.y + (wdy / wDist) * wanderSpeed * clampedDt,
-              enemy.radius,
-              map,
-            );
-            enemy.x = resolved.x;
-            enemy.y = resolved.y;
-          }
-        }
-      }
+      stepScoutBehavior(state, enemy, etx, ety, ptx, pty, distToPlayer, playerRoom, clampedDt, rng, alertSpawns);
     }
 
     // Normal enemy archetype: player-level-scaled weak ranged shot (prevents 1F bullet-hell while escalating later)
     if ((!enemy.kind || enemy.kind === 'normal') && enemy.awake) {
-      const inSight =
-        distToPlayer > 1e-3 && distToPlayer <= 190 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
-      if (!inSight) {
-        enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.55);
-      } else if (wasAwake) {
-        if ((enemy.attackCooldown ?? 0) > 0) {
-          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
-        }
-        if ((enemy.attackCooldown ?? 0) <= 0) {
-          const shotStats = getNormalEnemyShotStats(player.level);
-          const baseAngle = Math.atan2(dy, dx);
-          const dmgVal = Math.max(1, Math.round(enemy.damage * shotStats.damageMult));
-          for (let s = 0; s < shotStats.shotCount; s++) {
-            const offset = (s - (shotStats.shotCount - 1) / 2) * 0.16;
-            const a = baseAngle + offset;
-            state.enemyProjectiles.push({
-              id: state.nextEntityId++,
-              x: enemy.x,
-              y: enemy.y,
-              vx: Math.cos(a) * shotStats.speed,
-              vy: Math.sin(a) * shotStats.speed,
-              radius: 4.5,
-              damage: dmgVal,
-              life: 1.3,
-              color: '#fb7185',
-            });
-          }
-          enemy.attackCooldown = shotStats.cooldown;
-        }
-      }
+      stepNormalEnemyAttack(state, enemy, dx, dy, distToPlayer, wasAwake, clampedDt);
     }
 
     // Tank archetype: predictive parabolic mortar lobbing ground AoE zones with clear impact timing
     if (enemy.kind === 'tank' && !enemy.isRoomBoss && enemy.awake) {
-      const enemyTx = Math.floor(enemy.x / TILE_SIZE);
-      const enemyTy = Math.floor(enemy.y / TILE_SIZE);
-      const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
-      const canMortarFire =
-        distToPlayer > 1e-3 &&
-        ((sameRoom && distToPlayer <= 380) ||
-          (distToPlayer <= 280 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)));
-      if (!canMortarFire) {
-        enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
-      } else if (wasAwake) {
-        if ((enemy.attackCooldown ?? 0) > 0) {
-          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
-        }
-        if ((enemy.attackCooldown ?? 0) <= 0) {
-          const mortarDuration = 0.85;
-          const leadTime = 0.55;
-          const maxLeadDist = 115;
-          let leadDx = (player.velX ?? 0) * leadTime;
-          let leadDy = (player.velY ?? 0) * leadTime;
-          const leadLen = Math.hypot(leadDx, leadDy);
-          if (leadLen > maxLeadDist) {
-            leadDx = (leadDx / leadLen) * maxLeadDist;
-            leadDy = (leadDy / leadLen) * maxLeadDist;
-          }
-          let tx = player.x;
-          let ty = player.y;
-          const steps = 5;
-          for (let s = 0; s < steps; s++) {
-            const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
-            tx = stepped.x;
-            ty = stepped.y;
-          }
-
-          state.mortarZones.push({
-            id: state.nextEntityId++,
-            startX: enemy.x,
-            startY: enemy.y,
-            targetX: tx,
-            targetY: ty,
-            radius: 52,
-            damage: Math.round(enemy.damage * 1.45),
-            elapsed: 0,
-            duration: mortarDuration,
-          });
-          enemy.attackCooldown = 2.4;
-        }
-      }
+      stepTankEnemyAttack(state, enemy, distToPlayer, playerRoom, wasAwake, clampedDt);
     }
 
     // Shooter archetype: stationary knockback-immune turret firing continuous rotating radial barrage once awake
     if (enemy.kind === 'shooter' && enemy.awake) {
-      const enemyTx = Math.floor(enemy.x / TILE_SIZE);
-      const enemyTy = Math.floor(enemy.y / TILE_SIZE);
-      const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
-      const canShooterFire = distToPlayer > 1e-3 && ((sameRoom && distToPlayer <= 420) || distToPlayer <= 380);
-      if (!canShooterFire) {
-        enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
-      } else if (wasAwake) {
-        if ((enemy.attackCooldown ?? 0) > 0) {
-          enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
-        }
-        if ((enemy.attackCooldown ?? 0) <= 0) {
-          const projSpeed = 152 + Math.min(55, (state.floor - 1) * 7);
-          const dirCount = state.floor >= 11 ? 8 : state.floor >= 6 ? 6 : 4;
-          const angleStep = Math.PI / (dirCount * 2);
-          const shotIdx = enemy.bossPatternIndex ?? 0;
-          const baseOffset = shotIdx * angleStep;
-          const pierceSlotA = rng.int(0, dirCount - 1);
-          const pierceSlotB = dirCount >= 6 ? (pierceSlotA + rng.int(1, dirCount - 1)) % dirCount : -1;
-          for (let k = 0; k < dirCount; k++) {
-            const angle = baseOffset + (k * Math.PI * 2) / dirCount;
-            const isPiercing = k === pierceSlotA || k === pierceSlotB;
-            state.enemyProjectiles.push({
-              id: state.nextEntityId++,
-              x: enemy.x,
-              y: enemy.y,
-              vx: Math.cos(angle) * projSpeed,
-              vy: Math.sin(angle) * projSpeed,
-              radius: isPiercing ? 5.5 : 5,
-              damage: enemy.damage,
-              life: 1.85,
-              pierceDefense: isPiercing,
-              color: isPiercing ? '#e879f9' : undefined,
-            });
-          }
-          enemy.bossPatternIndex = (shotIdx + 1) % 16;
-          enemy.attackCooldown = Math.max(0.36, 0.48 - (state.floor - 1) * 0.015);
-        }
-      }
+      stepShooterEnemyAttack(state, enemy, distToPlayer, playerRoom, wasAwake, clampedDt, rng);
     }
 
     // Guardian / Grand Boss rotating patterns (ring, spread homing orbs, wall-bouncing shots, lead dash + burst) + independent mortar
     if (enemy.isRoomBoss && enemy.awake) {
-      const isGrand = Boolean(enemy.isGrandBoss);
-      if (
-        wasAwake &&
-        enemy.dashState !== 'dashing' &&
-        enemy.dashState !== 'windup' &&
-        enemy.dashState !== 'recovering'
-      ) {
-        enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? 0.6) - clampedDt);
-        const canBossMortar = distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 780 : 400);
-        if (canBossMortar && (enemy.mortarCooldown ?? 0) <= 0) {
-          const mortarDuration = 0.85;
-          const burstCount = isGrand ? 3 : 1;
-          const mortarRadius = isGrand ? 68 : 52;
-          const maxLeadDist = isGrand ? 155 : 115;
-          for (let b = 0; b < burstCount; b++) {
-            const leadTime = 0.55 + b * 0.28;
-            let leadDx = (player.velX ?? 0) * leadTime;
-            let leadDy = (player.velY ?? 0) * leadTime;
-            const leadLen = Math.hypot(leadDx, leadDy);
-            if (leadLen > maxLeadDist) {
-              leadDx = (leadDx / leadLen) * maxLeadDist;
-              leadDy = (leadDy / leadLen) * maxLeadDist;
-            }
-            let tx = player.x;
-            let ty = player.y;
-            const steps = 5;
-            for (let s = 0; s < steps; s++) {
-              const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
-              tx = stepped.x;
-              ty = stepped.y;
-            }
-            state.mortarZones.push({
-              id: state.nextEntityId++,
-              startX: enemy.x,
-              startY: enemy.y,
-              targetX: tx,
-              targetY: ty,
-              radius: mortarRadius,
-              damage: Math.round(enemy.damage * 1.2),
-              elapsed: -b * 0.24,
-              duration: mortarDuration,
-            });
-          }
-          enemy.mortarCooldown = isGrand ? 2.6 : 2.6;
-        }
-      }
-
-      if (enemy.dashState === 'windup') {
-        enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
-        if ((enemy.dashTimer ?? 0) <= 0) {
-          enemy.dashState = 'dashing';
-          enemy.dashTimer = isGrand ? 0.72 : 0.62;
-          emitSound(state, 'boss_dash');
-        }
-      } else if (enemy.dashState === 'dashing' && enemy.dashDir) {
-        const dashSpd = enemy.dashSpeed ?? (isGrand ? 540 : 480);
-        const stepDist = dashSpd * clampedDt;
-        const resolvedDash = resolveCircleGridCollision(
-          enemy.x + enemy.dashDir.x * stepDist,
-          enemy.y + enemy.dashDir.y * stepDist,
-          enemy.radius,
-          map,
-        );
-        const moved = Math.hypot(resolvedDash.x - enemy.x, resolvedDash.y - enemy.y);
-        enemy.x = resolvedDash.x;
-        enemy.y = resolvedDash.y;
-        spawnParticles(state, enemy.x, enemy.y, isGrand ? '#fbbf24' : '#f43f5e', 1, 10, 40, 2.6, 0.22);
-        enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
-
-        const hitWall = stepDist > 1e-4 && moved < stepDist * 0.65;
-        let endedDash = (enemy.dashTimer ?? 0) <= 0;
-        if (hitWall) {
-          if ((enemy.dashBouncesLeft ?? 0) > 0) {
-            const rx = resolveCircleGridCollision(enemy.x + enemy.dashDir.x * stepDist, enemy.y, enemy.radius, map);
-            const ry = resolveCircleGridCollision(enemy.x, enemy.y + enemy.dashDir.y * stepDist, enemy.radius, map);
-            const blockedX =
-              Math.abs(enemy.dashDir.x) > 1e-3 &&
-              Math.abs(rx.x - enemy.x) < Math.abs(enemy.dashDir.x) * stepDist * 0.65;
-            const blockedY =
-              Math.abs(enemy.dashDir.y) > 1e-3 &&
-              Math.abs(ry.y - enemy.y) < Math.abs(enemy.dashDir.y) * stepDist * 0.65;
-            if (blockedX) enemy.dashDir.x = -enemy.dashDir.x;
-            if (blockedY) enemy.dashDir.y = -enemy.dashDir.y;
-            if (!blockedX && !blockedY) {
-              enemy.dashDir.x = -enemy.dashDir.x;
-              enemy.dashDir.y = -enemy.dashDir.y;
-            }
-            enemy.dashBouncesLeft = (enemy.dashBouncesLeft ?? 1) - 1;
-            triggerShake(state, 3.5, 0.12);
-            spawnParticles(state, enemy.x, enemy.y, '#fbbf24', 6, 40, 120, 2.4, 0.25);
-          } else {
-            endedDash = true;
-          }
-        }
-
-        if (endedDash) {
-          enemy.dashState = 'recovering';
-          enemy.dashTimer = isGrand ? 1.05 : 0.95;
-          const burstCount = isGrand ? 8 : 4;
-          const burstSpd = isGrand ? 195 : 170;
-          const baseBurstAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-          for (let k = 0; k < burstCount; k++) {
-            const ba = baseBurstAngle + (k * Math.PI * 2) / burstCount;
-            state.enemyProjectiles.push({
-              id: state.nextEntityId++,
-              x: enemy.x,
-              y: enemy.y,
-              vx: Math.cos(ba) * burstSpd,
-              vy: Math.sin(ba) * burstSpd,
-              radius: 5.5,
-              damage: Math.round(enemy.damage * 0.78),
-              life: 1.7,
-              pierceDefense: false,
-              color: '#f97316',
-            });
-          }
-        }
-      } else if (enemy.dashState === 'recovering') {
-        enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
-        if ((enemy.dashTimer ?? 0) <= 0) {
-          enemy.dashState = 'none';
-        }
-      } else {
-        const inSight =
-          distToPlayer > 1e-3 &&
-          distToPlayer <= (isGrand ? 780 : 300) &&
-          hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
-        if (inSight && wasAwake) {
-          if ((enemy.attackCooldown ?? 0) > 0) {
-            enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
-          }
-          if ((enemy.attackCooldown ?? 0) <= 0) {
-            const pattern = enemy.bossPatternIndex ?? 0;
-            const aimAngle = Math.atan2(dy, dx);
-            const dmgVal = Math.round(enemy.damage * 0.8);
-
-            if (pattern === 0) {
-              const count = isGrand ? 12 : 8;
-              const spd = isGrand ? 195 : 172;
-              const pierceCount = isGrand ? 3 : 2;
-              const pierceStart = rng.int(0, count - 1);
-              const pierceStep = Math.floor(count / pierceCount);
-              for (let k = 0; k < count; k++) {
-                const a = aimAngle + (k * Math.PI * 2) / count;
-                const isPiercing =
-                  (k - pierceStart + count) % pierceStep === 0 &&
-                  Math.floor(((k - pierceStart + count) % count) / pierceStep) < pierceCount;
-                state.enemyProjectiles.push({
-                  id: state.nextEntityId++,
-                  x: enemy.x,
-                  y: enemy.y,
-                  vx: Math.cos(a) * spd,
-                  vy: Math.sin(a) * spd,
-                  radius: isPiercing ? 6.5 : 6,
-                  damage: dmgVal,
-                  life: 2.1,
-                  pierceDefense: isPiercing,
-                  color: isPiercing ? '#e879f9' : isGrand ? '#f43f5e' : '#fb7185',
-                });
-              }
-            } else if (pattern === 1) {
-              const count = isGrand ? 6 : 4;
-              const spread = isGrand ? 1.85 : 1.45;
-              const baseSpd = isGrand ? 168 : 148;
-              for (let k = 0; k < count; k++) {
-                const t = count > 1 ? k / (count - 1) - 0.5 : 0; // -0.5 .. +0.5
-                const edgeFactor = Math.abs(t) * 2; // 0 (center) .. 1 (outer)
-                const a = aimAngle + t * spread;
-                const spd = baseSpd - edgeFactor * 36;
-                const homingRate = (isGrand ? 1.55 : 1.3) + edgeFactor * (isGrand ? 1.05 : 0.85);
-                state.enemyProjectiles.push({
-                  id: state.nextEntityId++,
-                  x: enemy.x,
-                  y: enemy.y,
-                  vx: Math.cos(a) * spd,
-                  vy: Math.sin(a) * spd,
-                  radius: 6.5,
-                  damage: dmgVal,
-                  life: 2.6,
-                  homingRate,
-                  color: '#c084fc',
-                });
-              }
-            } else if (pattern === 2) {
-              if (isGrand) {
-                const leadPx = player.x + (player.velX ?? 0) * 0.45;
-                const leadPy = player.y + (player.velY ?? 0) * 0.45;
-                const laserAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
-                let ldx = Math.cos(laserAngle);
-                let ldy = Math.sin(laserAngle);
-                let lx = enemy.x;
-                let ly = enemy.y;
-                const points: Vec2[] = [{ x: lx, y: ly }];
-                const stepSize = 6;
-                let bounces = 0;
-                const maxBounces = 2;
-                let traveled = 0;
-                const maxLaserDist = 1800;
-                while (traveled < maxLaserDist) {
-                  const nx = lx + ldx * stepSize;
-                  const ny = ly + ldy * stepSize;
-                  if (isWallAtWorld(map, nx, ny)) {
-                    points.push({ x: lx, y: ly });
-                    if (bounces >= maxBounces) break;
-                    const hitX = isWallAtWorld(map, nx, ly);
-                    const hitY = isWallAtWorld(map, lx, ny);
-                    if (hitX) ldx = -ldx;
-                    if (hitY) ldy = -ldy;
-                    if (!hitX && !hitY) {
-                      ldx = -ldx;
-                      ldy = -ldy;
-                    }
-                    bounces++;
-                  } else {
-                    lx = nx;
-                    ly = ny;
-                  }
-                  traveled += stepSize;
-                }
-                if (
-                  points.length === 1 ||
-                  Math.hypot(lx - points[points.length - 1].x, ly - points[points.length - 1].y) > 4
-                ) {
-                  points.push({ x: lx, y: ly });
-                }
-                if (!state.bossLasers) state.bossLasers = [];
-                state.bossLasers.push({
-                  id: state.nextEntityId++,
-                  points,
-                  width: 22,
-                  damage: Math.round(enemy.damage * 1.15),
-                  elapsed: 0,
-                  windup: 0.72,
-                  duration: 1.12,
-                  hitPlayer: false,
-                });
-              } else {
-                const count = 4;
-                const spd = 168;
-                const pSlotA = rng.int(0, count - 1);
-                for (let k = 0; k < count; k++) {
-                  const a = aimAngle + (k - (count - 1) / 2) * 0.34;
-                  const isPiercing = k === pSlotA;
-                  state.enemyProjectiles.push({
-                    id: state.nextEntityId++,
-                    x: enemy.x,
-                    y: enemy.y,
-                    vx: Math.cos(a) * spd,
-                    vy: Math.sin(a) * spd,
-                    radius: isPiercing ? 6.5 : 6,
-                    damage: dmgVal,
-                    life: 2.8,
-                    bouncesLeft: 1,
-                    pierceDefense: isPiercing,
-                    color: isPiercing ? '#e879f9' : '#fbbf24',
-                  });
-                }
-              }
-            } else {
-              const leadPx = player.x + (player.velX ?? 0) * 0.35;
-              const leadPy = player.y + (player.velY ?? 0) * 0.35;
-              const dashAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
-              enemy.dashState = 'windup';
-              enemy.dashTimer = isGrand ? 0.55 : 0.58;
-              enemy.dashDir = { x: Math.cos(dashAngle), y: Math.sin(dashAngle) };
-              enemy.dashSpeed = isGrand ? 540 : 480;
-              enemy.dashBouncesLeft = isGrand ? 1 : 0;
-            }
-            enemy.bossPatternIndex = (pattern + 1) % 4;
-            enemy.attackCooldown = isGrand ? 1.35 : 1.85;
-          }
-        }
-      }
+      stepBossBehavior(state, enemy, dx, dy, distToPlayer, wasAwake, clampedDt, rng);
     }
 
-    const isBossDashLocked =
-      enemy.isRoomBoss &&
-      (enemy.dashState === 'windup' || enemy.dashState === 'dashing' || enemy.dashState === 'recovering');
-
-    if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isBossDashLocked) {
-      let steerX = player.x;
-      let steerY = player.y;
-      if (!hasClearCorridorPath(enemy.x, enemy.y, player.x, player.y, enemy.radius, map)) {
-        if (!bfsDist) {
-          bfsDist = computeBfsDistances(map.width, map.height, map.tiles, ptx, pty);
-        }
-        const waypoint = findBfsSteerTarget(enemy, player, map, bfsDist);
-        steerX = waypoint.x;
-        steerY = waypoint.y;
-      }
-
-      const baseMoveSpeed =
-        enemy.kind === 'scout'
-          ? Math.min(SCOUT_MAX_ALERT_SPEED, Math.round(enemy.speed * SCOUT_ALERT_SPEED_MULT))
-          : enemy.speed;
-      const effectiveSpeed =
-        orbitItem && distToPlayer <= player.orbitRadius ? baseMoveSpeed * ORBIT_SHIELD_INNER_SLOW : baseMoveSpeed;
-
-      const sdx = steerX - enemy.x;
-      const sdy = steerY - enemy.y;
-      const steerDist = Math.hypot(sdx, sdy);
-      let moveX = steerDist > 1e-3 ? (sdx / steerDist) * effectiveSpeed : 0;
-      let moveY = steerDist > 1e-3 ? (sdy / steerDist) * effectiveSpeed : 0;
-
-      if (enemy.kind === 'tank' && !enemy.isRoomBoss) {
-        if (distToPlayer < 125) {
-          const rdx = enemy.x - player.x;
-          const rdy = enemy.y - player.y;
-          const rDist = Math.hypot(rdx, rdy);
-          moveX = rDist > 1e-3 ? (rdx / rDist) * effectiveSpeed : 0;
-          moveY = rDist > 1e-3 ? (rdy / rDist) * effectiveSpeed : 0;
-        } else if (distToPlayer <= 175 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)) {
-          moveX = 0;
-          moveY = 0;
-        }
-      } else if (enemy.kind === 'scout') {
-        if (distToPlayer < SCOUT_KEEP_DIST) {
-          if (!bfsDist) {
-            bfsDist = computeBfsDistances(map.width, map.height, map.tiles, ptx, pty);
-          }
-          const fleeTarget = findScoutFleeTarget(enemy, player, map, bfsDist);
-          const fdx = fleeTarget.x - enemy.x;
-          const fdy = fleeTarget.y - enemy.y;
-          const fDist = Math.hypot(fdx, fdy);
-          moveX = fDist > 1e-3 ? (fdx / fDist) * effectiveSpeed : 0;
-          moveY = fDist > 1e-3 ? (fdy / fDist) * effectiveSpeed : 0;
-        } else if (distToPlayer <= SCOUT_CHASE_DIST) {
-          // Strafe tangentially around the player to stay annoying just outside weapon range
-          const invDist = distToPlayer > 1e-3 ? 1 / distToPlayer : 0;
-          const nx = (enemy.x - player.x) * invDist;
-          const ny = (enemy.y - player.y) * invDist;
-          let dirSign = (enemy.wanderDir?.x ?? (enemy.id % 2 === 0 ? 1 : -1)) >= 0 ? 1 : -1;
-          let tx = -ny * dirSign;
-          let ty = nx * dirSign;
-          const probeTx = Math.floor((enemy.x + tx * (TILE_SIZE * 0.7)) / TILE_SIZE);
-          const probeTy = Math.floor((enemy.y + ty * (TILE_SIZE * 0.7)) / TILE_SIZE);
-          if (isWallTile(map, probeTx, probeTy)) {
-            dirSign = -dirSign;
-            tx = -ny * dirSign;
-            ty = nx * dirSign;
-          }
-          enemy.wanderDir = { x: dirSign, y: 0 };
-          const strafeSpeed = effectiveSpeed * 0.65;
-          moveX = tx * strafeSpeed;
-          moveY = ty * strafeSpeed;
-        }
-      }
-
-      for (let j = 0; j < state.enemies.length; j++) {
-        if (i === j) continue;
-        const other = state.enemies[j];
-        const sx = enemy.x - other.x;
-        const sy = enemy.y - other.y;
-        const sd = Math.hypot(sx, sy);
-        const minSep = enemy.radius + other.radius + 2;
-        if (sd > 1e-4 && sd < minSep) {
-          const push = ((minSep - sd) / minSep) * 120;
-          moveX += (sx / sd) * push;
-          moveY += (sy / sd) * push;
-        }
-      }
-
-      const resolved = resolveCircleGridCollision(
-        enemy.x + moveX * clampedDt,
-        enemy.y + moveY * clampedDt,
-        enemy.radius,
-        map,
-      );
-      enemy.x = resolved.x;
-      enemy.y = resolved.y;
-    }
+    stepEnemyMovement(state, enemy, i, orbitItem, distToPlayer, clampedDt, getBfsDist);
 
     // Contact damage to player
-    if (player.invulnTimer <= 0 && Math.hypot(player.x - enemy.x, player.y - enemy.y) <= player.radius + enemy.radius) {
-      const isDashingBoss = Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
-
-      if (!isDashingBoss) {
-        if (tryAegisParry(state, mods, enemy)) {
-          continue;
-        }
-        if (tryTacticalStepEvade(state, mods)) {
-          continue;
-        }
-      } else {
-        if (tryTacticalStepEvade(state, mods)) {
-          continue;
-        }
-      }
-
-      if (applyPlayerHitDamage(state, enemy.damage, 6, 0.18, '#f87171', 7)) {
-        return true;
-      }
-
-      // Boss dash bypasses parry damage negation, but def_aegis still triggers a counter-hit (trade)
-      if (isDashingBoss && mods.hasAegisParry && player.aegisCooldown <= 0) {
-        player.aegisCooldown = mods.aegisCooldown;
-        emitSound(state, 'parry');
-        damageEnemy(state, enemy, mods.aegisDamage, true);
-        state.visualFx.push({
-          kind: 'pulse',
-          x: player.x,
-          y: player.y,
-          radius: 70,
-          color: '#34d399',
-          life: 0.25,
-          maxLife: 0.25,
-        });
-        state.floatingTexts.push({
-          x: player.x,
-          y: player.y - 20,
-          text: 'PARRY!',
-          color: '#34d399',
-          life: 0.7,
-          maxLife: 0.7,
-        });
-      }
-
-      // Trigger reactive coil counter immediately on hit if equipped
-      const coil = player.equipment.find((e) => e.id === 'reactive_coil');
-      if (coil) {
-        const coilStats = getReactiveCoilStats(coil.level, EQUIPMENT_CATALOG.reactive_coil.baseRange, mods.rangeMult);
-        triggerChainLightning(
-          state,
-          player.x,
-          player.y,
-          Math.min(MAX_TARGET_RANGE, coilStats.range),
-          getEquipmentDamage(coil, 1),
-          coilStats.maxTargets,
-        );
-      }
+    if (handleEnemyContactWithPlayer(state, enemy, mods)) {
+      return true;
     }
   }
 
@@ -1253,6 +466,880 @@ export function stepEnemies(
   // 9d. Grand Boss wall-reflecting laser beams (telegraph windup -> active beam hit check)
   if (stepBossLasers(state, mods, clampedDt)) return true;
 
+  return false;
+}
+
+function handleEnemyDeath(
+  state: GameState,
+  enemy: EnemyState,
+  index: number,
+  mods: ComputedSkillModifiers,
+  rng: ReturnType<typeof createRng>,
+  deps: EnemiesStepDeps,
+): void {
+  const { player, map } = state;
+  state.stats.kills += 1;
+  const wasRoomBoss = Boolean(enemy.isRoomBoss);
+  const wasGrandBoss = Boolean(enemy.isGrandBoss);
+  const deathColor = wasGrandBoss
+    ? '#fbbf24'
+    : wasRoomBoss
+      ? '#f43f5e'
+      : enemy.kind === 'runner'
+        ? '#fde047'
+        : enemy.kind === 'tank'
+          ? '#c084fc'
+          : enemy.kind === 'shooter'
+            ? '#38bdf8'
+            : enemy.kind === 'scout'
+              ? '#fb923c'
+              : '#fb7185';
+  if (wasRoomBoss || wasGrandBoss) {
+    emitSound(state, 'boss_kill');
+    triggerShake(state, wasGrandBoss ? 10 : 7.5, wasGrandBoss ? 0.38 : 0.28);
+    spawnParticles(state, enemy.x, enemy.y, deathColor, wasGrandBoss ? 24 : 18, 60, 210, 3.6, 0.55);
+  } else {
+    emitSound(state, 'kill');
+    spawnParticles(state, enemy.x, enemy.y, deathColor, 8, 45, 145, 2.6, 0.34);
+  }
+
+  // Scout-spawned ambush runners yield no drops so alerts cannot be farmed for EXP (APP-MAP-07)
+  if (!enemy.isAmbush) {
+    const isPackExtra = Boolean(enemy.isPackFollower);
+    const dropRateScale = isPackExtra ? 0.4 : 1.0;
+    state.pickups.push({
+      id: state.nextEntityId++,
+      kind: 'exp',
+      x: enemy.x,
+      y: enemy.y,
+      value: wasGrandBoss ? 120 : wasRoomBoss ? 45 : isPackExtra ? 4 : 10,
+    });
+    if (wasRoomBoss || rng.next() < (0.22 + mods.lootBonusRate * 0.4) * dropRateScale) {
+      state.pickups.push({
+        id: state.nextEntityId++,
+        kind: 'heal',
+        x: enemy.x + 10,
+        y: enemy.y + 6,
+        value: wasGrandBoss ? 60 : wasRoomBoss ? 40 : 25,
+      });
+    }
+    if (wasRoomBoss) {
+      const eqId = rng.pick(ALL_EQUIPMENT_IDS);
+      let minEquippedLv = 1;
+      if (player.equipment.length > 0) {
+        minEquippedLv = Math.min(...player.equipment.map((eq) => eq.level));
+      }
+      const bonus = (wasGrandBoss ? 2 : 1) + (rng.next() < 0.35 ? 1 : 0);
+      const itemLevel = clampEquipmentLevel(minEquippedLv + bonus);
+      state.pickups.push({
+        id: state.nextEntityId++,
+        kind: 'equip',
+        x: enemy.x - 10,
+        y: enemy.y + 6,
+        value: 1,
+        equipmentId: eqId,
+        itemLevel,
+      });
+    } else {
+      // Low-probability enemy equipment drop (1.5% base + mob_loot bonus) scaled to player's lowest equipment level & drop quality (APP-GRW-07)
+      const equipDropChance = (0.015 + mods.equipDropBonus) * dropRateScale;
+      if (rng.next() < equipDropChance) {
+        const eqId = rng.pick(ALL_EQUIPMENT_IDS);
+        const itemLevel = deps.rollDropEquipmentLevel(player.equipment, () => rng.next(), mods.dropQualityTier);
+        state.pickups.push({
+          id: state.nextEntityId++,
+          kind: 'equip',
+          x: enemy.x - 10,
+          y: enemy.y + 6,
+          value: 1,
+          equipmentId: eqId,
+          itemLevel,
+        });
+      }
+    }
+  }
+  state.enemies.splice(index, 1);
+  if (wasRoomBoss && deps.getStairsLockCount(state) === 0) {
+    const stairsWorld = tileCenterWorld(map.stairsTile.tx, map.stairsTile.ty);
+    emitSound(state, 'stairs_unlock');
+    pushNotification(
+      state,
+      'info',
+      wasGrandBoss
+        ? `🏆 階層ボス撃破！階段から先（${state.floor + 1}F）へ進める！`
+        : '🔓 中ボス撃破！階段の封印が解けた！',
+      '#22d3ee',
+      3.2,
+    );
+    state.visualFx.push({
+      kind: 'pulse',
+      x: stairsWorld.x,
+      y: stairsWorld.y,
+      radius: 84,
+      color: '#22d3ee',
+      life: 0.65,
+      maxLife: 0.65,
+    });
+  }
+}
+
+function stepScoutBehavior(
+  state: GameState,
+  enemy: EnemyState,
+  etx: number,
+  ety: number,
+  ptx: number,
+  pty: number,
+  distToPlayer: number,
+  playerRoom: ReturnType<typeof findRoomAtTile>,
+  clampedDt: number,
+  rng: ReturnType<typeof createRng>,
+  alertSpawns: EnemyState[],
+): void {
+  const { player, map } = state;
+  if (enemy.awake) {
+    if ((enemy.alertCooldown ?? 0) <= 0 && distToPlayer <= SCOUT_SUMMON_MAX_PLAYER_DIST) {
+      const activeSummons =
+        state.enemies.filter((e) => e.isAmbush && e.summonerId === enemy.id).length +
+        alertSpawns.filter((e) => e.isAmbush && e.summonerId === enemy.id).length;
+      const remainingCap = SCOUT_SUMMON_CAP_PER_SCOUT - activeSummons;
+      if (remainingCap > 0) {
+        enemy.alertCooldown = SCOUT_ALERT_COOLDOWN;
+
+        // Spawn up to 2-3 fast awake runners nearby (130-320px away) that outpace player baseSpeed
+        const spawnCandidates: { tx: number; ty: number }[] = [];
+        const occupied = new Set<number>();
+        for (const existing of state.enemies) {
+          occupied.add(tileIndex(map, Math.floor(existing.x / TILE_SIZE), Math.floor(existing.y / TILE_SIZE)));
+        }
+        for (const spawned of alertSpawns) {
+          occupied.add(tileIndex(map, Math.floor(spawned.x / TILE_SIZE), Math.floor(spawned.y / TILE_SIZE)));
+        }
+        const minSy = Math.max(1, pty - 9);
+        const maxSy = Math.min(map.height - 2, pty + 9);
+        const minSx = Math.max(1, ptx - 9);
+        const maxSx = Math.min(map.width - 2, ptx + 9);
+        for (let ty = minSy; ty <= maxSy; ty++) {
+          for (let tx = minSx; tx <= maxSx; tx++) {
+            if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+            const c = tileCenterWorld(tx, ty);
+            const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
+            if (dPlayer >= 130 && dPlayer <= 320) {
+              spawnCandidates.push({ tx, ty });
+            }
+          }
+        }
+        if (spawnCandidates.length === 0) {
+          for (let ty = 1; ty < map.height - 1; ty++) {
+            for (let tx = 1; tx < map.width - 1; tx++) {
+              if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+              const c = tileCenterWorld(tx, ty);
+              const dPlayer = Math.hypot(c.x - player.x, c.y - player.y);
+              if (dPlayer >= 90 && dPlayer <= 380) {
+                spawnCandidates.push({ tx, ty });
+              }
+            }
+          }
+        }
+        const ambushCount = Math.min(spawnCandidates.length, remainingCap, state.floor >= 3 ? 3 : 2);
+        for (let s = 0; s < ambushCount; s++) {
+          const pickIdx = rng.int(0, spawnCandidates.length - 1);
+          const picked = spawnCandidates.splice(pickIdx, 1)[0];
+          const pos = tileCenterWorld(picked.tx, picked.ty);
+          const runner = createEnemyByKind(state.nextEntityId++, 'runner', pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
+          runner.speed = Math.max(228, Math.min(265, Math.round(224 + (state.floor - 1) * 4)));
+          runner.spawnDelay = 0.45;
+          runner.awake = true;
+          runner.isAmbush = true;
+          runner.summonerId = enemy.id;
+          alertSpawns.push(runner);
+          state.visualFx.push({
+            kind: 'pulse',
+            x: pos.x,
+            y: pos.y,
+            radius: 36,
+            color: '#f59e0b',
+            life: 0.35,
+            maxLife: 0.35,
+          });
+        }
+
+        if (ambushCount > 0) {
+          const inCorridorEncounter = playerRoom === null;
+          state.visualFx.push({
+            kind: 'pulse',
+            x: enemy.x,
+            y: enemy.y,
+            radius: 130,
+            color: '#f97316',
+            life: 0.45,
+            maxLife: 0.45,
+          });
+          state.floatingTexts.push({
+            x: enemy.x,
+            y: enemy.y - enemy.radius - 10,
+            text: inCorridorEncounter ? 'ENCOUNTER!!' : 'ALERT!!',
+            color: '#fb923c',
+            life: 1.0,
+            maxLife: 1.0,
+          });
+          emitSound(state, 'alert');
+          pushNotification(
+            state,
+            'alert',
+            inCorridorEncounter
+              ? '⚠️ 通路でスカウトと遭遇！高速の敵が迫る！'
+              : '⚠️ スカウトに発見された！高速の敵が迫る！',
+            '#f97316',
+            2.8,
+          );
+        }
+      }
+    }
+  } else if (enemy.speed > 0) {
+    enemy.wanderTimer = (enemy.wanderTimer ?? 0) - clampedDt;
+    const arrived = enemy.wanderTarget
+      ? Math.hypot(enemy.wanderTarget.x - enemy.x, enemy.wanderTarget.y - enemy.y) <= 8
+      : true;
+    if (!enemy.wanderTarget || arrived || (enemy.wanderTimer ?? 0) <= 0) {
+      const dirs: readonly [number, number][] = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ];
+      const prevDx = enemy.wanderDir?.x ?? 0;
+      const prevDy = enemy.wanderDir?.y ?? 0;
+      const validDirs: { dx: number; dy: number; tx: number; ty: number }[] = [];
+      for (const [ox, oy] of dirs) {
+        const ntx = etx + ox;
+        const nty = ety + oy;
+        if (ntx <= 0 || nty <= 0 || ntx >= map.width - 1 || nty >= map.height - 1) continue;
+        if (!isWallTile(map, ntx, nty)) {
+          validDirs.push({ dx: ox, dy: oy, tx: ntx, ty: nty });
+        }
+      }
+      if (validDirs.length > 0) {
+        const forward = validDirs.find((d) => d.dx === prevDx && d.dy === prevDy);
+        const nonReverse = validDirs.filter((d) => !(d.dx === -prevDx && d.dy === -prevDy));
+        const pool = nonReverse.length > 0 ? nonReverse : validDirs;
+        const chosen = forward && rng.next() < 0.72 ? forward : pool[rng.int(0, pool.length - 1)];
+        enemy.wanderTarget = tileCenterWorld(chosen.tx, chosen.ty);
+        enemy.wanderDir = { x: chosen.dx, y: chosen.dy };
+      } else {
+        enemy.wanderTarget = null;
+      }
+      enemy.wanderTimer = 1.1;
+    }
+    if (enemy.wanderTarget) {
+      const wdx = enemy.wanderTarget.x - enemy.x;
+      const wdy = enemy.wanderTarget.y - enemy.y;
+      const wDist = Math.hypot(wdx, wdy);
+      if (wDist > 1e-3) {
+        const wanderSpeed = enemy.speed * 0.78;
+        const resolved = resolveCircleGridCollision(
+          enemy.x + (wdx / wDist) * wanderSpeed * clampedDt,
+          enemy.y + (wdy / wDist) * wanderSpeed * clampedDt,
+          enemy.radius,
+          map,
+        );
+        enemy.x = resolved.x;
+        enemy.y = resolved.y;
+      }
+    }
+  }
+}
+
+function stepNormalEnemyAttack(
+  state: GameState,
+  enemy: EnemyState,
+  dx: number,
+  dy: number,
+  distToPlayer: number,
+  wasAwake: boolean,
+  clampedDt: number,
+): void {
+  const { player, map } = state;
+  const inSight =
+    distToPlayer > 1e-3 && distToPlayer <= 190 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+  if (!inSight) {
+    enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.55);
+  } else if (wasAwake) {
+    if ((enemy.attackCooldown ?? 0) > 0) {
+      enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+    }
+    if ((enemy.attackCooldown ?? 0) <= 0) {
+      const shotStats = getNormalEnemyShotStats(player.level);
+      const baseAngle = Math.atan2(dy, dx);
+      const dmgVal = Math.max(1, Math.round(enemy.damage * shotStats.damageMult));
+      for (let s = 0; s < shotStats.shotCount; s++) {
+        const offset = (s - (shotStats.shotCount - 1) / 2) * 0.16;
+        const a = baseAngle + offset;
+        state.enemyProjectiles.push({
+          id: state.nextEntityId++,
+          x: enemy.x,
+          y: enemy.y,
+          vx: Math.cos(a) * shotStats.speed,
+          vy: Math.sin(a) * shotStats.speed,
+          radius: 4.5,
+          damage: dmgVal,
+          life: 1.3,
+          color: '#fb7185',
+        });
+      }
+      enemy.attackCooldown = shotStats.cooldown;
+    }
+  }
+}
+
+function stepTankEnemyAttack(
+  state: GameState,
+  enemy: EnemyState,
+  distToPlayer: number,
+  playerRoom: ReturnType<typeof findRoomAtTile>,
+  wasAwake: boolean,
+  clampedDt: number,
+): void {
+  const { player, map } = state;
+  const enemyTx = Math.floor(enemy.x / TILE_SIZE);
+  const enemyTy = Math.floor(enemy.y / TILE_SIZE);
+  const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
+  const canMortarFire =
+    distToPlayer > 1e-3 &&
+    ((sameRoom && distToPlayer <= 380) ||
+      (distToPlayer <= 280 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)));
+  if (!canMortarFire) {
+    enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
+  } else if (wasAwake) {
+    if ((enemy.attackCooldown ?? 0) > 0) {
+      enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+    }
+    if ((enemy.attackCooldown ?? 0) <= 0) {
+      const mortarDuration = 0.85;
+      const leadTime = 0.55;
+      const maxLeadDist = 115;
+      let leadDx = (player.velX ?? 0) * leadTime;
+      let leadDy = (player.velY ?? 0) * leadTime;
+      const leadLen = Math.hypot(leadDx, leadDy);
+      if (leadLen > maxLeadDist) {
+        leadDx = (leadDx / leadLen) * maxLeadDist;
+        leadDy = (leadDy / leadLen) * maxLeadDist;
+      }
+      let tx = player.x;
+      let ty = player.y;
+      const steps = 5;
+      for (let s = 0; s < steps; s++) {
+        const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
+        tx = stepped.x;
+        ty = stepped.y;
+      }
+
+      state.mortarZones.push({
+        id: state.nextEntityId++,
+        startX: enemy.x,
+        startY: enemy.y,
+        targetX: tx,
+        targetY: ty,
+        radius: 52,
+        damage: Math.round(enemy.damage * 1.45),
+        elapsed: 0,
+        duration: mortarDuration,
+      });
+      enemy.attackCooldown = 2.4;
+    }
+  }
+}
+
+function stepShooterEnemyAttack(
+  state: GameState,
+  enemy: EnemyState,
+  distToPlayer: number,
+  playerRoom: ReturnType<typeof findRoomAtTile>,
+  wasAwake: boolean,
+  clampedDt: number,
+  rng: ReturnType<typeof createRng>,
+): void {
+  const enemyTx = Math.floor(enemy.x / TILE_SIZE);
+  const enemyTy = Math.floor(enemy.y / TILE_SIZE);
+  const sameRoom = playerRoom !== null && isTileInRoom(playerRoom, enemyTx, enemyTy);
+  const canShooterFire = distToPlayer > 1e-3 && ((sameRoom && distToPlayer <= 420) || distToPlayer <= 380);
+  if (!canShooterFire) {
+    enemy.attackCooldown = Math.max(enemy.attackCooldown ?? 0, 0.75);
+  } else if (wasAwake) {
+    if ((enemy.attackCooldown ?? 0) > 0) {
+      enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+    }
+    if ((enemy.attackCooldown ?? 0) <= 0) {
+      const projSpeed = 152 + Math.min(55, (state.floor - 1) * 7);
+      const dirCount = state.floor >= 11 ? 8 : state.floor >= 6 ? 6 : 4;
+      const angleStep = Math.PI / (dirCount * 2);
+      const shotIdx = enemy.bossPatternIndex ?? 0;
+      const baseOffset = shotIdx * angleStep;
+      const pierceSlotA = rng.int(0, dirCount - 1);
+      const pierceSlotB = dirCount >= 6 ? (pierceSlotA + rng.int(1, dirCount - 1)) % dirCount : -1;
+      for (let k = 0; k < dirCount; k++) {
+        const angle = baseOffset + (k * Math.PI * 2) / dirCount;
+        const isPiercing = k === pierceSlotA || k === pierceSlotB;
+        state.enemyProjectiles.push({
+          id: state.nextEntityId++,
+          x: enemy.x,
+          y: enemy.y,
+          vx: Math.cos(angle) * projSpeed,
+          vy: Math.sin(angle) * projSpeed,
+          radius: isPiercing ? 5.5 : 5,
+          damage: enemy.damage,
+          life: 1.85,
+          pierceDefense: isPiercing,
+          color: isPiercing ? '#e879f9' : undefined,
+        });
+      }
+      enemy.bossPatternIndex = (shotIdx + 1) % 16;
+      enemy.attackCooldown = Math.max(0.36, 0.48 - (state.floor - 1) * 0.015);
+    }
+  }
+}
+
+function stepBossBehavior(
+  state: GameState,
+  enemy: EnemyState,
+  dx: number,
+  dy: number,
+  distToPlayer: number,
+  wasAwake: boolean,
+  clampedDt: number,
+  rng: ReturnType<typeof createRng>,
+): void {
+  const { player, map } = state;
+  const isGrand = Boolean(enemy.isGrandBoss);
+  if (wasAwake && enemy.dashState !== 'dashing' && enemy.dashState !== 'windup' && enemy.dashState !== 'recovering') {
+    enemy.mortarCooldown = Math.max(0, (enemy.mortarCooldown ?? 0.6) - clampedDt);
+    const canBossMortar = distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 780 : 400);
+    if (canBossMortar && (enemy.mortarCooldown ?? 0) <= 0) {
+      const mortarDuration = 0.85;
+      const burstCount = isGrand ? 3 : 1;
+      const mortarRadius = isGrand ? 68 : 52;
+      const maxLeadDist = isGrand ? 155 : 115;
+      for (let b = 0; b < burstCount; b++) {
+        const leadTime = 0.55 + b * 0.28;
+        let leadDx = (player.velX ?? 0) * leadTime;
+        let leadDy = (player.velY ?? 0) * leadTime;
+        const leadLen = Math.hypot(leadDx, leadDy);
+        if (leadLen > maxLeadDist) {
+          leadDx = (leadDx / leadLen) * maxLeadDist;
+          leadDy = (leadDy / leadLen) * maxLeadDist;
+        }
+        let tx = player.x;
+        let ty = player.y;
+        const steps = 5;
+        for (let s = 0; s < steps; s++) {
+          const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
+          tx = stepped.x;
+          ty = stepped.y;
+        }
+        state.mortarZones.push({
+          id: state.nextEntityId++,
+          startX: enemy.x,
+          startY: enemy.y,
+          targetX: tx,
+          targetY: ty,
+          radius: mortarRadius,
+          damage: Math.round(enemy.damage * 1.2),
+          elapsed: -b * 0.24,
+          duration: mortarDuration,
+        });
+      }
+      enemy.mortarCooldown = isGrand ? 2.6 : 2.6;
+    }
+  }
+
+  if (enemy.dashState === 'windup') {
+    enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+    if ((enemy.dashTimer ?? 0) <= 0) {
+      enemy.dashState = 'dashing';
+      enemy.dashTimer = isGrand ? 0.72 : 0.62;
+      emitSound(state, 'boss_dash');
+    }
+  } else if (enemy.dashState === 'dashing' && enemy.dashDir) {
+    const dashSpd = enemy.dashSpeed ?? (isGrand ? 540 : 480);
+    const stepDist = dashSpd * clampedDt;
+    const resolvedDash = resolveCircleGridCollision(
+      enemy.x + enemy.dashDir.x * stepDist,
+      enemy.y + enemy.dashDir.y * stepDist,
+      enemy.radius,
+      map,
+    );
+    const moved = Math.hypot(resolvedDash.x - enemy.x, resolvedDash.y - enemy.y);
+    enemy.x = resolvedDash.x;
+    enemy.y = resolvedDash.y;
+    spawnParticles(state, enemy.x, enemy.y, isGrand ? '#fbbf24' : '#f43f5e', 1, 10, 40, 2.6, 0.22);
+    enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+
+    const hitWall = stepDist > 1e-4 && moved < stepDist * 0.65;
+    let endedDash = (enemy.dashTimer ?? 0) <= 0;
+    if (hitWall) {
+      if ((enemy.dashBouncesLeft ?? 0) > 0) {
+        const rx = resolveCircleGridCollision(enemy.x + enemy.dashDir.x * stepDist, enemy.y, enemy.radius, map);
+        const ry = resolveCircleGridCollision(enemy.x, enemy.y + enemy.dashDir.y * stepDist, enemy.radius, map);
+        const blockedX =
+          Math.abs(enemy.dashDir.x) > 1e-3 && Math.abs(rx.x - enemy.x) < Math.abs(enemy.dashDir.x) * stepDist * 0.65;
+        const blockedY =
+          Math.abs(enemy.dashDir.y) > 1e-3 && Math.abs(ry.y - enemy.y) < Math.abs(enemy.dashDir.y) * stepDist * 0.65;
+        if (blockedX) enemy.dashDir.x = -enemy.dashDir.x;
+        if (blockedY) enemy.dashDir.y = -enemy.dashDir.y;
+        if (!blockedX && !blockedY) {
+          enemy.dashDir.x = -enemy.dashDir.x;
+          enemy.dashDir.y = -enemy.dashDir.y;
+        }
+        enemy.dashBouncesLeft = (enemy.dashBouncesLeft ?? 1) - 1;
+        triggerShake(state, 3.5, 0.12);
+        spawnParticles(state, enemy.x, enemy.y, '#fbbf24', 6, 40, 120, 2.4, 0.25);
+      } else {
+        endedDash = true;
+      }
+    }
+
+    if (endedDash) {
+      enemy.dashState = 'recovering';
+      enemy.dashTimer = isGrand ? 1.05 : 0.95;
+      const burstCount = isGrand ? 8 : 4;
+      const burstSpd = isGrand ? 195 : 170;
+      const baseBurstAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+      for (let k = 0; k < burstCount; k++) {
+        const ba = baseBurstAngle + (k * Math.PI * 2) / burstCount;
+        state.enemyProjectiles.push({
+          id: state.nextEntityId++,
+          x: enemy.x,
+          y: enemy.y,
+          vx: Math.cos(ba) * burstSpd,
+          vy: Math.sin(ba) * burstSpd,
+          radius: 5.5,
+          damage: Math.round(enemy.damage * 0.78),
+          life: 1.7,
+          pierceDefense: false,
+          color: '#f97316',
+        });
+      }
+    }
+  } else if (enemy.dashState === 'recovering') {
+    enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+    if ((enemy.dashTimer ?? 0) <= 0) {
+      enemy.dashState = 'none';
+    }
+  } else {
+    const inSight =
+      distToPlayer > 1e-3 &&
+      distToPlayer <= (isGrand ? 780 : 300) &&
+      hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+    if (inSight && wasAwake) {
+      if ((enemy.attackCooldown ?? 0) > 0) {
+        enemy.attackCooldown = Math.max(0, (enemy.attackCooldown ?? 0) - clampedDt);
+      }
+      if ((enemy.attackCooldown ?? 0) <= 0) {
+        const pattern = enemy.bossPatternIndex ?? 0;
+        const aimAngle = Math.atan2(dy, dx);
+        const dmgVal = Math.round(enemy.damage * 0.8);
+
+        if (pattern === 0) {
+          const count = isGrand ? 12 : 8;
+          const spd = isGrand ? 195 : 172;
+          const pierceCount = isGrand ? 3 : 2;
+          const pierceStart = rng.int(0, count - 1);
+          const pierceStep = Math.floor(count / pierceCount);
+          for (let k = 0; k < count; k++) {
+            const a = aimAngle + (k * Math.PI * 2) / count;
+            const isPiercing =
+              (k - pierceStart + count) % pierceStep === 0 &&
+              Math.floor(((k - pierceStart + count) % count) / pierceStep) < pierceCount;
+            state.enemyProjectiles.push({
+              id: state.nextEntityId++,
+              x: enemy.x,
+              y: enemy.y,
+              vx: Math.cos(a) * spd,
+              vy: Math.sin(a) * spd,
+              radius: isPiercing ? 6.5 : 6,
+              damage: dmgVal,
+              life: 2.1,
+              pierceDefense: isPiercing,
+              color: isPiercing ? '#e879f9' : isGrand ? '#f43f5e' : '#fb7185',
+            });
+          }
+        } else if (pattern === 1) {
+          const count = isGrand ? 6 : 4;
+          const spread = isGrand ? 1.85 : 1.45;
+          const baseSpd = isGrand ? 168 : 148;
+          for (let k = 0; k < count; k++) {
+            const t = count > 1 ? k / (count - 1) - 0.5 : 0; // -0.5 .. +0.5
+            const edgeFactor = Math.abs(t) * 2; // 0 (center) .. 1 (outer)
+            const a = aimAngle + t * spread;
+            const spd = baseSpd - edgeFactor * 36;
+            const homingRate = (isGrand ? 1.55 : 1.3) + edgeFactor * (isGrand ? 1.05 : 0.85);
+            state.enemyProjectiles.push({
+              id: state.nextEntityId++,
+              x: enemy.x,
+              y: enemy.y,
+              vx: Math.cos(a) * spd,
+              vy: Math.sin(a) * spd,
+              radius: 6.5,
+              damage: dmgVal,
+              life: 2.6,
+              homingRate,
+              color: '#c084fc',
+            });
+          }
+        } else if (pattern === 2) {
+          if (isGrand) {
+            const leadPx = player.x + (player.velX ?? 0) * 0.45;
+            const leadPy = player.y + (player.velY ?? 0) * 0.45;
+            const laserAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
+            let ldx = Math.cos(laserAngle);
+            let ldy = Math.sin(laserAngle);
+            let lx = enemy.x;
+            let ly = enemy.y;
+            const points: Vec2[] = [{ x: lx, y: ly }];
+            const stepSize = 6;
+            let bounces = 0;
+            const maxBounces = 2;
+            let traveled = 0;
+            const maxLaserDist = 1800;
+            while (traveled < maxLaserDist) {
+              const nx = lx + ldx * stepSize;
+              const ny = ly + ldy * stepSize;
+              if (isWallAtWorld(map, nx, ny)) {
+                points.push({ x: lx, y: ly });
+                if (bounces >= maxBounces) break;
+                const hitX = isWallAtWorld(map, nx, ly);
+                const hitY = isWallAtWorld(map, lx, ny);
+                if (hitX) ldx = -ldx;
+                if (hitY) ldy = -ldy;
+                if (!hitX && !hitY) {
+                  ldx = -ldx;
+                  ldy = -ldy;
+                }
+                bounces++;
+              } else {
+                lx = nx;
+                ly = ny;
+              }
+              traveled += stepSize;
+            }
+            if (
+              points.length === 1 ||
+              Math.hypot(lx - points[points.length - 1].x, ly - points[points.length - 1].y) > 4
+            ) {
+              points.push({ x: lx, y: ly });
+            }
+            if (!state.bossLasers) state.bossLasers = [];
+            state.bossLasers.push({
+              id: state.nextEntityId++,
+              points,
+              width: 22,
+              damage: Math.round(enemy.damage * 1.15),
+              elapsed: 0,
+              windup: 0.72,
+              duration: 1.12,
+              hitPlayer: false,
+            });
+          } else {
+            const count = 4;
+            const spd = 168;
+            const pSlotA = rng.int(0, count - 1);
+            for (let k = 0; k < count; k++) {
+              const a = aimAngle + (k - (count - 1) / 2) * 0.34;
+              const isPiercing = k === pSlotA;
+              state.enemyProjectiles.push({
+                id: state.nextEntityId++,
+                x: enemy.x,
+                y: enemy.y,
+                vx: Math.cos(a) * spd,
+                vy: Math.sin(a) * spd,
+                radius: isPiercing ? 6.5 : 6,
+                damage: dmgVal,
+                life: 2.8,
+                bouncesLeft: 1,
+                pierceDefense: isPiercing,
+                color: isPiercing ? '#e879f9' : '#fbbf24',
+              });
+            }
+          }
+        } else {
+          const leadPx = player.x + (player.velX ?? 0) * 0.35;
+          const leadPy = player.y + (player.velY ?? 0) * 0.35;
+          const dashAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
+          enemy.dashState = 'windup';
+          enemy.dashTimer = isGrand ? 0.55 : 0.58;
+          enemy.dashDir = { x: Math.cos(dashAngle), y: Math.sin(dashAngle) };
+          enemy.dashSpeed = isGrand ? 540 : 480;
+          enemy.dashBouncesLeft = isGrand ? 1 : 0;
+        }
+        enemy.bossPatternIndex = (pattern + 1) % 4;
+        enemy.attackCooldown = isGrand ? 1.35 : 1.85;
+      }
+    }
+  }
+}
+
+function stepEnemyMovement(
+  state: GameState,
+  enemy: EnemyState,
+  enemyIndex: number,
+  orbitItem: EquippedItem | undefined,
+  distToPlayer: number,
+  clampedDt: number,
+  getBfsDist: () => Int32Array,
+): void {
+  const { player, map } = state;
+  const isBossDashLocked =
+    enemy.isRoomBoss &&
+    (enemy.dashState === 'windup' || enemy.dashState === 'dashing' || enemy.dashState === 'recovering');
+
+  if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isBossDashLocked) {
+    let steerX = player.x;
+    let steerY = player.y;
+    if (!hasClearCorridorPath(enemy.x, enemy.y, player.x, player.y, enemy.radius, map)) {
+      const waypoint = findBfsSteerTarget(enemy, player, map, getBfsDist());
+      steerX = waypoint.x;
+      steerY = waypoint.y;
+    }
+
+    const baseMoveSpeed =
+      enemy.kind === 'scout'
+        ? Math.min(SCOUT_MAX_ALERT_SPEED, Math.round(enemy.speed * SCOUT_ALERT_SPEED_MULT))
+        : enemy.speed;
+    const effectiveSpeed =
+      orbitItem && distToPlayer <= player.orbitRadius ? baseMoveSpeed * ORBIT_SHIELD_INNER_SLOW : baseMoveSpeed;
+
+    const sdx = steerX - enemy.x;
+    const sdy = steerY - enemy.y;
+    const steerDist = Math.hypot(sdx, sdy);
+    let moveX = steerDist > 1e-3 ? (sdx / steerDist) * effectiveSpeed : 0;
+    let moveY = steerDist > 1e-3 ? (sdy / steerDist) * effectiveSpeed : 0;
+
+    if (enemy.kind === 'tank' && !enemy.isRoomBoss) {
+      if (distToPlayer < 125) {
+        const rdx = enemy.x - player.x;
+        const rdy = enemy.y - player.y;
+        const rDist = Math.hypot(rdx, rdy);
+        moveX = rDist > 1e-3 ? (rdx / rDist) * effectiveSpeed : 0;
+        moveY = rDist > 1e-3 ? (rdy / rDist) * effectiveSpeed : 0;
+      } else if (distToPlayer <= 175 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map)) {
+        moveX = 0;
+        moveY = 0;
+      }
+    } else if (enemy.kind === 'scout') {
+      if (distToPlayer < SCOUT_KEEP_DIST) {
+        const fleeTarget = findScoutFleeTarget(enemy, player, map, getBfsDist());
+        const fdx = fleeTarget.x - enemy.x;
+        const fdy = fleeTarget.y - enemy.y;
+        const fDist = Math.hypot(fdx, fdy);
+        moveX = fDist > 1e-3 ? (fdx / fDist) * effectiveSpeed : 0;
+        moveY = fDist > 1e-3 ? (fdy / fDist) * effectiveSpeed : 0;
+      } else if (distToPlayer <= SCOUT_CHASE_DIST) {
+        // Strafe tangentially around the player to stay annoying just outside weapon range
+        const invDist = distToPlayer > 1e-3 ? 1 / distToPlayer : 0;
+        const nx = (enemy.x - player.x) * invDist;
+        const ny = (enemy.y - player.y) * invDist;
+        let dirSign = (enemy.wanderDir?.x ?? (enemy.id % 2 === 0 ? 1 : -1)) >= 0 ? 1 : -1;
+        let tx = -ny * dirSign;
+        let ty = nx * dirSign;
+        const probeTx = Math.floor((enemy.x + tx * (TILE_SIZE * 0.7)) / TILE_SIZE);
+        const probeTy = Math.floor((enemy.y + ty * (TILE_SIZE * 0.7)) / TILE_SIZE);
+        if (isWallTile(map, probeTx, probeTy)) {
+          dirSign = -dirSign;
+          tx = -ny * dirSign;
+          ty = nx * dirSign;
+        }
+        enemy.wanderDir = { x: dirSign, y: 0 };
+        const strafeSpeed = effectiveSpeed * 0.65;
+        moveX = tx * strafeSpeed;
+        moveY = ty * strafeSpeed;
+      }
+    }
+
+    for (let j = 0; j < state.enemies.length; j++) {
+      if (enemyIndex === j) continue;
+      const other = state.enemies[j];
+      const sx = enemy.x - other.x;
+      const sy = enemy.y - other.y;
+      const sd = Math.hypot(sx, sy);
+      const minSep = enemy.radius + other.radius + 2;
+      if (sd > 1e-4 && sd < minSep) {
+        const push = ((minSep - sd) / minSep) * 120;
+        moveX += (sx / sd) * push;
+        moveY += (sy / sd) * push;
+      }
+    }
+
+    const resolved = resolveCircleGridCollision(
+      enemy.x + moveX * clampedDt,
+      enemy.y + moveY * clampedDt,
+      enemy.radius,
+      map,
+    );
+    enemy.x = resolved.x;
+    enemy.y = resolved.y;
+  }
+}
+
+function handleEnemyContactWithPlayer(state: GameState, enemy: EnemyState, mods: ComputedSkillModifiers): boolean {
+  const { player } = state;
+  if (player.invulnTimer <= 0 && Math.hypot(player.x - enemy.x, player.y - enemy.y) <= player.radius + enemy.radius) {
+    const isDashingBoss = Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
+
+    if (!isDashingBoss) {
+      if (tryAegisParry(state, mods, enemy)) {
+        return false;
+      }
+      if (tryTacticalStepEvade(state, mods)) {
+        return false;
+      }
+    } else {
+      if (tryTacticalStepEvade(state, mods)) {
+        return false;
+      }
+    }
+
+    if (applyPlayerHitDamage(state, enemy.damage, 6, 0.18, '#f87171', 7)) {
+      return true;
+    }
+
+    // Boss dash bypasses parry damage negation, but def_aegis still triggers a counter-hit (trade)
+    if (isDashingBoss && mods.hasAegisParry && player.aegisCooldown <= 0) {
+      player.aegisCooldown = mods.aegisCooldown;
+      emitSound(state, 'parry');
+      damageEnemy(state, enemy, mods.aegisDamage, true);
+      state.visualFx.push({
+        kind: 'pulse',
+        x: player.x,
+        y: player.y,
+        radius: 70,
+        color: '#34d399',
+        life: 0.25,
+        maxLife: 0.25,
+      });
+      state.floatingTexts.push({
+        x: player.x,
+        y: player.y - 20,
+        text: 'PARRY!',
+        color: '#34d399',
+        life: 0.7,
+        maxLife: 0.7,
+      });
+    }
+
+    // Trigger reactive coil counter immediately on hit if equipped
+    const coil = player.equipment.find((e) => e.id === 'reactive_coil');
+    if (coil) {
+      const coilStats = getReactiveCoilStats(coil.level, EQUIPMENT_CATALOG.reactive_coil.baseRange, mods.rangeMult);
+      triggerChainLightning(
+        state,
+        player.x,
+        player.y,
+        Math.min(MAX_TARGET_RANGE, coilStats.range),
+        getEquipmentDamage(coil, 1),
+        coilStats.maxTargets,
+      );
+    }
+  }
   return false;
 }
 
