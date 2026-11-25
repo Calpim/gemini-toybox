@@ -658,7 +658,7 @@ export function renderGame(
   nowSec: number,
   insets: HudSafeInsets = {},
 ): void {
-  const { map, player, explored } = state;
+  const { player } = state;
   const mods = computeSkillModifiers(player.skillLevels);
   const stairsLockCount = getStairsLockCount(state);
   const topSafeY = computeTopSafeY(width, insets.hudBottom);
@@ -680,6 +680,78 @@ export function renderGame(
   ctx.save();
   ctx.scale(zoom, zoom);
   ctx.translate(-camX, -camY);
+
+  // 1-3. Visible tiles, chests, and pickups
+  renderMapTilesAndInteractables({ ctx, state, camX, camY, viewW, viewH, stairsLockCount, nowSec });
+
+  // 5. Intercept range rings, Orbit Bits & Seeker Drones
+  renderPlayerSupportGear(ctx, state, mods);
+
+  // 5.5. Tank parabolic mortar landing telegraphs & airborne shells
+  renderMortarZones(ctx, state);
+
+  // 5.6. Grand Boss wall-reflecting laser beams (telegraph -> additive-blended high-energy beam)
+  renderBossLasers(ctx, state);
+
+  // 6 & 6.5. Visual FX and additive particles
+  renderVisualFxAndParticles(ctx, state);
+
+  // 7. Enemies (rendered when inside player's vision, or glowing ambush runners summoned by scout)
+  renderEnemies(ctx, state, nowSec);
+
+  // 8. Projectiles (additive bloom for beams and energy shots)
+  renderProjectiles(ctx, state, nowSec);
+
+  // 9. Player & Aegis ready aura
+  renderPlayerAndAura(ctx, state, mods, nowSec);
+
+  // 10. Floating damage / pickup texts
+  renderFloatingTexts(ctx, state);
+
+  ctx.restore();
+
+  // 10.5. Fog of War overlay (corridor circular light vs lit room)
+  renderFogOverlay(ctx, width, height, zoom, camX, camY, state);
+
+  // 11. Legacy in-canvas Mini-map (skipped when HUD renders dedicated minimap canvas)
+  if (!insets.hideCanvasMinimap) {
+    renderMinimap(ctx, width, state, topSafeY);
+  }
+
+  // 12. Virtual joystick indicator (if active)
+  renderVirtualStick(ctx, stick);
+
+  // 13. Legacy in-canvas Toast Notifications (skipped when HUD renders DOM notifications)
+  if (!insets.hideCanvasNotifications) {
+    renderNotifications(ctx, width, height, state, insets.hintTop);
+  }
+
+  // 14. Sleek sci-fi cut-corner Floor Entry Banner
+  renderFloorBanner(ctx, width, height, state, topSafeY);
+}
+
+interface RenderMapTilesParams {
+  ctx: CanvasRenderingContext2D;
+  state: GameState;
+  camX: number;
+  camY: number;
+  viewW: number;
+  viewH: number;
+  stairsLockCount: number;
+  nowSec: number;
+}
+
+function renderMapTilesAndInteractables({
+  ctx,
+  state,
+  camX,
+  camY,
+  viewW,
+  viewH,
+  stairsLockCount,
+  nowSec,
+}: RenderMapTilesParams): void {
+  const { map, explored } = state;
 
   // 1. Visible tile culling & explored dungeon floor/walls
   const minTx = Math.max(0, Math.floor(camX / TILE_SIZE) - 1);
@@ -844,6 +916,14 @@ export function renderGame(
       ctx.fill();
     }
   }
+}
+
+function renderPlayerSupportGear(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+  mods: ReturnType<typeof computeSkillModifiers>,
+): void {
+  const { player } = state;
 
   // 5. Intercept range rings & Orbit Bits
   const droneEquip = player.equipment.find((e) => e.id === 'seeker_drone');
@@ -918,8 +998,9 @@ export function renderGame(
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }
+}
 
-  // 5.5. Tank parabolic mortar landing telegraphs & airborne shells
+function renderMortarZones(ctx: CanvasRenderingContext2D, state: GameState): void {
   for (const zone of state.mortarZones) {
     if (zone.elapsed < 0) continue;
     const progress = Math.max(0, Math.min(1, zone.elapsed / Math.max(0.01, zone.duration)));
@@ -969,8 +1050,9 @@ export function renderGame(
     ctx.stroke();
     ctx.restore();
   }
+}
 
-  // 5.6. Grand Boss wall-reflecting laser beams (telegraph -> additive-blended high-energy beam)
+function renderBossLasers(ctx: CanvasRenderingContext2D, state: GameState): void {
   for (const laser of state.bossLasers ?? []) {
     if (laser.points.length < 2) continue;
     ctx.save();
@@ -1017,7 +1099,9 @@ export function renderGame(
     }
     ctx.restore();
   }
+}
 
+function renderVisualFxAndParticles(ctx: CanvasRenderingContext2D, state: GameState): void {
   // 6. Visual FX (Additive-blended Thick crescent Slash / Lightning / Pulse)
   for (const fx of state.visualFx) {
     const alpha = Math.max(0, fx.life / fx.maxLife);
@@ -1109,16 +1193,20 @@ export function renderGame(
     }
     ctx.restore();
   }
+}
 
-  // 7. Enemies (rendered when inside player's vision, or glowing ambush runners summoned by scout)
+function renderEnemies(ctx: CanvasRenderingContext2D, state: GameState, nowSec: number): void {
+  const { map, player } = state;
   for (const enemy of state.enemies) {
     if (!enemy.isAmbush && !isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y)) {
       continue;
     }
     drawEnemyBody(ctx, enemy, nowSec);
   }
+}
 
-  // 8. Projectiles (additive bloom for beams and energy shots)
+function renderProjectiles(ctx: CanvasRenderingContext2D, state: GameState, nowSec: number): void {
+  const { map, player } = state;
   for (const proj of state.projectiles) {
     if (proj.kind === 'disc') {
       const glow = 0.65 + 0.35 * Math.sin(nowSec * 14);
@@ -1373,8 +1461,15 @@ export function renderGame(
     ctx.lineWidth = ep.pierceDefense ? 1.8 : 1.3;
     ctx.stroke();
   }
+}
 
-  // 9. Player & Aegis ready aura
+function renderPlayerAndAura(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+  mods: ReturnType<typeof computeSkillModifiers>,
+  nowSec: number,
+): void {
+  const { player } = state;
   if (mods.hasAegisParry && player.aegisCooldown <= 0) {
     drawGlowSprite(ctx, 'emerald', player.x, player.y, player.radius * 2.4, 0.32, true);
     ctx.strokeStyle = 'rgba(52, 211, 153, 0.72)';
@@ -1388,8 +1483,9 @@ export function renderGame(
   if (!blink) {
     drawPlayerCore(ctx, player.x, player.y, player.radius, player.facingAngle, nowSec);
   }
+}
 
-  // 10. Floating damage / pickup texts
+function renderFloatingTexts(ctx: CanvasRenderingContext2D, state: GameState): void {
   ctx.font = 'bold 12px monospace';
   ctx.textAlign = 'center';
   for (const ft of state.floatingTexts) {
@@ -1398,95 +1494,87 @@ export function renderGame(
     ctx.fillText(ft.text, ft.x, ft.y);
   }
   ctx.globalAlpha = 1;
+}
 
+function renderVirtualStick(ctx: CanvasRenderingContext2D, stick: VirtualStickState): void {
+  if (!stick.active) return;
+  const dx = stick.currentX - stick.originX;
+  const dy = stick.currentY - stick.originY;
+  const dist = Math.hypot(dx, dy);
+  const clampedDist = Math.min(dist, stick.maxRadius);
+  const kx = dist > 0 ? stick.originX + (dx / dist) * clampedDist : stick.originX;
+  const ky = dist > 0 ? stick.originY + (dy / dist) * clampedDist : stick.originY;
+
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.42)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(stick.originX, stick.originY, stick.maxRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(34, 211, 238, 0.55)';
+  ctx.beginPath();
+  ctx.arc(kx, ky, 18, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function renderFloorBanner(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  state: GameState,
+  topSafeY: number,
+): void {
+  if (state.floorBannerTimer <= 0) return;
+  const { map } = state;
+  const isBoss = map.floorType === 'boss';
+  const isGuardian = map.floorType === 'guardian';
+  const bannerText = isBoss
+    ? `BOSS FLOOR ${state.floor}F`
+    : isGuardian
+      ? `GUARDIAN ${state.floor}F`
+      : `FLOOR ${state.floor}F`;
+  const borderColor = isBoss ? '#f43f5e' : isGuardian ? '#facc15' : '#38bdf8';
+  const glowStroke = isBoss
+    ? 'rgba(244, 63, 94, 0.32)'
+    : isGuardian
+      ? 'rgba(250, 204, 21, 0.32)'
+      : 'rgba(56, 189, 248, 0.34)';
+  const banner = computeFloorBannerRect(width, height, topSafeY);
+
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
+
+  traceCutCornerRect(ctx, banner.x, banner.y, banner.width, banner.height, 10);
+  if (typeof ctx.createLinearGradient === 'function') {
+    const grad = ctx.createLinearGradient(banner.x, banner.y, banner.x, banner.y + banner.height);
+    grad.addColorStop(0, 'rgba(12, 24, 48, 0.92)');
+    grad.addColorStop(1, 'rgba(5, 11, 24, 0.88)');
+    ctx.fillStyle = grad;
+  } else {
+    ctx.fillStyle = 'rgba(6, 14, 30, 0.88)';
+  }
+  ctx.fill();
+
+  // Soft outer neon border glow (zero shadowBlur)
+  ctx.strokeStyle = glowStroke;
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  // Crisp neon frame stroke
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  // Side cyber accent bars inside banner
+  ctx.fillStyle = borderColor;
+  ctx.fillRect(banner.x + 12, banner.y + 11, 3, banner.height - 22);
+  ctx.fillRect(banner.x + banner.width - 15, banner.y + 11, 3, banner.height - 22);
+
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 18px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(bannerText, width / 2, banner.y + 27);
   ctx.restore();
-
-  // 10.5. Fog of War overlay (corridor circular light vs lit room)
-  renderFogOverlay(ctx, width, height, zoom, camX, camY, state);
-
-  // 11. Legacy in-canvas Mini-map (skipped when HUD renders dedicated minimap canvas)
-  if (!insets.hideCanvasMinimap) {
-    renderMinimap(ctx, width, state, topSafeY);
-  }
-
-  // 12. Virtual joystick indicator (if active)
-  if (stick.active) {
-    const dx = stick.currentX - stick.originX;
-    const dy = stick.currentY - stick.originY;
-    const dist = Math.hypot(dx, dy);
-    const clampedDist = Math.min(dist, stick.maxRadius);
-    const kx = dist > 0 ? stick.originX + (dx / dist) * clampedDist : stick.originX;
-    const ky = dist > 0 ? stick.originY + (dy / dist) * clampedDist : stick.originY;
-
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.42)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(stick.originX, stick.originY, stick.maxRadius, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(34, 211, 238, 0.55)';
-    ctx.beginPath();
-    ctx.arc(kx, ky, 18, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // 13. Legacy in-canvas Toast Notifications (skipped when HUD renders DOM notifications)
-  if (!insets.hideCanvasNotifications) {
-    renderNotifications(ctx, width, height, state, insets.hintTop);
-  }
-
-  // 14. Sleek sci-fi cut-corner Floor Entry Banner
-  if (state.floorBannerTimer > 0) {
-    const isBoss = map.floorType === 'boss';
-    const isGuardian = map.floorType === 'guardian';
-    const bannerText = isBoss
-      ? `BOSS FLOOR ${state.floor}F`
-      : isGuardian
-        ? `GUARDIAN ${state.floor}F`
-        : `FLOOR ${state.floor}F`;
-    const borderColor = isBoss ? '#f43f5e' : isGuardian ? '#facc15' : '#38bdf8';
-    const glowStroke = isBoss
-      ? 'rgba(244, 63, 94, 0.32)'
-      : isGuardian
-        ? 'rgba(250, 204, 21, 0.32)'
-        : 'rgba(56, 189, 248, 0.34)';
-    const banner = computeFloorBannerRect(width, height, topSafeY);
-
-    ctx.save();
-    ctx.globalAlpha = Math.min(1, state.floorBannerTimer);
-
-    traceCutCornerRect(ctx, banner.x, banner.y, banner.width, banner.height, 10);
-    if (typeof ctx.createLinearGradient === 'function') {
-      const grad = ctx.createLinearGradient(banner.x, banner.y, banner.x, banner.y + banner.height);
-      grad.addColorStop(0, 'rgba(12, 24, 48, 0.92)');
-      grad.addColorStop(1, 'rgba(5, 11, 24, 0.88)');
-      ctx.fillStyle = grad;
-    } else {
-      ctx.fillStyle = 'rgba(6, 14, 30, 0.88)';
-    }
-    ctx.fill();
-
-    // Soft outer neon border glow (zero shadowBlur)
-    ctx.strokeStyle = glowStroke;
-    ctx.lineWidth = 5;
-    ctx.stroke();
-
-    // Crisp neon frame stroke
-    ctx.strokeStyle = borderColor;
-    ctx.lineWidth = 1.6;
-    ctx.stroke();
-
-    // Side cyber accent bars inside banner
-    ctx.fillStyle = borderColor;
-    ctx.fillRect(banner.x + 12, banner.y + 11, 3, banner.height - 22);
-    ctx.fillRect(banner.x + banner.width - 15, banner.y + 11, 3, banner.height - 22);
-
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 18px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(bannerText, width / 2, banner.y + 27);
-    ctx.restore();
-  }
 }
 
 function renderFogOverlay(
