@@ -304,6 +304,10 @@
     .badge-implemented { background: rgba(56, 189, 248, 0.16); color: var(--biz); border: 1px solid rgba(56, 189, 248, 0.4); }
     .badge-disputed { background: rgba(248, 113, 113, 0.16); color: var(--disputed); border: 1px solid rgba(248, 113, 113, 0.4); }
     .badge-unknown { background: rgba(148, 163, 184, 0.16); color: var(--muted); border: 1px solid rgba(148, 163, 184, 0.35); }
+    .badge-overridden { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); }
+    .decision-addendum-row { background: rgba(56, 189, 248, 0.05); }
+    .decision-addendum-row td:first-child { padding-left: 22px; border-left: 3px solid rgba(56, 189, 248, 0.55); }
+    .addendum-indent { color: #38bdf8; font-weight: 700; margin-right: 4px; }
     h3 { margin: 4px 0 10px; font-size: 17px; color: #f8fafc; }
     h4 { margin: 4px 0 10px; font-size: 15px; color: #f1f5f9; }
     .steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -3960,8 +3964,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-03" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-03" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-03">DEC-03</a></td>
+      <tr id="DEC-03" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-03" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-03">DEC-03</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
         <td><strong>初期ノーアイテム開始（自機ショットあり）＋SP消費総量連動強化＋Lv1-3=1SP / Lv4=2SP / Lv5=3SP を採用</strong><div class="note-text">レベル数値だけの自動強化を避け、横展開か一点突破かのビルド選択を際立たせるため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Inferred → Confirmed</div></td>
@@ -3971,8 +3975,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-03-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-03-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-03-addendum">DEC-03-addendum</a></td>
+      <tr id="DEC-03-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-03-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-03">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-03-addendum">DEC-03-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-03</code> 原文のうち「SP消費総量連動強化」は <code class="inline-code">DEC-12</code> で廃止（兵装スキル専用へ移行）、「Lv1-3=1SP / Lv4=2SP / Lv5=3SP」は <code class="inline-code">DEC-18</code>・<code class="inline-code">DEC-20</code>・<code class="inline-code">DEC-25</code> により Tier1(<code class="inline-code">1/1/1/2/2</code>)・Tier2(<code class="inline-code">1/1/1/2/3</code>)・全Tier3(<code class="inline-code">2/3</code>) へ上書き済み。現在も維持されているのは「初期ノーアイテム開始（自機ショットあり）」のみ</strong><div class="note-text"><code class="inline-code">DEC-03</code> の原文を保持したまま、後続 <code class="inline-code">DEC-12</code>・<code class="inline-code">DEC-18</code>・<code class="inline-code">DEC-20</code>・<code class="inline-code">DEC-25</code> による廃止・上書きと現行有効範囲を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-03 原文不変）</div></td>
@@ -4004,8 +4008,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-06" class="spec-row" data-section="decisions" data-status="Disputed" data-item-id="DEC-06" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-06">DEC-06</a></td>
+      <tr id="DEC-06" class="spec-row decision-overridden-row" data-section="decisions" data-status="Disputed" data-item-id="DEC-06" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-06">DEC-06</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">未決</div></td>
         <td><strong>節目ボス階層（暫定10F毎）と回復の泉安全前室・エンドレス継続の仕様再計画</strong><div class="note-text">旧5F想定から暫定10階層毎へ方針変更。大部屋＋泉スタート＋雑魚リポップやエンドレス継続仕様は別途計画（<code class="inline-code">APP-BOS-01/02</code>）</div></td>
         <td><span class="badge badge-disputed">Disputed（要調整）</span><div class="sub-code">Inferred → Disputed</div></td>
@@ -4015,8 +4019,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-06-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-06-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-06-addendum">DEC-06-addendum</a></td>
+      <tr id="DEC-06-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-06-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-06">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-06-addendum">DEC-06-addendum</a></td>
         <td><span class="date-pill">2026-11-17</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-17 追記・2026-11-24 同期）回復の泉・安全前室（<code class="inline-code">BIZ-BOS-01</code>／<code class="inline-code">APP-BOS-01</code>／<code class="inline-code">GLS-10</code>／<code class="inline-code">ST-09</code>／<code class="inline-code">OQ-01</code>）および10F大ボス本体の暫定戦闘仕様（<code class="inline-code">GLS-15</code>／<code class="inline-code">PRM-16</code>／<code class="inline-code">PRM-30</code>）は <code class="inline-code">DEC-10</code> 等で <code class="inline-code">Confirmed</code>（数値係数は <code class="inline-code">Inferred</code>）確定済み。<code class="inline-code">DEC-06</code> 時点で <code class="inline-code">Disputed</code> だったもののうち、現在も残る <code class="inline-code">Disputed</code> 対象は <code class="inline-code">BIZ-BOS-02</code>／<code class="inline-code">BIZ-BOS-03</code>／<code class="inline-code">APP-BOS-02</code>／<code class="inline-code">GLS-11</code>／<code class="inline-code">ST-10</code>／<code class="inline-code">OQ-02</code>（10F大ボス撃破後の正式なクリア祝勝モーダル・エンドレス継続選択UI仕様とそれに伴う暫定進行扱い）のみ</strong><div class="note-text"><code class="inline-code">DEC-06</code> の原文を保持したまま、現在の残存 <code class="inline-code">Disputed</code> 範囲を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-06 原文不変）</div></td>
@@ -4026,8 +4030,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-07" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-07" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-07">DEC-07</a></td>
+      <tr id="DEC-07" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-07" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-07">DEC-07</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
         <td><strong>初期2枠上限＋満杯時「スクラップ＆ビルド」（所持装備1個強化 or 拡張蓄積3回で枠+1・実質上限5枠）を確定</strong><div class="note-text">単なる全装備強化ではなく、装備強化と枠拡張（3回蓄積で+1枠、現行装備が5種のため実質上限5枠）を選べるようにするため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Inferred → Confirmed</div></td>
@@ -4037,8 +4041,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-07-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-07-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-07-addendum">DEC-07-addendum</a></td>
+      <tr id="DEC-07-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-07-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-07">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-07-addendum">DEC-07-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-07</code> 原文のうち「拡張蓄積3回で枠+1」は <code class="inline-code">DEC-11</code> で段階コスト（<code class="inline-code">1/2/3</code> 回：2→3枠は1回、3→4枠は2回、4→5枠は3回）へ上書き済み。また「満杯時のみ」前提も <code class="inline-code">DEC-25</code> で同種 <code class="inline-code">+2Lv</code> 以上ドロップ時の空き枠有無を問わない装備選択モーダル化および同一装備重複禁止（<code class="inline-code">INV-11</code>）へ拡張済み</strong><div class="note-text"><code class="inline-code">DEC-07</code> の原文を保持したまま、後続 <code class="inline-code">DEC-11</code>・<code class="inline-code">DEC-25</code> による枠拡張コスト変更とモーダル発火条件・重複禁止の拡張を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-07 原文不変）</div></td>
@@ -4048,8 +4052,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-08" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-08" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-08">DEC-08</a></td>
+      <tr id="DEC-08" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-08" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-08">DEC-08</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
         <td><strong>AI暫定パラメータ14件を確定（<code class="inline-code">PRM-14</code> は中ボス撃破のみで階段ロック解除へ変更、<code class="inline-code">PRM-17</code> 初期射程は索敵上限 <code class="inline-code">180px</code> と同値へ変更。残り12件は <code class="inline-code">Confirmed (AI提案)</code> として承認）</strong><div class="note-text">増援・リポップ雑魚で階段が再ロックされる不自然さをなくし、視認できている敵に自機攻撃が届かない不自然さを解消するため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Inferred → Confirmed / Confirmed (AI提案)</div></td>
@@ -4059,8 +4063,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-08-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-08-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-08-addendum">DEC-08-addendum</a></td>
+      <tr id="DEC-08-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-08-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-08">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-08-addendum">DEC-08-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-08</code> で承認した14件のうち <code class="inline-code">PRM-14, PRM-15, PRM-19, PRM-21, PRM-23, PRM-27</code>（および <code class="inline-code">mob_loot Lv5</code> 補正を含む <code class="inline-code">PRM-25</code>）は、後続 <code class="inline-code">DEC-10</code>〜<code class="inline-code">DEC-30</code> での再改定により現在 <code class="inline-code">Inferred</code>（<code class="inline-code">OQ-06</code> 管理）へ戻っている。また <code class="inline-code">PRM-06</code>／<code class="inline-code">PRM-17</code> の <code class="inline-code">180px</code> 上限は <code class="inline-code">DEC-19</code> で主兵装（<code class="inline-code">arm_base</code>）のみ視線あり前提で最大 <code class="inline-code">290px</code> まで例外延長が追加済み</strong><div class="note-text"><code class="inline-code">DEC-08</code> の原文を保持したまま、後続改定で <code class="inline-code">Inferred</code> へ戻ったパラメータ群と主兵装射程例外を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-08 原文不変）</div></td>
@@ -4081,8 +4085,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-10" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-10" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-10">DEC-10</a></td>
+      <tr id="DEC-10" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-10" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-10">DEC-10</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
         <td><strong>改善パッチ一括方針確定：(1) シューター固定砲台化(8方向弾[※Disputed: OQ-09]・ノックバック無効)＋通路リポップ抑制 (2) ブレード扇形高火力・シールド少ビット高速回転＆広範囲内スロー (3) caller→スカウト改名＆追撃ランナー&gt;210px/s＋出現猶予 (4) 装備上限Lv10(Lv6展開最大・Lv7-10威力/CD/射程) (5) ESC/K/⏸でポーズ兼スキル・装備詳細画面 (6) 3/6/9F守護中ボス(確定高Lv装備)＋10F泉前室・大ボス・11F暫定エンドレス継続 (7) トレジャー解析仕様同期・AI決定数値はInferred運用・新規波線弾幕はIssue管理</strong><div class="note-text">仕様書とプレイテスト要望を統合し、方針は人間確定（Confirmed）、AIが定めた数値係数はプレイテスト評価までInferredとして切り分けるため</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Disputed/Unknown → Confirmed (方針) / Inferred (AI数値)</div></td>
@@ -4092,8 +4096,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-10-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-10-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-10-addendum">DEC-10-addendum</a></td>
+      <tr id="DEC-10-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-10-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-10">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-10-addendum">DEC-10-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-10</code> 原文の各項目における後続決定での上書き・現行有効範囲の整理：(1) シューター弾幕は <code class="inline-code">DEC-15</code>（<code class="inline-code">OQ-09</code> 解消・Confirmed）により 1-5F: 4方向 / 6-10F: 6方向 / 11F+: 8方向の回転放射（防御貫通弾混在）へ確定・更新済み、ノックバック無効は <code class="inline-code">DEC-11</code> で守護中ボス・大ボスへ拡張 (2) ブレードは <code class="inline-code">DEC-11</code> で厚み付き三日月斬撃＋敵弾反射を追加、シールドは <code class="inline-code">DEC-11</code> で接触ダメ・内側スロー弱体化、さらに <code class="inline-code">DEC-12</code>・<code class="inline-code">DEC-26</code> で位置づけを更新 (3) スカウト改名・追撃ランナーは現行維持 (4) 装備上限は <code class="inline-code">DEC-16</code>（<code class="inline-code">OQ-03</code> 確定）により試作 Lv8（Lv1〜6展開進化 / Lv7〜8威力・CD・射程特化）へ引き下げ、<code class="inline-code">DEC-11</code>・<code class="inline-code">DEC-25</code> でカンスト自動枠拡張・+2Lv以上選択モーダルへ拡張 (5) ポーズ画面は <code class="inline-code">DEC-17</code>・<code class="inline-code">DEC-23</code>・<code class="inline-code">DEC-24</code>・<code class="inline-code">DEC-30</code> により ⏸ ボタン廃止・上HUDピル＆下部 SKILL/GEAR スイッチ集約・「スキル」「装備・ギア」2タブ化・スキルカード簡素化＆ⓘポップオーバー化へ刷新 (6) 守護中ボス・10F大ボスは <code class="inline-code">DEC-11</code>・<code class="inline-code">DEC-16</code>・<code class="inline-code">DEC-17</code>・<code class="inline-code">DEC-26</code>・<code class="inline-code">DEC-27</code> でHP連動・無敵突進（大ボス壁反射）・極太反射レーザー・Lv8上限ドロップ・10Fクリアタイム記録を追加（10F撃破後の正式祝勝モーダル・エンドレス継続選択UIは <code class="inline-code">DEC-06-addendum</code> / <code class="inline-code">OQ-02</code> の通り引き続き Disputed） (7) トレジャー解析は <code class="inline-code">OQ-07</code> 解消＆<code class="inline-code">DEC-12</code> で Tier 2 再配置・品質/ドロップ率加算へ拡張、AI数値の Inferred 運用は <code class="inline-code">OQ-06</code>・新規波線弾幕は <code class="inline-code">OQ-08</code>（Unknown）で継続管理</strong><div class="note-text"><code class="inline-code">DEC-10</code> の原文を保持したまま、後続 <code class="inline-code">DEC-11</code>〜<code class="inline-code">DEC-30</code> による上書き・拡張と現在の残存未決範囲（<code class="inline-code">OQ-02</code> / <code class="inline-code">OQ-06</code> / <code class="inline-code">OQ-08</code>）を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-10 原文不変）</div></td>
@@ -4103,8 +4107,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-11" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-11" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-11">DEC-11</a></td>
+      <tr id="DEC-11" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-11" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-11">DEC-11</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-14</span><div class="sub-code">先輩</div></td>
         <td><strong>実機プレイテスト反映バランス調整：(1) <code class="inline-code">orbit_shield</code> 接触ダメ・内側スロー弱体化 (2) チャクラム単発追尾＋反射＋対象不在時1周(<code class="inline-code">2π</code>)再ヒット化 (3) 守護中ボス／大ボスHP増＋守護中ボスノックバック無効＋ボス予兆付き高速突進追加 (4) <code class="inline-code">tank</code> 放物線迫撃砲＋通常赤丸敵のプレイヤーLv連動弱砲撃追加 (5) <code class="inline-code">pulse_blade</code> 厚み付き三日月斬撃＋敵弾反射追加 (6) 枠拡張コスト段階化(<code class="inline-code">1/2/3</code>)＋Lv10重複の自動枠拡張充当＋HUD常設EXPバー追加</strong><div class="note-text">シールドの攻防一強を是正し、各装備の差別化・中ボス/大ボスの手応え・敵弾幕と迫撃砲による回避の緊迫感・枠拡張テンポを向上させるため（AI決定数値はInferred）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed (方針) / Inferred (AI数値)</div></td>
@@ -4114,8 +4118,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-11-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-11-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-11-addendum">DEC-11-addendum</a></td>
+      <tr id="DEC-11-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-11-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-11">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-11-addendum">DEC-11-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-11</code> 原文のうち、(2) チャクラム単体ループは <code class="inline-code">DEC-25</code> で「ヒット位置起点の固定中心円周1周（<code class="inline-code">2π</code>、壁接触時ループ解除）」へ改定、(3) ボス高速突進は <code class="inline-code">DEC-27</code> で「突進中無敵（<code class="inline-code">def_aegis</code> 相打ちのみ貫通）・大ボス壁1回反射・終了後通常着地弾＋硬直」へ刷新、(6) 「Lv10重複の自動枠拡張充当」は <code class="inline-code">DEC-16</code>・<code class="inline-code">DEC-25</code> で <code class="inline-code">Lv8</code> 基準へ上書き済み</strong><div class="note-text"><code class="inline-code">DEC-11</code> の原文を保持したまま、後続 <code class="inline-code">DEC-16</code>・<code class="inline-code">DEC-25</code>・<code class="inline-code">DEC-27</code> による上書き・刷新を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-11 原文不変）</div></td>
@@ -4125,8 +4129,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-12" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-12" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-12">DEC-12</a></td>
+      <tr id="DEC-12" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-12" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-12">DEC-12</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-15</span><div class="sub-code">先輩</div></td>
         <td><strong>メイン武器（コアショット）分離とスキルツリー再編（Issue #2 / #3）：(1) 総SP (<code class="inline-code">spentSkillPoints</code>) 連動を廃止し、コアショットを「初期値＋兵装（<code class="inline-code">arms</code>）スキル専用」のメイン武器へ整理 (2) サブ装備5系統から <code class="inline-code">arms</code> スキルによる威力・CD・展開数インフレを外し、装備Lv＋広域索敵（<code class="inline-code">def_sensor</code> 射程）のみでスケール (3) 防衛（<code class="inline-code">def_pulse</code> / <code class="inline-code">def_aegis</code>）の無敵・自動火力過多を抑制 (4) 探索・機動を「磁力回収 → トレジャー解析（品質・ドロップ率UP追加） → 戦術ステップ（全被弾対応＋発動後2.5秒一時加速）」の順へ再配置</strong><div class="note-text">二重乗算インフレと「スキルだけで勝てる」状態を解消し、「メイン武器特化」と「探索で高品質なサブ装備を固める」ビルドの棲み分けを明確にするため（AI決定の調整数値はInferred）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed → Confirmed (方針再編) / Inferred (AI数値)</div></td>
@@ -4136,8 +4140,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-12-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-12-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-12-addendum">DEC-12-addendum</a></td>
+      <tr id="DEC-12-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-12-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-12">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-12-addendum">DEC-12-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-12</code> 原文のうち、(4)「戦術ステップ（全被弾対応＋発動後2.5秒一時加速）」は <code class="inline-code">DEC-18</code> で「緊急回避ブースト」へ改称・強制移動ワープ廃止のうえ、<code class="inline-code">DEC-26</code> で全攻撃ノーダメージ回避型（チャージ消費＋無敵延長＋一時加速）へ転換済み</strong><div class="note-text"><code class="inline-code">DEC-12</code> の原文を保持したまま、後続 <code class="inline-code">DEC-18</code>・<code class="inline-code">DEC-26</code> による <code class="inline-code">mob_dash</code> の改称・挙動転換を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-12 原文不変）</div></td>
@@ -4191,8 +4195,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-17" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-17" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-17">DEC-17</a></td>
+      <tr id="DEC-17" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-17" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-17">DEC-17</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-18</span><div class="sub-code">先輩</div></td>
         <td><strong>UI/UX・オーディオ・演出刷新（Issue #15 / #16 / #19）：(1) プロシージャル Web Audio SE 16種＋HUD右端ミュートトグル (<code class="inline-code">localStorage</code> 永続化・AI提案) (2) パーティクル（上限140）＋画面シェイクVFX（AI提案） (3) プレイ中HUDから仕様書リンクを外してスタート／ポーズ画面へ集約・ポーズ右上端固定 <code class="inline-code">✕</code> ボタン追加 (4) プレイ時間 <code class="inline-code">MM:SS</code> HUD常時表示・10Fクリア時タイム記録＆通知（AI提案を承認）・敗北リザルト縦リスト化 (5) 下部トーストを角丸ガラスカード＋左アクセントバーへ刷新</strong><div class="note-text">スマホ実機プレイテストでの視認性・誤タップ防止・操作性向上、および戦闘・成長の手触り強化のため（10Fクリア約10分前後のテンポを確認済み。SE/VFX・ミュート詳細は暫定AI提案として承認し、別Issueで詳細仕様を再決定）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed（SE/VFX・ミュート・10F記録はAI提案承認）</div></td>
@@ -4202,8 +4206,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-17-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-17-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-17-addendum">DEC-17-addendum</a></td>
+      <tr id="DEC-17-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-17-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-17">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-17-addendum">DEC-17-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-17</code> 原文のうち、(1)「HUD右端ミュートトグル」は <code class="inline-code">DEC-23</code> でポーズ画面ヘッダーへ移設済み、(5)「下部トースト」は <code class="inline-code">DEC-24</code> で上HUD直下の DOM 表示（<code class="inline-code">#notificationStack</code>・最新2件）へ移行済み</strong><div class="note-text"><code class="inline-code">DEC-17</code> の原文を保持したまま、後続 <code class="inline-code">DEC-23</code>・<code class="inline-code">DEC-24</code> によるミュートボタン配置と通知トースト位置の変更を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-17 原文不変）</div></td>
@@ -4213,8 +4217,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-18" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-18" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-18">DEC-18</a></td>
+      <tr id="DEC-18" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-18" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-18">DEC-18</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-19</span><div class="sub-code">先輩</div></td>
         <td><strong>被弾時無敵・回避スキル・索敵/機動力Tier3再調整の方針確定：(1) 全被弾時（パリィ含む）に自機が点滅＋一定時間無敵になって連続ヒットを防ぐ仕様を正式採用 (2) <code class="inline-code">mob_dash</code> を「戦術ステップ」から「緊急回避ブースト」へ改称し、壁めり込みを防ぐため強制移動ワープを廃止してチャージ消費による無敵延長＋一時移動加速へ変更 (3) 迎撃/索敵Tier3（<code class="inline-code">def_aegis</code>）と機動力Tier3（<code class="inline-code">mob_dash</code>）の2スキルを最大 <code class="inline-code">Lv2</code>・必要SP <code class="inline-code">2 / 3</code>（計5SP）へ変更し、兵装Tier3（<code class="inline-code">arm_overclock</code>）は <code class="inline-code">Lv5</code> を維持（基礎無敵秒数 <code class="inline-code">PRM-33</code> や各スキルの具体数値 <code class="inline-code">PRM-23</code> はプレイテスト評価まで <code class="inline-code">Inferred</code> として <code class="inline-code">OQ-06</code> で管理）</strong><div class="note-text">連続ヒットの理不尽さと強制ステップによる壁めり込みリスクを解消しつつ、防衛・機動力のTier3を2段階（2/3SP）に凝縮するため（具体数値はInferred）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed (`DEC-12`) → Confirmed (方針・Lv上限・SPコスト) / Inferred (AI仮数値: `PRM-23`, `PRM-33`)</div></td>
@@ -4224,8 +4228,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-18-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-18-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-18-addendum">DEC-18-addendum</a></td>
+      <tr id="DEC-18-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-18-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-18">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-18-addendum">DEC-18-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-18</code> 原文のうち、(2) <code class="inline-code">mob_dash</code>（緊急回避ブースト）は <code class="inline-code">DEC-26</code> で被弾後リカバリー型から「チャージ消費で全攻撃をノーダメージ回避＋無敵延長＋加速する切り札」へ転換済み、(3)「兵装Tier3（<code class="inline-code">arm_overclock</code>）は <code class="inline-code">Lv5</code> を維持」は <code class="inline-code">DEC-20</code> で他のTier3と同じ最大 <code class="inline-code">Lv2</code>・必要SP <code class="inline-code">2/3</code>（計5SP）統一へ上書き済み</strong><div class="note-text"><code class="inline-code">DEC-18</code> の原文を保持したまま、後続 <code class="inline-code">DEC-20</code>・<code class="inline-code">DEC-26</code> による <code class="inline-code">arm_overclock</code> 上限統一と <code class="inline-code">mob_dash</code> 回避仕様転換を明示する追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-18 原文不変）</div></td>
@@ -4235,8 +4239,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-19" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-19" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-19">DEC-19</a></td>
+      <tr id="DEC-19" class="spec-row decision-overridden-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-19" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-19">DEC-19</a><div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div></td>
         <td><span class="date-pill">2026-11-19</span><div class="sub-code">先輩</div></td>
         <td><strong>メイン武器（コアショット）主軸ビルドの強化方針確定（サブ装備全体バフなし / <code class="inline-code">DEC-12</code> 維持）：(1) 10F到達（Lv20前後）基準で、サブ装備に頼らず主兵装特化でもボス・雑魚を攻略できるよう兵装スキル3ノードを大幅強化 (2) <code class="inline-code">arm_base</code>（出力強化）：ダメージ倍率の大幅引き上げ＋主兵装専用の射程延長（視線が通っている見えている敵に限り、<code class="inline-code">PRM-06</code> の180px上限を超えて遠距離攻撃できる主兵装固有の強み） (3) <code class="inline-code">arm_parallel</code>（並列射出）：メイン弾を扇状拡散から単体に全弾ヒットしやすい平行ショットへ変更し、一定距離内の敵へ誘導して飛ぶ小型バラマキ誘導弾を追加射出 (4) <code class="inline-code">arm_overclock</code>（オーバークロック）：CD短縮・弾速UP・貫通に加え、スキル育成に応じた弾丸・レーザー風ビジュアル＆エフェクト変化を付与（具体数値・計算式はプレイテスト評価まで <code class="inline-code">Inferred</code> として <code class="inline-code">OQ-06</code> で管理）</strong><div class="note-text">10F到達（Lv20前後）時点でサブ装備への全体バフを行わない（<code class="inline-code">DEC-12</code> 維持）まま、主兵装特化ビルドでもボス・雑魚を攻略できる火力・単体集中力・射程上の優位性と育成のビジュアル手応えを確立するため（具体数値はInferred）</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Confirmed (`DEC-12`) → Confirmed (方針) / Inferred (AI仮数値: `PRM-18`, `PRM-23`, `FML-03`, `FML-04`, `FML-05`)</div></td>
@@ -4246,8 +4250,8 @@
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr>
-      <tr id="DEC-19-addendum" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-19-addendum" data-source-file="specs/decisions.md">
-        <td><a class="id-pill id-doc" href="#DEC-19-addendum">DEC-19-addendum</a></td>
+      <tr id="DEC-19-addendum" class="spec-row decision-addendum-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-19-addendum" data-source-file="specs/decisions.md" data-parent-id="DEC-19">
+        <td><span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#DEC-19-addendum">DEC-19-addendum</a></td>
         <td><span class="date-pill">2026-11-25</span><div class="sub-code">先輩</div></td>
         <td><strong>（2026-11-25 追記・同期）<code class="inline-code">DEC-19</code>〜<code class="inline-code">DEC-22</code>・<code class="inline-code">DEC-28</code>・<code class="inline-code">DEC-29</code> に渡る主兵装・SP経済の連続改定の統合注記：現行の最新正本は、SP経済＝<code class="inline-code">DEC-25</code>（初期 <code class="inline-code">1SP</code>・Lv2〜10 <code class="inline-code">+1SP</code> / Lv11〜 <code class="inline-code">+2SP</code>・1系統 <code class="inline-code">20SP</code>［Tier1:7 / Tier2:8 / Tier3:5］）、主兵装＝<code class="inline-code">DEC-30</code>（平行ショット廃止・Tier1〜2は単発楕円プラズマチャージショット＋追尾レーザー <code class="inline-code">2/3/4/6/8発</code>、Tier3は中央極太貫通チャージ弾100%＋両脇極細レーザー2/4本60%・狭レーン <code class="inline-code">10px</code> 固定のハイブリッド進化）</strong><div class="note-text"><code class="inline-code">DEC-19</code>〜<code class="inline-code">DEC-22</code>・<code class="inline-code">DEC-28</code>・<code class="inline-code">DEC-29</code> の各原文を保持したまま、連続改定チェーンの最終正本（<code class="inline-code">DEC-25</code>／<code class="inline-code">DEC-30</code>）を1行で明示する統合追記</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">補足追記（DEC-19 原文不変）</div></td>

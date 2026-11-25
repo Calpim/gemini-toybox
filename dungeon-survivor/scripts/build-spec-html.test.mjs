@@ -15,6 +15,7 @@ import {
   parseStateTransitions,
   parseInvariants,
   parseDecisionLog,
+  resolveDecisionAddendums,
   buildFormulaChartsData,
   loadExtendedSpecs,
   validateExtendedSpecs,
@@ -439,5 +440,74 @@ stateDiagram-v2
     });
     assert.equal(validation.disputedTerms.length, 1);
     assert.equal(validation.undefinedTransitions.length, 1);
+  });
+
+  it('resolves all actual project decision addendums mechanically and renders overridden badge + grouped rows', () => {
+    const biz = loadFeaturesFromDir(path.join(projectRoot, 'specs', 'business'));
+    const app = loadFeaturesFromDir(path.join(projectRoot, 'specs', 'app'));
+    const graph = buildTraceabilityGraph(biz, app);
+    const extended = loadExtendedSpecs(projectRoot);
+    const resolved = resolveDecisionAddendums(extended.decisions);
+
+    assert.equal(resolved.unmatchedAddendums.length, 0);
+    assert.equal(resolved.matchedAddendumIds.size, 10);
+    for (const baseId of [
+      'DEC-03',
+      'DEC-06',
+      'DEC-07',
+      'DEC-08',
+      'DEC-10',
+      'DEC-11',
+      'DEC-12',
+      'DEC-17',
+      'DEC-18',
+      'DEC-19',
+    ]) {
+      const list = resolved.addendumsByBaseId.get(baseId);
+      assert.ok(list && list.length === 1, `Expected 1 addendum for ${baseId}`);
+      assert.equal(list[0].id, `${baseId}-addendum`);
+    }
+
+    const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extended);
+    const decStart = html.indexOf('<section id="sec-decisions"');
+    const decSlice = html.slice(decStart);
+    assert.match(decSlice, /id="DEC-10"[\s\S]*?badge-overridden">上書きあり<\/span>[\s\S]*?<\/tr>\s*<tr id="DEC-10-addendum" class="spec-row decision-addendum-row"/);
+    assert.equal((decSlice.match(/<tr id="DEC-10-addendum"/g) || []).length, 1);
+  });
+
+  it('leaves addendums unmatched when baseId is missing from refs, base DEC does not exist, or naming does not match', () => {
+    const decisions = parseDecisionLog(
+      `| ID | 日付 | 決定者 | 決定事項 | 理由・背景 | 状態 | 状態遷移 | 関連ID | 再検討トリガー |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DEC-01 | 2026-11-14 | 先輩 | 元決定1 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-02 | 2026-11-14 | 先輩 | 元決定2 | 理由 | Confirmed | - | GLS-02 | - |
+| DEC-01-addendum | 2026-11-25 | 先輩 | 正しく紐付く追記 | 理由 | Confirmed | 補足 | DEC-01, DEC-02 | - |
+| DEC-02-addendum | 2026-11-25 | 先輩 | refsにDEC-02なし | 理由 | Confirmed | 補足 | DEC-01 | - |
+| DEC-99-addendum | 2026-11-25 | 先輩 | 元DEC不在 | 理由 | Confirmed | 補足 | DEC-99 | - |
+| CUSTOM-addendum | 2026-11-25 | 先輩 | 命名規則外 | 理由 | Confirmed | 補足 | DEC-01 | - |
+`,
+      'specs/decisions.md'
+    );
+
+    const resolved = resolveDecisionAddendums(decisions);
+    assert.equal(resolved.matchedAddendumIds.size, 1);
+    assert.ok(resolved.matchedAddendumIds.has('DEC-01-addendum'));
+    assert.deepEqual(
+      resolved.unmatchedAddendums.map((x) => x.id),
+      ['DEC-02-addendum', 'DEC-99-addendum', 'CUSTOM-addendum']
+    );
+
+    const graph = buildTraceabilityGraph([], []);
+    const html = renderHtml(graph, 'Test', { decisions });
+    const decSlice = html.slice(html.indexOf('<section id="sec-decisions"'));
+    // DEC-01-addendum is grouped right below DEC-01 (before DEC-02) with no duplicate
+    assert.match(decSlice, /id="DEC-01"[\s\S]*?上書きあり[\s\S]*?<\/tr>\s*<tr id="DEC-01-addendum" class="spec-row decision-addendum-row"[\s\S]*?<tr id="DEC-02"/);
+    assert.equal((decSlice.match(/<tr id="DEC-01-addendum"/g) || []).length, 1);
+    // DEC-02 has no matched addendum, so no overridden badge
+    assert.doesNotMatch(decSlice, /id="DEC-02"[\s\S]*?上書きあり[\s\S]*?<\/tr>/);
+    // Unmatched addendums remain as normal rows without decision-addendum-row class
+    assert.match(decSlice, /<tr id="DEC-02-addendum" class="spec-row"/);
+    assert.match(decSlice, /<tr id="DEC-99-addendum" class="spec-row"/);
+    assert.match(decSlice, /<tr id="CUSTOM-addendum" class="spec-row"/);
   });
 });

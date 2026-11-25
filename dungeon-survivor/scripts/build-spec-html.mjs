@@ -520,6 +520,42 @@ export function parseDecisionLog(content, filePath = 'specs/decisions.md') {
   };
 }
 
+export function resolveDecisionAddendums(decisions) {
+  const items = decisions?.items || [];
+  const baseIds = new Set(
+    items
+      .filter((item) => item.id && !item.id.endsWith('-addendum'))
+      .map((item) => item.id)
+  );
+  const addendumsByBaseId = new Map();
+  const unmatchedAddendums = [];
+  const matchedAddendumIds = new Set();
+
+  for (const item of items) {
+    if (!item.id || !item.id.endsWith('-addendum')) continue;
+    const match = item.id.match(/^(DEC-\d+)-addendum$/);
+    const baseId = match ? match[1] : null;
+    const hasBaseInRefs = Boolean(baseId && Array.isArray(item.refs) && item.refs.includes(baseId));
+    const baseExists = Boolean(baseId && baseIds.has(baseId));
+
+    if (baseId && hasBaseInRefs && baseExists) {
+      if (!addendumsByBaseId.has(baseId)) {
+        addendumsByBaseId.set(baseId, []);
+      }
+      addendumsByBaseId.get(baseId).push(item);
+      matchedAddendumIds.add(item.id);
+    } else {
+      unmatchedAddendums.push(item);
+    }
+  }
+
+  return {
+    addendumsByBaseId,
+    unmatchedAddendums,
+    matchedAddendumIds,
+  };
+}
+
 export function extractFormulaParamValues(parameters) {
   const byId = new Map((parameters?.items || []).map((p) => [p.id, String(p.value || '')]));
   const getVal = (id) => byId.get(id) || '';
@@ -1367,19 +1403,42 @@ function renderInvariantsSection(invariants) {
 
 function renderDecisionsSection(decisions) {
   if (!decisions) return '';
-  const rows = decisions.items
-    .map(
-      (item) => `
-      <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="decisions" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+  const { addendumsByBaseId, matchedAddendumIds } = resolveDecisionAddendums(decisions);
+
+  const renderDecisionRow = (item, { isOverridden = false, isAddendum = false, baseId = '' } = {}) => {
+    const rowClasses = [
+      'spec-row',
+      isOverridden ? 'decision-overridden-row' : '',
+      isAddendum ? 'decision-addendum-row' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const parentAttr = isAddendum && baseId ? ` data-parent-id="${escapeHtml(baseId)}"` : '';
+    const idCell = isAddendum
+      ? `<span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>`
+      : `<a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>${isOverridden ? '<div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div>' : ''}`;
+
+    return `
+      <tr id="${escapeHtml(item.id)}" class="${rowClasses}" data-section="decisions" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}"${parentAttr}>
+        <td>${idCell}</td>
         <td><span class="date-pill">${escapeHtml(item.date)}</span><div class="sub-code">${escapeHtml(item.decider)}</div></td>
         <td><strong>${renderInlineCodeText(item.decision)}</strong><div class="note-text">${renderInlineCodeText(item.reason)}</div></td>
         <td>${renderStatusBadge(item.status)}${item.transition ? `<div class="sub-code">${escapeHtml(item.transition)}</div>` : ''}</td>
         <td>${renderRefLinks(item.refs)}</td>
         <td>${item.revisitTrigger ? `<div class="note-text">${renderInlineCodeText(item.revisitTrigger)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
-    )
-    .join('');
+      </tr>`;
+  };
+
+  const renderedRows = [];
+  for (const item of decisions.items) {
+    if (matchedAddendumIds.has(item.id)) continue;
+    const attached = addendumsByBaseId.get(item.id) || [];
+    renderedRows.push(renderDecisionRow(item, { isOverridden: attached.length > 0 }));
+    for (const addendum of attached) {
+      renderedRows.push(renderDecisionRow(addendum, { isAddendum: true, baseId: item.id }));
+    }
+  }
+  const rows = renderedRows.join('');
 
   return `
   <section id="sec-decisions" class="doc-section" data-section-name="decisions">
@@ -1885,6 +1944,10 @@ export function renderHtml(
     .badge-implemented { background: rgba(56, 189, 248, 0.16); color: var(--biz); border: 1px solid rgba(56, 189, 248, 0.4); }
     .badge-disputed { background: rgba(248, 113, 113, 0.16); color: var(--disputed); border: 1px solid rgba(248, 113, 113, 0.4); }
     .badge-unknown { background: rgba(148, 163, 184, 0.16); color: var(--muted); border: 1px solid rgba(148, 163, 184, 0.35); }
+    .badge-overridden { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); }
+    .decision-addendum-row { background: rgba(56, 189, 248, 0.05); }
+    .decision-addendum-row td:first-child { padding-left: 22px; border-left: 3px solid rgba(56, 189, 248, 0.55); }
+    .addendum-indent { color: #38bdf8; font-weight: 700; margin-right: 4px; }
     h3 { margin: 4px 0 10px; font-size: 17px; color: #f8fafc; }
     h4 { margin: 4px 0 10px; font-size: 15px; color: #f1f5f9; }
     .steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
