@@ -1,0 +1,6 @@
+# Enforce LF line endings for all text files (matches Biome / CI Linux environment)
+* text=auto eol=lf
+
+# Keep Windows batch scripts as CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
