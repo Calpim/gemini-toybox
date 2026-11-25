@@ -244,6 +244,10 @@ const MOB_DASH_CD = [0, 4.5, 3.5] as const;
 const MOB_DASH_SPEED_BOOST = [0, 0.24, 0.38] as const;
 export const TACTICAL_SPEED_BOOST_DURATION = 2.5;
 
+function curveAt(curve: readonly number[], lv: number): number {
+  return curve[Math.max(0, Math.min(curve.length - 1, lv))] ?? 0;
+}
+
 export interface ComputedSkillModifiers {
   totalSkillLevels: number;
   armBaseLevel: number;
@@ -303,33 +307,33 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     totalSkillLevels,
     armBaseLevel: armBaseLv,
     armOverclockLevel: armOverclockLv,
-    mainDamageMult: 1 + ARM_MAIN_DAMAGE_PCT[armBaseLv],
-    mainRangeBonus: ARM_MAIN_RANGE_BONUS[armBaseLv],
-    mainExtraShots: ARM_MAIN_EXTRA_SHOTS[armParallelLv],
-    mainParallelDamageMult: 1 + ARM_MAIN_PARALLEL_DMG_PCT[armParallelLv],
-    mainHomingShots: ARM_MAIN_HOMING_SHOTS[armParallelLv],
-    mainCooldownMult: Math.max(0.55, 1 - ARM_MAIN_CD_REDUCTION[armOverclockLv]),
+    mainDamageMult: 1 + curveAt(ARM_MAIN_DAMAGE_PCT, armBaseLv),
+    mainRangeBonus: curveAt(ARM_MAIN_RANGE_BONUS, armBaseLv),
+    mainExtraShots: curveAt(ARM_MAIN_EXTRA_SHOTS, armParallelLv),
+    mainParallelDamageMult: 1 + curveAt(ARM_MAIN_PARALLEL_DMG_PCT, armParallelLv),
+    mainHomingShots: curveAt(ARM_MAIN_HOMING_SHOTS, armParallelLv),
+    mainCooldownMult: Math.max(0.55, 1 - curveAt(ARM_MAIN_CD_REDUCTION, armOverclockLv)),
     piercingMainShot: armOverclockLv >= 1,
-    mainSpeedBonus: ARM_MAIN_SPEED_BONUS[armOverclockLv],
-    rangeMult: 1 + DEF_RANGE_PCT[defSensorLv],
+    mainSpeedBonus: curveAt(ARM_MAIN_SPEED_BONUS, armOverclockLv),
+    rangeMult: 1 + curveAt(DEF_RANGE_PCT, defSensorLv),
     hasRepulsor: defPulseLv >= 1,
-    repulsorDamage: DEF_PULSE_DMG[defPulseLv],
-    repulsorCooldown: DEF_PULSE_CD[defPulseLv],
-    repulsorRange: DEF_PULSE_RANGE[defPulseLv],
+    repulsorDamage: curveAt(DEF_PULSE_DMG, defPulseLv),
+    repulsorCooldown: curveAt(DEF_PULSE_CD, defPulseLv),
+    repulsorRange: curveAt(DEF_PULSE_RANGE, defPulseLv),
     hasAegisParry: defAegisLv >= 1,
-    aegisCooldown: DEF_AEGIS_CD[defAegisLv],
-    aegisDamage: DEF_AEGIS_DMG[defAegisLv],
-    pickupMagnetMult: 1 + MOB_MAGNET_PCT[mobMagnetLv],
-    healBonusMult: 1 + MOB_HEAL_PCT[mobMagnetLv],
-    lootBonusRate: MOB_LOOT_PCT[mobLootLv],
-    equipDropBonus: MOB_DROP_BONUS[mobLootLv],
-    dropQualityTier: MOB_DROP_QUALITY[mobLootLv],
-    expMult: 1 + MOB_EXP_PCT[mobLootLv],
+    aegisCooldown: curveAt(DEF_AEGIS_CD, defAegisLv),
+    aegisDamage: curveAt(DEF_AEGIS_DMG, defAegisLv),
+    pickupMagnetMult: 1 + curveAt(MOB_MAGNET_PCT, mobMagnetLv),
+    healBonusMult: 1 + curveAt(MOB_HEAL_PCT, mobMagnetLv),
+    lootBonusRate: curveAt(MOB_LOOT_PCT, mobLootLv),
+    equipDropBonus: curveAt(MOB_DROP_BONUS, mobLootLv),
+    dropQualityTier: curveAt(MOB_DROP_QUALITY, mobLootLv),
+    expMult: 1 + curveAt(MOB_EXP_PCT, mobLootLv),
     hasTacticalStep: mobDashLv >= 1,
-    tacticalInvulnDuration: MOB_DASH_INVULN[mobDashLv],
-    tacticalMaxCharges: MOB_DASH_CHARGES[mobDashLv],
-    tacticalStepCooldown: MOB_DASH_CD[mobDashLv],
-    tacticalSpeedBonus: MOB_DASH_SPEED_BOOST[mobDashLv],
+    tacticalInvulnDuration: curveAt(MOB_DASH_INVULN, mobDashLv),
+    tacticalMaxCharges: curveAt(MOB_DASH_CHARGES, mobDashLv),
+    tacticalStepCooldown: curveAt(MOB_DASH_CD, mobDashLv),
+    tacticalSpeedBonus: curveAt(MOB_DASH_SPEED_BOOST, mobDashLv),
   };
 }
 
@@ -338,29 +342,29 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
   if (lv <= 0) return '未習得';
   switch (nodeId) {
     case 'arm_base':
-      return `メイン威力 +${Math.round(ARM_MAIN_DAMAGE_PCT[lv] * 100)}% / 射程+${ARM_MAIN_RANGE_BONUS[lv]}px`;
+      return `メイン威力 +${Math.round(curveAt(ARM_MAIN_DAMAGE_PCT, lv) * 100)}% / 射程+${curveAt(ARM_MAIN_RANGE_BONUS, lv)}px`;
     case 'arm_parallel': {
-      const dmgPct = Math.round(ARM_MAIN_PARALLEL_DMG_PCT[lv] * 100);
-      const homing = ARM_MAIN_HOMING_SHOTS[lv];
+      const dmgPct = Math.round(curveAt(ARM_MAIN_PARALLEL_DMG_PCT, lv) * 100);
+      const homing = curveAt(ARM_MAIN_HOMING_SHOTS, lv);
       if (dmgPct > 0) {
         return `追尾レーザー${homing}発 / メイン威力 +${dmgPct}%`;
       }
       return `追尾レーザー${homing}発`;
     }
     case 'arm_overclock':
-      return `CD -${Math.round(ARM_MAIN_CD_REDUCTION[lv] * 100)}% / 弾速+${ARM_MAIN_SPEED_BONUS[lv]} / ${lv >= 2 ? '貫通チャージ＋脇レーザー4本' : '貫通チャージ＋脇レーザー2本'}`;
+      return `CD -${Math.round(curveAt(ARM_MAIN_CD_REDUCTION, lv) * 100)}% / 弾速+${curveAt(ARM_MAIN_SPEED_BONUS, lv)} / ${lv >= 2 ? '貫通チャージ＋脇レーザー4本' : '貫通チャージ＋脇レーザー2本'}`;
     case 'def_sensor':
-      return `レンジ +${Math.round(DEF_RANGE_PCT[lv] * 100)}%`;
+      return `レンジ +${Math.round(curveAt(DEF_RANGE_PCT, lv) * 100)}%`;
     case 'def_pulse':
-      return `威力${DEF_PULSE_DMG[lv]} / 範囲${DEF_PULSE_RANGE[lv]} / CD ${DEF_PULSE_CD[lv].toFixed(1)}s`;
+      return `威力${curveAt(DEF_PULSE_DMG, lv)} / 範囲${curveAt(DEF_PULSE_RANGE, lv)} / CD ${curveAt(DEF_PULSE_CD, lv).toFixed(1)}s`;
     case 'def_aegis':
-      return `反撃${DEF_AEGIS_DMG[lv]} / CD ${DEF_AEGIS_CD[lv].toFixed(1)}s`;
+      return `反撃${curveAt(DEF_AEGIS_DMG, lv)} / CD ${curveAt(DEF_AEGIS_CD, lv).toFixed(1)}s`;
     case 'mob_magnet':
-      return `吸引 +${Math.round(MOB_MAGNET_PCT[lv] * 100)}% / 回復 +${Math.round(MOB_HEAL_PCT[lv] * 100)}%`;
+      return `吸引 +${Math.round(curveAt(MOB_MAGNET_PCT, lv) * 100)}% / 回復 +${Math.round(curveAt(MOB_HEAL_PCT, lv) * 100)}%`;
     case 'mob_loot':
-      return `品質+${MOB_DROP_QUALITY[lv]} / 装備率+${(MOB_DROP_BONUS[lv] * 100).toFixed(1)}% / EXP+${Math.round(MOB_EXP_PCT[lv] * 100)}%`;
+      return `品質+${curveAt(MOB_DROP_QUALITY, lv)} / 装備率+${(curveAt(MOB_DROP_BONUS, lv) * 100).toFixed(1)}% / EXP+${Math.round(curveAt(MOB_EXP_PCT, lv) * 100)}%`;
     case 'mob_dash':
-      return `連続${MOB_DASH_CHARGES[lv]}回 / 無敵${MOB_DASH_INVULN[lv].toFixed(2)}s / 加速+${Math.round(MOB_DASH_SPEED_BOOST[lv] * 100)}% / 回復${MOB_DASH_CD[lv].toFixed(1)}s`;
+      return `連続${curveAt(MOB_DASH_CHARGES, lv)}回 / 無敵${curveAt(MOB_DASH_INVULN, lv).toFixed(2)}s / 加速+${Math.round(curveAt(MOB_DASH_SPEED_BOOST, lv) * 100)}% / 回復${curveAt(MOB_DASH_CD, lv).toFixed(1)}s`;
   }
 }
 
@@ -374,7 +378,7 @@ function getSkillLevelDetailSummary(nodeId: SkillNodeId, level: number): string 
     case 'def_aegis':
       return `${base} / 無敵${BASE_HIT_INVULN_DURATION.toFixed(1)}s`;
     case 'mob_loot':
-      return `${base} / 宝+${Math.round(MOB_LOOT_PCT[level] * 100)}%`;
+      return `${base} / 宝+${Math.round(curveAt(MOB_LOOT_PCT, level) * 100)}%`;
     default:
       return base;
   }

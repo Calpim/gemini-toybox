@@ -44,7 +44,7 @@ export function findBfsSteerTarget(enemy: EnemyState, player: PlayerState, map: 
   }
 
   const currIdx = ety * map.width + etx;
-  const currDist = etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? bfsDist[currIdx] : -1;
+  const currDist = etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? (bfsDist[currIdx] ?? -1) : -1;
 
   let bestTx = etx;
   let bestTy = ety;
@@ -59,7 +59,7 @@ export function findBfsSteerTarget(enemy: EnemyState, player: PlayerState, map: 
     if (dx !== 0 && dy !== 0) {
       if (isWallTile(map, etx + dx, ety) || isWallTile(map, etx, ety + dy)) continue;
     }
-    const nd = bfsDist[ny * map.width + nx];
+    const nd = bfsDist[ny * map.width + nx] ?? -1;
     if (nd >= 0 && nd < bestDist) {
       bestDist = nd;
       bestTx = nx;
@@ -82,7 +82,7 @@ export function findScoutFleeTarget(
   const etx = Math.floor(enemy.x / TILE_SIZE);
   const ety = Math.floor(enemy.y / TILE_SIZE);
   const currIdx = ety * map.width + etx;
-  const currBfs = etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? bfsDist[currIdx] : 0;
+  const currBfs = etx >= 0 && ety >= 0 && etx < map.width && ety < map.height ? (bfsDist[currIdx] ?? 0) : 0;
 
   // If scout is inside a room, look for nearby corridor exits that lead away from (or not closer to) the player
   const scoutRoom = findRoomAtTile(map, etx, ety);
@@ -103,7 +103,7 @@ export function findScoutFleeTarget(
       if (c.tx <= 0 || c.ty <= 0 || c.tx >= map.width - 1 || c.ty >= map.height - 1) continue;
       if (isWallTile(map, c.tx, c.ty)) continue;
       const exitWorld = tileCenterWorld(c.tx, c.ty);
-      const exitBfs = bfsDist[c.ty * map.width + c.tx];
+      const exitBfs = bfsDist[c.ty * map.width + c.tx] ?? -1;
       const distFromScout = Math.hypot(exitWorld.x - enemy.x, exitWorld.y - enemy.y);
       const distFromPlayer = Math.hypot(exitWorld.x - player.x, exitWorld.y - player.y);
       const bfsGain = exitBfs >= 0 && currBfs >= 0 ? exitBfs - currBfs : 0;
@@ -141,7 +141,7 @@ export function findScoutFleeTarget(
       if (isWallTile(map, etx + dx, ety) || isWallTile(map, etx, ety + dy)) continue;
     }
     const nw = tileCenterWorld(nx, ny);
-    const nd = bfsDist[ny * map.width + nx];
+    const nd = bfsDist[ny * map.width + nx] ?? -1;
     const bfsScore = nd >= 0 ? nd * TILE_SIZE : 0;
     const distScore = Math.hypot(nw.x - player.x, nw.y - player.y);
     const exitBonus = preferredExit ? -Math.hypot(nw.x - preferredExit.x, nw.y - preferredExit.y) * exitWeight : 0;

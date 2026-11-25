@@ -245,7 +245,7 @@ export function stepPlayerCombat(
         let reflectedCount = 0;
         for (let bIdx = state.enemyProjectiles.length - 1; bIdx >= 0; bIdx--) {
           const ep = state.enemyProjectiles[bIdx];
-          if (ep.pierceDefense) continue;
+          if (!ep || ep.pierceDefense) continue;
           if (Math.hypot(ep.x - player.x, ep.y - player.y) > cappedRange + ep.radius) continue;
           if (!hasLineOfSight(player.x, player.y, ep.x, ep.y, map)) continue;
           const ba = Math.atan2(ep.y - player.y, ep.x - player.x);

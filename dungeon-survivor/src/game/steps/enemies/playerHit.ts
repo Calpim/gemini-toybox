@@ -102,6 +102,7 @@ export function stepEnemyProjectilesOnPlayer(state: GameState, mods: ComputedSki
   const { player } = state;
   for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
     const ep = state.enemyProjectiles[i];
+    if (!ep) continue;
     if (player.invulnTimer <= 0 && Math.hypot(player.x - ep.x, player.y - ep.y) <= player.radius + ep.radius) {
       state.enemyProjectiles.splice(i, 1);
       if (!ep.pierceDefense && tryAegisParry(state, mods)) {

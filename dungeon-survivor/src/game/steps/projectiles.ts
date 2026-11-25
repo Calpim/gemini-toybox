@@ -64,6 +64,7 @@ export function stepProjectiles(state: GameState, clampedDt: number, deps: Proje
 
   for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
     const ep = state.enemyProjectiles[i];
+    if (!ep) continue;
     if ((ep.homingRate ?? 0) > 0) {
       const spd = Math.hypot(ep.vx, ep.vy);
       if (spd > 1e-3) {
@@ -123,6 +124,7 @@ export function stepProjectiles(state: GameState, clampedDt: number, deps: Proje
   // 8. Player projectiles & wall/enemy collision + homing/orbiting ricochet disc (APP-CMB-03, APP-CMB-05)
   for (let i = state.projectiles.length - 1; i >= 0; i--) {
     const proj = state.projectiles[i];
+    if (!proj) continue;
     proj.life -= clampedDt;
 
     if (proj.kind === 'disc') {

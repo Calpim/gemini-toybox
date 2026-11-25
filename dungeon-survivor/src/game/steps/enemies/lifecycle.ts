@@ -178,6 +178,7 @@ export function stepFloorRespawn(state: GameState, clampedDt: number, rng: Retur
           if (candidates.length === 0) break;
           const pickIdx = rng.int(0, candidates.length - 1);
           const picked = candidates.splice(pickIdx, 1)[0];
+          if (!picked) continue;
           const pos = tileCenterWorld(picked.tx, picked.ty);
           const kind = pickEnemyKindForFloor(state.floor, rng.next());
           const spawned = createEnemyByKind(state.nextEntityId++, kind, pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
@@ -193,6 +194,7 @@ export function stepFloorRespawn(state: GameState, clampedDt: number, rng: Retur
               let bestDist = Infinity;
               for (let cIdx = 0; cIdx < candidates.length; cIdx++) {
                 const c = candidates[cIdx];
+                if (!c) continue;
                 const d = Math.hypot(c.tx - picked.tx, c.ty - picked.ty);
                 if (d < bestDist) {
                   bestDist = d;
@@ -200,6 +202,7 @@ export function stepFloorRespawn(state: GameState, clampedDt: number, rng: Retur
                 }
               }
               const extraTile = candidates.splice(bestCandIdx, 1)[0];
+              if (!extraTile) continue;
               const extraPos = tileCenterWorld(extraTile.tx, extraTile.ty);
               const follower = createEnemyByKind(
                 state.nextEntityId++,

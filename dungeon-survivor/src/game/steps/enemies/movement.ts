@@ -85,6 +85,7 @@ export function stepEnemyMovement(
     for (let j = 0; j < state.enemies.length; j++) {
       if (enemyIndex === j) continue;
       const other = state.enemies[j];
+      if (!other) continue;
       const sx = enemy.x - other.x;
       const sy = enemy.y - other.y;
       const sd = Math.hypot(sx, sy);
