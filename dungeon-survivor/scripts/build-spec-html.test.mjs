@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -15,9 +17,13 @@ import {
   parseStateTransitions,
   parseInvariants,
   parseDecisionLog,
+  resolveDecisionAddendums,
   buildFormulaChartsData,
   loadExtendedSpecs,
   validateExtendedSpecs,
+  validateInvariantTests,
+  validateNoLineNumberRefs,
+  validateSymbolRefs,
 } from './build-spec-html.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -439,5 +445,192 @@ stateDiagram-v2
     });
     assert.equal(validation.disputedTerms.length, 1);
     assert.equal(validation.undefinedTransitions.length, 1);
+  });
+
+  it('resolves all actual project decision addendums mechanically and renders overridden badge + grouped rows', () => {
+    const biz = loadFeaturesFromDir(path.join(projectRoot, 'specs', 'business'));
+    const app = loadFeaturesFromDir(path.join(projectRoot, 'specs', 'app'));
+    const graph = buildTraceabilityGraph(biz, app);
+    const extended = loadExtendedSpecs(projectRoot);
+    const resolved = resolveDecisionAddendums(extended.decisions);
+
+    assert.equal(resolved.unmatchedAddendums.length, 0);
+    assert.equal(resolved.matchedAddendumIds.size, 10);
+    for (const baseId of [
+      'DEC-03',
+      'DEC-06',
+      'DEC-07',
+      'DEC-08',
+      'DEC-10',
+      'DEC-11',
+      'DEC-12',
+      'DEC-17',
+      'DEC-18',
+      'DEC-19',
+    ]) {
+      const list = resolved.addendumsByBaseId.get(baseId);
+      assert.ok(list && list.length === 1, `Expected 1 addendum for ${baseId}`);
+      assert.equal(list[0].id, `${baseId}-addendum`);
+    }
+
+    const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extended);
+    const decStart = html.indexOf('<section id="sec-decisions"');
+    const decSlice = html.slice(decStart);
+    assert.match(decSlice, /id="DEC-10"[\s\S]*?badge-overridden">上書きあり<\/span>[\s\S]*?<\/tr>\s*<tr id="DEC-10-addendum" class="spec-row decision-addendum-row"/);
+    assert.equal((decSlice.match(/<tr id="DEC-10-addendum"/g) || []).length, 1);
+  });
+
+  it('leaves addendums unmatched when baseId is missing from refs, base DEC does not exist, or naming does not match', () => {
+    const decisions = parseDecisionLog(
+      `| ID | 日付 | 決定者 | 決定事項 | 理由・背景 | 状態 | 状態遷移 | 関連ID | 再検討トリガー |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DEC-01 | 2026-11-14 | 先輩 | 元決定1 | 理由 | Confirmed | - | GLS-01 | - |
+| DEC-02 | 2026-11-14 | 先輩 | 元決定2 | 理由 | Confirmed | - | GLS-02 | - |
+| DEC-01-addendum | 2026-11-25 | 先輩 | 正しく紐付く追記 | 理由 | Confirmed | 補足 | DEC-01, DEC-02 | - |
+| DEC-02-addendum | 2026-11-25 | 先輩 | refsにDEC-02なし | 理由 | Confirmed | 補足 | DEC-01 | - |
+| DEC-99-addendum | 2026-11-25 | 先輩 | 元DEC不在 | 理由 | Confirmed | 補足 | DEC-99 | - |
+| CUSTOM-addendum | 2026-11-25 | 先輩 | 命名規則外 | 理由 | Confirmed | 補足 | DEC-01 | - |
+`,
+      'specs/decisions.md'
+    );
+
+    const resolved = resolveDecisionAddendums(decisions);
+    assert.equal(resolved.matchedAddendumIds.size, 1);
+    assert.ok(resolved.matchedAddendumIds.has('DEC-01-addendum'));
+    assert.deepEqual(
+      resolved.unmatchedAddendums.map((x) => x.id),
+      ['DEC-02-addendum', 'DEC-99-addendum', 'CUSTOM-addendum']
+    );
+
+    const graph = buildTraceabilityGraph([], []);
+    const html = renderHtml(graph, 'Test', { decisions });
+    const decSlice = html.slice(html.indexOf('<section id="sec-decisions"'));
+    // DEC-01-addendum is grouped right below DEC-01 (before DEC-02) with no duplicate
+    assert.match(decSlice, /id="DEC-01"[\s\S]*?上書きあり[\s\S]*?<\/tr>\s*<tr id="DEC-01-addendum" class="spec-row decision-addendum-row"[\s\S]*?<tr id="DEC-02"/);
+    assert.equal((decSlice.match(/<tr id="DEC-01-addendum"/g) || []).length, 1);
+    // DEC-02 has no matched addendum, so no overridden badge
+    assert.doesNotMatch(decSlice, /id="DEC-02"[\s\S]*?上書きあり[\s\S]*?<\/tr>/);
+    // Unmatched addendums remain as normal rows without decision-addendum-row class
+    assert.match(decSlice, /<tr id="DEC-02-addendum" class="spec-row"/);
+    assert.match(decSlice, /<tr id="DEC-99-addendum" class="spec-row"/);
+    assert.match(decSlice, /<tr id="CUSTOM-addendum" class="spec-row"/);
+  });
+
+  it('validates all actual project invariant test references with zero broken links', () => {
+    const extended = loadExtendedSpecs(projectRoot);
+    const result = validateInvariantTests(extended.invariants, projectRoot);
+    assert.ok(result.checkedCount >= 14, `Expected >= 14 checked invariant test tags, got ${result.checkedCount}`);
+    assert.deepEqual(result.brokenInvariantTests, []);
+  });
+
+  it('detects broken single/composite test tags, missing test files, and missing tags while skipping non-test rows', () => {
+    const mockInvariants = parseInvariants(
+      `| ID | 分類 | 不変条件 | 検証箇所 | 状態 | 関連ID | 備考 |
+| --- | --- | --- | --- | --- | --- | --- |
+| INV-OK | 正常 | 正常参照 | \`src/game/engine.test.ts\` (\`[APP-MAP-03]\`, \`[INV-09 / APP-GRW-04]\`) | Confirmed | APP-MAP-03 | ok |
+| INV-SKIP | 対象外 | テストファイル参照なし | \`src/main.ts#L403\`, \`src/core/collision.ts\` | Inferred | APP-MAP-02 | skip |
+| INV-BAD-SINGLE | 異常1 | 存在しない単一タグ | \`src/game/engine.test.ts\` (\`[APP-FAKE-99]\`) | Confirmed | APP-MAP-03 | fail |
+| INV-BAD-COMP | 異常2 | 片方不在の複合タグ | \`src/game/engine.test.ts\` (\`[INV-09 / APP-FAKE-99]\`) | Confirmed | APP-MAP-03 | fail |
+| INV-BAD-FILE | 異常3 | 存在しないテストファイル | \`src/game/nonexistent.test.ts\` (\`[APP-MAP-01]\`) | Confirmed | APP-MAP-01 | fail |
+| INV-NO-TAG | 異常4 | タグ記載なし | \`src/game/engine.test.ts\` | Confirmed | APP-MAP-03 | fail |
+`,
+      'specs/invariants.md'
+    );
+
+    const result = validateInvariantTests(mockInvariants, projectRoot);
+    assert.equal(result.brokenInvariantTests.length, 4);
+    assert.deepEqual(
+      result.brokenInvariantTests.map((b) => ({
+        invariantId: b.invariantId,
+        tag: b.tag,
+        reason: b.reason,
+      })),
+      [
+        { invariantId: 'INV-BAD-SINGLE', tag: '[APP-FAKE-99]', reason: 'missing test tag in file' },
+        { invariantId: 'INV-BAD-COMP', tag: '[INV-09 / APP-FAKE-99]', reason: 'missing test tag in file' },
+        { invariantId: 'INV-BAD-FILE', tag: '[APP-MAP-01]', reason: 'missing test file' },
+        { invariantId: 'INV-NO-TAG', tag: null, reason: 'missing test tag' },
+      ]
+    );
+  });
+
+  it('detects line-number code references (#L123 etc.) in dummy spec files without false positives on symbol refs', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spec-lineref-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'bad.md'),
+        `| ID | ref |\n| --- | --- |\n| X1 | \`src/game/engine.ts#L123\` |\n| X2 | \`src/game/engine.ts#L10-L20,L30\` |\n`,
+        'utf8'
+      );
+      fs.writeFileSync(
+        path.join(tmpDir, 'clean.md'),
+        `| ID | ref |\n| --- | --- |\n| C1 | \`src/game/engine.ts#stepGame\`, Lv10, #GLS-01 |\n`,
+        'utf8'
+      );
+      const result = validateNoLineNumberRefs(tmpDir, { specsDir: tmpDir });
+      assert.equal(result.checkedFiles, 2);
+      assert.equal(result.lineNumberRefs.length, 2);
+      assert.equal(result.lineNumberRefs[0].file, 'bad.md');
+      assert.equal(result.lineNumberRefs[0].line, 3);
+      assert.equal(result.lineNumberRefs[0].match, '#L123');
+      assert.equal(result.lineNumberRefs[1].file, 'bad.md');
+      assert.equal(result.lineNumberRefs[1].line, 4);
+      assert.match(result.lineNumberRefs[1].match, /#L10-L20,L30/);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('ensures zero line-number code references (#L...) remain in actual project specs/', () => {
+    const result = validateNoLineNumberRefs(projectRoot);
+    assert.ok(result.checkedFiles >= 14, `Expected >= 14 spec files, got ${result.checkedFiles}`);
+    assert.deepEqual(result.lineNumberRefs, []);
+  });
+
+  it('validates all actual project symbol code references (src/...#symbol) with zero broken links', () => {
+    const result = validateSymbolRefs(projectRoot);
+    assert.equal(result.checkedCount, 84);
+    assert.deepEqual(result.brokenSymbolRefs, []);
+  });
+
+  it('detects missing symbols and missing target files in validateSymbolRefs', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'spec-symref-test-'));
+    try {
+      fs.writeFileSync(
+        path.join(tmpDir, 'refs.md'),
+        [
+          '| ID | ref |',
+          '| --- | --- |',
+          '| OK1 | `src/game/engine.ts#stepGame` |',
+          '| BAD_SYM | `src/game/engine.ts#nonExistentSymbolFoo` |',
+          '| BAD_FILE | `src/game/nonexistent.ts#foo` |',
+        ].join('\n') + '\n',
+        'utf8'
+      );
+      const result = validateSymbolRefs(projectRoot, { specsDir: tmpDir });
+      assert.equal(result.checkedCount, 3);
+      assert.equal(result.brokenSymbolRefs.length, 2);
+      assert.deepEqual(
+        result.brokenSymbolRefs.map((b) => ({
+          targetFile: b.targetFile,
+          symbol: b.symbol,
+          reason: b.reason,
+        })),
+        [
+          {
+            targetFile: 'src/game/engine.ts',
+            symbol: 'nonExistentSymbolFoo',
+            reason: 'missing symbol declaration',
+          },
+          {
+            targetFile: 'src/game/nonexistent.ts',
+            symbol: 'foo',
+            reason: 'missing target file',
+          },
+        ]
+      );
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });

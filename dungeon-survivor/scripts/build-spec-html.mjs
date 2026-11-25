@@ -520,6 +520,42 @@ export function parseDecisionLog(content, filePath = 'specs/decisions.md') {
   };
 }
 
+export function resolveDecisionAddendums(decisions) {
+  const items = decisions?.items || [];
+  const baseIds = new Set(
+    items
+      .filter((item) => item.id && !item.id.endsWith('-addendum'))
+      .map((item) => item.id)
+  );
+  const addendumsByBaseId = new Map();
+  const unmatchedAddendums = [];
+  const matchedAddendumIds = new Set();
+
+  for (const item of items) {
+    if (!item.id || !item.id.endsWith('-addendum')) continue;
+    const match = item.id.match(/^(DEC-\d+)-addendum$/);
+    const baseId = match ? match[1] : null;
+    const hasBaseInRefs = Boolean(baseId && Array.isArray(item.refs) && item.refs.includes(baseId));
+    const baseExists = Boolean(baseId && baseIds.has(baseId));
+
+    if (baseId && hasBaseInRefs && baseExists) {
+      if (!addendumsByBaseId.has(baseId)) {
+        addendumsByBaseId.set(baseId, []);
+      }
+      addendumsByBaseId.get(baseId).push(item);
+      matchedAddendumIds.add(item.id);
+    } else {
+      unmatchedAddendums.push(item);
+    }
+  }
+
+  return {
+    addendumsByBaseId,
+    unmatchedAddendums,
+    matchedAddendumIds,
+  };
+}
+
 export function extractFormulaParamValues(parameters) {
   const byId = new Map((parameters?.items || []).map((p) => [p.id, String(p.value || '')]));
   const getVal = (id) => byId.get(id) || '';
@@ -966,6 +1002,228 @@ export function validateExtendedSpecs(graph, extendedSpecs) {
   };
 }
 
+function tokenizeTagBlock(inner) {
+  return String(inner || '')
+    .split(/\s*(?:&|\/|,)\s*/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+function extractTestTitleTagSets(fileContent) {
+  const tagSets = [];
+  const titleRegex = /\b(?:describe|it|test)\s*\(\s*(['"`])((?:\\.|(?!\1)[^\\\n])+)\1/g;
+  let titleMatch;
+  while ((titleMatch = titleRegex.exec(fileContent)) !== null) {
+    const title = titleMatch[2];
+    const bracketRegex = /\[([^\]]+)\]/g;
+    let bracketMatch;
+    while ((bracketMatch = bracketRegex.exec(title)) !== null) {
+      const tokens = tokenizeTagBlock(bracketMatch[1]);
+      if (tokens.length > 0) {
+        tagSets.push(new Set(tokens));
+      }
+    }
+  }
+  return tagSets;
+}
+
+export function validateInvariantTests(invariants, projectRoot) {
+  const items = invariants?.items || [];
+  const brokenInvariantTests = [];
+  const fileCache = new Map();
+  let checkedCount = 0;
+
+  const getFileTagSets = (relPath) => {
+    if (fileCache.has(relPath)) return fileCache.get(relPath);
+    const fullPath = path.join(projectRoot, relPath);
+    if (!fs.existsSync(fullPath)) {
+      fileCache.set(relPath, null);
+      return null;
+    }
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const sets = extractTestTitleTagSets(content);
+    fileCache.set(relPath, sets);
+    return sets;
+  };
+
+  const testRefRegex = /`([^`]+\.test\.ts)`(?:\s*\(([^)]*)\))?/g;
+  for (const item of items) {
+    const verification = String(item.verification || '');
+    let refMatch;
+    testRefRegex.lastIndex = 0;
+    while ((refMatch = testRefRegex.exec(verification)) !== null) {
+      const testFile = refMatch[1].trim();
+      const parenContent = refMatch[2] ?? '';
+      const bracketRegex = /\[([^\]]+)\]/g;
+      const tags = [];
+      let bm;
+      while ((bm = bracketRegex.exec(parenContent)) !== null) {
+        tags.push(bm[1].trim());
+      }
+
+      if (tags.length === 0) {
+        brokenInvariantTests.push({
+          invariantId: item.id || '(NO-ID)',
+          testFile,
+          tag: null,
+          reason: 'missing test tag',
+        });
+        continue;
+      }
+
+      const fileTagSets = getFileTagSets(testFile);
+      if (fileTagSets === null) {
+        for (const tagInner of tags) {
+          brokenInvariantTests.push({
+            invariantId: item.id || '(NO-ID)',
+            testFile,
+            tag: `[${tagInner}]`,
+            reason: 'missing test file',
+          });
+        }
+        continue;
+      }
+
+      for (const tagInner of tags) {
+        checkedCount += 1;
+        const requiredTokens = tokenizeTagBlock(tagInner);
+        const found =
+          requiredTokens.length > 0 &&
+          fileTagSets.some((tokenSet) => requiredTokens.every((tok) => tokenSet.has(tok)));
+        if (!found) {
+          brokenInvariantTests.push({
+            invariantId: item.id || '(NO-ID)',
+            testFile,
+            tag: `[${tagInner}]`,
+            reason: 'missing test tag in file',
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    checkedCount,
+    brokenInvariantTests,
+  };
+}
+
+function collectSpecFilesRecursive(dirPath, result = []) {
+  if (!fs.existsSync(dirPath)) return result;
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+  for (const entry of entries) {
+    const full = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      collectSpecFilesRecursive(full, result);
+    } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.feature'))) {
+      result.push(full);
+    }
+  }
+  return result;
+}
+
+export function validateNoLineNumberRefs(projectRoot, options = {}) {
+  const specsDir = options.specsDir ? path.resolve(options.specsDir) : path.join(projectRoot, 'specs');
+  const files = collectSpecFilesRecursive(specsDir);
+  const lineNumberRefs = [];
+  const lineRefRegex = /(?:#L\d+(?:[-,]L?\d+)*|\b(?:src|scripts|specs)\/[^\s`)|]+,L\d+(?:[-,]L?\d+)*)/g;
+
+  for (const fullPath of files) {
+    const relPath = path.relative(projectRoot, fullPath).replaceAll('\\', '/');
+    const lines = fs.readFileSync(fullPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      lineRefRegex.lastIndex = 0;
+      let m;
+      while ((m = lineRefRegex.exec(line)) !== null) {
+        lineNumberRefs.push({
+          file: relPath,
+          line: i + 1,
+          match: m[0],
+          text: line.trim(),
+        });
+      }
+    }
+  }
+
+  return {
+    checkedFiles: files.length,
+    lineNumberRefs,
+  };
+}
+
+export function validateSymbolRefs(projectRoot, options = {}) {
+  const specsDir = options.specsDir ? path.resolve(options.specsDir) : path.join(projectRoot, 'specs');
+  const files = collectSpecFilesRecursive(specsDir).filter((f) => f.endsWith('.md'));
+  const uniqueRefs = new Map();
+  const symbolRefRegex = /\b(src\/[A-Za-z0-9_./-]+\.ts)#([A-Za-z_][A-Za-z0-9_]*)/g;
+
+  for (const fullPath of files) {
+    const specFile = path.relative(projectRoot, fullPath).replaceAll('\\', '/');
+    const lines = fs.readFileSync(fullPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      symbolRefRegex.lastIndex = 0;
+      let m;
+      while ((m = symbolRefRegex.exec(line)) !== null) {
+        const targetFile = m[1];
+        const symbol = m[2];
+        const ref = `${targetFile}#${symbol}`;
+        if (!uniqueRefs.has(ref)) {
+          uniqueRefs.set(ref, {
+            specFile,
+            line: i + 1,
+            ref,
+            targetFile,
+            symbol,
+          });
+        }
+      }
+    }
+  }
+
+  const fileCache = new Map();
+  const getTargetContent = (targetFile) => {
+    if (fileCache.has(targetFile)) return fileCache.get(targetFile);
+    const fullPath = path.join(projectRoot, targetFile);
+    if (!fs.existsSync(fullPath)) {
+      fileCache.set(targetFile, null);
+      return null;
+    }
+    const content = fs.readFileSync(fullPath, 'utf8');
+    fileCache.set(targetFile, content);
+    return content;
+  };
+
+  const brokenSymbolRefs = [];
+  for (const entry of uniqueRefs.values()) {
+    const content = getTargetContent(entry.targetFile);
+    if (content === null) {
+      brokenSymbolRefs.push({
+        ...entry,
+        reason: 'missing target file',
+      });
+      continue;
+    }
+
+    const declRegex = new RegExp(
+      `\\b(?:function|const|let|var|class|interface|type|enum)\\s+${entry.symbol}\\b`
+    );
+    const memberRegex = new RegExp(`\\b${entry.symbol}\\s*[:=(]`);
+    if (!declRegex.test(content) && !memberRegex.test(content)) {
+      brokenSymbolRefs.push({
+        ...entry,
+        reason: 'missing symbol declaration',
+      });
+    }
+  }
+
+  return {
+    checkedCount: uniqueRefs.size,
+    brokenSymbolRefs,
+  };
+}
+
 function escapeHtml(str) {
   return String(str)
     .replaceAll('&', '&amp;')
@@ -1367,19 +1625,42 @@ function renderInvariantsSection(invariants) {
 
 function renderDecisionsSection(decisions) {
   if (!decisions) return '';
-  const rows = decisions.items
-    .map(
-      (item) => `
-      <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="decisions" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+  const { addendumsByBaseId, matchedAddendumIds } = resolveDecisionAddendums(decisions);
+
+  const renderDecisionRow = (item, { isOverridden = false, isAddendum = false, baseId = '' } = {}) => {
+    const rowClasses = [
+      'spec-row',
+      isOverridden ? 'decision-overridden-row' : '',
+      isAddendum ? 'decision-addendum-row' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const parentAttr = isAddendum && baseId ? ` data-parent-id="${escapeHtml(baseId)}"` : '';
+    const idCell = isAddendum
+      ? `<span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>`
+      : `<a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>${isOverridden ? '<div class="sub-code"><span class="badge badge-overridden">上書きあり</span></div>' : ''}`;
+
+    return `
+      <tr id="${escapeHtml(item.id)}" class="${rowClasses}" data-section="decisions" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}"${parentAttr}>
+        <td>${idCell}</td>
         <td><span class="date-pill">${escapeHtml(item.date)}</span><div class="sub-code">${escapeHtml(item.decider)}</div></td>
         <td><strong>${renderInlineCodeText(item.decision)}</strong><div class="note-text">${renderInlineCodeText(item.reason)}</div></td>
         <td>${renderStatusBadge(item.status)}${item.transition ? `<div class="sub-code">${escapeHtml(item.transition)}</div>` : ''}</td>
         <td>${renderRefLinks(item.refs)}</td>
         <td>${item.revisitTrigger ? `<div class="note-text">${renderInlineCodeText(item.revisitTrigger)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
-      </tr>`
-    )
-    .join('');
+      </tr>`;
+  };
+
+  const renderedRows = [];
+  for (const item of decisions.items) {
+    if (matchedAddendumIds.has(item.id)) continue;
+    const attached = addendumsByBaseId.get(item.id) || [];
+    renderedRows.push(renderDecisionRow(item, { isOverridden: attached.length > 0 }));
+    for (const addendum of attached) {
+      renderedRows.push(renderDecisionRow(addendum, { isAddendum: true, baseId: item.id }));
+    }
+  }
+  const rows = renderedRows.join('');
 
   return `
   <section id="sec-decisions" class="doc-section" data-section-name="decisions">
@@ -1885,6 +2166,10 @@ export function renderHtml(
     .badge-implemented { background: rgba(56, 189, 248, 0.16); color: var(--biz); border: 1px solid rgba(56, 189, 248, 0.4); }
     .badge-disputed { background: rgba(248, 113, 113, 0.16); color: var(--disputed); border: 1px solid rgba(248, 113, 113, 0.4); }
     .badge-unknown { background: rgba(148, 163, 184, 0.16); color: var(--muted); border: 1px solid rgba(148, 163, 184, 0.35); }
+    .badge-overridden { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); }
+    .decision-addendum-row { background: rgba(56, 189, 248, 0.05); }
+    .decision-addendum-row td:first-child { padding-left: 22px; border-left: 3px solid rgba(56, 189, 248, 0.55); }
+    .addendum-indent { color: #38bdf8; font-weight: 700; margin-right: 4px; }
     h3 { margin: 4px 0 10px; font-size: 17px; color: #f8fafc; }
     h4 { margin: 4px 0 10px; font-size: 15px; color: #f1f5f9; }
     .steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -2555,12 +2840,23 @@ export function generateSpecHtml({ projectRoot, outPath }) {
   const graph = buildTraceabilityGraph(businessFeatures, appFeatures);
   const extendedSpecs = loadExtendedSpecs(projectRoot);
   const extValidation = validateExtendedSpecs(graph, extendedSpecs);
+  const invariantTestValidation = validateInvariantTests(extendedSpecs.invariants, projectRoot);
+  const lineNumberRefValidation = validateNoLineNumberRefs(projectRoot);
+  const symbolRefValidation = validateSymbolRefs(projectRoot);
   const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extendedSpecs);
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, html, 'utf8');
 
-  return { graph, extendedSpecs, extValidation, outPath };
+  return {
+    graph,
+    extendedSpecs,
+    extValidation,
+    invariantTestValidation,
+    lineNumberRefValidation,
+    symbolRefValidation,
+    outPath,
+  };
 }
 
 // CLI entry point
@@ -2572,15 +2868,28 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       ? path.resolve(process.argv[outArgIndex + 1])
       : path.join(projectRoot, 'docs', 'specs.html');
 
-  const { graph, extValidation } = generateSpecHtml({ projectRoot, outPath });
+  const { graph, extValidation, invariantTestValidation, lineNumberRefValidation, symbolRefValidation } =
+    generateSpecHtml({
+      projectRoot,
+      outPath,
+    });
   console.log(
-    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
+    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, LineNumRefs=${lineNumberRefValidation.lineNumberRefs.length}, SymbolRefs=${symbolRefValidation.checkedCount}, SymbolRefBroken=${symbolRefValidation.brokenSymbolRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
   );
-  if (graph.stats.brokenCount > 0 || extValidation.brokenDocRefs.length > 0) {
+  if (
+    graph.stats.brokenCount > 0 ||
+    extValidation.brokenDocRefs.length > 0 ||
+    invariantTestValidation.brokenInvariantTests.length > 0 ||
+    lineNumberRefValidation.lineNumberRefs.length > 0 ||
+    symbolRefValidation.brokenSymbolRefs.length > 0
+  ) {
     console.error('Traceability issues found:', {
       unlinkedBiz: graph.unlinkedBiz,
       orphanApps: graph.orphanApps,
       brokenDocRefs: extValidation.brokenDocRefs,
+      brokenInvariantTests: invariantTestValidation.brokenInvariantTests,
+      lineNumberRefs: lineNumberRefValidation.lineNumberRefs,
+      brokenSymbolRefs: symbolRefValidation.brokenSymbolRefs,
     });
     process.exitCode = 1;
   }
