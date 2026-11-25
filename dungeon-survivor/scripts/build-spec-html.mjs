@@ -1002,6 +1002,112 @@ export function validateExtendedSpecs(graph, extendedSpecs) {
   };
 }
 
+function tokenizeTagBlock(inner) {
+  return String(inner || '')
+    .split(/\s*(?:&|\/|,)\s*/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+function extractTestTitleTagSets(fileContent) {
+  const tagSets = [];
+  const titleRegex = /\b(?:describe|it|test)\s*\(\s*(['"`])((?:\\.|(?!\1)[^\\\n])+)\1/g;
+  let titleMatch;
+  while ((titleMatch = titleRegex.exec(fileContent)) !== null) {
+    const title = titleMatch[2];
+    const bracketRegex = /\[([^\]]+)\]/g;
+    let bracketMatch;
+    while ((bracketMatch = bracketRegex.exec(title)) !== null) {
+      const tokens = tokenizeTagBlock(bracketMatch[1]);
+      if (tokens.length > 0) {
+        tagSets.push(new Set(tokens));
+      }
+    }
+  }
+  return tagSets;
+}
+
+export function validateInvariantTests(invariants, projectRoot) {
+  const items = invariants?.items || [];
+  const brokenInvariantTests = [];
+  const fileCache = new Map();
+  let checkedCount = 0;
+
+  const getFileTagSets = (relPath) => {
+    if (fileCache.has(relPath)) return fileCache.get(relPath);
+    const fullPath = path.join(projectRoot, relPath);
+    if (!fs.existsSync(fullPath)) {
+      fileCache.set(relPath, null);
+      return null;
+    }
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const sets = extractTestTitleTagSets(content);
+    fileCache.set(relPath, sets);
+    return sets;
+  };
+
+  const testRefRegex = /`([^`]+\.test\.ts)`(?:\s*\(([^)]*)\))?/g;
+  for (const item of items) {
+    const verification = String(item.verification || '');
+    let refMatch;
+    testRefRegex.lastIndex = 0;
+    while ((refMatch = testRefRegex.exec(verification)) !== null) {
+      const testFile = refMatch[1].trim();
+      const parenContent = refMatch[2] ?? '';
+      const bracketRegex = /\[([^\]]+)\]/g;
+      const tags = [];
+      let bm;
+      while ((bm = bracketRegex.exec(parenContent)) !== null) {
+        tags.push(bm[1].trim());
+      }
+
+      if (tags.length === 0) {
+        brokenInvariantTests.push({
+          invariantId: item.id || '(NO-ID)',
+          testFile,
+          tag: null,
+          reason: 'missing test tag',
+        });
+        continue;
+      }
+
+      const fileTagSets = getFileTagSets(testFile);
+      if (fileTagSets === null) {
+        for (const tagInner of tags) {
+          brokenInvariantTests.push({
+            invariantId: item.id || '(NO-ID)',
+            testFile,
+            tag: `[${tagInner}]`,
+            reason: 'missing test file',
+          });
+        }
+        continue;
+      }
+
+      for (const tagInner of tags) {
+        checkedCount += 1;
+        const requiredTokens = tokenizeTagBlock(tagInner);
+        const found =
+          requiredTokens.length > 0 &&
+          fileTagSets.some((tokenSet) => requiredTokens.every((tok) => tokenSet.has(tok)));
+        if (!found) {
+          brokenInvariantTests.push({
+            invariantId: item.id || '(NO-ID)',
+            testFile,
+            tag: `[${tagInner}]`,
+            reason: 'missing test tag in file',
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    checkedCount,
+    brokenInvariantTests,
+  };
+}
+
 function escapeHtml(str) {
   return String(str)
     .replaceAll('&', '&amp;')
@@ -2618,12 +2724,13 @@ export function generateSpecHtml({ projectRoot, outPath }) {
   const graph = buildTraceabilityGraph(businessFeatures, appFeatures);
   const extendedSpecs = loadExtendedSpecs(projectRoot);
   const extValidation = validateExtendedSpecs(graph, extendedSpecs);
+  const invariantTestValidation = validateInvariantTests(extendedSpecs.invariants, projectRoot);
   const html = renderHtml(graph, 'Dungeon Survivor — 仕様書ビューア', extendedSpecs);
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, html, 'utf8');
 
-  return { graph, extendedSpecs, extValidation, outPath };
+  return { graph, extendedSpecs, extValidation, invariantTestValidation, outPath };
 }
 
 // CLI entry point
@@ -2635,15 +2742,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       ? path.resolve(process.argv[outArgIndex + 1])
       : path.join(projectRoot, 'docs', 'specs.html');
 
-  const { graph, extValidation } = generateSpecHtml({ projectRoot, outPath });
+  const { graph, extValidation, invariantTestValidation } = generateSpecHtml({ projectRoot, outPath });
   console.log(
-    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
+    `Generated ${outPath} (BIZ=${graph.stats.bizCount}, APP=${graph.stats.appCount}, Confirmed=${graph.stats.confirmedCount}, Inferred=${graph.stats.inferredCount}, Broken=${graph.stats.brokenCount}, ExtDocs=${extValidation.allDocItemsCount}, ExtBroken=${extValidation.brokenDocRefs.length}, InvTests=${invariantTestValidation.checkedCount}, InvTestBroken=${invariantTestValidation.brokenInvariantTests.length}, DisputedTerms=${extValidation.disputedTerms.length}, UndefTransitions=${extValidation.undefinedTransitions.length})`
   );
-  if (graph.stats.brokenCount > 0 || extValidation.brokenDocRefs.length > 0) {
+  if (
+    graph.stats.brokenCount > 0 ||
+    extValidation.brokenDocRefs.length > 0 ||
+    invariantTestValidation.brokenInvariantTests.length > 0
+  ) {
     console.error('Traceability issues found:', {
       unlinkedBiz: graph.unlinkedBiz,
       orphanApps: graph.orphanApps,
       brokenDocRefs: extValidation.brokenDocRefs,
+      brokenInvariantTests: invariantTestValidation.brokenInvariantTests,
     });
     process.exitCode = 1;
   }

@@ -19,6 +19,7 @@ import {
   buildFormulaChartsData,
   loadExtendedSpecs,
   validateExtendedSpecs,
+  validateInvariantTests,
 } from './build-spec-html.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -509,5 +510,43 @@ stateDiagram-v2
     assert.match(decSlice, /<tr id="DEC-02-addendum" class="spec-row"/);
     assert.match(decSlice, /<tr id="DEC-99-addendum" class="spec-row"/);
     assert.match(decSlice, /<tr id="CUSTOM-addendum" class="spec-row"/);
+  });
+
+  it('validates all actual project invariant test references with zero broken links', () => {
+    const extended = loadExtendedSpecs(projectRoot);
+    const result = validateInvariantTests(extended.invariants, projectRoot);
+    assert.ok(result.checkedCount >= 14, `Expected >= 14 checked invariant test tags, got ${result.checkedCount}`);
+    assert.deepEqual(result.brokenInvariantTests, []);
+  });
+
+  it('detects broken single/composite test tags, missing test files, and missing tags while skipping non-test rows', () => {
+    const mockInvariants = parseInvariants(
+      `| ID | 分類 | 不変条件 | 検証箇所 | 状態 | 関連ID | 備考 |
+| --- | --- | --- | --- | --- | --- | --- |
+| INV-OK | 正常 | 正常参照 | \`src/game/engine.test.ts\` (\`[APP-MAP-03]\`, \`[INV-09 / APP-GRW-04]\`) | Confirmed | APP-MAP-03 | ok |
+| INV-SKIP | 対象外 | テストファイル参照なし | \`src/main.ts#L403\`, \`src/core/collision.ts\` | Inferred | APP-MAP-02 | skip |
+| INV-BAD-SINGLE | 異常1 | 存在しない単一タグ | \`src/game/engine.test.ts\` (\`[APP-FAKE-99]\`) | Confirmed | APP-MAP-03 | fail |
+| INV-BAD-COMP | 異常2 | 片方不在の複合タグ | \`src/game/engine.test.ts\` (\`[INV-09 / APP-FAKE-99]\`) | Confirmed | APP-MAP-03 | fail |
+| INV-BAD-FILE | 異常3 | 存在しないテストファイル | \`src/game/nonexistent.test.ts\` (\`[APP-MAP-01]\`) | Confirmed | APP-MAP-01 | fail |
+| INV-NO-TAG | 異常4 | タグ記載なし | \`src/game/engine.test.ts\` | Confirmed | APP-MAP-03 | fail |
+`,
+      'specs/invariants.md'
+    );
+
+    const result = validateInvariantTests(mockInvariants, projectRoot);
+    assert.equal(result.brokenInvariantTests.length, 4);
+    assert.deepEqual(
+      result.brokenInvariantTests.map((b) => ({
+        invariantId: b.invariantId,
+        tag: b.tag,
+        reason: b.reason,
+      })),
+      [
+        { invariantId: 'INV-BAD-SINGLE', tag: '[APP-FAKE-99]', reason: 'missing test tag in file' },
+        { invariantId: 'INV-BAD-COMP', tag: '[INV-09 / APP-FAKE-99]', reason: 'missing test tag in file' },
+        { invariantId: 'INV-BAD-FILE', tag: '[APP-MAP-01]', reason: 'missing test file' },
+        { invariantId: 'INV-NO-TAG', tag: null, reason: 'missing test tag' },
+      ]
+    );
   });
 });
