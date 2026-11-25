@@ -217,8 +217,8 @@ class MockElement {
       type,
       target: this,
       currentTarget: this,
-      pointerType: opts.pointerType,
-      key: opts.key,
+      ...(opts.pointerType !== undefined ? { pointerType: opts.pointerType } : {}),
+      ...(opts.key !== undefined ? { key: opts.key } : {}),
       defaultPrevented: false,
       propagationStopped: false,
       preventDefault() {

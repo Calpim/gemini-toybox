@@ -363,7 +363,7 @@ export function stepShooterEnemyAttack(
           damage: enemy.damage,
           life: 1.85,
           pierceDefense: isPiercing,
-          color: isPiercing ? '#e879f9' : undefined,
+          ...(isPiercing ? { color: '#e879f9' } : {}),
         });
       }
       enemy.bossPatternIndex = (shotIdx + 1) % 16;
