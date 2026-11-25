@@ -3426,6 +3426,13 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
     }
   }
 
+  // 10-11. Pickups, Visual FX, Particles, Screen Shake, and Toast Notifications
+  stepPickupsAndFx(state, mods, clampedDt);
+}
+
+function stepPickupsAndFx(state: GameState, mods: ComputedSkillModifiers, clampedDt: number): void {
+  const { player } = state;
+
   // 10. Pickups (magnet & heal bonus scaled by mob_magnet, EXP by mob_loot; equip drops require direct pickup)
   const magnetRange = 95 * mods.pickupMagnetMult;
   for (let i = state.pickups.length - 1; i >= 0; i--) {
