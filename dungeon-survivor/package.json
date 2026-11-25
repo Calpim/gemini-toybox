@@ -14,16 +14,18 @@
     "lint": "biome lint .",
     "check": "biome check .",
     "check:ci": "biome ci .",
+    "check:deps": "depcruise src --config .dependency-cruiser.cjs",
     "knip": "knip",
     "spec:build": "node scripts/build-spec-html.mjs",
     "spec:test": "node --test scripts/build-spec-html.test.mjs",
     "test": "npm run spec:test && vitest run",
     "build": "npm run typecheck && vite build && node scripts/build-spec-html.mjs --out dist/specs.html && npm run spec:build",
     "preview": "vite preview",
-    "verify": "npm run check && npm run knip && npm run typecheck && npm test && npm run build"
+    "verify": "npm run check && npm run knip && npm run check:deps && npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.9",
+    "dependency-cruiser": "^18.9.0",
     "knip": "^6.48.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",

@@ -35,6 +35,9 @@ jobs:
       - name: Check dead code (Knip)
         run: npm run knip
 
+      - name: Check architecture boundaries (dependency-cruiser)
+        run: npm run check:deps
+
       - name: Typecheck
         run: npm run typecheck
 
