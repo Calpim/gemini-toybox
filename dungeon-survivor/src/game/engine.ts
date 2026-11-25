@@ -1533,7 +1533,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   const clampedDt = Math.min(dt, 0.05);
   state.stats.elapsedPlayTime = (state.stats.elapsedPlayTime ?? 0) + clampedDt;
-  const { player, map } = state;
+  const { player } = state;
   const mods = computeSkillModifiers(player.skillLevels);
 
   if (state.floorBannerTimer > 0) {
@@ -1591,6 +1591,21 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
 
   // 7-8. Orbit Shield Bits, Enemy Projectiles, and Player Projectiles
   const bits = stepProjectiles(state, clampedDt);
+  // 9. Update enemies, respawn, enemy projectiles on player, mortar zones, and boss lasers
+  if (stepEnemies(state, mods, orbitItem, bits, clampedDt)) return;
+
+  // 10-11. Pickups, Visual FX, Particles, Screen Shake, and Toast Notifications
+  stepPickupsAndFx(state, mods, clampedDt);
+}
+
+function stepEnemies(
+  state: GameState,
+  mods: ComputedSkillModifiers,
+  orbitItem: EquippedItem | undefined,
+  bits: Vec2[],
+  clampedDt: number,
+): boolean {
+  const { player, map } = state;
   const orbitDmg = orbitItem ? getEquipmentDamage(orbitItem, 1) : 0;
 
   // 9. Update enemies (with BFS corridor pathfinding, scout wander/alert, shooter 4/6/8-way rotating barrage, boss patterns, room-only repop)
@@ -1599,100 +1614,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   );
 
   // 9a. Timed reinforcement respawn (room tiles only; boss floor spawns inside boss arena only while grand boss is active)
-  state.elapsedFloorTime += clampedDt;
-  state.respawnTimer -= clampedDt;
-  const maxAlive = 26 + state.floor * 3;
-  const isBossArenaFloor = map.floorType === 'boss';
-  const activeGrandBoss = isBossArenaFloor ? state.enemies.find((e) => e.isGrandBoss && e.hp > 0) : undefined;
-  const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss && activeGrandBoss.awake);
-
-  if (state.respawnTimer <= 0) {
-    state.respawnTimer = isBossArenaFloor ? 5.0 : Math.max(9, 14 - (state.floor - 1) * 0.8);
-    const nonBossAlive = isBossArenaFloor
-      ? state.enemies.filter((e) => !e.isRoomBoss && !e.isGrandBoss).length
-      : state.enemies.length;
-    const arenaCap = isBossArenaFloor ? 10 : maxAlive;
-    if (canRespawnOnFloor && state.enemies.length < maxAlive && (!isBossArenaFloor || nonBossAlive < arenaCap)) {
-      const occupied = new Set<number>();
-      for (const e of state.enemies) {
-        occupied.add(tileIndex(map, Math.floor(e.x / TILE_SIZE), Math.floor(e.y / TILE_SIZE)));
-      }
-      for (const c of state.chests) {
-        occupied.add(tileIndex(map, Math.floor(c.x / TILE_SIZE), Math.floor(c.y / TILE_SIZE)));
-      }
-      const candidates: { tx: number; ty: number }[] = [];
-      const bossArena = isBossArenaFloor && map.rooms.length >= 2 ? map.rooms[1] : null;
-      for (let ty = 1; ty < map.height - 1; ty++) {
-        for (let tx = 1; tx < map.width - 1; tx++) {
-          if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
-          const room = findRoomAtTile(map, tx, ty);
-          if (!room) continue; // Corridor respawn suppressed
-          if (bossArena && room !== bossArena) continue; // Never spawn inside fountain anteroom
-          const pos = tileCenterWorld(tx, ty);
-          const minDist = bossArena ? 180 : 260;
-          if (Math.hypot(pos.x - player.x, pos.y - player.y) >= minDist) {
-            candidates.push({ tx, ty });
-          }
-        }
-      }
-      if (candidates.length > 0) {
-        const desiredCount = isBossArenaFloor
-          ? Math.min(arenaCap - nonBossAlive, rng.next() < 0.5 ? 3 : 2)
-          : rng.next() < 0.45
-            ? 2
-            : 1;
-        const spawnCount = Math.min(candidates.length, maxAlive - state.enemies.length, desiredCount);
-        for (let s = 0; s < spawnCount; s++) {
-          if (candidates.length === 0) break;
-          const pickIdx = rng.int(0, candidates.length - 1);
-          const picked = candidates.splice(pickIdx, 1)[0];
-          const pos = tileCenterWorld(picked.tx, picked.ty);
-          const kind = pickEnemyKindForFloor(state.floor, rng.next());
-          const spawned = createEnemyByKind(state.nextEntityId++, kind, pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
-          if (bossArena) spawned.awake = true;
-          state.enemies.push(spawned);
-
-          if (kind === 'runner') {
-            const packSize = getRunnerPackSize(state.floor, rng.next());
-            for (let p = 1; p < packSize; p++) {
-              if (candidates.length === 0 || state.enemies.length >= maxAlive) break;
-              // Prefer nearby candidate tiles in the same room for pack cohesion
-              let bestCandIdx = 0;
-              let bestDist = Infinity;
-              for (let cIdx = 0; cIdx < candidates.length; cIdx++) {
-                const c = candidates[cIdx];
-                const d = Math.hypot(c.tx - picked.tx, c.ty - picked.ty);
-                if (d < bestDist) {
-                  bestDist = d;
-                  bestCandIdx = cIdx;
-                }
-              }
-              const extraTile = candidates.splice(bestCandIdx, 1)[0];
-              const extraPos = tileCenterWorld(extraTile.tx, extraTile.ty);
-              const follower = createEnemyByKind(
-                state.nextEntityId++,
-                'runner',
-                extraPos.x,
-                extraPos.y,
-                state.floor,
-                MAX_TARGET_RANGE,
-              );
-              follower.isPackFollower = true;
-              if (bossArena) follower.awake = true;
-              state.enemies.push(follower);
-            }
-          }
-        }
-        pushNotification(
-          state,
-          'info',
-          bossArena ? '👾 ボスアリーナに増援が出現！' : '👾 ダンジョン奥の部屋に新たな敵の気配…',
-          '#c084fc',
-          2.2,
-        );
-      }
-    }
-  }
+  stepFloorRespawn(state, clampedDt, rng);
 
   let bfsDist: Int32Array | null = null;
   const ptx = Math.floor(player.x / TILE_SIZE);
@@ -2540,7 +2462,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
 
       if (applyPlayerHitDamage(state, enemy.damage, 6, 0.18, '#f87171', 7)) {
-        return;
+        return true;
       }
 
       // Boss dash bypasses parry damage negation, but def_aegis still triggers a counter-hit (trade)
@@ -2588,6 +2510,117 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
   }
 
   // 9b. Enemy projectiles hitting player
+  if (stepEnemyProjectilesOnPlayer(state, mods)) return true;
+
+  // 9c. Tank parabolic mortar ground impact zones (overhead, bypasses shield/blade)
+  if (stepMortarZones(state, mods, clampedDt)) return true;
+
+  // 9d. Grand Boss wall-reflecting laser beams (telegraph windup -> active beam hit check)
+  if (stepBossLasers(state, mods, clampedDt)) return true;
+
+  return false;
+}
+
+function stepFloorRespawn(state: GameState, clampedDt: number, rng: ReturnType<typeof createRng>): void {
+  const { player, map } = state;
+  state.elapsedFloorTime += clampedDt;
+  state.respawnTimer -= clampedDt;
+  const maxAlive = 26 + state.floor * 3;
+  const isBossArenaFloor = map.floorType === 'boss';
+  const activeGrandBoss = isBossArenaFloor ? state.enemies.find((e) => e.isGrandBoss && e.hp > 0) : undefined;
+  const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss && activeGrandBoss.awake);
+
+  if (state.respawnTimer <= 0) {
+    state.respawnTimer = isBossArenaFloor ? 5.0 : Math.max(9, 14 - (state.floor - 1) * 0.8);
+    const nonBossAlive = isBossArenaFloor
+      ? state.enemies.filter((e) => !e.isRoomBoss && !e.isGrandBoss).length
+      : state.enemies.length;
+    const arenaCap = isBossArenaFloor ? 10 : maxAlive;
+    if (canRespawnOnFloor && state.enemies.length < maxAlive && (!isBossArenaFloor || nonBossAlive < arenaCap)) {
+      const occupied = new Set<number>();
+      for (const e of state.enemies) {
+        occupied.add(tileIndex(map, Math.floor(e.x / TILE_SIZE), Math.floor(e.y / TILE_SIZE)));
+      }
+      for (const c of state.chests) {
+        occupied.add(tileIndex(map, Math.floor(c.x / TILE_SIZE), Math.floor(c.y / TILE_SIZE)));
+      }
+      const candidates: { tx: number; ty: number }[] = [];
+      const bossArena = isBossArenaFloor && map.rooms.length >= 2 ? map.rooms[1] : null;
+      for (let ty = 1; ty < map.height - 1; ty++) {
+        for (let tx = 1; tx < map.width - 1; tx++) {
+          if (isWallTile(map, tx, ty) || occupied.has(tileIndex(map, tx, ty))) continue;
+          const room = findRoomAtTile(map, tx, ty);
+          if (!room) continue; // Corridor respawn suppressed
+          if (bossArena && room !== bossArena) continue; // Never spawn inside fountain anteroom
+          const pos = tileCenterWorld(tx, ty);
+          const minDist = bossArena ? 180 : 260;
+          if (Math.hypot(pos.x - player.x, pos.y - player.y) >= minDist) {
+            candidates.push({ tx, ty });
+          }
+        }
+      }
+      if (candidates.length > 0) {
+        const desiredCount = isBossArenaFloor
+          ? Math.min(arenaCap - nonBossAlive, rng.next() < 0.5 ? 3 : 2)
+          : rng.next() < 0.45
+            ? 2
+            : 1;
+        const spawnCount = Math.min(candidates.length, maxAlive - state.enemies.length, desiredCount);
+        for (let s = 0; s < spawnCount; s++) {
+          if (candidates.length === 0) break;
+          const pickIdx = rng.int(0, candidates.length - 1);
+          const picked = candidates.splice(pickIdx, 1)[0];
+          const pos = tileCenterWorld(picked.tx, picked.ty);
+          const kind = pickEnemyKindForFloor(state.floor, rng.next());
+          const spawned = createEnemyByKind(state.nextEntityId++, kind, pos.x, pos.y, state.floor, MAX_TARGET_RANGE);
+          if (bossArena) spawned.awake = true;
+          state.enemies.push(spawned);
+
+          if (kind === 'runner') {
+            const packSize = getRunnerPackSize(state.floor, rng.next());
+            for (let p = 1; p < packSize; p++) {
+              if (candidates.length === 0 || state.enemies.length >= maxAlive) break;
+              // Prefer nearby candidate tiles in the same room for pack cohesion
+              let bestCandIdx = 0;
+              let bestDist = Infinity;
+              for (let cIdx = 0; cIdx < candidates.length; cIdx++) {
+                const c = candidates[cIdx];
+                const d = Math.hypot(c.tx - picked.tx, c.ty - picked.ty);
+                if (d < bestDist) {
+                  bestDist = d;
+                  bestCandIdx = cIdx;
+                }
+              }
+              const extraTile = candidates.splice(bestCandIdx, 1)[0];
+              const extraPos = tileCenterWorld(extraTile.tx, extraTile.ty);
+              const follower = createEnemyByKind(
+                state.nextEntityId++,
+                'runner',
+                extraPos.x,
+                extraPos.y,
+                state.floor,
+                MAX_TARGET_RANGE,
+              );
+              follower.isPackFollower = true;
+              if (bossArena) follower.awake = true;
+              state.enemies.push(follower);
+            }
+          }
+        }
+        pushNotification(
+          state,
+          'info',
+          bossArena ? '👾 ボスアリーナに増援が出現！' : '👾 ダンジョン奥の部屋に新たな敵の気配…',
+          '#c084fc',
+          2.2,
+        );
+      }
+    }
+  }
+}
+
+function stepEnemyProjectilesOnPlayer(state: GameState, mods: ComputedSkillModifiers): boolean {
+  const { player } = state;
   for (let i = state.enemyProjectiles.length - 1; i >= 0; i--) {
     const ep = state.enemyProjectiles[i];
     if (player.invulnTimer <= 0 && Math.hypot(player.x - ep.x, player.y - ep.y) <= player.radius + ep.radius) {
@@ -2599,12 +2632,15 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
         continue;
       }
       if (applyPlayerHitDamage(state, ep.damage, 5.5, 0.16, '#f87171', 6)) {
-        return;
+        return true;
       }
     }
   }
+  return false;
+}
 
-  // 9c. Tank parabolic mortar ground impact zones (overhead, bypasses shield/blade)
+function stepMortarZones(state: GameState, mods: ComputedSkillModifiers, clampedDt: number): boolean {
+  const { player } = state;
   for (let i = state.mortarZones.length - 1; i >= 0; i--) {
     const zone = state.mortarZones[i];
     zone.elapsed += clampedDt;
@@ -2629,14 +2665,17 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       ) {
         if (!tryTacticalStepEvade(state, mods)) {
           if (applyPlayerHitDamage(state, zone.damage, 6.5, 0.2, '#f87171', 7)) {
-            return;
+            return true;
           }
         }
       }
     }
   }
+  return false;
+}
 
-  // 9d. Grand Boss wall-reflecting laser beams (telegraph windup -> active beam hit check)
+function stepBossLasers(state: GameState, mods: ComputedSkillModifiers, clampedDt: number): boolean {
+  const { player } = state;
   if (state.bossLasers && state.bossLasers.length > 0) {
     for (let i = state.bossLasers.length - 1; i >= 0; i--) {
       const laser = state.bossLasers[i];
@@ -2660,7 +2699,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
           laser.hitPlayer = true;
           if (!tryTacticalStepEvade(state, mods)) {
             if (applyPlayerHitDamage(state, laser.damage, 7, 0.22, '#f43f5e', 8)) {
-              return;
+              return true;
             }
           }
         }
@@ -2670,9 +2709,7 @@ export function stepGame(state: GameState, rawInput: Vec2, dt: number): void {
       }
     }
   }
-
-  // 10-11. Pickups, Visual FX, Particles, Screen Shake, and Toast Notifications
-  stepPickupsAndFx(state, mods, clampedDt);
+  return false;
 }
 
 function stepProjectiles(state: GameState, clampedDt: number): Vec2[] {
