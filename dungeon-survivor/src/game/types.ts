@@ -11,6 +11,20 @@ export interface Vec2 {
 
 export type MainWeaponId = 'core_shot';
 
+export interface PendingMainBurst {
+  delay: number;
+  angle: number;
+  damage: number;
+  speed: number;
+  life: number;
+  radius: number;
+  pierce: boolean;
+  baseLevel: number;
+  overclockLevel: number;
+  color: string;
+  count: number;
+}
+
 export interface PlayerState {
   x: number;
   y: number;
@@ -36,6 +50,7 @@ export interface PlayerState {
   droneAngle: number;
   orbitRadius: number;
   baseAttackCooldown: number;
+  pendingMainBursts?: PendingMainBurst[];
   repulsorCooldown: number;
   aegisCooldown: number;
   tacticalStepCooldown: number;
@@ -121,6 +136,13 @@ export interface ProjectileState {
   expandTimer?: number;
   expandDuration?: number;
   expandTargetRadius?: number;
+  spiralOriginX?: number;
+  spiralOriginY?: number;
+  spiralAngle?: number;
+  spiralPhase?: number;
+  spiralAge?: number;
+  spiralAmplitude?: number;
+  spiralOmega?: number;
   traveledDist?: number;
   maxDistance?: number;
   hitEnemyIds: number[];

@@ -236,49 +236,75 @@ export function renderProjectiles(ctx: CanvasRenderingContext2D, state: GameStat
       const baseLv = proj.baseLevel ?? 0;
       const angle = Math.atan2(proj.vy, proj.vx);
 
-      if (ocLv >= 1 && !proj.isCenterCharge) {
-        const beamLen = Math.min(92, 56 + (ocLv >= 2 ? 12 : 0) + baseLv * 5);
-        const baseScale = 1 + baseLv * 0.08 + (ocLv >= 2 ? 0.08 : 0);
-        const halfW = Math.max(1.2, proj.radius * 0.24 * baseScale);
+      if (ocLv >= 1 && proj.isCenterCharge) {
+        const beamLen = ocLv >= 2 ? 112 : 84;
+        const halfW = ocLv >= 2 ? proj.radius * 0.72 : proj.radius * 0.58;
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         ctx.translate(proj.x, proj.y);
         ctx.rotate(angle);
         ctx.lineCap = 'round';
 
-        // Tight outer cyan neon bloom (slim so parallel beams stay crisp and distinct)
-        ctx.strokeStyle = ocLv >= 2 ? 'rgba(6, 182, 212, 0.36)' : 'rgba(6, 182, 212, 0.28)';
-        ctx.lineWidth = halfW * 2.8;
+        // Outer electric cyan aura
+        ctx.strokeStyle = ocLv >= 2 ? 'rgba(56, 189, 248, 0.45)' : 'rgba(6, 182, 212, 0.34)';
+        ctx.lineWidth = halfW * 3.2;
         ctx.beginPath();
         ctx.moveTo(-beamLen, 0);
-        ctx.lineTo(2, 0);
-        ctx.stroke();
-
-        // Mid intense turquoise energy sheath
-        ctx.strokeStyle = ocLv >= 2 ? 'rgba(45, 212, 191, 0.72)' : 'rgba(34, 211, 238, 0.65)';
-        ctx.lineWidth = halfW * 1.65;
-        ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.95, 0);
-        ctx.lineTo(4, 0);
-        ctx.stroke();
-
-        // Bright slim beam body
-        ctx.strokeStyle = proj.color;
-        ctx.lineWidth = halfW * 1.05;
-        ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.88, 0);
-        ctx.lineTo(5, 0);
-        ctx.stroke();
-
-        // Razor-sharp white-cyan core
-        ctx.strokeStyle = '#f0fdfa';
-        ctx.lineWidth = Math.max(1.0, halfW * 0.55);
-        ctx.beginPath();
-        ctx.moveTo(-beamLen * 0.78, 0);
         ctx.lineTo(6, 0);
         ctx.stroke();
 
-        drawGlowSprite(ctx, 'cyan', 2, 0, halfW * 2.0, 0.45, false);
+        // Intense mid sheath
+        ctx.strokeStyle = ocLv >= 2 ? 'rgba(125, 211, 252, 0.85)' : 'rgba(45, 212, 191, 0.78)';
+        ctx.lineWidth = halfW * 1.85;
+        ctx.beginPath();
+        ctx.moveTo(-beamLen * 0.94, 0);
+        ctx.lineTo(8, 0);
+        ctx.stroke();
+
+        // White-hot platinum core
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = Math.max(2.0, halfW * 0.85);
+        ctx.beginPath();
+        ctx.moveTo(-beamLen * 0.84, 0);
+        ctx.lineTo(10, 0);
+        ctx.stroke();
+
+        drawGlowSprite(ctx, 'cyan', 4, 0, halfW * 3.4, ocLv >= 2 ? 0.72 : 0.56, false);
+        ctx.restore();
+      } else if (proj.spiralAmplitude !== undefined) {
+        const isOverclock = ocLv >= 1;
+        if (proj.trail && proj.trail.length >= 2) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = isOverclock ? 'rgba(45, 212, 191, 0.55)' : 'rgba(52, 211, 153, 0.52)';
+          ctx.lineWidth = Math.max(2.2, proj.radius * 0.85);
+          ctx.beginPath();
+          const first = proj.trail[0];
+          if (first) {
+            ctx.moveTo(first.x, first.y);
+            for (let t = 1; t < proj.trail.length; t++) {
+              const pt = proj.trail[t];
+              if (pt) ctx.lineTo(pt.x, pt.y);
+            }
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+        drawGlowSprite(ctx, isOverclock ? 'cyan' : 'emerald', proj.x, proj.y, proj.radius * 2.4, 0.45, true);
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.translate(proj.x, proj.y);
+        ctx.rotate(angle);
+        ctx.fillStyle = proj.color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, proj.radius * 1.35, proj.radius * 0.82, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f0fdfa';
+        ctx.beginPath();
+        ctx.ellipse(proj.radius * 0.15, 0, proj.radius * 0.7, proj.radius * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       } else {
         const isOverclockCharge = ocLv >= 1;
@@ -304,22 +330,31 @@ export function renderProjectiles(ctx: CanvasRenderingContext2D, state: GameStat
         const tailLen = isOverclockCharge ? (isBigCharge ? 42 : 30) : isBigCharge ? 32 : isMidCharge ? 22 : 10;
 
         // Energy charge wake / plasma tail
-        const tailGrad = ctx.createLinearGradient(-tailLen - rx * 0.4, 0, rx * 0.6, 0);
-        tailGrad.addColorStop(0, isOverclockCharge ? 'rgba(6, 182, 212, 0)' : 'rgba(16, 185, 129, 0)');
-        tailGrad.addColorStop(
-          0.55,
-          isOverclockCharge
-            ? 'rgba(34, 211, 238, 0.58)'
-            : isBigCharge
-              ? 'rgba(52, 211, 153, 0.52)'
-              : 'rgba(52, 211, 153, 0.36)',
-        );
-        tailGrad.addColorStop(1, isOverclockCharge ? 'rgba(207, 250, 254, 0.9)' : 'rgba(167, 243, 208, 0.82)');
-        ctx.fillStyle = tailGrad;
+        if (typeof ctx.createLinearGradient === 'function') {
+          const tailGrad = ctx.createLinearGradient(-tailLen - rx * 0.4, 0, rx * 0.6, 0);
+          tailGrad.addColorStop(0, isOverclockCharge ? 'rgba(6, 182, 212, 0)' : 'rgba(16, 185, 129, 0)');
+          tailGrad.addColorStop(
+            0.55,
+            isOverclockCharge
+              ? 'rgba(34, 211, 238, 0.58)'
+              : isBigCharge
+                ? 'rgba(52, 211, 153, 0.52)'
+                : 'rgba(52, 211, 153, 0.36)',
+          );
+          tailGrad.addColorStop(1, isOverclockCharge ? 'rgba(207, 250, 254, 0.9)' : 'rgba(167, 243, 208, 0.82)');
+          ctx.fillStyle = tailGrad;
+        } else {
+          ctx.fillStyle = isOverclockCharge ? 'rgba(34, 211, 238, 0.58)' : 'rgba(52, 211, 153, 0.45)';
+        }
         ctx.beginPath();
         ctx.moveTo(rx * 0.35, -ry * 0.92);
-        ctx.quadraticCurveTo(-tailLen * 0.45, -ry * 0.65, -tailLen - rx * 0.35, 0);
-        ctx.quadraticCurveTo(-tailLen * 0.45, ry * 0.65, rx * 0.35, ry * 0.92);
+        if (typeof ctx.quadraticCurveTo === 'function') {
+          ctx.quadraticCurveTo(-tailLen * 0.45, -ry * 0.65, -tailLen - rx * 0.35, 0);
+          ctx.quadraticCurveTo(-tailLen * 0.45, ry * 0.65, rx * 0.35, ry * 0.92);
+        } else {
+          ctx.lineTo(-tailLen - rx * 0.35, 0);
+          ctx.lineTo(rx * 0.35, ry * 0.92);
+        }
         ctx.closePath();
         ctx.fill();
 

@@ -323,8 +323,14 @@ export function stepProjectiles(state: GameState, clampedDt: number, deps: Proje
             proj.vx = Math.cos(aimAngle) * dashSpd;
             proj.vy = Math.sin(aimAngle) * dashSpd;
           } else {
-            proj.vx = Math.cos(radialAngle) * dashSpd;
-            proj.vy = Math.sin(radialAngle) * dashSpd;
+            const convergeDist = 200;
+            const convergeX = player.x + Math.cos(player.facingAngle) * convergeDist;
+            const convergeY = player.y + Math.sin(player.facingAngle) * convergeDist;
+            const dx = convergeX - proj.x;
+            const dy = convergeY - proj.y;
+            const aimAngle = Math.hypot(dx, dy) > 1e-3 ? Math.atan2(dy, dx) : player.facingAngle;
+            proj.vx = Math.cos(aimAngle) * dashSpd;
+            proj.vy = Math.sin(aimAngle) * dashSpd;
           }
         }
       } else {
@@ -362,9 +368,46 @@ export function stepProjectiles(state: GameState, clampedDt: number, deps: Proje
       if (proj.trail.length > 12) {
         proj.trail.shift();
       }
+    } else if (
+      proj.spiralAmplitude !== undefined &&
+      proj.spiralOriginX !== undefined &&
+      proj.spiralOriginY !== undefined &&
+      proj.spiralAngle !== undefined
+    ) {
+      const nextAge = (proj.spiralAge ?? 0) + clampedDt;
+      proj.spiralAge = nextAge;
+      const spd = proj.speed ?? Math.max(1, Math.hypot(proj.vx, proj.vy));
+      const forwardDist = spd * nextAge;
+      const amp = proj.spiralAmplitude * Math.min(1, nextAge / 0.1);
+      const phase = (proj.spiralOmega ?? 18) * nextAge + (proj.spiralPhase ?? 0);
+      const lateral = Math.sin(phase) * amp;
+      const dirX = Math.cos(proj.spiralAngle);
+      const dirY = Math.sin(proj.spiralAngle);
+      const perpX = -dirY;
+      const perpY = dirX;
+      const nx = proj.spiralOriginX + dirX * forwardDist + perpX * lateral;
+      const ny = proj.spiralOriginY + dirY * forwardDist + perpY * lateral;
+      if (clampedDt > 1e-6) {
+        proj.vx = (nx - proj.x) / clampedDt;
+        proj.vy = (ny - proj.y) / clampedDt;
+      }
+      proj.x = nx;
+      proj.y = ny;
+      if (proj.trail) {
+        proj.trail.push({ x: proj.x, y: proj.y });
+        if (proj.trail.length > 8) {
+          proj.trail.shift();
+        }
+      }
     } else {
       proj.x += proj.vx * clampedDt;
       proj.y += proj.vy * clampedDt;
+      if (proj.trail) {
+        proj.trail.push({ x: proj.x, y: proj.y });
+        if (proj.trail.length > 8) {
+          proj.trail.shift();
+        }
+      }
     }
 
     const isLoopingDisc = proj.kind === 'disc' && proj.loopCenterX !== undefined && proj.loopCenterY !== undefined;

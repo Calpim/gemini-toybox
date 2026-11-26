@@ -25,6 +25,7 @@ export interface CombatBaseStats {
   cooldown: number;
   range: number;
   shotCount: number;
+  centerLaserDamage: number;
   homingShots: number;
   homingDamage: number;
   speed: number;
@@ -32,6 +33,59 @@ export interface CombatBaseStats {
   armBaseLevel: number;
   armOverclockLevel: number;
   spentSp: number;
+}
+
+const SPIRAL_BURST_DELAY = 0.065;
+const SPIRAL_AMPLITUDE = 12;
+const SPIRAL_OMEGA = 18;
+const MAX_PENDING_MAIN_BURSTS = 8;
+
+function spawnSpiralPair(
+  state: GameState,
+  angle: number,
+  damage: number,
+  speed: number,
+  life: number,
+  radius: number,
+  pierce: boolean,
+  baseLevel: number,
+  overclockLevel: number,
+  color: string,
+  count: number,
+): void {
+  const { player } = state;
+  const dirX = Math.cos(angle);
+  const dirY = Math.sin(angle);
+  const phases = count >= 2 ? [0, Math.PI] : [0];
+  for (const phase of phases) {
+    state.projectiles.push({
+      id: state.nextEntityId++,
+      kind: 'base',
+      x: player.x,
+      y: player.y,
+      vx: dirX * speed,
+      vy: dirY * speed,
+      speed,
+      radius,
+      damage,
+      life,
+      pierce,
+      baseLevel,
+      overclockLevel,
+      isCenterCharge: false,
+      visualTier: Math.max(baseLevel >= 3 ? 1 : 0, overclockLevel),
+      spiralOriginX: player.x,
+      spiralOriginY: player.y,
+      spiralAngle: angle,
+      spiralPhase: phase,
+      spiralAge: 0,
+      spiralAmplitude: SPIRAL_AMPLITUDE,
+      spiralOmega: SPIRAL_OMEGA,
+      trail: [{ x: player.x, y: player.y }],
+      hitEnemyIds: [],
+      color,
+    });
+  }
 }
 
 export interface CombatStepDeps {
@@ -81,6 +135,31 @@ export function stepPlayerCombat(
     }
   }
 
+  // 4.4. Process queued delayed spiral burst pairs
+  if (player.pendingMainBursts && player.pendingMainBursts.length > 0) {
+    for (let b = player.pendingMainBursts.length - 1; b >= 0; b--) {
+      const burst = player.pendingMainBursts[b];
+      if (!burst) continue;
+      burst.delay -= clampedDt;
+      if (burst.delay <= 0) {
+        spawnSpiralPair(
+          state,
+          burst.angle,
+          burst.damage,
+          burst.speed,
+          burst.life,
+          burst.radius,
+          burst.pierce,
+          burst.baseLevel,
+          burst.overclockLevel,
+          burst.color,
+          burst.count,
+        );
+        player.pendingMainBursts.splice(b, 1);
+      }
+    }
+  }
+
   // 4.5. Player intrinsic Main Weapon auto-attack (Core Shot; scales via arms skills, APP-CMB-01, APP-CMB-06)
   if (player.baseAttackCooldown <= 0 && state.enemies.length > 0) {
     const baseStats = deps.getPlayerBaseAttackStats(player);
@@ -89,42 +168,95 @@ export function stepPlayerCombat(
       const centerAngle = Math.atan2(target.y - player.y, target.x - player.x);
       const dirX = Math.cos(centerAngle);
       const dirY = Math.sin(centerAngle);
-      const perpX = -dirY;
-      const perpY = dirX;
-      const laneSpacing = baseStats.armOverclockLevel >= 1 ? 10 : 14;
       const mainLife = Math.max(0.75, (baseStats.range + 60) / baseStats.speed);
-      const chargeRadius = 5 + (baseStats.armBaseLevel >= 5 ? 4.0 : baseStats.armBaseLevel >= 3 ? 2.5 : 0);
-      const sideLaserRadius = 4.0 + (baseStats.armBaseLevel >= 5 ? 0.8 : baseStats.armBaseLevel >= 3 ? 0.4 : 0);
-      const sideLaserDamage = Math.max(1, Math.round(baseStats.damage * 0.6));
+      const spiralRadius = 4.2 + (baseStats.armBaseLevel >= 5 ? 0.8 : baseStats.armBaseLevel >= 3 ? 0.4 : 0);
+      const coreLaserRadius = baseStats.armOverclockLevel >= 2 ? 7.5 : 5.5;
       const mainColor = baseStats.pierce ? '#2dd4bf' : baseStats.armBaseLevel >= 3 ? '#6ee7b7' : '#34d399';
 
-      const centerIndex = Math.floor(baseStats.shotCount / 2);
-      for (let s = 0; s < baseStats.shotCount; s++) {
-        const laneOffset = (s - (baseStats.shotCount - 1) / 2) * laneSpacing;
-        const isCenterCharge = baseStats.armOverclockLevel === 0 || s === centerIndex;
-        let spawnX = player.x + perpX * laneOffset;
-        let spawnY = player.y + perpY * laneOffset;
-        if (isWallAtWorld(map, spawnX, spawnY)) {
-          spawnX = player.x;
-          spawnY = player.y;
-        }
+      if (baseStats.shotCount <= 1) {
         state.projectiles.push({
           id: state.nextEntityId++,
           kind: 'base',
-          x: spawnX,
-          y: spawnY,
+          x: player.x,
+          y: player.y,
           vx: dirX * baseStats.speed,
           vy: dirY * baseStats.speed,
-          radius: isCenterCharge ? chargeRadius : sideLaserRadius,
-          damage: isCenterCharge ? baseStats.damage : sideLaserDamage,
+          speed: baseStats.speed,
+          radius: 5,
+          damage: baseStats.damage,
           life: mainLife,
           pierce: baseStats.pierce,
           baseLevel: baseStats.armBaseLevel,
           overclockLevel: baseStats.armOverclockLevel,
-          isCenterCharge,
+          isCenterCharge: true,
           visualTier: Math.max(baseStats.armBaseLevel >= 3 ? 1 : 0, baseStats.armOverclockLevel),
           hitEnemyIds: [],
           color: mainColor,
+        });
+      } else {
+        const pairWaves = Math.ceil(baseStats.shotCount / 2);
+        const firstWaveCount = Math.min(2, baseStats.shotCount);
+        spawnSpiralPair(
+          state,
+          centerAngle,
+          baseStats.damage,
+          baseStats.speed,
+          mainLife,
+          spiralRadius,
+          baseStats.pierce,
+          baseStats.armBaseLevel,
+          baseStats.armOverclockLevel,
+          mainColor,
+          firstWaveCount,
+        );
+        if (pairWaves > 1) {
+          if (!player.pendingMainBursts) {
+            player.pendingMainBursts = [];
+          }
+          let remaining = baseStats.shotCount - firstWaveCount;
+          for (let w = 1; w < pairWaves; w++) {
+            const waveCount = Math.min(2, remaining);
+            remaining -= waveCount;
+            if (player.pendingMainBursts.length < MAX_PENDING_MAIN_BURSTS) {
+              player.pendingMainBursts.push({
+                delay: w * SPIRAL_BURST_DELAY,
+                angle: centerAngle,
+                damage: baseStats.damage,
+                speed: baseStats.speed,
+                life: mainLife,
+                radius: spiralRadius,
+                pierce: baseStats.pierce,
+                baseLevel: baseStats.armBaseLevel,
+                overclockLevel: baseStats.armOverclockLevel,
+                color: mainColor,
+                count: waveCount,
+              });
+            }
+          }
+        }
+      }
+
+      // Tier 3 (Overclock): Center piercing core laser cutting straight through the spiral
+      if (baseStats.armOverclockLevel >= 1 && baseStats.centerLaserDamage > 0) {
+        state.projectiles.push({
+          id: state.nextEntityId++,
+          kind: 'base',
+          x: player.x,
+          y: player.y,
+          vx: dirX * baseStats.speed,
+          vy: dirY * baseStats.speed,
+          speed: baseStats.speed,
+          radius: coreLaserRadius,
+          damage: baseStats.centerLaserDamage,
+          life: mainLife,
+          pierce: true,
+          baseLevel: baseStats.armBaseLevel,
+          overclockLevel: baseStats.armOverclockLevel,
+          isCenterCharge: true,
+          visualTier: baseStats.armOverclockLevel + 1,
+          trail: [{ x: player.x, y: player.y }],
+          hitEnemyIds: [],
+          color: baseStats.armOverclockLevel >= 2 ? '#e0f2fe' : '#38bdf8',
         });
       }
 

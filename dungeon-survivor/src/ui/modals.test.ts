@@ -448,7 +448,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     expect(armBaseCard.querySelector('.node-icon')?.innerHTML).toContain('<svg');
     expect(armBaseCard.querySelector('.node-title')?.textContent).toBe('出力強化');
     expect(armBaseCard.querySelector('.node-lv')?.textContent).toBe('Lv2/5');
-    expect(armBaseCard.querySelector('.node-tagline')?.textContent).toBe('メイン威力＆射程UP・チャージ弾化');
+    expect(armBaseCard.querySelector('.node-tagline')?.textContent).toBe('螺旋バースト弾数＆射程・威力UP');
     expect(armBaseCard.querySelector('.node-cost')?.textContent).toBe('-1 SP');
 
     // Locked prerequisite card still keeps its ⓘ info button enabled!

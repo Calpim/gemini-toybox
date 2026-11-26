@@ -253,6 +253,7 @@ export interface PlayerBaseAttackStats {
   cooldown: number;
   range: number;
   shotCount: number;
+  centerLaserDamage: number;
   homingShots: number;
   homingDamage: number;
   speed: number;
@@ -268,18 +269,19 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
   const baseDamage = 14;
   const baseCooldown = 0.58;
   const baseSpeed = 460;
-  const damage = Math.round(baseDamage * mods.mainDamageMult * mods.mainParallelDamageMult);
+  const totalRefDamage = Math.round(baseDamage * mods.mainDamageMult * mods.mainParallelDamageMult);
+  const shotCount = Math.max(1, mods.mainSpiralShots + mods.mainExtraShots);
+  const damage = shotCount <= 1 ? totalRefDamage : Math.max(4, Math.round((totalRefDamage * 1.2) / shotCount));
+  const centerLaserDamage =
+    mods.armOverclockLevel >= 2
+      ? Math.round(totalRefDamage * 1.5)
+      : mods.armOverclockLevel === 1
+        ? totalRefDamage
+        : 0;
   const cooldown = Math.max(0.2, baseCooldown * mods.mainCooldownMult);
   const range = Math.min(MAX_TARGET_RANGE, Math.round(MAX_TARGET_RANGE * mods.rangeMult)) + mods.mainRangeBonus;
-  const baseShots = 1 + mods.mainExtraShots;
-  const shotCount =
-    mods.armOverclockLevel >= 2
-      ? Math.max(5, baseShots)
-      : mods.armOverclockLevel === 1
-        ? Math.max(3, baseShots)
-        : baseShots;
   const homingShots = mods.mainHomingShots;
-  const homingDamage = homingShots > 0 ? Math.max(1, Math.round(damage * 0.35)) : 0;
+  const homingDamage = homingShots > 0 ? Math.max(1, Math.round(totalRefDamage * 0.35)) : 0;
   const speed = baseSpeed + mods.mainSpeedBonus;
   return {
     weaponId,
@@ -287,6 +289,7 @@ export function getPlayerBaseAttackStats(player: PlayerState): PlayerBaseAttackS
     cooldown,
     range,
     shotCount,
+    centerLaserDamage,
     homingShots,
     homingDamage,
     speed,

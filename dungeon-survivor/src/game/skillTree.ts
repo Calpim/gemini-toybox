@@ -95,10 +95,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 1,
     name: '出力強化',
     requires: null,
-    tagline: 'メイン威力＆射程UP・チャージ弾化',
-    description: 'メイン武器ダメ大幅UP & 主兵装射程延長（Lv3+で極太チャージショット化 / 最大射程+110px）',
+    tagline: '螺旋バースト弾数＆射程・威力UP',
+    description: 'メイン弾を2発毎の遅延二重螺旋バースト化（2→4→6→6→8発）& 威力・射程UP（最大射程+110px）',
     detailNote:
-      'メイン武器「コアショット」専用。視線が通る敵へ索敵上限(180px)を超えて攻撃でき、Lv3/Lv5で楕円プラズマチャージ弾が段階的に巨大化します。',
+      'メイン武器「コアショット」専用。Lv1から逆位相の2発組が螺旋を描いて飛び、2発毎に遅延連射して最大8発の二重螺旋弾幕を形成します。',
   },
   {
     id: 'arm_parallel',
@@ -106,10 +106,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 2,
     name: '追尾レーザー展開',
     requires: 'arm_base',
-    tagline: '周囲周回→急加速の追尾レーザーを大量展開',
-    description: 'メイン弾は極太1発のまま、周囲周回後に敵へ急加速する追尾レーザー(2〜8発)を同時射出 & 威力UP',
+    tagline: '周囲周回→追尾 or 自機前方へ収束一斉射出',
+    description: '周囲周回→外側展開後に敵へ急加速追尾（敵がいなければ自機前方へ軽く絞って一斉直進）するレーザー(2〜8発) & 威力UP',
     detailNote:
-      'Lv1から追尾レーザー(威力35%)を展開(2→3→4→6→8発)し、Lv2+でメイン威力も上昇(+8〜35%)。44pxを0.26s周回→84pxへ離脱後に高速追尾します。',
+      'Lv1から追尾レーザー(威力35%)を展開(2→3→4→6→8発)し、Lv2+でメイン威力も上昇(+8〜35%)。44pxを0.26s周回→84pxへ離脱後に追尾し、索敵内に敵がいなければ自機前方へ収束直進します。',
   },
   {
     id: 'arm_overclock',
@@ -117,11 +117,11 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     tier: 3,
     name: 'オーバークロック',
     requires: 'arm_parallel',
-    tagline: '貫通チャージ弾＋両脇極細レーザー追加',
+    tagline: '螺旋貫通化＋中心極太コアレーザー追加',
     description:
-      'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 貫通化＆両脇に極細レーザー(左右2本 / Lv2で4本・各60%威力)を追加',
+      'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 全弾貫通化＆螺旋の中心を貫く極太コアレーザーを追加',
     detailNote:
-      'メイン武器CD短縮(最小0.20s)＆弾速UPに加え、中央の極太チャージ弾(100%威力・貫通)の両脇へ極細貫通レーザー(各60%威力・10px間隔)を展開します。',
+      'メイン武器CD短縮(最小0.20s)＆弾速UP＆螺旋弾の貫通化に加え、二重螺旋の真ん中を一直線に貫く極太コアレーザー（Lv1: 100%威力 / Lv2: 150%威力・発光強化）を同時発射します。',
   },
   {
     id: 'def_sensor',
@@ -217,6 +217,7 @@ export function canUpgradeSkill(levels: SkillLevelMap, skillPoints: number, node
 // Arms: Main Weapon dedicated scaling (DEC-19 / DEC-20 / PRM-18 / PRM-23)
 const ARM_MAIN_DAMAGE_PCT = [0, 0.25, 0.5, 0.8, 1.2, 1.7] as const;
 const ARM_MAIN_RANGE_BONUS = [0, 20, 40, 60, 85, 110] as const;
+const ARM_MAIN_SPIRAL_SHOTS = [1, 2, 4, 6, 6, 8] as const;
 const ARM_MAIN_EXTRA_SHOTS = [0, 0, 0, 0, 0, 0] as const;
 const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.08, 0.16, 0.25, 0.35] as const;
 const ARM_MAIN_HOMING_SHOTS = [0, 2, 3, 4, 6, 8] as const;
@@ -254,6 +255,7 @@ export interface ComputedSkillModifiers {
   armOverclockLevel: number;
   mainDamageMult: number;
   mainRangeBonus: number;
+  mainSpiralShots: number;
   mainExtraShots: number;
   mainParallelDamageMult: number;
   mainHomingShots: number;
@@ -309,6 +311,7 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     armOverclockLevel: armOverclockLv,
     mainDamageMult: 1 + curveAt(ARM_MAIN_DAMAGE_PCT, armBaseLv),
     mainRangeBonus: curveAt(ARM_MAIN_RANGE_BONUS, armBaseLv),
+    mainSpiralShots: curveAt(ARM_MAIN_SPIRAL_SHOTS, armBaseLv),
     mainExtraShots: curveAt(ARM_MAIN_EXTRA_SHOTS, armParallelLv),
     mainParallelDamageMult: 1 + curveAt(ARM_MAIN_PARALLEL_DMG_PCT, armParallelLv),
     mainHomingShots: curveAt(ARM_MAIN_HOMING_SHOTS, armParallelLv),
@@ -342,7 +345,7 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
   if (lv <= 0) return '未習得';
   switch (nodeId) {
     case 'arm_base':
-      return `メイン威力 +${Math.round(curveAt(ARM_MAIN_DAMAGE_PCT, lv) * 100)}% / 射程+${curveAt(ARM_MAIN_RANGE_BONUS, lv)}px`;
+      return `螺旋${curveAt(ARM_MAIN_SPIRAL_SHOTS, lv)}発 / メイン威力 +${Math.round(curveAt(ARM_MAIN_DAMAGE_PCT, lv) * 100)}% / 射程+${curveAt(ARM_MAIN_RANGE_BONUS, lv)}px`;
     case 'arm_parallel': {
       const dmgPct = Math.round(curveAt(ARM_MAIN_PARALLEL_DMG_PCT, lv) * 100);
       const homing = curveAt(ARM_MAIN_HOMING_SHOTS, lv);
@@ -352,7 +355,7 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
       return `追尾レーザー${homing}発`;
     }
     case 'arm_overclock':
-      return `CD -${Math.round(curveAt(ARM_MAIN_CD_REDUCTION, lv) * 100)}% / 弾速+${curveAt(ARM_MAIN_SPEED_BONUS, lv)} / ${lv >= 2 ? '貫通チャージ＋脇レーザー4本' : '貫通チャージ＋脇レーザー2本'}`;
+      return `CD -${Math.round(curveAt(ARM_MAIN_CD_REDUCTION, lv) * 100)}% / 弾速+${curveAt(ARM_MAIN_SPEED_BONUS, lv)} / ${lv >= 2 ? '螺旋貫通＋極太コアレーザー強化' : '螺旋貫通＋中心コアレーザー'}`;
     case 'def_sensor':
       return `レンジ +${Math.round(curveAt(DEF_RANGE_PCT, lv) * 100)}%`;
     case 'def_pulse':
@@ -372,8 +375,7 @@ function getSkillLevelDetailSummary(nodeId: SkillNodeId, level: number): string 
   const base = getSkillEffectSummary(nodeId, level);
   switch (nodeId) {
     case 'arm_base':
-      if (level === 3) return `${base} / 弾拡大・残像`;
-      if (level === 5) return `${base} / 最大拡大`;
+      if (level === 5) return `${base} / 最大8発バースト`;
       return base;
     case 'def_aegis':
       return `${base} / 無敵${BASE_HIT_INVULN_DURATION.toFixed(1)}s`;
