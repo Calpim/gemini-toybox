@@ -695,7 +695,7 @@ stateDiagram-v2
 
   it('validates all actual project symbol code references (src/...#symbol) with zero broken links', () => {
     const result = validateSymbolRefs(projectRoot);
-    assert.equal(result.checkedCount, 84);
+    assert.equal(result.checkedCount, 85);
     assert.deepEqual(result.brokenSymbolRefs, []);
   });
 

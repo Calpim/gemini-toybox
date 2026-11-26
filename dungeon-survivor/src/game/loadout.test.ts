@@ -82,7 +82,7 @@ describe('Equipment, loadout, and growth simulation', () => {
     state.player.skillPoints = 3;
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true); // Lv1 (cost 1)
     expect(state.player.skillPoints).toBe(2);
-    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(1);
+    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(8);
     expect(getPlayerBaseAttackStats(state.player).homingShots).toBe(2);
     expect(getOrbitBitPositions(state).length).toBe(1);
     expect(getSeekerDronePositions(state).length).toBe(1);
@@ -517,7 +517,8 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(lv1Stats.cooldown).toBeCloseTo(0.58 * 0.78, 4); // -22%
     expect(lv1Stats.speed).toBe(460 + 100);
     expect(lv1Stats.pierce).toBe(true);
-    expect(lv1Stats.shotCount).toBe(3);
+    expect(lv1Stats.shotCount).toBe(8);
+    expect(lv1Stats.centerLaserDamage).toBeGreaterThan(0);
 
     expect(upgradeSkillNode(state, 'arm_overclock')).toBe(true);
     expect(state.player.skillPoints).toBe(0);
@@ -528,7 +529,8 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(lv2Stats.cooldown).toBeCloseTo(0.58 * 0.55, 4); // -45%
     expect(lv2Stats.speed).toBe(460 + 200);
     expect(lv2Stats.pierce).toBe(true);
-    expect(lv2Stats.shotCount).toBe(5);
+    expect(lv2Stats.shotCount).toBe(8);
+    expect(lv2Stats.centerLaserDamage).toBeGreaterThan(lv1Stats.centerLaserDamage);
   });
 
   it('handles higher-level duplicate equipment choices across empty/full slots and safely exits ricochet_disc loop on wall contact', () => {

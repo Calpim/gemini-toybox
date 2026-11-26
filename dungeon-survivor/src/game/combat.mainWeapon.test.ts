@@ -115,9 +115,9 @@ describe('Player main weapon combat simulation', () => {
     expect(upgradeSkillNode(state, 'arm_parallel')).toBe(true);
 
     const skilledStats = getPlayerBaseAttackStats(state.player);
-    expect(skilledStats.damage).toBeGreaterThan(initialStats.damage);
+    expect(skilledStats.damage * skilledStats.shotCount).toBeGreaterThan(initialStats.damage * initialStats.shotCount);
     expect(skilledStats.range).toBe(MAX_TARGET_RANGE + 60);
-    expect(skilledStats.shotCount).toBe(1);
+    expect(skilledStats.shotCount).toBe(6);
     expect(skilledStats.homingShots).toBe(2);
 
     // Sub-equipment counts/damage/cooldown stay purely determined by equipment level (not arms skills)
@@ -125,7 +125,7 @@ describe('Player main weapon combat simulation', () => {
     expect(getOrbitBitPositions(state).length).toBe(1);
     expect(getSeekerDronePositions(state).length).toBe(1);
 
-    // Fires 1 charge shot + 2 homing lasers at arm_parallel Lv1
+    // Fires 1st spiral pair (2 shots) + queues 2 delayed pairs + 2 homing lasers at arm_base Lv3 & arm_parallel Lv1
     state.enemies = [
       {
         id: 910,
@@ -143,11 +143,12 @@ describe('Player main weapon combat simulation', () => {
       },
     ];
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
-    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(1);
+    expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(2);
+    expect(state.player.pendingMainBursts).toHaveLength(2);
     expect(state.projectiles.filter((p) => p.kind === 'base_homing')).toHaveLength(2);
   });
 
-  it('[APP-CMB-03 & APP-CMB-06] supports DEC-19 parallel main shots, homing scatter shots (35% dmg, 220px), 290px LoS-only range, and overclock min CD 0.20s', () => {
+  it('[APP-CMB-03 & APP-CMB-06] supports DEC-19 spiral main shots, homing scatter shots (35% dmg, 220px), 290px LoS-only range, and overclock min CD 0.20s', () => {
     const state = createGameState({ seed: 1919 });
     state.chests = [];
     state.pickups = [];
@@ -160,9 +161,10 @@ describe('Player main weapon combat simulation', () => {
     };
 
     const stats = getPlayerBaseAttackStats(state.player);
-    // 14 * (1 + 1.70) * (1 + 0.35) = 14 * 2.7 * 1.35 = 51.03 -> 51
-    expect(stats.damage).toBe(51);
-    expect(stats.shotCount).toBe(5);
+    // totalRef = round(14 * 2.7 * 1.35) = 51 -> 8 spiral shots (each round(51*1.2/8)=8), centerLaser = round(51*1.5)=77
+    expect(stats.damage).toBe(8);
+    expect(stats.shotCount).toBe(8);
+    expect(stats.centerLaserDamage).toBe(Math.round(51 * 1.5));
     expect(stats.homingShots).toBe(8);
     expect(stats.homingDamage).toBe(Math.round(51 * 0.35)); // 18
     // min(180, round(180 * 1.55)) + 110 = 180 + 110 = 290
@@ -209,19 +211,22 @@ describe('Player main weapon combat simulation', () => {
 
     const baseProjs = state.projectiles.filter((p) => p.kind === 'base');
     const homingProjs = state.projectiles.filter((p) => p.kind === 'base_homing');
-    expect(baseProjs).toHaveLength(5);
+    expect(baseProjs).toHaveLength(3);
+    expect(state.player.pendingMainBursts).toHaveLength(3);
     expect(homingProjs).toHaveLength(8);
 
-    // Parallel shots share the exact same velocity vector and are offset perpendicularly
+    // Center core laser flies straight while spiral shots oscillate laterally
     for (const bp of baseProjs) {
       expect(bp.vx).toBeCloseTo(dir * stats.speed, 3);
-      expect(bp.vy).toBeCloseTo(0, 3);
+      if (bp.isCenterCharge) {
+        expect(bp.vy).toBeCloseTo(0, 3);
+      } else {
+        expect(Math.abs(bp.vy)).toBeGreaterThan(0);
+      }
       expect(bp.pierce).toBe(true);
       expect(bp.overclockLevel).toBe(2);
       expect(bp.baseLevel).toBe(5);
     }
-    const yCoords = baseProjs.map((p) => p.y).sort((a, b) => a - b);
-    expect(mustAt(yCoords, 4, 'yCoords') - mustAt(yCoords, 0, 'yCoords')).toBeCloseTo(40, 1); // 10px * 4 = 40px
 
     // Homing shots have 35% damage and start in 44px orbit (0.26s) + expand (0.13s)
     expect(homingProjs[0]?.damage).toBe(stats.homingDamage);
@@ -237,28 +242,30 @@ describe('Player main weapon combat simulation', () => {
     expect(state.projectiles.filter((p) => p.kind === 'base')).toHaveLength(0);
   });
 
-  it('[APP-CMB-06 & DEC-22] guarantees minimum 3 shots at arm_overclock Lv1 and 5 shots at Lv2', () => {
+  it('[APP-CMB-06 & DEC-22] scales spiral shot counts on arm_base (1,2,4,6,6,8) and center piercing core laser on arm_overclock Lv1/Lv2', () => {
     const state = createGameState({ seed: 2023 });
     state.chests = [];
     state.pickups = [];
     state.player.equipment = [];
 
-    // arm_parallel Lv1 gives baseShots=2, but arm_overclock Lv1 raises it to min 3
-    state.player.skillLevels = { arm_base: 3, arm_parallel: 1, arm_overclock: 1 };
-    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(3);
+    const expectedShots = [1, 2, 4, 6, 6, 8];
+    for (let lv = 0; lv <= 5; lv++) {
+      state.player.skillLevels = { arm_base: lv };
+      expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(expectedShots[lv]);
+    }
 
-    // arm_parallel Lv5 keeps baseShots=1, so arm_overclock Lv1 upgrades to 3 slim beams
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 1 };
-    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(3);
+    const oc1 = getPlayerBaseAttackStats(state.player);
+    expect(oc1.shotCount).toBe(8);
+    expect(oc1.centerLaserDamage).toBe(51);
 
-    // arm_overclock Lv2 always guarantees at least 5 shots regardless of arm_parallel Lv
-    state.player.skillLevels = { arm_base: 3, arm_parallel: 1, arm_overclock: 2 };
-    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(5);
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 2 };
-    expect(getPlayerBaseAttackStats(state.player).shotCount).toBe(5);
+    const oc2 = getPlayerBaseAttackStats(state.player);
+    expect(oc2.shotCount).toBe(8);
+    expect(oc2.centerLaserDamage).toBe(Math.round(51 * 1.5));
   });
 
-  it('[APP-CMB-06] uses tight 10px laneSpacing for overclock slim beams and scores multi-beam hits on large enemies', () => {
+  it('[APP-CMB-06] fires delayed spiral pairs up to 8 shots and adds center piercing core laser on overclock', () => {
     const state = createGameState({ seed: 2022 });
     state.chests = [];
     state.pickups = [];
@@ -293,34 +300,34 @@ describe('Player main weapon combat simulation', () => {
       },
     ];
 
-    // Normal charge shot (arm_overclock = 0): 1 thick charge shot (radius = 9 at arm_base Lv5)
-    state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 0 };
+    // arm_base Lv5 (arm_overclock = 0): fires 1st spiral pair immediately and queues 3 delayed pairs (total 8 shots)
+    state.player.skillLevels = { arm_base: 5, arm_parallel: 0, arm_overclock: 0 };
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     const normalProjs = state.projectiles.filter((p) => p.kind === 'base');
-    expect(normalProjs).toHaveLength(1);
-    expect(normalProjs[0]?.radius).toBeCloseTo(9, 2);
+    expect(normalProjs).toHaveLength(2);
+    expect(normalProjs[0]?.spiralAmplitude).toBeGreaterThan(0);
+    expect(state.player.pendingMainBursts).toHaveLength(3);
 
-    // Hybrid shots (arm_overclock = 1, arm_base = 5): center charge (radius 9, 100% dmg) + 2 side slim lasers (radius 4.8, 60% dmg) @ 10px spacing -> span = 20px
+    // Overclock Lv1 + arm_base Lv5: fires 1st spiral pair (2) + 1 center piercing core laser = 3 immediate base projectiles
     state.projectiles = [];
+    state.player.pendingMainBursts = [];
     state.player.baseAttackCooldown = 0;
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 1 };
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     const oc1Stats = getPlayerBaseAttackStats(state.player);
-    const sideDmg1 = Math.max(1, Math.round(oc1Stats.damage * 0.6));
-    const laserProjs = state.projectiles.filter((p) => p.kind === 'base').sort((a, b) => a.y - b.y);
+    const laserProjs = state.projectiles.filter((p) => p.kind === 'base');
     expect(laserProjs).toHaveLength(3);
-    expect(mustAt(laserProjs, 2, 'laserProjs').y - mustAt(laserProjs, 0, 'laserProjs').y).toBeCloseTo(20, 1);
-    expect(laserProjs[0]?.isCenterCharge).toBe(false);
-    expect(laserProjs[0]?.radius).toBeCloseTo(4.8, 2);
-    expect(laserProjs[0]?.damage).toBe(sideDmg1);
-    expect(laserProjs[1]?.isCenterCharge).toBe(true);
-    expect(laserProjs[1]?.radius).toBeCloseTo(9, 2);
-    expect(laserProjs[1]?.damage).toBe(oc1Stats.damage);
-    expect(laserProjs[2]?.isCenterCharge).toBe(false);
-    expect(laserProjs[2]?.damage).toBe(sideDmg1);
+    const centerLaser = laserProjs.find((p) => p.isCenterCharge);
+    const spiralShots = laserProjs.filter((p) => !p.isCenterCharge);
+    expect(centerLaser).toBeDefined();
+    expect(centerLaser?.pierce).toBe(true);
+    expect(centerLaser?.damage).toBe(oc1Stats.centerLaserDamage);
+    expect(spiralShots).toHaveLength(2);
+    expect(mustAt(spiralShots, 0, 'spiralShots').spiralAmplitude).toBeGreaterThan(0);
 
-    // Large enemy (radius 26, e.g. boss/tank) takes center charge (100%) + 4 side lasers (60% each) from arm_overclock Lv2
+    // Large enemy (radius 26, e.g. boss/tank) takes center core laser + spiral pair hits from arm_overclock Lv2
     state.projectiles = [];
+    state.player.pendingMainBursts = [];
     state.player.baseAttackCooldown = 0;
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 2 };
     const largeEnemy = {
@@ -339,23 +346,22 @@ describe('Player main weapon combat simulation', () => {
     };
     state.enemies = [largeEnemy];
     const oc2Stats = getPlayerBaseAttackStats(state.player);
-    const expectedHybridDamage = oc2Stats.damage + Math.max(1, Math.round(oc2Stats.damage * 0.6)) * 4;
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 18; i++) {
       stepGame(state, { x: 0, y: 0 }, 1 / 60);
     }
     const damageTaken = 5000 - largeEnemy.hp;
-    expect(damageTaken).toBeGreaterThanOrEqual(expectedHybridDamage);
+    expect(damageTaken).toBeGreaterThanOrEqual(oc2Stats.centerLaserDamage + oc2Stats.damage * 2);
   });
 
-  it('[APP-CMB-06] scales arm_parallel Lv1-5 homing counts (2,3,4,6,8) while keeping 1 main charge shot until overclock', () => {
+  it('[APP-CMB-06] scales arm_parallel Lv1-5 homing counts (2,3,4,6,8) alongside arm_base spiral shots', () => {
     const state = createGameState({ seed: 2025 });
     state.player.skillLevels = { arm_base: 3 };
     const expected = [
-      { lv: 1, shots: 1, homing: 2 },
-      { lv: 2, shots: 1, homing: 3 },
-      { lv: 3, shots: 1, homing: 4 },
-      { lv: 4, shots: 1, homing: 6 },
-      { lv: 5, shots: 1, homing: 8 },
+      { lv: 1, shots: 6, homing: 2 },
+      { lv: 2, shots: 6, homing: 3 },
+      { lv: 3, shots: 6, homing: 4 },
+      { lv: 4, shots: 6, homing: 6 },
+      { lv: 5, shots: 6, homing: 8 },
     ];
     for (const row of expected) {
       state.player.skillLevels = { arm_base: 3, arm_parallel: row.lv };
@@ -495,5 +501,119 @@ describe('Player main weapon combat simulation', () => {
       'closeEnemy',
     );
     expect(closeEnemy.hp).toBeLessThan(100);
+  });
+
+  it('[APP-CMB-06] converges base_homing forward along player.facingAngle when no enemy is targetable after expand phase', () => {
+    const state = createGameState({ seed: 2026 });
+    state.chests = [];
+    state.pickups = [];
+    state.player.equipment = [];
+    state.player.skillLevels = { arm_base: 3, arm_parallel: 3 };
+    state.player.facingAngle = 0; // facing right (+X)
+
+    const pTileX = Math.floor(state.player.x / TILE_SIZE);
+    const pTileY = Math.floor(state.player.y / TILE_SIZE);
+    for (let dy = -7; dy <= 7; dy++) {
+      for (let dx = -7; dx <= 7; dx++) {
+        const tx = pTileX + dx;
+        const ty = pTileY + dy;
+        if (tx > 0 && tx < state.map.width - 1 && ty > 0 && ty < state.map.height - 1) {
+          state.map.tiles[ty * state.map.width + tx] = 'floor';
+        }
+      }
+    }
+
+    // Spawn a temporary enemy to trigger firing, then remove all enemies before expand finishes
+    state.enemies = [
+      {
+        id: 9960,
+        x: state.player.x + 120,
+        y: state.player.y,
+        radius: 12,
+        speed: 0,
+        hp: 100,
+        maxHp: 100,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.projectiles.filter((p) => p.kind === 'base_homing')).toHaveLength(4);
+
+    // Clear enemies so no target is available when orbit (0.26s) + expand (0.13s) finishes
+    state.enemies = [];
+    for (let i = 0; i < 30; i++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+
+    const homingAfterExpand = state.projectiles.filter((p) => p.kind === 'base_homing');
+    expect(homingAfterExpand.length).toBeGreaterThan(0);
+    for (const p of homingAfterExpand) {
+      // All projectiles should be heading forward (+X) toward the forward convergence point
+      expect(p.vx).toBeGreaterThan(0);
+    }
+  });
+
+  it('[APP-CMB-06] spawns delayed spiral burst waves from the initial attack player coordinates even after player moves', () => {
+    const state = createGameState({ seed: 2027 });
+    state.chests = [];
+    state.pickups = [];
+    state.player.equipment = [];
+    state.player.skillLevels = { arm_base: 5 };
+
+    const pTileX = Math.floor(state.player.x / TILE_SIZE);
+    const pTileY = Math.floor(state.player.y / TILE_SIZE);
+    for (let dy = -5; dy <= 5; dy++) {
+      for (let dx = -5; dx <= 5; dx++) {
+        const tx = pTileX + dx;
+        const ty = pTileY + dy;
+        if (tx > 0 && tx < state.map.width - 1 && ty > 0 && ty < state.map.height - 1) {
+          state.map.tiles[ty * state.map.width + tx] = 'floor';
+        }
+      }
+    }
+
+    const startX = state.player.x;
+    const startY = state.player.y;
+    state.enemies = [
+      {
+        id: 9970,
+        x: startX + 140,
+        y: startY,
+        radius: 14,
+        speed: 0,
+        hp: 5000,
+        maxHp: 5000,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+
+    // Wave 1 fires immediately at (startX, startY)
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.player.pendingMainBursts).toHaveLength(3);
+
+    // Move player away before delayed waves spawn
+    state.player.x = startX - 60;
+    state.player.y = startY + 50;
+    state.player.baseAttackCooldown = 5; // prevent a second attack cycle
+
+    for (let i = 0; i < 15; i++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+
+    expect(state.player.pendingMainBursts).toHaveLength(0);
+    const spiralProjs = state.projectiles.filter((p) => p.kind === 'base');
+    expect(spiralProjs.length).toBeGreaterThanOrEqual(8);
+    for (const p of spiralProjs) {
+      expect(p.spiralOriginX).toBeCloseTo(startX, 3);
+      expect(p.spiralOriginY).toBeCloseTo(startY, 3);
+    }
   });
 });

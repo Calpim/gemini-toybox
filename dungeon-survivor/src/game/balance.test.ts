@@ -98,9 +98,10 @@ function evaluateBuild(preset: BuildPreset) {
   const player = makePlayer(preset.playerLevel, preset.skills, preset.equipment);
   const mainStats = getPlayerBaseAttackStats(player);
 
-  const mainFullDps = (mainStats.damage * mainStats.shotCount) / mainStats.cooldown;
+  const centerLaserDps = mainStats.centerLaserDamage / mainStats.cooldown;
+  const mainFullDps = (mainStats.damage * mainStats.shotCount) / mainStats.cooldown + centerLaserDps;
   const mainRealisticSingleDps =
-    (mainStats.damage * Math.max(1, mainStats.shotCount * preset.mainHitRatio)) / mainStats.cooldown;
+    (mainStats.damage * Math.max(1, mainStats.shotCount * preset.mainHitRatio)) / mainStats.cooldown + centerLaserDps;
   const homingDps = (mainStats.homingDamage * mainStats.homingShots) / mainStats.cooldown;
 
   const subDps = preset.equipment.reduce((sum, item) => sum + calcSubEquipmentSingleTargetDps(item), 0);
