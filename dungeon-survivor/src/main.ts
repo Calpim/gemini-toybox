@@ -194,7 +194,7 @@ function syncNotifications(): void {
       const iconHtml = n.kind === 'alert' ? ICON_ALERT : isBossLike ? ICON_BOSS : ICON_SPARK;
       toast.innerHTML = `<span class="toast-icon">${iconHtml}</span><span></span>`;
       const textSpan = toast.lastElementChild as HTMLElement;
-      textSpan.textContent = n.text.replace(/^(?:⚠️|[⚠👾🎉📦✨⚡🛡🔥💥\s])+/u, '');
+      textSpan.textContent = n.text.replace(/^(?:[⚠👾🎉📦✨⚡🛡🔥💥\s]|\uFE0F)+/u, '');
       return toast;
     }),
   );

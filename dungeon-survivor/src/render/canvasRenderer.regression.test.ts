@@ -20,9 +20,14 @@ interface RecordedDrawOp {
     globalAlpha: number;
     globalCompositeOperation: string;
     lineWidth: number;
+    lineCap: string;
+    lineJoin: string;
     font: string;
+    textAlign: string;
+    textBaseline: string;
     shadowColor: string;
     shadowBlur: number;
+    shadowOffsetY: number;
   };
 }
 
@@ -77,9 +82,14 @@ function createRecordingCtx() {
     globalAlpha: roundNum(styleState.globalAlpha),
     globalCompositeOperation: styleState.globalCompositeOperation,
     lineWidth: roundNum(styleState.lineWidth),
+    lineCap: styleState.lineCap,
+    lineJoin: styleState.lineJoin,
     font: styleState.font,
+    textAlign: styleState.textAlign,
+    textBaseline: styleState.textBaseline,
     shadowColor: styleState.shadowColor,
     shadowBlur: roundNum(styleState.shadowBlur),
+    shadowOffsetY: roundNum(styleState.shadowOffsetY),
   });
 
   const makeGradient = (kind: 'linear' | 'radial', args: number[]) => {
