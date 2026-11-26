@@ -13,6 +13,8 @@ export type MainWeaponId = 'core_shot';
 
 export interface PendingMainBurst {
   delay: number;
+  originX: number;
+  originY: number;
   angle: number;
   damage: number;
   speed: number;

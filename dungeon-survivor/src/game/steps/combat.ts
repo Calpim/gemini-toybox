@@ -42,6 +42,8 @@ const MAX_PENDING_MAIN_BURSTS = 8;
 
 function spawnSpiralPair(
   state: GameState,
+  originX: number,
+  originY: number,
   angle: number,
   damage: number,
   speed: number,
@@ -53,7 +55,6 @@ function spawnSpiralPair(
   color: string,
   count: number,
 ): void {
-  const { player } = state;
   const dirX = Math.cos(angle);
   const dirY = Math.sin(angle);
   const phases = count >= 2 ? [0, Math.PI] : [0];
@@ -61,8 +62,8 @@ function spawnSpiralPair(
     state.projectiles.push({
       id: state.nextEntityId++,
       kind: 'base',
-      x: player.x,
-      y: player.y,
+      x: originX,
+      y: originY,
       vx: dirX * speed,
       vy: dirY * speed,
       speed,
@@ -74,14 +75,14 @@ function spawnSpiralPair(
       overclockLevel,
       isCenterCharge: false,
       visualTier: Math.max(baseLevel >= 3 ? 1 : 0, overclockLevel),
-      spiralOriginX: player.x,
-      spiralOriginY: player.y,
+      spiralOriginX: originX,
+      spiralOriginY: originY,
       spiralAngle: angle,
       spiralPhase: phase,
       spiralAge: 0,
       spiralAmplitude: SPIRAL_AMPLITUDE,
       spiralOmega: SPIRAL_OMEGA,
-      trail: [{ x: player.x, y: player.y }],
+      trail: [{ x: originX, y: originY }],
       hitEnemyIds: [],
       color,
     });
@@ -144,6 +145,8 @@ export function stepPlayerCombat(
       if (burst.delay <= 0) {
         spawnSpiralPair(
           state,
+          burst.originX,
+          burst.originY,
           burst.angle,
           burst.damage,
           burst.speed,
@@ -194,10 +197,14 @@ export function stepPlayerCombat(
           color: mainColor,
         });
       } else {
+        const originX = player.x;
+        const originY = player.y;
         const pairWaves = Math.ceil(baseStats.shotCount / 2);
         const firstWaveCount = Math.min(2, baseStats.shotCount);
         spawnSpiralPair(
           state,
+          originX,
+          originY,
           centerAngle,
           baseStats.damage,
           baseStats.speed,
@@ -220,6 +227,8 @@ export function stepPlayerCombat(
             if (player.pendingMainBursts.length < MAX_PENDING_MAIN_BURSTS) {
               player.pendingMainBursts.push({
                 delay: w * SPIRAL_BURST_DELAY,
+                originX,
+                originY,
                 angle: centerAngle,
                 damage: baseStats.damage,
                 speed: baseStats.speed,

@@ -556,4 +556,64 @@ describe('Player main weapon combat simulation', () => {
       expect(p.vx).toBeGreaterThan(0);
     }
   });
+
+  it('[APP-CMB-06] spawns delayed spiral burst waves from the initial attack player coordinates even after player moves', () => {
+    const state = createGameState({ seed: 2027 });
+    state.chests = [];
+    state.pickups = [];
+    state.player.equipment = [];
+    state.player.skillLevels = { arm_base: 5 };
+
+    const pTileX = Math.floor(state.player.x / TILE_SIZE);
+    const pTileY = Math.floor(state.player.y / TILE_SIZE);
+    for (let dy = -5; dy <= 5; dy++) {
+      for (let dx = -5; dx <= 5; dx++) {
+        const tx = pTileX + dx;
+        const ty = pTileY + dy;
+        if (tx > 0 && tx < state.map.width - 1 && ty > 0 && ty < state.map.height - 1) {
+          state.map.tiles[ty * state.map.width + tx] = 'floor';
+        }
+      }
+    }
+
+    const startX = state.player.x;
+    const startY = state.player.y;
+    state.enemies = [
+      {
+        id: 9970,
+        x: startX + 140,
+        y: startY,
+        radius: 14,
+        speed: 0,
+        hp: 5000,
+        maxHp: 5000,
+        damage: 10,
+        aggroRange: 0,
+        awake: false,
+        hitFlash: 0,
+        bitHitCooldown: 0,
+      },
+    ];
+
+    // Wave 1 fires immediately at (startX, startY)
+    stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    expect(state.player.pendingMainBursts).toHaveLength(3);
+
+    // Move player away before delayed waves spawn
+    state.player.x = startX - 60;
+    state.player.y = startY + 50;
+    state.player.baseAttackCooldown = 5; // prevent a second attack cycle
+
+    for (let i = 0; i < 15; i++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+    }
+
+    expect(state.player.pendingMainBursts).toHaveLength(0);
+    const spiralProjs = state.projectiles.filter((p) => p.kind === 'base');
+    expect(spiralProjs.length).toBeGreaterThanOrEqual(8);
+    for (const p of spiralProjs) {
+      expect(p.spiralOriginX).toBeCloseTo(startX, 3);
+      expect(p.spiralOriginY).toBeCloseTo(startY, 3);
+    }
+  });
 });
