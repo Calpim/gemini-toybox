@@ -325,4 +325,33 @@ describe('Player sub-equipment combat simulation', () => {
     );
     expect(reflected.vx).toBeGreaterThan(0);
   });
+
+  it('seeker drone orbit angle stays continuous across orbitAngle wraps (no snap-back)', () => {
+    const state = createGameState({ seed: 42 });
+    state.chests = [];
+    state.pickups = [];
+    state.enemies = [];
+    state.map.tiles.fill('floor');
+    state.player.equipment = [createEquippedItem('seeker_drone', 1)];
+    state.player.baseAttackCooldown = 999;
+
+    let prevAngle: number | null = null;
+    let maxJumpDeg = 0;
+    // 12s crosses the orbitAngle 2PI wrap (every ~2.62s at 2.4 rad/s) several times
+    for (let f = 0; f < 60 * 12; f++) {
+      stepGame(state, { x: 0, y: 0 }, 1 / 60);
+      const drone = getSeekerDronePositions(state)[0];
+      expect(drone).toBeDefined();
+      if (!drone) continue;
+      const angle = Math.atan2(drone.y - state.player.y, drone.x - state.player.x);
+      if (prevAngle !== null) {
+        let diff = Math.abs(angle - prevAngle);
+        if (diff > Math.PI) diff = Math.PI * 2 - diff;
+        maxJumpDeg = Math.max(maxJumpDeg, (diff * 180) / Math.PI);
+      }
+      prevAngle = angle;
+    }
+    // Normal per-frame motion is ~3.2deg; the old wrapped derivation snapped ~141deg
+    expect(maxJumpDeg).toBeLessThan(10);
+  });
 });

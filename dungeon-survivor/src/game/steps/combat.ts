@@ -195,6 +195,10 @@ export function stepPlayerCombat(
     player.orbitRadius = getOrbitShieldRadius(orbitItem.level, mods.rangeMult);
   }
   player.orbitAngle = (player.orbitAngle + orbitAngularSpeed * clampedDt) % (Math.PI * 2);
+  // Seeker drones counter-rotate at 1.4x the orbit speed. Keep a dedicated angle:
+  // deriving it from the wrapped orbitAngle would snap by 2PI * 0.4 at every wrap.
+  const droneAngleDelta = -orbitAngularSpeed * 1.4 * clampedDt;
+  player.droneAngle = (((player.droneAngle + droneAngleDelta) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
   const seekerDrones = deps.getSeekerDronePositions(state);
   let droneCursor = 0;
 
