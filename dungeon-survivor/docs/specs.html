@@ -3542,7 +3542,7 @@
         <td><a class="id-pill id-doc" href="#INV-03">INV-03</a></td>
         <td><span class="cat-pill">装備枠・採用方針</span></td>
         <td><code class="inline-code">player.equipment.length &lt;= 5</code>（初期2枠、スクラップ＆ビルドで <code class="inline-code">1/2/3</code> 回蓄積により最大5枠）を満たし、<code class="inline-code">auto_turret</code> は装備候補に含まれない（同一装備の重複装着禁止は <code class="inline-code">INV-11</code>）</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/combat.test.ts</code> (<code class="inline-code">[APP-CMB-02]</code>), <code class="inline-code">src/game/loadout.test.ts</code> (<code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>)</div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/combat.subEquipment.test.ts</code> (<code class="inline-code">[APP-CMB-02]</code>), <code class="inline-code">src/game/loadout.test.ts</code> (<code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-04">BIZ-CMB-04</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#PRM-05">PRM-05</a><a class="ref-pill ref-link" href="#GLS-02">GLS-02</a><a class="ref-pill ref-link" href="#GLS-03">GLS-03</a><a class="ref-pill ref-link" href="#DEC-07">DEC-07</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#INV-11">INV-11</a></div></td>
         <td><div class="note-text">初期 <code class="inline-code">MAX_EQUIP_SLOTS = 2</code>、<code class="inline-code">MAX_EQUIP_SLOTS_CAP = 5</code></div><div class="source-cell">
@@ -3578,7 +3578,7 @@
         <td><a class="id-pill id-doc" href="#INV-06">INV-06</a></td>
         <td><span class="cat-pill">索敵・射線</span></td>
         <td>サブ装備および通常索敵の距離は <code class="inline-code">MAX_TARGET_RANGE (180px)</code> を超えず、全攻撃において壁越し（<code class="inline-code">hasLineOfSight === false</code>）の標的を攻撃しない（メイン武器コアショットのみ <code class="inline-code">arm_base</code> 投資により視線が通る敵へ最大 <code class="inline-code">290px</code> まで例外延長可）</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/combat.test.ts</code> (<code class="inline-code">[APP-CMB-01 &amp; APP-CMB-03]</code>)</div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/combat.mainWeapon.test.ts</code> (<code class="inline-code">[APP-CMB-01 &amp; APP-CMB-03]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#GLS-13">GLS-13</a><a class="ref-pill ref-link" href="#DEC-09">DEC-09</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a></div></td>
         <td><div class="note-text"><code class="inline-code">def_sensor</code> Lv5でもサブ装備は 180px 上限を厳守。主兵装のみ <code class="inline-code">arm_base</code> で要LoS前提の例外延長（<code class="inline-code">DEC-19</code>）</div><div class="source-cell">
@@ -3614,7 +3614,7 @@
         <td><a class="id-pill id-doc" href="#INV-09">INV-09</a></td>
         <td><span class="cat-pill">装備上限・経済</span></td>
         <td>所持装備レベルは常に <code class="inline-code">1 &lt;= level &lt;= MAX_EQUIPMENT_LEVEL (8)</code> を満たし、Lv8装備への <code class="inline-code">scrap_upgrade</code> は拒否され、Lv8重複拾得は枠5未満なら自動枠拡張蓄積・枠5到達後はオーバーフローボーナスへ変換される</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/combat.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>), <code class="inline-code">src/game/loadout.test.ts</code> (<code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>, <code class="inline-code">[INV-09 / APP-GRW-04]</code>)</div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/combat.subEquipment.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>), <code class="inline-code">src/game/loadout.test.ts</code> (<code class="inline-code">[APP-GRW-03 &amp; APP-GRW-04]</code>, <code class="inline-code">[INV-09 / APP-GRW-04]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#BIZ-GRW-03">BIZ-GRW-03</a><a class="ref-pill ref-link" href="#BIZ-GRW-04">BIZ-GRW-04</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#GLS-12">GLS-12</a><a class="ref-pill ref-link" href="#PRM-13">PRM-13</a><a class="ref-pill ref-link" href="#PRM-32">PRM-32</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a><a class="ref-pill ref-link" href="#DEC-16">DEC-16</a></div></td>
         <td><div class="note-text">Lv8到達後の無意味な強化やリソース損失を防止</div><div class="source-cell">
@@ -3626,7 +3626,7 @@
         <td><a class="id-pill id-doc" href="#INV-10">INV-10</a></td>
         <td><span class="cat-pill">武装・敵役割保証</span></td>
         <td><code class="inline-code">pulse_blade</code> は全レベルで <code class="inline-code">fullCircle === false</code>（扇形維持）であり、<code class="inline-code">shooter</code>・守護中ボス（<code class="inline-code">isRoomBoss</code>）・大ボス（<code class="inline-code">isGrandBoss</code>）はノックバックで座標移動しない</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/combat.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>), <code class="inline-code">src/game/steps/enemies.test.ts</code> (<code class="inline-code">[APP-MAP-07]</code>, <code class="inline-code">[APP-MAP-07 &amp; APP-CMB-02]</code>)</div></td>
+        <td><div class="sub-code"><code class="inline-code">src/game/combat.subEquipment.test.ts</code> (<code class="inline-code">[APP-CMB-05]</code>), <code class="inline-code">src/game/steps/enemies.test.ts</code> (<code class="inline-code">[APP-MAP-07]</code>, <code class="inline-code">[APP-MAP-07 &amp; APP-CMB-02]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-05">BIZ-CMB-05</a><a class="ref-pill ref-link" href="#APP-CMB-05">APP-CMB-05</a><a class="ref-pill ref-link" href="#APP-MAP-07">APP-MAP-07</a><a class="ref-pill ref-link" href="#NG-10">NG-10</a><a class="ref-pill ref-link" href="#NG-12">NG-12</a><a class="ref-pill ref-link" href="#DEC-10">DEC-10</a><a class="ref-pill ref-link" href="#DEC-11">DEC-11</a></div></td>
         <td><div class="note-text">装備役割の重複防止と固定砲台・ボス戦ギミックの維持</div><div class="source-cell">
