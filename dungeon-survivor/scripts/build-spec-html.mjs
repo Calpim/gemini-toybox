@@ -294,8 +294,7 @@ export function parseMarkdownTables(content) {
 export function extractMermaidBlocks(content) {
   const blocks = [];
   const regex = /```mermaid\s*\n([\s\S]*?)```/g;
-  let m;
-  while ((m = regex.exec(content.replace(/\r\n/g, '\n'))) !== null) {
+  for (const m of content.replace(/\r\n/g, '\n').matchAll(regex)) {
     const code = m[1].trim();
     if (code) blocks.push(code);
   }
@@ -529,8 +528,7 @@ export function parseOverrideTargets(text) {
   const targets = [];
   const seen = new Set();
   const markerRegex = /上書き対象\s*[:：]\s*([^。；;\n）)]+)/g;
-  let m;
-  while ((m = markerRegex.exec(str)) !== null) {
+  for (const m of str.matchAll(markerRegex)) {
     const rawList = m[1].trim();
     if (!rawList) continue;
     const tokens = rawList
@@ -1053,12 +1051,10 @@ function tokenizeTagBlock(inner) {
 function extractTestTitleTagSets(fileContent) {
   const tagSets = [];
   const titleRegex = /\b(?:describe|it|test)\s*\(\s*(['"`])((?:\\.|(?!\1)[^\\\n])+)\1/g;
-  let titleMatch;
-  while ((titleMatch = titleRegex.exec(fileContent)) !== null) {
+  for (const titleMatch of fileContent.matchAll(titleRegex)) {
     const title = titleMatch[2];
     const bracketRegex = /\[([^\]]+)\]/g;
-    let bracketMatch;
-    while ((bracketMatch = bracketRegex.exec(title)) !== null) {
+    for (const bracketMatch of title.matchAll(bracketRegex)) {
       const tokens = tokenizeTagBlock(bracketMatch[1]);
       if (tokens.length > 0) {
         tagSets.push(new Set(tokens));
@@ -1090,15 +1086,12 @@ export function validateInvariantTests(invariants, projectRoot) {
   const testRefRegex = /`([^`]+\.test\.ts)`(?:\s*\(([^)]*)\))?/g;
   for (const item of items) {
     const verification = String(item.verification || '');
-    let refMatch;
-    testRefRegex.lastIndex = 0;
-    while ((refMatch = testRefRegex.exec(verification)) !== null) {
+    for (const refMatch of verification.matchAll(testRefRegex)) {
       const testFile = refMatch[1].trim();
       const parenContent = refMatch[2] ?? '';
       const bracketRegex = /\[([^\]]+)\]/g;
       const tags = [];
-      let bm;
-      while ((bm = bracketRegex.exec(parenContent)) !== null) {
+      for (const bm of parenContent.matchAll(bracketRegex)) {
         tags.push(bm[1].trim());
       }
 
@@ -1173,9 +1166,7 @@ export function validateNoLineNumberRefs(projectRoot, options = {}) {
     const lines = fs.readFileSync(fullPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
     for (let i = 0; i < lines.length; i += 1) {
       const line = lines[i];
-      lineRefRegex.lastIndex = 0;
-      let m;
-      while ((m = lineRefRegex.exec(line)) !== null) {
+      for (const m of line.matchAll(lineRefRegex)) {
         lineNumberRefs.push({
           file: relPath,
           line: i + 1,
@@ -1203,9 +1194,7 @@ export function validateSymbolRefs(projectRoot, options = {}) {
     const lines = fs.readFileSync(fullPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
     for (let i = 0; i < lines.length; i += 1) {
       const line = lines[i];
-      symbolRefRegex.lastIndex = 0;
-      let m;
-      while ((m = symbolRefRegex.exec(line)) !== null) {
+      for (const m of line.matchAll(symbolRefRegex)) {
         const targetFile = m[1];
         const symbol = m[2];
         const ref = `${targetFile}#${symbol}`;

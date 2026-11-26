@@ -28,53 +28,61 @@ import {
 } from './ui/icons';
 import { closeOpenSkillInfoPopover, type PauseModalTab, renderModals } from './ui/modals';
 
-const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d')!;
+function requireEl(id: string): HTMLElement {
+  const el = document.getElementById(id);
+  if (!el) throw new Error(`Missing required DOM element: #${id}`);
+  return el;
+}
+
+const canvas = requireEl('gameCanvas') as HTMLCanvasElement;
+const ctxOrNull = canvas.getContext('2d');
+if (!ctxOrNull) throw new Error('2D rendering context is unavailable');
+const ctx = ctxOrNull;
 const minimapCanvas = document.getElementById('minimapCanvas') as HTMLCanvasElement | null;
 const minimapCtx = minimapCanvas?.getContext('2d') ?? null;
 
 const hudEl = document.querySelector('.hud') as HTMLElement | null;
 const bottomConsoleEl = document.querySelector('.cockpit-console') as HTMLElement | null;
-const hpBar = document.getElementById('hpBar')!;
-const hpText = document.getElementById('hpText')!;
-const hpFill = document.getElementById('hpFill')!;
-const expText = document.getElementById('expText')!;
-const expFill = document.getElementById('expFill')!;
-const floorText = document.getElementById('floorText')!;
-const playTimeText = document.getElementById('playTimeText')!;
-const muteBtn = document.getElementById('muteBtn')!;
-const skillBtn = document.getElementById('skillBtn')!;
-const gearBtn = document.getElementById('gearBtn')!;
+const hpBar = requireEl('hpBar');
+const hpText = requireEl('hpText');
+const hpFill = requireEl('hpFill');
+const expText = requireEl('expText');
+const expFill = requireEl('expFill');
+const floorText = requireEl('floorText');
+const playTimeText = requireEl('playTimeText');
+const muteBtn = requireEl('muteBtn');
+const skillBtn = requireEl('skillBtn');
+const gearBtn = requireEl('gearBtn');
 const bottomPauseLeftBtn = document.getElementById('bottomPauseLeftBtn');
 const bottomSkillBadge = document.getElementById('bottomSkillBadge');
 const bottomSkillSub = document.getElementById('bottomSkillSub');
 const bottomGearBtn = document.getElementById('bottomGearBtn');
 const bottomGearSub = document.getElementById('bottomGearSub');
-const killsText = document.getElementById('killsText')!;
-const notificationStack = document.getElementById('notificationStack')!;
+const killsText = requireEl('killsText');
+const notificationStack = requireEl('notificationStack');
 const skillModalHeading = document.getElementById('skillModalHeading');
-const startModal = document.getElementById('startModal')!;
-const startBtn = document.getElementById('startBtn')!;
-const gameOverModal = document.getElementById('gameOverModal')!;
-const gameOverSummary = document.getElementById('gameOverSummary')!;
-const retryBtn = document.getElementById('retryBtn')!;
+const startModal = requireEl('startModal');
+const startBtn = requireEl('startBtn');
+const gameOverModal = requireEl('gameOverModal');
+const gameOverSummary = requireEl('gameOverSummary');
+const retryBtn = requireEl('retryBtn');
 
 const modalEls = {
-  skillModal: document.getElementById('skillModal')!,
-  skillSpBadge: document.getElementById('skillSpBadge')!,
-  skillColumns: document.getElementById('skillColumns')!,
-  skillTabBody: document.getElementById('skillTabBody')!,
-  gearTabBody: document.getElementById('gearTabBody')!,
-  tabSkillBtn: document.getElementById('tabSkillBtn')!,
-  tabGearBtn: document.getElementById('tabGearBtn')!,
-  equipModal: document.getElementById('equipModal')!,
-  equipDropCard: document.getElementById('equipDropCard')!,
-  equipSlotList: document.getElementById('equipSlotList')!,
+  skillModal: requireEl('skillModal'),
+  skillSpBadge: requireEl('skillSpBadge'),
+  skillColumns: requireEl('skillColumns'),
+  skillTabBody: requireEl('skillTabBody'),
+  gearTabBody: requireEl('gearTabBody'),
+  tabSkillBtn: requireEl('tabSkillBtn'),
+  tabGearBtn: requireEl('tabGearBtn'),
+  equipModal: requireEl('equipModal'),
+  equipDropCard: requireEl('equipDropCard'),
+  equipSlotList: requireEl('equipSlotList'),
 };
 
-const closeSkillBtn = document.getElementById('closeSkillBtn')!;
-const closeSkillTopBtn = document.getElementById('closeSkillTopBtn')!;
-const scrapEquipBtn = document.getElementById('scrapEquipBtn')!;
+const closeSkillBtn = requireEl('closeSkillBtn');
+const closeSkillTopBtn = requireEl('closeSkillTopBtn');
+const scrapEquipBtn = requireEl('scrapEquipBtn');
 
 let activePauseTab: PauseModalTab = 'skill';
 
@@ -186,7 +194,7 @@ function syncNotifications(): void {
       const iconHtml = n.kind === 'alert' ? ICON_ALERT : isBossLike ? ICON_BOSS : ICON_SPARK;
       toast.innerHTML = `<span class="toast-icon">${iconHtml}</span><span></span>`;
       const textSpan = toast.lastElementChild as HTMLElement;
-      textSpan.textContent = n.text.replace(/^[⚠️⚠👾🎉📦✨⚡🛡🔥💥\s]+/u, '');
+      textSpan.textContent = n.text.replace(/^(?:⚠️|[⚠👾🎉📦✨⚡🛡🔥💥\s])+/u, '');
       return toast;
     }),
   );
