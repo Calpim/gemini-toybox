@@ -208,7 +208,7 @@ export function getSeekerDronePositions(state: GameState): Vec2[] {
   const count = getSeekerDroneCount(droneItem.level);
   const positions: Vec2[] = [];
   for (let i = 0; i < count; i++) {
-    const a = -player.orbitAngle * 1.4 + (i * Math.PI * 2) / count;
+    const a = player.droneAngle + (i * Math.PI * 2) / count;
     positions.push({
       x: player.x + Math.cos(a) * 28,
       y: player.y + Math.sin(a) * 28,

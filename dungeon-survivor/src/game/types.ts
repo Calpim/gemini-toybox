@@ -33,6 +33,7 @@ export interface PlayerState {
   invulnTimer: number;
   facingAngle: number;
   orbitAngle: number;
+  droneAngle: number;
   orbitRadius: number;
   baseAttackCooldown: number;
   repulsorCooldown: number;

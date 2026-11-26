@@ -47,6 +47,7 @@ function makePlayer(level: number, skills: SkillLevelMap, equipment: EquippedIte
     tacticalSpeedTimer: 0,
     invulnTimer: 0,
     orbitAngle: 0,
+    droneAngle: 0,
     orbitRadius: 78,
     facingAngle: 0,
   };
