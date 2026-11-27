@@ -14,7 +14,7 @@ export function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): vo
     player.level += 1;
     const gainedSp = getLevelUpSkillPoints(player.level);
     player.skillPoints += gainedSp;
-    player.expToNext = Math.round(player.expToNext * 1.22);
+    player.expToNext = Math.round(player.expToNext * 1.32);
     emitSound(state, 'level_up');
     spawnParticles(state, player.x, player.y, '#38bdf8', 14, 55, 165, 3.0, 0.45);
     state.floatingTexts.push({

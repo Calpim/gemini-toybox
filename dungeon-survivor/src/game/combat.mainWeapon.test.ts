@@ -91,17 +91,20 @@ describe('Player main weapon combat simulation', () => {
       spentSp: 0,
     });
 
-    // Raising player.level alone without spending SP does NOT alter Core Shot
+    // Raising player.level applies a flat base-damage floor (+1.2/Lv, cap +18) without altering shotCount/cooldown/pierce
     state.player.level = 5;
-    expect(getPlayerBaseAttackStats(state.player)).toEqual(initialStats);
+    expect(getPlayerBaseAttackStats(state.player)).toEqual({
+      ...initialStats,
+      damage: 19,
+    });
 
-    // Spending SP in defense/mobility (e.g. mob_magnet Lv2) does NOT inflate Core Shot damage/shots
+    // Spending SP in defense/mobility (e.g. mob_magnet Lv2) does NOT inflate Core Shot damage/shots beyond level floor
     state.player.skillPoints = 2;
     expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true);
     expect(upgradeSkillNode(state, 'mob_magnet')).toBe(true);
     expect(state.player.spentSkillPoints).toBe(2);
     expect(getPlayerBaseAttackStats(state.player)).toMatchObject({
-      damage: 14,
+      damage: 19,
       shotCount: 1,
       cooldown: initialStats.cooldown,
       pierce: false,
@@ -161,16 +164,16 @@ describe('Player main weapon combat simulation', () => {
     };
 
     const stats = getPlayerBaseAttackStats(state.player);
-    // totalRef = round(14 * 2.7 * 1.35) = 51 -> 8 spiral shots (each round(51*1.2/8)=8), centerLaser = round(51*1.5)=77
+    // totalRef = round(14 * 2.7 * 1.35) = 51 -> 8 spiral shots (each round(51*1.2/8)=8), centerLaser = round(51*1.2)=61
     expect(stats.damage).toBe(8);
     expect(stats.shotCount).toBe(8);
-    expect(stats.centerLaserDamage).toBe(Math.round(51 * 1.5));
+    expect(stats.centerLaserDamage).toBe(Math.round(51 * 1.2));
     expect(stats.homingShots).toBe(8);
     expect(stats.homingDamage).toBe(Math.round(51 * 0.35)); // 18
     // min(180, round(180 * 1.55)) + 110 = 180 + 110 = 290
     expect(stats.range).toBe(290);
-    // 0.58 * 0.55 = 0.319 >= 0.20
-    expect(stats.cooldown).toBeCloseTo(0.319, 4);
+    // 0.58 * 0.68 = 0.3944 >= 0.20
+    expect(stats.cooldown).toBeCloseTo(0.3944, 4);
     expect(stats.speed).toBe(460 + 200);
     expect(stats.pierce).toBe(true);
     expect(stats.armBaseLevel).toBe(5);
@@ -272,12 +275,12 @@ describe('Player main weapon combat simulation', () => {
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 1 };
     const oc1 = getPlayerBaseAttackStats(state.player);
     expect(oc1.shotCount).toBe(8);
-    expect(oc1.centerLaserDamage).toBe(51);
+    expect(oc1.centerLaserDamage).toBe(Math.round(51 * 0.8));
 
     state.player.skillLevels = { arm_base: 5, arm_parallel: 5, arm_overclock: 2 };
     const oc2 = getPlayerBaseAttackStats(state.player);
     expect(oc2.shotCount).toBe(8);
-    expect(oc2.centerLaserDamage).toBe(Math.round(51 * 1.5));
+    expect(oc2.centerLaserDamage).toBe(Math.round(51 * 1.2));
   });
 
   it('[APP-CMB-06] fires delayed spiral pairs up to 8 shots and adds center piercing core laser on overclock', () => {

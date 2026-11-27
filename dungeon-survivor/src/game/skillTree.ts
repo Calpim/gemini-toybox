@@ -120,9 +120,9 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     requires: 'arm_parallel',
     tagline: '螺旋貫通化＋中心極太コアレーザー追加',
     description:
-      'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 全弾貫通化＆螺旋の中心を貫く極太コアレーザーを追加',
+      'メイン武器CD短縮(-16% / -32%) & 弾速UP(+100 / +200) + 全弾貫通化＆螺旋の中心を貫く極太コアレーザーを追加',
     detailNote:
-      'メイン武器CD短縮(最小0.20s)＆弾速UP＆螺旋弾の貫通化に加え、二重螺旋の真ん中を一直線に貫く極太コアレーザー（Lv1: 100%威力 / Lv2: 150%威力・発光強化）を同時発射します。',
+      'メイン武器CD短縮(最小0.20s)＆弾速UP＆螺旋弾の貫通化に加え、二重螺旋の真ん中を一直線に貫く極太コアレーザー（Lv1: 80%威力 / Lv2: 120%威力・発光強化）を同時発射します。',
   },
   {
     id: 'def_sensor',
@@ -175,7 +175,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     requires: 'mob_magnet',
     tagline: '装備ドロップ率・品質とEXPを強化',
     description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（サブ装備固めの要）',
-    detailNote: '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
+    detailNote: '基礎装備ドロップ率(2.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
   },
   {
     id: 'mob_dash',
@@ -222,7 +222,7 @@ const ARM_MAIN_SPIRAL_SHOTS = [1, 2, 4, 6, 6, 8] as const;
 const ARM_MAIN_EXTRA_SHOTS = [0, 0, 0, 0, 0, 0] as const;
 const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.08, 0.16, 0.25, 0.35] as const;
 const ARM_MAIN_HOMING_SHOTS = [0, 2, 3, 4, 6, 8] as const;
-const ARM_MAIN_CD_REDUCTION = [0, 0.22, 0.45] as const;
+const ARM_MAIN_CD_REDUCTION = [0, 0.16, 0.32] as const;
 const ARM_MAIN_SPEED_BONUS = [0, 100, 200] as const;
 
 // Defense: Sensor range + controlled emergency defense (def_aegis capped at Lv2)

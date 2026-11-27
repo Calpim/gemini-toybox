@@ -21,7 +21,7 @@ export interface EquippedItem {
 
 export const MAX_EQUIP_SLOTS = 2;
 export const MAX_EQUIP_SLOTS_CAP = 5;
-export const SCRAP_EXPAND_COSTS = [1, 2, 3] as const;
+export const SCRAP_EXPAND_COSTS = [1, 1, 2] as const;
 export const MAX_TARGET_RANGE = 180;
 export const MAX_EQUIPMENT_LEVEL = 8;
 export const MAX_EQUIPMENT_COUNT_EVO_LEVEL = 6;

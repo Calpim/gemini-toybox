@@ -87,8 +87,8 @@ export function handleEnemyDeath(
         itemLevel,
       });
     } else {
-      // Low-probability enemy equipment drop (1.5% base + mob_loot bonus) scaled to player's lowest equipment level & drop quality (APP-GRW-07)
-      const equipDropChance = (0.015 + mods.equipDropBonus) * dropRateScale;
+      // Low-probability enemy equipment drop (2.5% base + mob_loot bonus) scaled to player's lowest equipment level & drop quality (APP-GRW-07)
+      const equipDropChance = (0.025 + mods.equipDropBonus) * dropRateScale;
       if (rng.next() < equipDropChance) {
         const eqId = rng.pick(ALL_EQUIPMENT_IDS);
         const itemLevel = deps.rollDropEquipmentLevel(player.equipment, () => rng.next(), mods.dropQualityTier);
