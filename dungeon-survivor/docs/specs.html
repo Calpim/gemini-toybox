@@ -543,7 +543,7 @@
       <a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (11)</a>
       <a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (10)</a>
       <a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (12)</a>
-      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (41)</a>
+      <a class="nav-pill" href="#sec-decisions">🧭 決定ログ (42)</a>
     </nav>
 
     <section id="sec-overview" class="doc-section">
@@ -557,14 +557,14 @@
       <div class="stats">
         <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">34</div></div>
         <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">25</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">180</div></div>
+        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">181</div></div>
         <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">36</div></div>
         <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">7</div></div>
         <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">2</div></div>
       </div>
 
       <div class="ok-banner">✅ トレーサビリティチェック OK：全 34 件のビジネス仕様と 25 件のアプリ仕様が ID 紐付けされています</div>
-      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 166 件の関連IDにリンク切れはありません</div>
+      <div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 167 件の関連IDにリンク切れはありません</div>
 
       <div class="dash-grid">
     <div class="dash-panel dash-disputed">
@@ -1335,9 +1335,9 @@
       <li>決定経緯: auto_turret 不採用は人間確定（2026-11-14）、各装備の数値パラメータは AI仮提案（@Confirmed @AIProposed）</li><li>不採用理由（auto_turret）: 5秒ごとの足元固定設置は敵殲滅後に空撃ち設置となって次の移動に活かせないため削除</li>
     </ul>
   </div>
-                <h4>自機基本攻撃と各装備のクールダウン・射程判定により最短距離の敵を自動攻撃する</h4>
+                <h4>自機基本攻撃と各装備のクールダウン・射程・視界判定により最短距離の敵を自動攻撃する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">プレイヤーが自機固有の基本攻撃（コアショット）、および任意の数の自動攻撃装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">射程 R 以内・視線上に敵が存在し、かつ自機基本攻撃または装備の残りクールダウンが 0 以下になる</span></li><li><span class="kw">ならば</span><span class="st-text">入力ボタン操作なしで即座に攻撃インスタンス（コアショット・弾・斬撃・電撃）を生成し、CD をリセットする</span></li>
+    <li><span class="kw">前提</span><span class="st-text">プレイヤーが自機固有の基本攻撃（コアショット）、および任意の数の自動攻撃装備を所持している</span></li><li><span class="kw">もし</span><span class="st-text">射程 R 以内・視線上かつプレイヤー視界内（isEnemyVisibleToPlayer：同室内または通路半径 210px 以内、もしくは isAmbush）に敵が存在し、かつ自機基本攻撃または装備の残りクールダウンが 0 以下になる</span></li><li><span class="kw">ならば</span><span class="st-text">入力ボタン操作なしで即座に攻撃インスタンス（コアショット・弾・斬撃・電撃）を生成し、CD をリセットする（なお、すでに発射された弾の流れ弾ヒットは視界外でも有効）</span></li>
   </ul>
               </div>
           </div>
@@ -1422,9 +1422,9 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 
-                <h4>レイキャストによる壁遮蔽と最大索敵上限 MAX_TARGET_RANGE（180px・主兵装のみarm_baseで例外延長）を適用する</h4>
+                <h4>レイキャストによる壁遮蔽・プレイヤー視界制限・最大索敵上限 MAX_TARGET_RANGE（180px・主兵装のみarm_baseで例外延長）を適用する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">索敵上限定数 MAX_TARGET_RANGE が 180px（4.5タイル相当＝1部屋〜隣通路規模）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃・自機ショット・索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">壁タイルとの交差は遮断され、サブ装備および通常索敵は def_sensor でレンジが伸びても 180px を超える敵をロックオンしない</span></li><li><span class="kw">かつ</span><span class="st-text">メイン武器（コアショット）のみ arm_base 投資時（DEC-19）に視線が通る敵へ最大 290px（Inferred / OQ-06）まで例外的に射程を延長できる</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">索敵上限定数 MAX_TARGET_RANGE が 180px（4.5タイル相当＝1部屋〜隣通路規模）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃・自機ショット・索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">壁タイルとの交差は遮断され、プレイヤーの全自動攻撃（ターゲティング・連鎖・範囲攻撃）はフォグで隠れた視界外（isEnemyVisibleToPlayer === false）の敵を狙わない</span></li><li><span class="kw">かつ</span><span class="st-text">サブ装備および通常索敵は def_sensor でレンジが伸びても 180px を超える敵をロックオンしない</span></li><li><span class="kw">かつ</span><span class="st-text">メイン武器（コアショット）のみ arm_base 投資時（DEC-19）に、視線が通りかつプレイヤー視界内（部屋全体または通路半径 210px 以内）の敵へ最大 290px（Inferred / OQ-06）まで例外的に射程を延長できる</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅する</span></li>
   </ul>
               </div>
           </div>
@@ -1441,9 +1441,9 @@
             <span class="badge badge-confirmed">Confirmed（決定済み）</span>
           </div>
           
-          <h3>部屋・通路に収まる索敵上限で遠距離スナイプを防ぐ</h3>
+          <h3>部屋・通路に収まる索敵上限と視界制限で遠距離スナイプを防ぐ</h3>
           <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">長い通路の先などに遠方の部屋が見えている</span></li><li><span class="kw">もし</span><span class="st-text">サブ装備や通常索敵の距離が部屋・通路規模の索敵上限距離を超える（主兵装の視線あり射程延長を除く）</span></li><li><span class="kw">ならば</span><span class="st-text">2つ隣の部屋にまで届くような無制限の遠距離スナイプは行わない</span></li>
+    <li><span class="kw">前提</span><span class="st-text">長い通路の先などに遠方の部屋やフォグ（暗い霧）がある</span></li><li><span class="kw">もし</span><span class="st-text">サブ装備や通常索敵の距離が部屋・通路規模の索敵上限距離を超える、または自動攻撃の対象がフォグに隠れて見えていない敵である</span></li><li><span class="kw">ならば</span><span class="st-text">2つ隣の部屋にまで届くような無制限の遠距離スナイプや、通路からフォグ奥の見えていない敵への狙い撃ちは行わない（部屋に入って視界が開ければ設定射程どおり攻撃できる）</span></li>
   </ul>
         </div>
         <details class="app-accordion">
@@ -1464,9 +1464,9 @@
                   <span class="badge badge-confirmed-ai">確定 (AI提案)</span>
                 </div>
                 
-                <h4>レイキャストによる壁遮蔽と最大索敵上限 MAX_TARGET_RANGE（180px・主兵装のみarm_baseで例外延長）を適用する</h4>
+                <h4>レイキャストによる壁遮蔽・プレイヤー視界制限・最大索敵上限 MAX_TARGET_RANGE（180px・主兵装のみarm_baseで例外延長）を適用する</h4>
                 <ul class="steps">
-    <li><span class="kw">前提</span><span class="st-text">索敵上限定数 MAX_TARGET_RANGE が 180px（4.5タイル相当＝1部屋〜隣通路規模）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃・自機ショット・索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">壁タイルとの交差は遮断され、サブ装備および通常索敵は def_sensor でレンジが伸びても 180px を超える敵をロックオンしない</span></li><li><span class="kw">かつ</span><span class="st-text">メイン武器（コアショット）のみ arm_base 投資時（DEC-19）に視線が通る敵へ最大 290px（Inferred / OQ-06）まで例外的に射程を延長できる</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅する</span></li>
+    <li><span class="kw">前提</span><span class="st-text">索敵上限定数 MAX_TARGET_RANGE が 180px（4.5タイル相当＝1部屋〜隣通路規模）に設定されている</span></li><li><span class="kw">もし</span><span class="st-text">通常属性の自動攻撃・自機ショット・索敵AIがターゲット判定を行う</span></li><li><span class="kw">ならば</span><span class="st-text">壁タイルとの交差は遮断され、プレイヤーの全自動攻撃（ターゲティング・連鎖・範囲攻撃）はフォグで隠れた視界外（isEnemyVisibleToPlayer === false）の敵を狙わない</span></li><li><span class="kw">かつ</span><span class="st-text">サブ装備および通常索敵は def_sensor でレンジが伸びても 180px を超える敵をロックオンしない</span></li><li><span class="kw">かつ</span><span class="st-text">メイン武器（コアショット）のみ arm_base 投資時（DEC-19）に、視線が通りかつプレイヤー視界内（部屋全体または通路半径 210px 以内）の敵へ最大 290px（Inferred / OQ-06）まで例外的に射程を延長できる</span></li><li><span class="kw">かつ</span><span class="st-text">敵弾・自機弾ともに壁に接触した時点で消滅する</span></li>
   </ul>
               </div>
           </div>
@@ -2696,7 +2696,7 @@
         <td><div class="note-text">スマホでも周囲を見渡せる視野確保と、部屋・通路ごとの暗がりによる探索の緊張感を両立するため（BIZ-EXP-06, APP-MAP-06）</div></td>
         <td><span class="badge badge-confirmed-ai">確定 (AI提案)</span></td>
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-EXP-06">BIZ-EXP-06</a><a class="ref-pill ref-link" href="#APP-MAP-06">APP-MAP-06</a><a class="ref-pill ref-link" href="#DEC-08">DEC-08</a><a class="ref-pill ref-link" href="#GLS-08">GLS-08</a><a class="ref-pill ref-link" href="#FML-11">FML-11</a></div></td>
-        <td><div class="sub-code"><code class="inline-code">src/render/canvasRenderer.ts#TARGET_VIEW_WORLD_WIDTH</code>, <code class="inline-code">src/render/canvasRenderer.ts#computeCameraZoom</code>, <code class="inline-code">src/game/engine.ts#CORRIDOR_VISION_RADIUS</code>, <code class="inline-code">src/game/steps/player.ts#revealAroundPlayer</code></div><div class="source-cell">
+        <td><div class="sub-code"><code class="inline-code">src/render/canvasRenderer.ts#TARGET_VIEW_WORLD_WIDTH</code>, <code class="inline-code">src/render/canvasRenderer.ts#computeCameraZoom</code>, <code class="inline-code">src/game/vision.ts#CORRIDOR_VISION_RADIUS</code>, <code class="inline-code">src/game/steps/player.ts#revealAroundPlayer</code></div><div class="source-cell">
     <a class="source-link" href="../specs/parameters.md#PRM-12" data-source-file="specs/parameters.md" data-item-id="PRM-12" title="元仕様ファイル specs/parameters.md (PRM-12)">specs/parameters.md#PRM-12</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/parameters.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3577,11 +3577,11 @@
       <tr id="INV-06" class="spec-row" data-section="invariants" data-status="Confirmed" data-item-id="INV-06" data-source-file="specs/invariants.md">
         <td><a class="id-pill id-doc" href="#INV-06">INV-06</a></td>
         <td><span class="cat-pill">索敵・射線</span></td>
-        <td>サブ装備および通常索敵の距離は <code class="inline-code">MAX_TARGET_RANGE (180px)</code> を超えず、全攻撃において壁越し（<code class="inline-code">hasLineOfSight === false</code>）の標的を攻撃しない（メイン武器コアショットのみ <code class="inline-code">arm_base</code> 投資により視線が通る敵へ最大 <code class="inline-code">290px</code> まで例外延長可）</td>
-        <td><div class="sub-code"><code class="inline-code">src/game/combat.mainWeapon.test.ts</code> (<code class="inline-code">[APP-CMB-01 &amp; APP-CMB-03]</code>)</div></td>
+        <td>サブ装備および通常索敵の距離は <code class="inline-code">MAX_TARGET_RANGE (180px)</code> を超えず、全自動攻撃において壁越し（<code class="inline-code">hasLineOfSight === false</code>）またはプレイヤー視界外（<code class="inline-code">isEnemyVisibleToPlayer === false</code>）の標的をターゲット・連鎖・範囲攻撃の対象にしない（メイン武器コアショットのみ <code class="inline-code">arm_base</code> 投資により視界内かつ視線が通る敵へ最大 <code class="inline-code">290px</code> まで例外延長可）</td>
+        <td><div class="sub-code"><code class="inline-code">src/game/combat.mainWeapon.test.ts</code> (<code class="inline-code">[APP-CMB-01 &amp; APP-CMB-03]</code>), <code class="inline-code">src/game/steps/combatHelpers.test.ts</code> (<code class="inline-code">[INV-06]</code>)</div></td>
         <td><span class="badge badge-confirmed">Confirmed（決定済み）</span></td>
-        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#GLS-13">GLS-13</a><a class="ref-pill ref-link" href="#DEC-09">DEC-09</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a></div></td>
-        <td><div class="note-text"><code class="inline-code">def_sensor</code> Lv5でもサブ装備は 180px 上限を厳守。主兵装のみ <code class="inline-code">arm_base</code> で要LoS前提の例外延長（<code class="inline-code">DEC-19</code>）</div><div class="source-cell">
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-12">PRM-12</a><a class="ref-pill ref-link" href="#GLS-13">GLS-13</a><a class="ref-pill ref-link" href="#DEC-09">DEC-09</a><a class="ref-pill ref-link" href="#DEC-19">DEC-19</a><a class="ref-pill ref-link" href="#DEC-32">DEC-32</a></div></td>
+        <td><div class="note-text"><code class="inline-code">def_sensor</code> Lv5でもサブ装備は 180px 上限を厳守。<code class="inline-code">isAmbush</code> 敵は視認可能扱い、発射済み弾の流れ弾ヒットは維持（<code class="inline-code">DEC-32</code>）</div><div class="source-cell">
     <a class="source-link" href="../specs/invariants.md#INV-06" data-source-file="specs/invariants.md" data-item-id="INV-06" title="元仕様ファイル specs/invariants.md (INV-06)">specs/invariants.md#INV-06</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/invariants.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
@@ -3930,7 +3930,7 @@
     <div class="section-head">
       <div>
         <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(41件)</span></h2>
+        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(42件)</span></h2>
       </div>
       <div class="source-cell">
     <a class="source-link" href="../specs/decisions.md" data-source-file="specs/decisions.md" data-item-id="" title="元仕様ファイル specs/decisions.md ()">specs/decisions.md</a>
@@ -4391,6 +4391,17 @@
         <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-06">BIZ-CMB-06</a><a class="ref-pill ref-link" href="#BIZ-GRW-02">BIZ-GRW-02</a><a class="ref-pill ref-link" href="#APP-CMB-06">APP-CMB-06</a><a class="ref-pill ref-link" href="#APP-GRW-02">APP-GRW-02</a><a class="ref-pill ref-link" href="#PRM-18">PRM-18</a><a class="ref-pill ref-link" href="#PRM-23">PRM-23</a><a class="ref-pill ref-link" href="#FML-03">FML-03</a><a class="ref-pill ref-link" href="#FML-05">FML-05</a><a class="ref-pill ref-link" href="#OQ-06">OQ-06</a></div></td>
         <td><div class="note-text">プレイテストで螺旋振幅・遅延間隔・合計威力1.2x配分および中心コアレーザーの火力感を確認した時（<code class="inline-code">OQ-06</code>）</div><div class="source-cell">
     <a class="source-link" href="../specs/decisions.md#DEC-31" data-source-file="specs/decisions.md" data-item-id="DEC-31" title="元仕様ファイル specs/decisions.md (DEC-31)">specs/decisions.md#DEC-31</a>
+    <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
+  </div></td>
+      </tr>
+      <tr id="DEC-32" class="spec-row" data-section="decisions" data-status="Confirmed" data-item-id="DEC-32" data-source-file="specs/decisions.md">
+        <td><a class="id-pill id-doc" href="#DEC-32">DEC-32</a></td>
+        <td><span class="date-pill">2026-11-27</span><div class="sub-code">先輩</div></td>
+        <td><strong>プレイヤーの全自動攻撃（通常弾・ホーミング・サブ装備すべて）について、フォグで隠れている視界外（<code class="inline-code">isEnemyVisibleToPlayer</code> が false：同室外かつ <code class="inline-code">CORRIDOR_VISION_RADIUS</code> 外、かつ <code class="inline-code">isAmbush</code> でない）の敵をターゲティング・連鎖・範囲攻撃の対象にしないよう制限する（描画側と同一の視界判定 <code class="inline-code">src/game/vision.ts</code> を共有し、部屋に入れば設定射程どおり攻撃可能・すでに発射された弾の流れ弾ヒットは従来どおり当たる）</strong><div class="note-text">主兵装の射程延長等に伴い通路から別室の眠っている敵を一方的に狙い撃ちできる不自然さを防ぎ、視界が開けた部屋内でのみ設定射程を活かせるようにするため</div></td>
+        <td><span class="badge badge-confirmed">Confirmed（決定済み）</span><div class="sub-code">Unknown → Confirmed</div></td>
+        <td><div class="ref-list"><a class="ref-pill ref-link" href="#BIZ-CMB-03">BIZ-CMB-03</a><a class="ref-pill ref-link" href="#BIZ-CMB-07">BIZ-CMB-07</a><a class="ref-pill ref-link" href="#APP-CMB-01">APP-CMB-01</a><a class="ref-pill ref-link" href="#APP-CMB-03">APP-CMB-03</a><a class="ref-pill ref-link" href="#INV-06">INV-06</a><a class="ref-pill ref-link" href="#PRM-06">PRM-06</a><a class="ref-pill ref-link" href="#PRM-12">PRM-12</a></div></td>
+        <td><div class="note-text">フォグ外の敵を狙える特殊装備やスキルを追加する場合</div><div class="source-cell">
+    <a class="source-link" href="../specs/decisions.md#DEC-32" data-source-file="specs/decisions.md" data-item-id="DEC-32" title="元仕様ファイル specs/decisions.md (DEC-32)">specs/decisions.md#DEC-32</a>
     <a class="gh-link" href="https://github.com/Calpim/gemini-toybox/blob/main/dungeon-survivor/specs/decisions.md" target="_blank" rel="noopener" title="GitHubで元ファイルを開く">GitHub ↗</a>
   </div></td>
       </tr></tbody>

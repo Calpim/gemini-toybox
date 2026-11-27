@@ -176,7 +176,7 @@ describe('Player main weapon combat simulation', () => {
     expect(stats.armBaseLevel).toBe(5);
     expect(stats.armOverclockLevel).toBe(2);
 
-    // Clear a large open area around the player so 270px LoS is guaranteed unobstructed
+    // Clear a large open room around the player so 270px LoS & room vision are guaranteed unobstructed
     const pTileX = Math.floor(state.player.x / TILE_SIZE);
     const pTileY = Math.floor(state.player.y / TILE_SIZE);
     const dir = pTileX < state.map.width / 2 ? 1 : -1;
@@ -189,6 +189,21 @@ describe('Player main weapon combat simulation', () => {
         }
       }
     }
+    const minRoomTx = Math.max(1, Math.min(pTileX - 1, pTileX + dir * 8));
+    const maxRoomTx = Math.min(state.map.width - 2, Math.max(pTileX - 1, pTileX + dir * 8));
+    const minRoomTy = Math.max(1, pTileY - 2);
+    const maxRoomTy = Math.min(state.map.height - 2, pTileY + 2);
+    state.map.rooms = [
+      {
+        id: 0,
+        x: minRoomTx,
+        y: minRoomTy,
+        w: maxRoomTx - minRoomTx + 1,
+        h: maxRoomTy - minRoomTy + 1,
+        cx: pTileX,
+        cy: pTileY,
+      },
+    ];
 
     // Enemy at 270px (within 290px, beyond MAX_TARGET_RANGE 180px) with LoS
     state.enemies = [

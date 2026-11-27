@@ -2,6 +2,7 @@ import { hasLineOfSight } from '../../core/collision';
 import { emitSound, spawnParticles } from '../effects';
 import { MAX_TARGET_RANGE } from '../equipment';
 import type { EnemyState, GameState, Vec2 } from '../types';
+import { isEnemyVisibleToPlayer } from '../vision';
 
 export function damageEnemy(state: GameState, enemy: EnemyState, amount: number, bypassDashInvuln = false): void {
   const isDashInvuln = Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
@@ -37,6 +38,7 @@ export function findNearestVisibleEnemy(
   let bestDist = allowExceedMaxRange ? range : Math.min(range, MAX_TARGET_RANGE);
   for (const enemy of state.enemies) {
     if (enemy.hp <= 0 || excludeIds.includes(enemy.id)) continue;
+    if (!isEnemyVisibleToPlayer(state, enemy)) continue;
     const d = Math.hypot(enemy.x - originX, enemy.y - originY);
     if (d <= bestDist && hasLineOfSight(originX, originY, enemy.x, enemy.y, state.map)) {
       bestDist = d;
@@ -71,6 +73,7 @@ export function triggerChainLightning(
     let nextDist = Math.min(MAX_TARGET_RANGE, Math.max(105, range * 1.15));
     for (const candidate of state.enemies) {
       if (hitIds.has(candidate.id) || candidate.hp <= 0) continue;
+      if (!isEnemyVisibleToPlayer(state, candidate)) continue;
       const d = Math.hypot(candidate.x - curr.x, candidate.y - curr.y);
       if (d <= nextDist && hasLineOfSight(curr.x, curr.y, candidate.x, candidate.y, state.map)) {
         nextDist = d;

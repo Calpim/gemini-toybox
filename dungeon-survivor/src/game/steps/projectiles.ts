@@ -1,6 +1,7 @@
 import { type DungeonMap, isWallAtWorld } from '../../core/dungeon';
 import { spawnParticles } from '../effects';
 import type { GameState, ProjectileState, Vec2 } from '../types';
+import { isEnemyVisibleToPlayer } from '../vision';
 import { damageEnemy, findNearestVisibleEnemy } from './combatHelpers';
 
 // REVISIT_IF: プレイテストでチャクラム回転半径の視認性・再ヒット率を調整する場合 (OQ-06)
@@ -169,7 +170,9 @@ export function stepProjectiles(state: GameState, clampedDt: number, deps: Proje
             }
             clearDiscLoopState(proj);
             const target =
-              targetId !== undefined ? state.enemies.find((e) => e.id === targetId && e.hp > 0) : undefined;
+              targetId !== undefined
+                ? state.enemies.find((e) => e.id === targetId && e.hp > 0 && isEnemyVisibleToPlayer(state, e))
+                : undefined;
             const resumeAngle =
               target && Math.hypot(target.x - proj.x, target.y - proj.y) > 1e-6
                 ? Math.atan2(target.y - proj.y, target.x - proj.x)
