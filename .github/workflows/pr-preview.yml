@@ -46,9 +46,9 @@ jobs:
           cp -r dungeon-survivor/dist/* _site/dungeon-survivor/
 
       - name: Deploy or remove PR preview
-        uses: rossjbx/pr-preview-action@v1
+        uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: _site
           preview-branch: gh-pages
           umbrella-dir: pr-preview
-          action: auto
+          action: ${{ github.event.action == 'closed' && 'remove' || 'deploy' }}
