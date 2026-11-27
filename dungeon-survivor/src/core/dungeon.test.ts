@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mustAt } from '../testUtils';
+import { mustAt, mustDefined } from '../testUtils';
 import { hasLineOfSight, resolveCircleGridCollision } from './collision';
 import { generateDungeon, getTile, isWallTile, tileCenterWorld } from './dungeon';
 
@@ -93,7 +93,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
     let reachedStairs = false;
 
     while (queue.length > 0) {
-      const cur = queue.shift()!;
+      const cur = mustDefined(queue.shift(), 'queue.shift()');
       if (cur.tx === map.stairsTile.tx && cur.ty === map.stairsTile.ty) {
         reachedStairs = true;
         break;
@@ -144,16 +144,18 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
     for (const gf of [3, 6, 9, 13]) {
       const gMap = generateDungeon({ floor: gf, seed: 4242 });
       expect(gMap.floorType).toBe('guardian');
-      const stairsRoom = gMap.rooms.find(
-        (r) =>
-          gMap.stairsTile.tx >= r.x &&
-          gMap.stairsTile.tx < r.x + r.w &&
-          gMap.stairsTile.ty >= r.y &&
-          gMap.stairsTile.ty < r.y + r.h,
+      const stairsRoom = mustDefined(
+        gMap.rooms.find(
+          (r) =>
+            gMap.stairsTile.tx >= r.x &&
+            gMap.stairsTile.tx < r.x + r.w &&
+            gMap.stairsTile.ty >= r.y &&
+            gMap.stairsTile.ty < r.y + r.h,
+        ),
+        'stairsRoom',
       );
-      expect(stairsRoom).toBeDefined();
-      expect(stairsRoom!.w).toBeGreaterThanOrEqual(11);
-      expect(stairsRoom!.h).toBeGreaterThanOrEqual(9);
+      expect(stairsRoom.w).toBeGreaterThanOrEqual(11);
+      expect(stairsRoom.h).toBeGreaterThanOrEqual(9);
     }
 
     for (const bf of [10, 20]) {
@@ -164,8 +166,8 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
       expect(anteroom?.w).toBeGreaterThanOrEqual(8);
       expect(arena?.w).toBeGreaterThanOrEqual(20);
       expect(arena?.h).toBeGreaterThanOrEqual(20);
-      expect(bMap.fountainTile).not.toBeNull();
-      expect(getTile(bMap, bMap.fountainTile!.tx, bMap.fountainTile!.ty)).toBe('fountain');
+      const fountainTile = mustDefined(bMap.fountainTile, 'bMap.fountainTile');
+      expect(getTile(bMap, fountainTile.tx, fountainTile.ty)).toBe('fountain');
       expect(getTile(bMap, bMap.stairsTile.tx, bMap.stairsTile.ty)).toBe('stairs');
 
       // Verify BFS reachability from start -> fountain -> stairs
@@ -173,7 +175,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
       const queue = [bMap.startTile];
       visited.add(`${bMap.startTile.tx},${bMap.startTile.ty}`);
       while (queue.length > 0) {
-        const cur = queue.shift()!;
+        const cur = mustDefined(queue.shift(), 'queue.shift()');
         for (const [dx, dy] of [
           [1, 0],
           [-1, 0],
@@ -189,7 +191,7 @@ describe('Dungeon generation & collision (APP-MAP-01 / APP-MAP-02 / APP-CMB-03)'
           }
         }
       }
-      expect(visited.has(`${bMap.fountainTile!.tx},${bMap.fountainTile!.ty}`)).toBe(true);
+      expect(visited.has(`${fountainTile.tx},${fountainTile.ty}`)).toBe(true);
       expect(visited.has(`${bMap.stairsTile.tx},${bMap.stairsTile.ty}`)).toBe(true);
     }
   });

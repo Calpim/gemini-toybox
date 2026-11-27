@@ -9,3 +9,14 @@ export function mustAt<T>(items: readonly T[], index: number, label = 'array'): 
   }
   return item;
 }
+
+/**
+ * Test helper: returns `value` if it is neither `null` nor `undefined`,
+ * or throws immediately otherwise, replacing non-null assertions (`!`) in tests.
+ */
+export function mustDefined<T>(value: T | null | undefined, label = 'value'): T {
+  if (value === null || value === undefined) {
+    throw new Error(`Expected ${label} to be defined`);
+  }
+  return value;
+}

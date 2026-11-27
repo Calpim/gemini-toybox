@@ -35,7 +35,7 @@ export function getWallTileImage(): HTMLImageElement | null {
     wallImage = img;
   }
 
-  if (wallImage && wallImage.complete && wallImage.naturalWidth > 0) {
+  if (wallImage?.complete && wallImage.naturalWidth > 0) {
     return wallImage;
   }
   return null;

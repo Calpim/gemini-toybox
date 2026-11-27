@@ -1,0 +1,530 @@
+{
+  "floor1-seed101": {
+    "floor": 1,
+    "status": "playing",
+    "player": {
+      "hp": 100,
+      "maxHp": 100,
+      "x": 1267,
+      "y": 720.587,
+      "level": 1,
+      "exp": 0,
+      "expToNext": 25,
+      "skillPoints": 1
+    },
+    "stats": {
+      "kills": 2,
+      "floorsCleared": 0,
+      "totalExp": 0,
+      "chestsOpened": 0,
+      "elapsedPlayTime": 10
+    },
+    "enemies": [
+      {
+        "id": 3,
+        "kind": "tank",
+        "hp": 62,
+        "maxHp": 62,
+        "x": 220,
+        "y": 340
+      },
+      {
+        "id": 4,
+        "kind": "normal",
+        "hp": 26,
+        "maxHp": 26,
+        "x": 380,
+        "y": 540
+      },
+      {
+        "id": 5,
+        "kind": "runner",
+        "hp": 14,
+        "maxHp": 14,
+        "x": 460,
+        "y": 340
+      },
+      {
+        "id": 6,
+        "kind": "normal",
+        "hp": 26,
+        "maxHp": 26,
+        "x": 460,
+        "y": 500
+      },
+      {
+        "id": 7,
+        "kind": "normal",
+        "hp": 26,
+        "maxHp": 26,
+        "x": 700,
+        "y": 1180
+      },
+      {
+        "id": 8,
+        "kind": "normal",
+        "hp": 26,
+        "maxHp": 26,
+        "x": 900,
+        "y": 1380
+      },
+      {
+        "id": 9,
+        "kind": "tank",
+        "hp": 62,
+        "maxHp": 62,
+        "x": 900,
+        "y": 1140
+      },
+      {
+        "id": 11,
+        "kind": "normal",
+        "hp": 26,
+        "maxHp": 26,
+        "x": 1780,
+        "y": 180
+      },
+      {
+        "id": 12,
+        "kind": "tank",
+        "hp": 62,
+        "maxHp": 62,
+        "x": 1860,
+        "y": 300
+      },
+      {
+        "id": 13,
+        "kind": "runner",
+        "hp": 14,
+        "maxHp": 14,
+        "x": 1119.511,
+        "y": 457.136
+      },
+      {
+        "id": 15,
+        "kind": "normal",
+        "hp": 26,
+        "maxHp": 26,
+        "x": 1245.665,
+        "y": 470.903
+      },
+      {
+        "id": 18,
+        "kind": "tank",
+        "hp": 62,
+        "maxHp": 62,
+        "x": 260,
+        "y": 1020
+      },
+      {
+        "id": 19,
+        "kind": "tank",
+        "hp": 62,
+        "maxHp": 62,
+        "x": 340,
+        "y": 1020
+      }
+    ],
+    "projectiles": {
+      "count": 0,
+      "byKind": {}
+    },
+    "enemyProjectiles": {
+      "count": 1
+    },
+    "pickups": {
+      "count": 5,
+      "byKind": {
+        "exp": 2,
+        "heal": 3
+      }
+    },
+    "nextEntityId": 27
+  },
+  "floor2-seed202": {
+    "floor": 2,
+    "status": "playing",
+    "player": {
+      "hp": 100,
+      "maxHp": 100,
+      "x": 787,
+      "y": 927.424,
+      "level": 1,
+      "exp": 0,
+      "expToNext": 25,
+      "skillPoints": 1
+    },
+    "stats": {
+      "kills": 0,
+      "floorsCleared": 0,
+      "totalExp": 0,
+      "chestsOpened": 0,
+      "elapsedPlayTime": 10
+    },
+    "enemies": [
+      {
+        "id": 2,
+        "kind": "shooter",
+        "hp": 40,
+        "maxHp": 40,
+        "x": 1500,
+        "y": 1260
+      },
+      {
+        "id": 3,
+        "kind": "normal",
+        "hp": 35,
+        "maxHp": 35,
+        "x": 1580,
+        "y": 1220
+      },
+      {
+        "id": 5,
+        "kind": "runner",
+        "hp": 19,
+        "maxHp": 19,
+        "x": 1340,
+        "y": 340
+      },
+      {
+        "id": 6,
+        "kind": "normal",
+        "hp": 35,
+        "maxHp": 35,
+        "x": 1260,
+        "y": 500
+      },
+      {
+        "id": 7,
+        "kind": "tank",
+        "hp": 84,
+        "maxHp": 84,
+        "x": 1340,
+        "y": 420
+      },
+      {
+        "id": 8,
+        "kind": "runner",
+        "hp": 19,
+        "maxHp": 19,
+        "x": 1340,
+        "y": 380
+      },
+      {
+        "id": 9,
+        "kind": "runner",
+        "hp": 19,
+        "maxHp": 19,
+        "x": 1180,
+        "y": 460
+      },
+      {
+        "id": 11,
+        "kind": "shooter",
+        "hp": 40,
+        "maxHp": 40,
+        "x": 340,
+        "y": 300
+      },
+      {
+        "id": 12,
+        "kind": "tank",
+        "hp": 84,
+        "maxHp": 84,
+        "x": 540,
+        "y": 420
+      },
+      {
+        "id": 13,
+        "kind": "tank",
+        "hp": 84,
+        "maxHp": 84,
+        "x": 380,
+        "y": 220
+      },
+      {
+        "id": 14,
+        "kind": "normal",
+        "hp": 35,
+        "maxHp": 35,
+        "x": 580,
+        "y": 220
+      },
+      {
+        "id": 15,
+        "kind": "normal",
+        "hp": 35,
+        "maxHp": 35,
+        "x": 1700,
+        "y": 620
+      },
+      {
+        "id": 16,
+        "kind": "shooter",
+        "hp": 40,
+        "maxHp": 40,
+        "x": 1780,
+        "y": 540
+      },
+      {
+        "id": 17,
+        "kind": "shooter",
+        "hp": 40,
+        "maxHp": 40,
+        "x": 1780,
+        "y": 740
+      },
+      {
+        "id": 18,
+        "kind": "scout",
+        "hp": 33,
+        "maxHp": 33,
+        "x": 1100.031,
+        "y": 506.137
+      }
+    ],
+    "projectiles": {
+      "count": 0,
+      "byKind": {}
+    },
+    "enemyProjectiles": {
+      "count": 0
+    },
+    "pickups": {
+      "count": 2,
+      "byKind": {
+        "heal": 2
+      }
+    },
+    "nextEntityId": 19
+  },
+  "floor3-seed303": {
+    "floor": 3,
+    "status": "playing",
+    "player": {
+      "hp": 100,
+      "maxHp": 100,
+      "x": 1907,
+      "y": 1125.699,
+      "level": 1,
+      "exp": 0,
+      "expToNext": 25,
+      "skillPoints": 1
+    },
+    "stats": {
+      "kills": 0,
+      "floorsCleared": 0,
+      "totalExp": 0,
+      "chestsOpened": 0,
+      "elapsedPlayTime": 10
+    },
+    "enemies": [
+      {
+        "id": 3,
+        "kind": "tank",
+        "hp": 307,
+        "maxHp": 307,
+        "x": 820,
+        "y": 300
+      },
+      {
+        "id": 4,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 660,
+        "y": 420
+      },
+      {
+        "id": 5,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 660,
+        "y": 180
+      },
+      {
+        "id": 6,
+        "kind": "shooter",
+        "hp": 51,
+        "maxHp": 51,
+        "x": 700,
+        "y": 220
+      },
+      {
+        "id": 7,
+        "kind": "shooter",
+        "hp": 51,
+        "maxHp": 51,
+        "x": 700,
+        "y": 340
+      },
+      {
+        "id": 8,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 620,
+        "y": 300
+      },
+      {
+        "id": 9,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 740,
+        "y": 420
+      },
+      {
+        "id": 11,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 580,
+        "y": 980
+      },
+      {
+        "id": 12,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 820,
+        "y": 1020
+      },
+      {
+        "id": 13,
+        "kind": "shooter",
+        "hp": 51,
+        "maxHp": 51,
+        "x": 780,
+        "y": 1060
+      },
+      {
+        "id": 14,
+        "kind": "normal",
+        "hp": 44,
+        "maxHp": 44,
+        "x": 820,
+        "y": 980
+      },
+      {
+        "id": 16,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 1780,
+        "y": 660
+      },
+      {
+        "id": 17,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 1860,
+        "y": 500
+      },
+      {
+        "id": 18,
+        "kind": "normal",
+        "hp": 44,
+        "maxHp": 44,
+        "x": 1900,
+        "y": 540
+      },
+      {
+        "id": 19,
+        "kind": "shooter",
+        "hp": 51,
+        "maxHp": 51,
+        "x": 1860,
+        "y": 620
+      },
+      {
+        "id": 20,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 1580,
+        "y": 500
+      },
+      {
+        "id": 21,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 1620,
+        "y": 540
+      },
+      {
+        "id": 22,
+        "kind": "runner",
+        "hp": 24,
+        "maxHp": 24,
+        "x": 1580,
+        "y": 380
+      },
+      {
+        "id": 24,
+        "kind": "normal",
+        "hp": 44,
+        "maxHp": 44,
+        "x": 940,
+        "y": 1460
+      },
+      {
+        "id": 25,
+        "kind": "normal",
+        "hp": 44,
+        "maxHp": 44,
+        "x": 780,
+        "y": 1460
+      },
+      {
+        "id": 26,
+        "kind": "tank",
+        "hp": 106,
+        "maxHp": 106,
+        "x": 740,
+        "y": 1460
+      },
+      {
+        "id": 27,
+        "kind": "normal",
+        "hp": 44,
+        "maxHp": 44,
+        "x": 700,
+        "y": 1500
+      },
+      {
+        "id": 28,
+        "kind": "scout",
+        "hp": 42,
+        "maxHp": 42,
+        "x": 735.853,
+        "y": 1515.853
+      },
+      {
+        "id": 29,
+        "kind": "scout",
+        "hp": 42,
+        "maxHp": 42,
+        "x": 776.361,
+        "y": 199.401
+      }
+    ],
+    "projectiles": {
+      "count": 0,
+      "byKind": {}
+    },
+    "enemyProjectiles": {
+      "count": 0
+    },
+    "pickups": {
+      "count": 3,
+      "byKind": {
+        "heal": 3
+      }
+    },
+    "nextEntityId": 30
+  }
+}

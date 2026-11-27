@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import indexHtmlRaw from '../../index.html?raw';
 import { createGameState } from '../game/engine';
 import { getSkillDetailedSpec, SKILL_PREREQ_LEVEL, SKILL_TREE_NODES } from '../game/skillTree';
+import { mustDefined } from '../testUtils';
 import { getSkillIcon } from './icons';
 import { closeOpenSkillInfoPopover, computePopoverPosition, type ModalElements, renderModals } from './modals';
 
@@ -439,28 +440,34 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     expect(raw.skillColumns.querySelectorAll('.node-req')).toHaveLength(0);
     expect(raw.skillTabBody.querySelector('.gear-summary')).toBeNull();
 
-    const armBaseCard = cards.find((c) => c.dataset.nodeId === 'arm_base')!;
+    const armBaseCard = mustDefined(
+      cards.find((c) => c.dataset.nodeId === 'arm_base'),
+      'armBaseCard',
+    );
     expect(armBaseCard.classList.contains('available')).toBe(true);
     expect(armBaseCard.querySelector('.node-icon')?.innerHTML).toContain('<svg');
     expect(armBaseCard.querySelector('.node-title')?.textContent).toBe('出力強化');
     expect(armBaseCard.querySelector('.node-lv')?.textContent).toBe('Lv2/5');
-    expect(armBaseCard.querySelector('.node-tagline')?.textContent).toBe('メイン威力＆射程UP・チャージ弾化');
+    expect(armBaseCard.querySelector('.node-tagline')?.textContent).toBe('螺旋バースト弾数＆射程・威力UP');
     expect(armBaseCard.querySelector('.node-cost')?.textContent).toBe('-1 SP');
 
     // Locked prerequisite card still keeps its ⓘ info button enabled!
-    const armParallelCard = cards.find((c) => c.dataset.nodeId === 'arm_parallel')!;
+    const armParallelCard = mustDefined(
+      cards.find((c) => c.dataset.nodeId === 'arm_parallel'),
+      'armParallelCard',
+    );
     expect(armParallelCard.classList.contains('locked')).toBe(true);
     expect(armParallelCard.dataset.lockReason).toBe('prereq');
     expect(armParallelCard.querySelector('.tree-node-main')?.disabled).toBe(true);
     expect(armParallelCard.querySelector('.node-cost')?.textContent).toBe('-1 SP');
-    const lockedInfoBtn = armParallelCard.querySelector('.node-info-btn')!;
+    const lockedInfoBtn = mustDefined(armParallelCard.querySelector('.node-info-btn'), 'lockedInfoBtn');
     expect(lockedInfoBtn.disabled).toBe(false);
 
     // Clicking card action unlocks, clicking ⓘ does NOT unlock
     lockedInfoBtn.click();
     expect(onUnlockSkill).not.toHaveBeenCalled();
 
-    armBaseCard.querySelector('.tree-node-main')!.click();
+    mustDefined(armBaseCard.querySelector('.tree-node-main'), 'armBaseCard main button').click();
     expect(onUnlockSkill).toHaveBeenCalledTimes(1);
     expect(onUnlockSkill).toHaveBeenCalledWith('arm_base');
   });
@@ -480,7 +487,10 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     });
 
     expect(popover.classList.contains('hidden')).toBe(true);
-    const infoBtn = raw.skillColumns.querySelector('.node-info-btn[data-info-node="arm_parallel"]')!;
+    const infoBtn = mustDefined(
+      raw.skillColumns.querySelector('.node-info-btn[data-info-node="arm_parallel"]'),
+      'arm_parallel infoBtn',
+    );
 
     // Simulate mobile touch sequence: pointerdown(touch) -> pointerenter(touch) -> focusin -> click
     infoBtn.dispatch('pointerdown', { pointerType: 'touch' });
@@ -523,7 +533,10 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
       onResolveEquip: vi.fn(),
     });
 
-    const sensorInfoBtn = raw.skillColumns.querySelector('.node-info-btn[data-info-node="def_sensor"]')!;
+    const sensorInfoBtn = mustDefined(
+      raw.skillColumns.querySelector('.node-info-btn[data-info-node="def_sensor"]'),
+      'def_sensor infoBtn',
+    );
 
     // Mouse hover opens unpinned preview
     sensorInfoBtn.dispatch('pointerenter', { pointerType: 'mouse' });
@@ -662,7 +675,10 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     };
 
     renderModals(state, els, handlers);
-    const infoBtn = raw.skillColumns.querySelector('.node-info-btn[data-info-node="arm_base"]')!;
+    const infoBtn = mustDefined(
+      raw.skillColumns.querySelector('.node-info-btn[data-info-node="arm_base"]'),
+      'arm_base infoBtn',
+    );
     infoBtn.click();
     expect(popover.querySelector('.skill-popover-current-val')?.textContent).toContain('+25%');
 
@@ -673,7 +689,7 @@ describe('Skill Tree & Pause Modal UI (#27)', () => {
     expect(popover.querySelector('.skill-popover-current-val')?.textContent).toContain('+50%');
 
     // Close via ✕ button inside popover
-    popover.querySelector('.skill-popover-close')!.click();
+    mustDefined(popover.querySelector('.skill-popover-close'), 'skill-popover-close').click();
     expect(popover.classList.contains('hidden')).toBe(true);
     expect(doc.activeElement?.dataset.infoNode).toBe('arm_base');
   });

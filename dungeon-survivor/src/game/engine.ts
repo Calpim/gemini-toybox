@@ -129,6 +129,7 @@ export function createGameState(options: CreateGameOptions = {}): GameState {
       invulnTimer: 0,
       facingAngle: 0,
       orbitAngle: 0,
+      droneAngle: 0,
       orbitRadius: 78,
       baseAttackCooldown: 0,
       repulsorCooldown: 0,

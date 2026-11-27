@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { findRoomAtTile, TILE_SIZE, tileCenterWorld } from '../core/dungeon';
 import { computeCameraZoom } from '../render/canvasRenderer';
-import { mustAt } from '../testUtils';
+import { mustAt, mustDefined } from '../testUtils';
 import {
   advanceToNextFloor,
   CORRIDOR_VISION_RADIUS,
@@ -87,16 +87,18 @@ describe('Game simulation engine (core loop, floor progression, and vision)', ()
 
     // Defeating Guardian unlocks stairs AND guarantees a higher-level equip pickup drop
     state.player.equipment = [createEquippedItem('pulse_blade', 3)];
-    roomBoss!.hp = 0;
+    mustDefined(roomBoss, 'roomBoss').hp = 0;
     const firstRoom = mustAt(state.map.rooms, 0, 'state.map.rooms');
     state.player.x = firstRoom.cx * TILE_SIZE;
     state.player.y = firstRoom.cy * TILE_SIZE;
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(getStairsLockCount(state)).toBe(0);
     expect(state.notifications.some((n) => n.text.includes('封印が解けた'))).toBe(true);
-    const bossDrop = state.pickups.find((p) => p.kind === 'equip');
-    expect(bossDrop).toBeDefined();
-    expect(bossDrop!.itemLevel).toBeGreaterThanOrEqual(4);
+    const bossDrop = mustDefined(
+      state.pickups.find((p) => p.kind === 'equip'),
+      'bossDrop',
+    );
+    expect(bossDrop.itemLevel).toBeGreaterThanOrEqual(4);
 
     state.player.x = stairs.x;
     state.player.y = stairs.y;
