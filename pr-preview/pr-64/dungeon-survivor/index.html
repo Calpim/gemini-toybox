@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Dungeon Survivor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="./assets/index-BzYDXP_V.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B0vkJkVq.css">
+</head>
+<body>
+  <div class="hud">
+    <div class="hud-top-grid">
+      <div class="hud-left-stack">
+        <div class="hud-main-panel">
+          <div class="hud-floor-block">
+            <strong id="floorText" class="hud-floor-text">1F</strong>
+            <span id="playTimeText" class="hud-time-text">00:00</span>
+          </div>
+
+          <div class="hud-bars">
+            <div id="hpBar" class="bar-track hp-bar">
+              <div id="hpFill" class="hp-fill" style="width: 100%"></div>
+              <div class="bar-overlay">
+                <span class="bar-tag">HP</span>
+                <span id="hpText">100 / 100</span>
+              </div>
+            </div>
+            <div class="bar-track exp-bar">
+              <div id="expFill" class="exp-fill" style="width: 0%"></div>
+              <div class="bar-overlay">
+                <span id="expText">EXP 0 / 25</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-pill-row">
+          <button id="skillBtn" type="button" class="hud-pill-btn hud-pill-skill" title="スキルツリー (ESC)"></button>
+          <button id="gearBtn" type="button" class="hud-pill-btn hud-pill-gear" title="装着中の装備・ステータス確認"></button>
+        </div>
+      </div>
+
+      <div class="minimap-tactical" aria-label="ミニマップ">
+        <span class="mm-cap tl" aria-hidden="true"></span>
+        <span class="mm-cap tr" aria-hidden="true"></span>
+        <span class="mm-cap bl" aria-hidden="true"></span>
+        <span class="mm-cap br" aria-hidden="true"></span>
+        <canvas id="minimapCanvas"></canvas>
+      </div>
+    </div>
+
+    <div id="notificationStack" class="notification-stack" aria-live="polite"></div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="cockpit-console">
+    <svg class="cockpit-svg-shell" viewBox="0 0 420 108" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="cockpitDeckGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(26, 48, 82, 0.86)" />
+          <stop offset="45%" stop-color="rgba(12, 24, 46, 0.92)" />
+          <stop offset="100%" stop-color="rgba(6, 13, 28, 0.97)" />
+        </linearGradient>
+        <linearGradient id="cockpitCanopyGlass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(56, 189, 248, 0.16)" />
+          <stop offset="100%" stop-color="rgba(14, 28, 54, 0.68)" />
+        </linearGradient>
+        <linearGradient id="skillSwitchBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(16, 68, 108, 0.94)" />
+          <stop offset="100%" stop-color="rgba(14, 26, 58, 0.97)" />
+        </linearGradient>
+        <linearGradient id="gearSwitchBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(58, 42, 18, 0.92)" />
+          <stop offset="100%" stop-color="rgba(20, 18, 24, 0.96)" />
+        </linearGradient>
+        <linearGradient id="cockpitCenterWell" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(4, 11, 24, 0.92)" />
+          <stop offset="100%" stop-color="rgba(9, 20, 40, 0.96)" />
+        </linearGradient>
+      </defs>
+
+      <polygon
+        points="0,36 86,10 334,10 420,36 420,108 0,108"
+        fill="url(#cockpitDeckGrad)"
+        stroke="#38bdf8"
+        stroke-opacity="0.7"
+        stroke-width="1.5"
+      />
+      <polyline points="4,37 87,12 333,12 416,37" fill="none" stroke="#67e8f9" stroke-width="2" />
+      <polygon
+        points="92,18 328,18 302,42 118,42"
+        fill="url(#cockpitCanopyGlass)"
+        stroke="#38bdf8"
+        stroke-opacity="0.45"
+        stroke-width="1"
+      />
+
+      <polygon
+        points="10,48 80,30 106,56 106,100 10,100"
+        fill="url(#skillSwitchBg)"
+        stroke="#22d3ee"
+        stroke-width="2"
+        stroke-linejoin="round"
+      />
+      <polygon
+        points="15,51 78,35 101,58 101,95 15,95"
+        fill="none"
+        stroke="#67e8f9"
+        stroke-opacity="0.38"
+        stroke-width="1"
+      />
+
+      <polygon
+        points="410,48 340,30 314,56 314,100 410,100"
+        fill="url(#gearSwitchBg)"
+        stroke="#fbbf24"
+        stroke-width="2"
+        stroke-linejoin="round"
+      />
+      <polygon
+        points="405,51 342,35 319,58 319,95 405,95"
+        fill="none"
+        stroke="#fde68a"
+        stroke-opacity="0.32"
+        stroke-width="1"
+      />
+
+      <polygon
+        points="126,50 294,50 306,100 114,100"
+        fill="url(#cockpitCenterWell)"
+        stroke="#38bdf8"
+        stroke-opacity="0.65"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
+    </svg>
+
+    <div class="cockpit-interactive-layer">
+      <div class="cockpit-kill-canopy">
+        <span>KILLS</span>
+        <span id="killsText" class="cockpit-kill-num">0</span>
+      </div>
+
+      <button id="bottomPauseLeftBtn" type="button" class="cockpit-side-btn left" title="スキルツリー (ESC)">
+        <span id="bottomSkillBadge" class="cockpit-alert-badge hidden">!</span>
+        <span>SKILL</span>
+        <span id="bottomSkillSub" class="cockpit-side-sub">SP 0</span>
+      </button>
+
+      <div class="cockpit-center-readout">
+        <div class="cockpit-readout-main">DRAG / WASD to Move</div>
+        <div class="cockpit-readout-sub">ESC / K to Pause</div>
+      </div>
+
+      <button id="bottomGearBtn" type="button" class="cockpit-side-btn right" title="装備・ステータス確認">
+        <span>GEAR</span>
+        <span id="bottomGearSub" class="cockpit-side-sub">0 / 2</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="skillModal" class="modal hidden">
+    <div class="modal-panel pause-modal-panel">
+      <button id="closeSkillTopBtn" type="button" class="modal-close-icon" title="閉じる (ESC)" aria-label="閉じる"></button>
+      <div class="modal-head">
+        <h2 id="skillModalHeading">ポーズ / スキル</h2>
+        <div class="modal-head-meta">
+          <button id="muteBtn" type="button" class="hud-icon-btn mute-btn" title="サウンド ON/OFF" aria-label="サウンド切替"></button>
+          <a class="spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書</a>
+          <span id="skillSpBadge" class="sp-badge">所持 SP: 0</span>
+        </div>
+      </div>
+      <div class="pause-tabs" role="tablist" aria-label="ポーズ画面タブ">
+        <button id="tabSkillBtn" type="button" class="pause-tab active-skill" role="tab" aria-selected="true"></button>
+        <button id="tabGearBtn" type="button" class="pause-tab" role="tab" aria-selected="false"></button>
+      </div>
+      <div class="pause-modal-scroll">
+        <div id="skillTabBody">
+          <div id="skillColumns" class="tree-grid"></div>
+        </div>
+        <div id="gearTabBody" class="hidden"></div>
+      </div>
+      <div class="pause-modal-footer">
+        <button id="closeSkillBtn" type="button" class="btn">戦闘に戻る</button>
+      </div>
+    </div>
+    <div id="skillInfoPopover" class="skill-popover hidden" role="dialog" aria-modal="false" aria-labelledby="skillPopoverTitle"></div>
+  </div>
+
+  <div id="equipModal" class="modal hidden">
+    <div class="modal-panel" style="max-width: 480px">
+      <div class="modal-head" style="padding-right: 0">
+        <h2 id="equipModalTitle">装備スロット満杯（2/2）</h2>
+      </div>
+      <div id="equipModalReason" class="equip-reason-banner"></div>
+      <div id="equipDropCard" class="drop-card"></div>
+      <button id="scrapEquipBtn" type="button" class="btn btn-scrap">スクラップ＆ビルド：枠拡張へ蓄積（0/1）</button>
+      <div id="equipModalSubLabel" class="gear-section-label" style="margin: 10px 0 6px">または既存スロットと入れ替え／スクラップで1個強化：</div>
+      <div id="equipSlotList" class="slot-list"></div>
+    </div>
+  </div>
+
+  <div id="gameOverModal" class="modal hidden">
+    <div class="gameover-frame-outer">
+      <svg class="gameover-border-svg" viewBox="0 0 374 420" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="goBorderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#22d3ee" />
+            <stop offset="50%" stop-color="#60a5fa" />
+            <stop offset="100%" stop-color="#fb7185" />
+          </linearGradient>
+        </defs>
+        <polygon
+          points="23,2 351,2 372,23 372,397 351,418 23,418 2,397 2,23"
+          fill="none"
+          stroke="url(#goBorderGrad)"
+          stroke-width="2.5"
+          vector-effect="non-scaling-stroke"
+        />
+        <polyline points="2,62 2,23 23,2 62,2" fill="none" stroke="#67e8f9" stroke-width="4" vector-effect="non-scaling-stroke" />
+        <polyline points="312,2 351,2 372,23 372,62" fill="none" stroke="#fda4af" stroke-width="4" vector-effect="non-scaling-stroke" />
+        <polyline points="2,358 2,397 23,418 62,418" fill="none" stroke="#67e8f9" stroke-width="4" vector-effect="non-scaling-stroke" />
+        <polyline points="312,418 351,418 372,397 372,358" fill="none" stroke="#fda4af" stroke-width="4" vector-effect="non-scaling-stroke" />
+      </svg>
+      <div class="gameover-wrap">
+        <h2 class="signal-lost-title">SIGNAL LOST</h2>
+        <div class="result-list">
+          <span class="result-bracket tl" aria-hidden="true"></span>
+          <span class="result-bracket tr" aria-hidden="true"></span>
+          <span class="result-bracket bl" aria-hidden="true"></span>
+          <span class="result-bracket br" aria-hidden="true"></span>
+          <div id="gameOverSummary"></div>
+        </div>
+        <div class="cyber-cta-bezel">
+          <button id="retryBtn" type="button" class="cyber-cta-btn">リトライ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="startModal" class="modal">
+    <div class="start-card">
+      <div class="start-kicker">ROGUELITE DUNGEON ACTION</div>
+      <h1>DUNGEON SURVIVOR</h1>
+      <p class="start-sub">自動で放たれる攻撃とスキル強化を駆使して、未知のダンジョンを踏破しよう。</p>
+      <div class="start-tips">
+        <div><strong>移動</strong>: ドラッグ / WASD（攻撃は自動）</div>
+        <div><strong>強化</strong>: LvUPでSP獲得 · ESC / K / 下部ボタンでスキルツリー</div>
+        <div><strong>装備</strong>: 宝箱やボスから獲得 · 同種は自動Lv+1（高Lvは選択）</div>
+      </div>
+      <div class="start-actions">
+        <div class="cyber-cta-bezel">
+          <button id="startBtn" type="button" class="cyber-cta-btn">START</button>
+        </div>
+        <a class="start-spec-link" href="./specs.html" target="_blank" rel="noopener">仕様書を見る ↗</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
