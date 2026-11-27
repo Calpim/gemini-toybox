@@ -21,19 +21,19 @@ export interface EquippedItem {
 
 export const MAX_EQUIP_SLOTS = 2;
 export const MAX_EQUIP_SLOTS_CAP = 5;
-export const SCRAP_EXPAND_COSTS = [1, 1, 2] as const;
+export const SCRAP_EXPAND_COSTS = [1, 2, 3] as const;
 export const MAX_TARGET_RANGE = 180;
 export const MAX_EQUIPMENT_LEVEL = 8;
 export const MAX_EQUIPMENT_COUNT_EVO_LEVEL = 6;
 export const ORBIT_SHIELD_INNER_SLOW = 0.86;
 
-export function getScrapExpandCost(currentMaxSlots: number): number {
+export function getScrapExpandCost(currentMaxSlots: number, discount = 0): number {
   const tier = Math.max(0, Math.floor(currentMaxSlots - MAX_EQUIP_SLOTS));
   const cost = SCRAP_EXPAND_COSTS[Math.min(SCRAP_EXPAND_COSTS.length - 1, tier)];
   if (cost === undefined) {
     throw new Error('SCRAP_EXPAND_COSTS must not be empty');
   }
-  return cost;
+  return Math.max(1, cost - Math.max(0, Math.floor(discount)));
 }
 
 export function clampEquipmentLevel(level: number): number {

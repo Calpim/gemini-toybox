@@ -19,7 +19,8 @@ import type { GameState, MainWeaponId, PlayerState, Vec2 } from './types';
 
 function applyScrapExpandStep(state: GameState, sourceLabel: string): void {
   const { player } = state;
-  const cost = getScrapExpandCost(player.maxEquipSlots);
+  const mods = computeSkillModifiers(player.skillLevels);
+  const cost = getScrapExpandCost(player.maxEquipSlots, mods.scrapExpandDiscount);
   player.scrapExpandProgress += 1;
   if (player.scrapExpandProgress >= cost) {
     player.scrapExpandProgress -= cost;

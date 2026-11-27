@@ -168,10 +168,12 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(state.player.equipment[0]?.id).toBe('ricochet_disc');
     expect(state.player.equipment[0]?.level).toBe(4);
 
-    // Scrap & Build: progressive 1 / 1 / 2 cost unlocks slots 2->3 (1), 3->4 (1), 4->5 (2)
+    // Scrap & Build: progressive 1 / 2 / 3 cost unlocks slots 2->3 (1), 3->4 (2), 4->5 (3); mob_loot Lv4 discounts by 1 (min 1)
     expect(getScrapExpandCost(2)).toBe(1);
-    expect(getScrapExpandCost(3)).toBe(1);
-    expect(getScrapExpandCost(4)).toBe(2);
+    expect(getScrapExpandCost(3)).toBe(2);
+    expect(getScrapExpandCost(4)).toBe(3);
+    expect(getScrapExpandCost(3, 1)).toBe(1);
+    expect(getScrapExpandCost(4, 1)).toBe(2);
 
     acquireEquipment(state, createEquippedItem('pulse_blade', 1));
     expect(state.status).toBe('equip_choice');
@@ -184,22 +186,15 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(state.status).toBe('playing');
     expect(state.player.equipment.length).toBe(3);
 
-    // 3->4 requires 1 scrap; then 4th unowned equips into new slot, and 5th triggers 4->5 (cost 2 scraps)
+    // 3->4 requires 2 scraps
     acquireEquipment(state, createEquippedItem('orbit_shield', 1));
-    expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
-    expect(state.player.scrapExpandProgress).toBe(0);
-    expect(state.player.maxEquipSlots).toBe(4);
-    acquireEquipment(state, createEquippedItem('orbit_shield', 1));
-    expect(state.status).toBe('playing');
-    expect(state.player.equipment.length).toBe(4);
-    acquireEquipment(state, createEquippedItem('reactive_coil', 1));
     expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
     expect(state.player.scrapExpandProgress).toBe(1);
-    expect(state.player.maxEquipSlots).toBe(4);
-    acquireEquipment(state, createEquippedItem('reactive_coil', 1));
+    expect(state.player.maxEquipSlots).toBe(3);
+    acquireEquipment(state, createEquippedItem('orbit_shield', 1));
     expect(resolveEquipChoice(state, { type: 'scrap_expand' })).toBe(true);
     expect(state.player.scrapExpandProgress).toBe(0);
-    expect(state.player.maxEquipSlots).toBe(5);
+    expect(state.player.maxEquipSlots).toBe(4);
   });
 
   it('[APP-GRW-06] starts run with 0 items without Room 0 chest and fights using intrinsic base attack', () => {
@@ -319,12 +314,9 @@ describe('Equipment, loadout, and growth simulation', () => {
     acquireEquipment(state, createEquippedItem('pulse_blade', 8));
     expect(state.player.maxEquipSlots).toBe(3); // cost 2->3 is 1 scrap
     expect(state.player.scrapExpandProgress).toBe(0);
-    // Next Lv8 duplicate unlocks 3->4 (cost 1), then next advances 4->5 progress (cost 2)
+    // Next Lv8 duplicate advances 3->4 progress (cost 2)
     acquireEquipment(state, createEquippedItem('pulse_blade', 8));
-    expect(state.player.maxEquipSlots).toBe(4);
-    expect(state.player.scrapExpandProgress).toBe(0);
-    acquireEquipment(state, createEquippedItem('pulse_blade', 8));
-    expect(state.player.maxEquipSlots).toBe(4);
+    expect(state.player.maxEquipSlots).toBe(3);
     expect(state.player.scrapExpandProgress).toBe(1);
 
     // Once maxEquipSlots reaches 5, Lv8 duplicate grants +20HP / +25EXP overflow bonus

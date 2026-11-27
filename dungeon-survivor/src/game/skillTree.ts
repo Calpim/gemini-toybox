@@ -174,8 +174,9 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: 'トレジャー解析',
     requires: 'mob_magnet',
     tagline: '装備ドロップ率・品質とEXPを強化',
-    description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（サブ装備固めの要）',
-    detailNote: '基礎装備ドロップ率(2.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
+    description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（Lv4+で枠拡張コスト-1）',
+    detailNote:
+      '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します（Lv4以上で装備枠拡張スクラップコスト-1、下限1）。',
   },
   {
     id: 'mob_dash',
@@ -237,7 +238,7 @@ const DEF_AEGIS_CD = [0, 7.0, 4.5] as const;
 const MOB_MAGNET_PCT = [0, 0.22, 0.44, 0.66, 1.05, 1.6] as const;
 const MOB_HEAL_PCT = [0, 0.1, 0.2, 0.3, 0.5, 0.75] as const;
 const MOB_LOOT_PCT = [0, 0.1, 0.2, 0.3, 0.45, 0.65] as const;
-const MOB_DROP_BONUS = [0, 0.005, 0.01, 0.015, 0.023, 0.035] as const;
+const MOB_DROP_BONUS = [0, 0.008, 0.016, 0.025, 0.04, 0.06] as const;
 const MOB_DROP_QUALITY = [0, 1, 2, 3, 4, 5] as const;
 const MOB_EXP_PCT = [0, 0.08, 0.16, 0.24, 0.42, 0.68] as const;
 const MOB_DASH_INVULN = [BASE_HIT_INVULN_DURATION, 1.3, 1.6] as const;
@@ -276,6 +277,7 @@ export interface ComputedSkillModifiers {
   lootBonusRate: number;
   equipDropBonus: number;
   dropQualityTier: number;
+  scrapExpandDiscount: number;
   expMult: number;
   hasTacticalStep: boolean;
   tacticalInvulnDuration: number;
@@ -332,6 +334,7 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     lootBonusRate: curveAt(MOB_LOOT_PCT, mobLootLv),
     equipDropBonus: curveAt(MOB_DROP_BONUS, mobLootLv),
     dropQualityTier: curveAt(MOB_DROP_QUALITY, mobLootLv),
+    scrapExpandDiscount: mobLootLv >= 4 ? 1 : 0,
     expMult: 1 + curveAt(MOB_EXP_PCT, mobLootLv),
     hasTacticalStep: mobDashLv >= 1,
     tacticalInvulnDuration: curveAt(MOB_DASH_INVULN, mobDashLv),
