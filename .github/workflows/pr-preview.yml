@@ -17,8 +17,12 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
+      # Checkout must run even on 'closed': the preview removal step below
+      # (the JamesIves deploy action used inside rossjrw/pr-preview-action)
+      # requires a checked-out git workspace. Without it, removal fails with
+      # "error initializing the repository: git failed with exit code 128"
+      # (seen on PR #60 after merge, run 45955826577).
       - name: Checkout
-        if: github.event.action != 'closed'
         uses: actions/checkout@v4
 
       - name: Setup Node.js
