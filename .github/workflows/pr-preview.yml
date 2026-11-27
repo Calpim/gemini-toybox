@@ -1,0 +1,54 @@
+name: PR Preview Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        if: github.event.action != 'closed'
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: github.event.action != 'closed'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: dungeon-survivor/package-lock.json
+
+      - name: Install & Build dungeon-survivor
+        if: github.event.action != 'closed'
+        working-directory: dungeon-survivor
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemble preview site
+        if: github.event.action != 'closed'
+        run: |
+          rm -rf _site
+          mkdir -p _site/dungeon-survivor
+          cp index.html _site/
+          cp -r vertical-survivor-rogue _site/
+          cp -r dungeon-survivor/dist/* _site/dungeon-survivor/
+
+      - name: Deploy or remove PR preview
+        uses: rossjbx/pr-preview-action@v1
+        with:
+          source-dir: _site
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: auto
