@@ -40,7 +40,7 @@ export function stepBossBehavior(
       const mortarRadius = isGrand ? 68 : 52;
       const maxLeadDist = isGrand ? 155 : 115;
       for (let b = 0; b < burstCount; b++) {
-        const leadTime = 0.55 + b * 0.28;
+        const leadTime = b === 0 ? 0 : b === 1 ? 0.55 : 0.85 + (b - 2) * 0.25;
         let leadDx = (player.velX ?? 0) * leadTime;
         let leadDy = (player.velY ?? 0) * leadTime;
         const leadLen = Math.hypot(leadDx, leadDy);

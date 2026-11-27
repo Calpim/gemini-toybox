@@ -83,14 +83,14 @@ function calcSubEquipmentSingleTargetDps(item: EquippedItem): number {
 }
 
 function calcEnemyHp(floor: number, playerLevel: number) {
-  const baseHp = 26 + (floor - 1) * 9;
+  const baseHp = 26 + (floor - 1) * 14 + Math.floor((floor - 1) ** 2 * 3.5);
   const normal = baseHp;
   const tank = Math.round(baseHp * 2.4);
   const guardian =
     floor % 10 === 3 || floor % 10 === 6 || floor % 10 === 9
-      ? Math.round(tank * 2.9 * (1 + Math.max(0, playerLevel - 1) * 0.14))
+      ? Math.round(tank * 2.2 * (1 + Math.max(0, playerLevel - 1) * 0.14))
       : null;
-  const grandBoss = floor % 10 === 0 ? Math.round(tank * 6.8 * (1 + Math.max(0, playerLevel - 1) * 0.16)) : null;
+  const grandBoss = floor % 10 === 0 ? Math.round(tank * 2.5 * (1 + Math.max(0, playerLevel - 1) * 0.16)) : null;
   return { normal, tank, guardian, grandBoss };
 }
 

@@ -165,120 +165,120 @@
       {
         "id": 2,
         "kind": "shooter",
-        "hp": 40,
-        "maxHp": 40,
+        "hp": 49,
+        "maxHp": 49,
         "x": 1500,
         "y": 1260
       },
       {
         "id": 3,
         "kind": "normal",
-        "hp": 35,
-        "maxHp": 35,
+        "hp": 43,
+        "maxHp": 43,
         "x": 1580,
         "y": 1220
       },
       {
         "id": 5,
         "kind": "runner",
-        "hp": 19,
-        "maxHp": 19,
+        "hp": 24,
+        "maxHp": 24,
         "x": 1340,
         "y": 340
       },
       {
         "id": 6,
         "kind": "normal",
-        "hp": 35,
-        "maxHp": 35,
+        "hp": 43,
+        "maxHp": 43,
         "x": 1260,
         "y": 500
       },
       {
         "id": 7,
         "kind": "tank",
-        "hp": 84,
-        "maxHp": 84,
+        "hp": 103,
+        "maxHp": 103,
         "x": 1340,
         "y": 420
       },
       {
         "id": 8,
         "kind": "runner",
-        "hp": 19,
-        "maxHp": 19,
+        "hp": 24,
+        "maxHp": 24,
         "x": 1340,
         "y": 380
       },
       {
         "id": 9,
         "kind": "runner",
-        "hp": 19,
-        "maxHp": 19,
+        "hp": 24,
+        "maxHp": 24,
         "x": 1180,
         "y": 460
       },
       {
         "id": 11,
         "kind": "shooter",
-        "hp": 40,
-        "maxHp": 40,
+        "hp": 49,
+        "maxHp": 49,
         "x": 340,
         "y": 300
       },
       {
         "id": 12,
         "kind": "tank",
-        "hp": 84,
-        "maxHp": 84,
+        "hp": 103,
+        "maxHp": 103,
         "x": 540,
         "y": 420
       },
       {
         "id": 13,
         "kind": "tank",
-        "hp": 84,
-        "maxHp": 84,
+        "hp": 103,
+        "maxHp": 103,
         "x": 380,
         "y": 220
       },
       {
         "id": 14,
         "kind": "normal",
-        "hp": 35,
-        "maxHp": 35,
+        "hp": 43,
+        "maxHp": 43,
         "x": 580,
         "y": 220
       },
       {
         "id": 15,
         "kind": "normal",
-        "hp": 35,
-        "maxHp": 35,
+        "hp": 43,
+        "maxHp": 43,
         "x": 1700,
         "y": 620
       },
       {
         "id": 16,
         "kind": "shooter",
-        "hp": 40,
-        "maxHp": 40,
+        "hp": 49,
+        "maxHp": 49,
         "x": 1780,
         "y": 540
       },
       {
         "id": 17,
         "kind": "shooter",
-        "hp": 40,
-        "maxHp": 40,
+        "hp": 49,
+        "maxHp": 49,
         "x": 1780,
         "y": 740
       },
       {
         "id": 18,
         "kind": "scout",
-        "hp": 33,
-        "maxHp": 33,
+        "hp": 41,
+        "maxHp": 41,
         "x": 1100.031,
         "y": 506.137
       }
@@ -322,192 +322,192 @@
       {
         "id": 3,
         "kind": "tank",
-        "hp": 307,
-        "maxHp": 307,
+        "hp": 359,
+        "maxHp": 359,
         "x": 820,
         "y": 300
       },
       {
         "id": 4,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 660,
         "y": 420
       },
       {
         "id": 5,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 660,
         "y": 180
       },
       {
         "id": 6,
         "kind": "shooter",
-        "hp": 51,
-        "maxHp": 51,
+        "hp": 78,
+        "maxHp": 78,
         "x": 700,
         "y": 220
       },
       {
         "id": 7,
         "kind": "shooter",
-        "hp": 51,
-        "maxHp": 51,
+        "hp": 78,
+        "maxHp": 78,
         "x": 700,
         "y": 340
       },
       {
         "id": 8,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 620,
         "y": 300
       },
       {
         "id": 9,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 740,
         "y": 420
       },
       {
         "id": 11,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 580,
         "y": 980
       },
       {
         "id": 12,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 820,
         "y": 1020
       },
       {
         "id": 13,
         "kind": "shooter",
-        "hp": 51,
-        "maxHp": 51,
+        "hp": 78,
+        "maxHp": 78,
         "x": 780,
         "y": 1060
       },
       {
         "id": 14,
         "kind": "normal",
-        "hp": 44,
-        "maxHp": 44,
+        "hp": 68,
+        "maxHp": 68,
         "x": 820,
         "y": 980
       },
       {
         "id": 16,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 1780,
         "y": 660
       },
       {
         "id": 17,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 1860,
         "y": 500
       },
       {
         "id": 18,
         "kind": "normal",
-        "hp": 44,
-        "maxHp": 44,
+        "hp": 68,
+        "maxHp": 68,
         "x": 1900,
         "y": 540
       },
       {
         "id": 19,
         "kind": "shooter",
-        "hp": 51,
-        "maxHp": 51,
+        "hp": 78,
+        "maxHp": 78,
         "x": 1860,
         "y": 620
       },
       {
         "id": 20,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 1580,
         "y": 500
       },
       {
         "id": 21,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 1620,
         "y": 540
       },
       {
         "id": 22,
         "kind": "runner",
-        "hp": 24,
-        "maxHp": 24,
+        "hp": 37,
+        "maxHp": 37,
         "x": 1580,
         "y": 380
       },
       {
         "id": 24,
         "kind": "normal",
-        "hp": 44,
-        "maxHp": 44,
+        "hp": 68,
+        "maxHp": 68,
         "x": 940,
         "y": 1460
       },
       {
         "id": 25,
         "kind": "normal",
-        "hp": 44,
-        "maxHp": 44,
+        "hp": 68,
+        "maxHp": 68,
         "x": 780,
         "y": 1460
       },
       {
         "id": 26,
         "kind": "tank",
-        "hp": 106,
-        "maxHp": 106,
+        "hp": 163,
+        "maxHp": 163,
         "x": 740,
         "y": 1460
       },
       {
         "id": 27,
         "kind": "normal",
-        "hp": 44,
-        "maxHp": 44,
+        "hp": 68,
+        "maxHp": 68,
         "x": 700,
         "y": 1500
       },
       {
         "id": 28,
         "kind": "scout",
-        "hp": 42,
-        "maxHp": 42,
+        "hp": 65,
+        "maxHp": 65,
         "x": 735.853,
         "y": 1515.853
       },
       {
         "id": 29,
         "kind": "scout",
-        "hp": 42,
-        "maxHp": 42,
+        "hp": 65,
+        "maxHp": 65,
         "x": 776.361,
         "y": 199.401
       }

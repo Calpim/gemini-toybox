@@ -22,7 +22,7 @@ export function createEnemyByKind(
   floor: number,
   aggroRange = MAX_TARGET_RANGE,
 ): EnemyState {
-  const baseHp = 26 + (floor - 1) * 9;
+  const baseHp = 26 + (floor - 1) * 14 + Math.floor((floor - 1) ** 2 * 3.5);
   const baseSpeed = 78 + Math.min(48, (floor - 1) * 6);
   const baseDmg = 10 + (floor - 1) * 2;
 
@@ -175,7 +175,7 @@ export function populateFloor(
 
     const grandBoss = createEnemyByKind(nextId++, 'tank', bossPos.x, bossPos.y, floor, 360);
     const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.16;
-    grandBoss.maxHp = Math.round(grandBoss.maxHp * 6.8 * lvScale);
+    grandBoss.maxHp = Math.round(grandBoss.maxHp * 2.5 * lvScale);
     grandBoss.hp = grandBoss.maxHp;
     grandBoss.radius += 8;
     grandBoss.speed = Math.max(58, Math.round(grandBoss.speed * 1.15));
@@ -308,7 +308,7 @@ export function populateFloor(
         wy = stairsPos.y;
         const boss = createEnemyByKind(nextId++, 'tank', wx, wy, floor, 260);
         const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.14;
-        boss.maxHp = Math.round(boss.maxHp * 2.9 * lvScale);
+        boss.maxHp = Math.round(boss.maxHp * 2.2 * lvScale);
         boss.hp = boss.maxHp;
         boss.speed = 108 + Math.min(24, floor * 2);
         boss.radius += 5;

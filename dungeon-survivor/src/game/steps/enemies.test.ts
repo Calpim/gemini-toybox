@@ -309,12 +309,12 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(40);
 
-    // Grand Boss exists with buffed HP (6.8x tank base), locks stairs, and cycles 4 patterns incl. windup->dashing
+    // Grand Boss exists with buffed HP (2.5x tank base), locks stairs, and cycles 4 patterns incl. windup->dashing
     const grandBoss = mustDefined(
       state.enemies.find((e) => e.isGrandBoss),
       'grandBoss',
     );
-    expect(grandBoss.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 10).maxHp * 6.8));
+    expect(grandBoss.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 10).maxHp * 2.5));
     expect(getStairsLockCount(state)).toBe(1);
 
     state.enemies = [grandBoss];
@@ -392,7 +392,7 @@ describe('Enemy AI, spawning, and boss simulation', () => {
       floor3.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss),
       'guardian',
     );
-    expect(guardian.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.9));
+    expect(guardian.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.2));
     const guardianStairs = tileCenterWorld(floor3.map.stairsTile.tx, floor3.map.stairsTile.ty);
     expect(guardian.x).toBeCloseTo(guardianStairs.x, 1);
     expect(guardian.y).toBeCloseTo(guardianStairs.y, 1);
@@ -435,18 +435,17 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     expect(mortarState.mortarZones.length).toBe(0);
     expect(mortarState.player.hp).toBeLessThan(hpBeforeImpact);
 
-    // Tank predicts smoothed actual player movement (lead-target mortar) without overshooting through walls
+    // Tank 1st mortar targets current player position directly (anti-standstill; 2nd/3rd lead ahead)
     tank.attackCooldown = 0.5;
     for (let f = 0; f < 15; f++) {
       stepGame(mortarState, { x: 0, y: 1 }, 0.02);
     }
-    const playerBeforeShotY = mortarState.player.y;
     tank.attackCooldown = 0.01;
     stepGame(mortarState, { x: 0, y: 1 }, 0.02);
     expect(mortarState.mortarZones.length).toBe(1);
     expect(mortarState.mortarZones[0]?.radius).toBe(52);
     expect(mortarState.mortarZones[0]?.duration).toBeCloseTo(0.85, 2);
-    expect(mortarState.mortarZones[0]?.targetY).toBeGreaterThan(playerBeforeShotY + 70);
+    expect(mortarState.mortarZones[0]?.targetY).toBeCloseTo(mortarState.player.y, 1);
 
     // Normal enemy fires level-scaled spread shots when awake & in sight
     const normState = createGameState({ seed: 963 });
@@ -648,6 +647,24 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     stepGame(lateState, { x: 0, y: 0 }, 0.05);
     expect(lateNormal.dashState).toBe('windup');
 
+    // Windup normal enemy is also invulnerable to normal shots
+    const windupHpBefore = lateNormal.hp;
+    lateState.projectiles.push({
+      id: 9298,
+      x: lateNormal.x,
+      y: lateNormal.y,
+      vx: 0,
+      vy: 0,
+      radius: 8,
+      damage: 25,
+      life: 1,
+      pierce: false,
+      hitEnemyIds: [],
+      color: '#38bdf8',
+    });
+    stepGame(lateState, { x: 0, y: 0 }, 0.01);
+    expect(lateNormal.hp).toBe(windupHpBefore);
+
     for (let f = 0; f < 30; f++) {
       stepGame(lateState, { x: 0, y: 0 }, 0.02);
       if (lateNormal.dashState === 'dashing') break;
@@ -694,9 +711,22 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     tank9.awake = true;
     tank9.attackCooldown = 0.01;
     tank9State.enemies = [tank9];
-    stepGame(tank9State, { x: 0, y: 0 }, 0.02);
+    tank9State.player.velX = 180;
+    tank9State.player.velY = 0;
+    stepGame(tank9State, { x: 1, y: 0 }, 0.02);
     expect(tank9State.mortarZones).toHaveLength(3);
     expect(tank9.attackCooldown).toBeCloseTo(3.2, 2);
+    // 1st mortar targets player's current position (leadTime = 0), 2nd & 3rd lead ahead
+    const [m1, m2, m3] = tank9State.mortarZones;
+    expect(mustDefined(m1).targetX).toBeCloseTo(tank9State.player.x, 1);
+    expect(mustDefined(m2).targetX).toBeGreaterThan(mustDefined(m1).targetX + 20);
+    expect(mustDefined(m3).targetX).toBeGreaterThan(mustDefined(m2).targetX + 10);
+
+    // Quadratic enemy HP scaling: 1F=26, 3F=68, 5F=138, 10F=435
+    expect(createEnemyByKind(1, 'normal', 0, 0, 1).maxHp).toBe(26);
+    expect(createEnemyByKind(1, 'normal', 0, 0, 3).maxHp).toBe(68);
+    expect(createEnemyByKind(1, 'normal', 0, 0, 5).maxHp).toBe(138);
+    expect(createEnemyByKind(1, 'normal', 0, 0, 10).maxHp).toBe(435);
 
     // 3. Guardian boss (3/6/9F) speed, 2-burst mortar, shorter attack cooldown (1.50s), and shorter dash recovery (0.75s)
     const g3State = createGameState({ seed: 9204, startFloor: 3 });
