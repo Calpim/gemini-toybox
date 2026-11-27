@@ -1,4 +1,4 @@
-import { getOrbitBitPositions, getSeekerDronePositions, isPointInPlayerVision } from '../../game/engine';
+import { getOrbitBitPositions, getSeekerDronePositions, isEnemyVisibleToPlayer } from '../../game/engine';
 import { EQUIPMENT_CATALOG, getOrbitShieldRadius, getSeekerDroneRange, MAX_TARGET_RANGE } from '../../game/equipment';
 import type { computeSkillModifiers } from '../../game/skillTree';
 import type { EnemyState, GameState } from '../../game/types';
@@ -476,9 +476,8 @@ export function renderPlayerSupportGear(
 }
 
 export function renderEnemies(ctx: CanvasRenderingContext2D, state: GameState, nowSec: number): void {
-  const { map, player } = state;
   for (const enemy of state.enemies) {
-    if (!enemy.isAmbush && !isPointInPlayerVision(map, player.x, player.y, enemy.x, enemy.y)) {
+    if (!isEnemyVisibleToPlayer(state, enemy)) {
       continue;
     }
     drawEnemyBody(ctx, enemy, nowSec);

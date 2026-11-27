@@ -17,6 +17,7 @@ import {
 } from '../equipment';
 import type { ComputedSkillModifiers } from '../skillTree';
 import type { GameState, MainWeaponId, PlayerState, Vec2 } from '../types';
+import { isEnemyVisibleToPlayer } from '../vision';
 import { damageEnemy, findNearestVisibleEnemy, triggerChainLightning } from './combatHelpers';
 
 export interface CombatBaseStats {
@@ -52,7 +53,9 @@ export function stepPlayerCombat(
     const pulseRange = Math.min(MAX_TARGET_RANGE, mods.repulsorRange * mods.rangeMult);
     const nearby = state.enemies.filter(
       (e) =>
-        Math.hypot(e.x - player.x, e.y - player.y) <= pulseRange && hasLineOfSight(player.x, player.y, e.x, e.y, map),
+        isEnemyVisibleToPlayer(state, e) &&
+        Math.hypot(e.x - player.x, e.y - player.y) <= pulseRange &&
+        hasLineOfSight(player.x, player.y, e.x, e.y, map),
     );
     if (nearby.length > 0) {
       for (const e of nearby) {
@@ -231,6 +234,7 @@ export function stepPlayerCombat(
       if (aimTarget) {
         const slashAngle = Math.atan2(aimTarget.y - player.y, aimTarget.x - player.x);
         const targets = state.enemies.filter((e) => {
+          if (!isEnemyVisibleToPlayer(state, e)) return false;
           if (Math.hypot(e.x - player.x, e.y - player.y) > cappedRange) return false;
           if (!hasLineOfSight(player.x, player.y, e.x, e.y, map)) return false;
           const ea = Math.atan2(e.y - player.y, e.x - player.x);

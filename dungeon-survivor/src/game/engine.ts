@@ -1,12 +1,4 @@
-import { hasLineOfSight } from '../core/collision';
-import {
-  type DungeonMap,
-  findRoomAtTile,
-  generateDungeon,
-  isTileInRoom,
-  TILE_SIZE,
-  tileCenterWorld,
-} from '../core/dungeon';
+import { generateDungeon, tileCenterWorld } from '../core/dungeon';
 import { emitSound, pushNotification } from './effects';
 import { MAX_EQUIP_SLOTS } from './equipment';
 import { getLevelUpSkillPoints, grantExpAndCheckLevelUp } from './leveling';
@@ -51,9 +43,11 @@ import { stepPickupsAndFx } from './steps/pickups';
 import { revealAroundPlayer, stepPlayerAndInteractables } from './steps/player';
 import { RICOCHET_DISC_LOOP_RADIUS, stepProjectiles } from './steps/projectiles';
 import type { GameState, GameStatus, Vec2 } from './types';
+import { CORRIDOR_VISION_RADIUS, isEnemyVisibleToPlayer, isPointInPlayerVision } from './vision';
 
 export {
   acquireEquipment,
+  CORRIDOR_VISION_RADIUS,
   createEnemyByKind,
   type EquipChoice,
   getActiveBossLaserWidth,
@@ -63,6 +57,8 @@ export {
   getPlayerBaseAttackStats,
   getRunnerPackSize,
   getSeekerDronePositions,
+  isEnemyVisibleToPlayer,
+  isPointInPlayerVision,
   pickEnemyKindForFloor,
   pushNotification,
   RICOCHET_DISC_LOOP_RADIUS,
@@ -76,35 +72,12 @@ export {
   SHOOTER_AGGRO_RANGE,
 };
 
-export const CORRIDOR_VISION_RADIUS = 210;
 export const INITIAL_RESPAWN_DELAY = 24;
 
 export interface CreateGameOptions {
   seed?: number;
   startFloor?: number;
   initialStatus?: GameStatus;
-}
-
-export function isPointInPlayerVision(
-  map: DungeonMap,
-  px: number,
-  py: number,
-  wx: number,
-  wy: number,
-  corridorRadius = CORRIDOR_VISION_RADIUS,
-): boolean {
-  const ptx = Math.floor(px / TILE_SIZE);
-  const pty = Math.floor(py / TILE_SIZE);
-  const activeRoom = findRoomAtTile(map, ptx, pty);
-  if (activeRoom) {
-    const wtx = Math.floor(wx / TILE_SIZE);
-    const wty = Math.floor(wy / TILE_SIZE);
-    if (isTileInRoom(activeRoom, wtx, wty, 1)) {
-      return true;
-    }
-  }
-  const dist = Math.hypot(wx - px, wy - py);
-  return dist <= corridorRadius && hasLineOfSight(px, py, wx, wy, map);
 }
 
 export function getStairsLockCount(state: GameState): number {
