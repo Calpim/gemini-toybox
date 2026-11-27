@@ -18,6 +18,7 @@ import { handleEnemyContactWithPlayer, stepEnemyProjectilesOnPlayer } from './en
 
 export {
   getNormalEnemyShotStats,
+  getTankMortarSpec,
   SCOUT_ALERT_COOLDOWN,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,

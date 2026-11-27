@@ -295,7 +295,9 @@ export function populateFloor(
     }
 
     const extraStairsMobs = isStairsRoom ? (guardianFloor ? 3 : 1) : 0;
-    const count = rng.int(2, 3 + Math.min(3, Math.floor(floor / 2))) + extraStairsMobs;
+    const minCount = 2 + Math.min(2, Math.floor((floor - 1) / 3));
+    const maxCount = 3 + Math.min(5, Math.floor(floor / 2));
+    const count = rng.int(minCount, maxCount) + extraStairsMobs;
     for (let k = 0; k < count; k++) {
       let wx: number;
       let wy: number;
@@ -308,6 +310,7 @@ export function populateFloor(
         const lvScale = 1 + Math.max(0, playerLevel - 1) * 0.14;
         boss.maxHp = Math.round(boss.maxHp * 2.9 * lvScale);
         boss.hp = boss.maxHp;
+        boss.speed = 108 + Math.min(24, floor * 2);
         boss.radius += 5;
         boss.damage = Math.round(boss.damage * 1.25);
         boss.isRoomBoss = true;

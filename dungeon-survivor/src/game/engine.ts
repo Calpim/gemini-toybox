@@ -32,6 +32,7 @@ import { stepPlayerCombat } from './steps/combat';
 import {
   getActiveBossLaserWidth,
   getNormalEnemyShotStats,
+  getTankMortarSpec,
   SCOUT_ALERT_COOLDOWN,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
@@ -57,6 +58,7 @@ export {
   getPlayerBaseAttackStats,
   getRunnerPackSize,
   getSeekerDronePositions,
+  getTankMortarSpec,
   isEnemyVisibleToPlayer,
   isPointInPlayerVision,
   pickEnemyKindForFloor,
