@@ -131,8 +131,9 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: '広域索敵',
     requires: null,
     tagline: '迎撃・装備の索敵レンジを拡大',
-    description: '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px）',
-    detailNote: '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで）。',
+    description: '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px、Lv4+で枠拡張コスト-1）',
+    detailNote:
+      '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで。Lv4以上で装備枠拡張スクラップコスト-1、下限1）。',
   },
   {
     id: 'def_pulse',
@@ -174,9 +175,8 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: 'トレジャー解析',
     requires: 'mob_magnet',
     tagline: '装備ドロップ率・品質とEXPを強化',
-    description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（Lv4+で枠拡張コスト-1）',
-    detailNote:
-      '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します（Lv4以上で装備枠拡張スクラップコスト-1、下限1）。',
+    description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化',
+    detailNote: '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
   },
   {
     id: 'mob_dash',
@@ -334,7 +334,7 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     lootBonusRate: curveAt(MOB_LOOT_PCT, mobLootLv),
     equipDropBonus: curveAt(MOB_DROP_BONUS, mobLootLv),
     dropQualityTier: curveAt(MOB_DROP_QUALITY, mobLootLv),
-    scrapExpandDiscount: mobLootLv >= 4 ? 1 : 0,
+    scrapExpandDiscount: defSensorLv >= 4 ? 1 : 0,
     expMult: 1 + curveAt(MOB_EXP_PCT, mobLootLv),
     hasTacticalStep: mobDashLv >= 1,
     tacticalInvulnDuration: curveAt(MOB_DASH_INVULN, mobDashLv),
@@ -360,8 +360,10 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
     }
     case 'arm_overclock':
       return `CD -${Math.round(curveAt(ARM_MAIN_CD_REDUCTION, lv) * 100)}% / 弾速+${curveAt(ARM_MAIN_SPEED_BONUS, lv)} / ${lv >= 2 ? '螺旋貫通＋極太コアレーザー強化' : '螺旋貫通＋中心コアレーザー'}`;
-    case 'def_sensor':
-      return `レンジ +${Math.round(curveAt(DEF_RANGE_PCT, lv) * 100)}%`;
+    case 'def_sensor': {
+      const rangeText = `レンジ +${Math.round(curveAt(DEF_RANGE_PCT, lv) * 100)}%`;
+      return lv >= 4 ? `${rangeText} / 枠拡張コスト-1` : rangeText;
+    }
     case 'def_pulse':
       return `威力${curveAt(DEF_PULSE_DMG, lv)} / 範囲${curveAt(DEF_PULSE_RANGE, lv)} / CD ${curveAt(DEF_PULSE_CD, lv).toFixed(1)}s`;
     case 'def_aegis':
