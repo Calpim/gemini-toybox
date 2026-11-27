@@ -120,7 +120,7 @@ describe('findNearestVisibleEnemy vision filtering', () => {
     return { state, origin, enemy };
   }
 
-  it('ignores enemies beyond CORRIDOR_VISION_RADIUS in a corridor even when allowExceedMaxRange is true', () => {
+  it('[INV-06] ignores enemies beyond CORRIDOR_VISION_RADIUS in a corridor even when allowExceedMaxRange is true', () => {
     const { state, origin } = createCorridorState(CORRIDOR_VISION_RADIUS + 40);
     expect(findNearestVisibleEnemy(origin.x, origin.y, 400, state, [], true)).toBeNull();
   });
