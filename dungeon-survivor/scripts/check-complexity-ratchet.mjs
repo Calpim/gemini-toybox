@@ -3,53 +3,85 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const baseline = JSON.parse(readFileSync(new URL('./complexity-baseline.json', import.meta.url), 'utf8'));
-const biomeBin = join(ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'biome.cmd' : 'biome');
-const proc = spawnSync(biomeBin, ['check', '.', '--reporter=json'], {
-  cwd: ROOT,
-  encoding: 'utf8',
-  maxBuffer: 64 * 1024 * 1024,
-  shell: process.platform === 'win32',
-});
-if (!proc.stdout) {
-  console.error('FAIL: biome produced no report — gate did not actually run');
-  if (proc.stderr) console.error(proc.stderr);
-  process.exit(1);
-}
-const report = JSON.parse(proc.stdout);
-const scanned = (report.summary?.unchanged ?? 0) + (report.summary?.changed ?? 0);
-if (!scanned) {
-  console.error('FAIL: biome scanned 0 files — gate did not actually run');
-  process.exit(1);
-}
-const perFile = {};
-for (const d of report.diagnostics ?? []) {
-  if (d.category !== 'lint/complexity/noExcessiveCognitiveComplexity') continue;
-  const score = Number(d.message.match(/complexity of (\d+)/)?.[1] ?? 0);
-  // biome の JSON 診断では location.path が { file } 形式の場合があるため両対応にする
-  const rawPath = d.location?.path;
-  const file = String(typeof rawPath === 'string' ? rawPath : (rawPath?.file ?? '')).replace(/\\/g, '/');
-  perFile[file] ??= { max: 0, count: 0 };
-  perFile[file].max = Math.max(perFile[file].max, score);
-  perFile[file].count++;
-}
-const total = Object.values(perFile).reduce((a, f) => a + f.count, 0);
-console.log(`complexity warnings: ${total} (baseline ${baseline.totalWarnings}), files scanned: ${scanned}`);
 
-const violations = [];
-for (const [file, cur] of Object.entries(perFile)) {
-  const base = baseline.perFile[file];
-  if (!base) violations.push(`${file}: new complexity warning (max ${cur.max}) not in baseline`);
-  else {
-    if (cur.max > base.max) violations.push(`${file}: max ${base.max} -> ${cur.max}`);
-    if (cur.count > base.count) violations.push(`${file}: count ${base.count} -> ${cur.count}`);
+export function evaluateComplexityReport(report, baseline) {
+  const scanned = (report.summary?.unchanged ?? 0) + (report.summary?.changed ?? 0);
+  if (!scanned) {
+    return { ok: false, scanned: 0, total: 0, violations: ['biome scanned 0 files — gate did not actually run'] };
   }
+  const perFile = {};
+  const parseErrors = [];
+  for (const d of report.diagnostics ?? []) {
+    if (d.category !== 'lint/complexity/noExcessiveCognitiveComplexity') continue;
+    const rawPath = d.location?.path;
+    const file = String(typeof rawPath === 'string' ? rawPath : (rawPath?.file ?? '')).replace(/\\/g, '/');
+    const scoreMatch = String(d.message ?? '').match(/complexity of (\d+)/);
+    if (!file || !scoreMatch) {
+      parseErrors.push(
+        `unparseable complexity diagnostic: path=${file || '(empty)'} message=${String(d.message ?? '')}`,
+      );
+      continue;
+    }
+    const score = Number(scoreMatch[1]);
+    perFile[file] ??= { max: 0, count: 0 };
+    perFile[file].max = Math.max(perFile[file].max, score);
+    perFile[file].count++;
+  }
+  const total = Object.values(perFile).reduce((a, f) => a + f.count, 0);
+  if (parseErrors.length) {
+    return { ok: false, scanned, total, violations: parseErrors };
+  }
+
+  const violations = [];
+  for (const [file, cur] of Object.entries(perFile)) {
+    const base = baseline.perFile[file];
+    if (!base) violations.push(`${file}: new complexity warning (max ${cur.max}) not in baseline`);
+    else {
+      if (cur.max > base.max) violations.push(`${file}: max ${base.max} -> ${cur.max}`);
+      if (cur.count > base.count) violations.push(`${file}: count ${base.count} -> ${cur.count}`);
+    }
+  }
+  return { ok: violations.length === 0, scanned, total, violations };
 }
-if (violations.length) {
-  console.error(`FAIL: complexity increased:\n${violations.join('\n')}`);
-  process.exit(1);
+
+function main() {
+  const baseline = JSON.parse(readFileSync(new URL('./complexity-baseline.json', import.meta.url), 'utf8'));
+  const biomeBin = join(ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'biome.cmd' : 'biome');
+  const proc = spawnSync(biomeBin, ['check', '.', '--reporter=json'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+    shell: process.platform === 'win32',
+  });
+  if (proc.error) {
+    console.error(`FAIL: failed to execute biome: ${proc.error.message}`);
+    process.exit(1);
+  }
+  if (proc.status !== 0 && proc.status !== 1) {
+    console.error(`FAIL: biome exited unexpectedly with status ${proc.status}`);
+    if (proc.stderr) console.error(proc.stderr);
+    process.exit(1);
+  }
+  if (!proc.stdout) {
+    console.error('FAIL: biome produced no report — gate did not actually run');
+    if (proc.stderr) console.error(proc.stderr);
+    process.exit(1);
+  }
+  const report = JSON.parse(proc.stdout);
+  const result = evaluateComplexityReport(report, baseline);
+  console.log(
+    `complexity warnings: ${result.total} (baseline ${baseline.totalWarnings}), files scanned: ${result.scanned}`,
+  );
+  if (!result.ok) {
+    console.error(`FAIL: complexity gate failed:\n${result.violations.join('\n')}`);
+    process.exit(1);
+  }
+  console.log('OK: complexity did not increase vs baseline');
 }
-console.log('OK: complexity did not increase vs baseline');
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
