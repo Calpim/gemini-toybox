@@ -1,6 +1,7 @@
 import { getOrbitBitPositions, getSeekerDronePositions, isEnemyVisibleToPlayer } from '../../game/engine';
 import { EQUIPMENT_CATALOG, getOrbitShieldRadius, getSeekerDroneRange, MAX_TARGET_RANGE } from '../../game/equipment';
 import type { computeSkillModifiers } from '../../game/skillTree';
+import { NORMAL_DASH_DURATION_SEC, NORMAL_DASH_SPEED } from '../../game/steps/enemies/archetypes';
 import type { EnemyState, GameState } from '../../game/types';
 import { drawGlowSprite, type GlowColor } from '../sprites';
 import { setLineDashSafe } from './primitives';
@@ -147,8 +148,8 @@ function drawEnemyBody(ctx: CanvasRenderingContext2D, enemy: EnemyState, nowSec:
   }
 
   if (enemy.dashState === 'windup' && enemy.dashDir) {
-    const dashDurationPreview = enemy.isRoomBoss ? (enemy.isGrandBoss ? 0.62 : 0.55) : 0.28;
-    const dashPreviewLen = (enemy.dashSpeed ?? (enemy.isRoomBoss ? 480 : 340)) * dashDurationPreview;
+    const dashDurationPreview = enemy.isRoomBoss ? (enemy.isGrandBoss ? 0.62 : 0.55) : NORMAL_DASH_DURATION_SEC;
+    const dashPreviewLen = (enemy.dashSpeed ?? (enemy.isRoomBoss ? 480 : NORMAL_DASH_SPEED)) * dashDurationPreview;
     const tx = enemy.dashDir.x * dashPreviewLen;
     const ty = enemy.dashDir.y * dashPreviewLen;
     const blink = 0.55 + 0.45 * Math.sin(nowSec * 28);
