@@ -1,0 +1,23 @@
+{
+  "generatedFrom": "main 3cb8036 + proposed overrides (2026-11-28 measured)",
+  "totalWarnings": 19,
+  "perFile": {
+    "scripts/spec-html/charts.mjs": { "max": 56, "count": 2 },
+    "src/core/dungeon.ts": { "max": 124, "count": 1 },
+    "src/game/spawn.ts": { "max": 116, "count": 1 },
+    "src/game/steps/combat.ts": { "max": 198, "count": 1 },
+    "src/game/steps/enemies.ts": { "max": 76, "count": 1 },
+    "src/game/steps/enemies/archetypes.ts": { "max": 139, "count": 1 },
+    "src/game/steps/enemies/boss.ts": { "max": 255, "count": 1 },
+    "src/game/steps/enemies/lifecycle.ts": { "max": 147, "count": 2 },
+    "src/game/steps/enemies/movement.ts": { "max": 78, "count": 1 },
+    "src/game/steps/enemies/pathfinding.ts": { "max": 52, "count": 1 },
+    "src/game/steps/pickups.ts": { "max": 56, "count": 1 },
+    "src/game/steps/projectiles.ts": { "max": 255, "count": 1 },
+    "src/render/canvas/effectsLayer.ts": { "max": 205, "count": 1 },
+    "src/render/canvas/entitiesLayer.ts": { "max": 150, "count": 1 },
+    "src/render/canvas/mapLayer.ts": { "max": 95, "count": 1 },
+    "src/render/minimapRenderer.ts": { "max": 90, "count": 1 },
+    "src/ui/modals/skillModal.ts": { "max": 55, "count": 1 }
+  }
+}

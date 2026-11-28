@@ -32,6 +32,12 @@ jobs:
       - name: Check (Biome)
         run: npm run check:ci
 
+      - name: Check suppressions gate
+        run: npm run check:suppressions
+
+      - name: Check complexity ratchet
+        run: npm run check:complexity
+
       - name: Check dead code (Knip)
         run: npm run knip
 

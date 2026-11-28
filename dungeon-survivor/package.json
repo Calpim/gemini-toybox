@@ -14,6 +14,8 @@
     "lint": "biome lint .",
     "check": "biome check .",
     "check:ci": "biome ci .",
+    "check:suppressions": "node scripts/check-suppressions.mjs",
+    "check:complexity": "node scripts/check-complexity-ratchet.mjs",
     "check:deps": "node scripts/check-deps.mjs",
     "knip": "knip",
     "spec:build": "node scripts/build-spec-html.mjs",
@@ -21,7 +23,7 @@
     "test": "npm run spec:test && vitest run",
     "build": "npm run typecheck && vite build && node scripts/build-spec-html.mjs --out dist/specs.html && npm run spec:build",
     "preview": "vite preview",
-    "verify": "npm run check && npm run knip && npm run check:deps && npm run typecheck && npm test && npm run build"
+    "verify": "npm run check && npm run check:suppressions && npm run check:complexity && npm run knip && npm run check:deps && npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.9",
