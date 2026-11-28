@@ -139,13 +139,19 @@ export function stepFloorRespawn(state: GameState, clampedDt: number, rng: Retur
   const { player, map } = state;
   state.elapsedFloorTime += clampedDt;
   state.respawnTimer -= clampedDt;
-  const maxAlive = Math.min(72, 26 + state.floor * 4);
+  const maxAlive = state.floor <= 10 ? Math.min(72, 26 + state.floor * 4) : 52;
   const isBossArenaFloor = map.floorType === 'boss';
   const activeGrandBoss = isBossArenaFloor ? state.enemies.find((e) => e.isGrandBoss && e.hp > 0) : undefined;
   const canRespawnOnFloor = !isBossArenaFloor || Boolean(activeGrandBoss?.awake);
 
   if (state.respawnTimer <= 0) {
-    state.respawnTimer = isBossArenaFloor ? 5.0 : Math.max(7.5, 14 - (state.floor - 1) * 0.85);
+    if (isBossArenaFloor) {
+      state.respawnTimer = 5.0;
+    } else if (state.floor >= 11) {
+      state.respawnTimer = 9.5;
+    } else {
+      state.respawnTimer = Math.max(7.5, 14 - (state.floor - 1) * 0.85);
+    }
     const nonBossAlive = isBossArenaFloor
       ? state.enemies.filter((e) => !e.isRoomBoss && !e.isGrandBoss).length
       : state.enemies.length;
@@ -175,7 +181,9 @@ export function stepFloorRespawn(state: GameState, clampedDt: number, rng: Retur
       }
       if (candidates.length > 0) {
         let normalFloorDesiredCount = rng.next() < 0.45 ? 2 : 1;
-        if (state.floor >= 9) {
+        if (state.floor >= 11) {
+          normalFloorDesiredCount = rng.next() < 0.5 ? 3 : 2;
+        } else if (state.floor >= 9) {
           normalFloorDesiredCount = rng.next() < 0.5 ? 4 : 3;
         } else if (state.floor >= 5) {
           normalFloorDesiredCount = rng.next() < 0.5 ? 3 : 2;

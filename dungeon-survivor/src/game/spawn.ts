@@ -295,8 +295,8 @@ export function populateFloor(
     }
 
     const extraStairsMobs = isStairsRoom ? (guardianFloor ? 3 : 1) : 0;
-    const minCount = 2 + Math.min(2, Math.floor((floor - 1) / 3));
-    const maxCount = 3 + Math.min(5, Math.floor(floor / 2));
+    const minCount = floor >= 11 ? 3 : 2 + Math.min(2, Math.floor((floor - 1) / 3));
+    const maxCount = floor >= 11 ? 6 : 3 + Math.min(5, Math.floor(floor / 2));
     const count = rng.int(minCount, maxCount) + extraStairsMobs;
     for (let k = 0; k < count; k++) {
       let wx: number;
