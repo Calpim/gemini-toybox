@@ -5,6 +5,13 @@ export function getLevelUpSkillPoints(newLevel: number): number {
   return newLevel <= 10 ? 1 : 2;
 }
 
+export function getNextExpThreshold(currentExpToNext: number, newLevel: number): number {
+  if (newLevel <= 15) {
+    return Math.round(currentExpToNext * 1.32);
+  }
+  return currentExpToNext + 220;
+}
+
 export function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): void {
   const { player } = state;
   player.exp += gainedExp;
@@ -14,7 +21,7 @@ export function grantExpAndCheckLevelUp(state: GameState, gainedExp: number): vo
     player.level += 1;
     const gainedSp = getLevelUpSkillPoints(player.level);
     player.skillPoints += gainedSp;
-    player.expToNext = Math.round(player.expToNext * 1.32);
+    player.expToNext = getNextExpThreshold(player.expToNext, player.level);
     emitSound(state, 'level_up');
     spawnParticles(state, player.x, player.y, '#38bdf8', 14, 55, 165, 3.0, 0.45);
     state.floatingTexts.push({

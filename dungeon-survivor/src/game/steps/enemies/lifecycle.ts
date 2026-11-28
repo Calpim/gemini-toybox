@@ -15,6 +15,11 @@ export interface EnemiesStepDeps {
   ) => number;
 }
 
+export function getFloorExpScale(floor: number): number {
+  if (floor <= 10) return 1;
+  return 1 + (floor - 10) * 0.35;
+}
+
 export function handleEnemyDeath(
   state: GameState,
   enemy: EnemyState,
@@ -53,12 +58,13 @@ export function handleEnemyDeath(
   if (!enemy.isAmbush) {
     const isPackExtra = Boolean(enemy.isPackFollower);
     const dropRateScale = isPackExtra ? 0.4 : 1.0;
+    const baseExp = wasGrandBoss ? 120 : wasRoomBoss ? 45 : isPackExtra ? 4 : 10;
     state.pickups.push({
       id: state.nextEntityId++,
       kind: 'exp',
       x: enemy.x,
       y: enemy.y,
-      value: wasGrandBoss ? 120 : wasRoomBoss ? 45 : isPackExtra ? 4 : 10,
+      value: Math.round(baseExp * getFloorExpScale(state.floor)),
     });
     if (wasRoomBoss || rng.next() < (0.22 + mods.lootBonusRate * 0.4) * dropRateScale) {
       state.pickups.push({

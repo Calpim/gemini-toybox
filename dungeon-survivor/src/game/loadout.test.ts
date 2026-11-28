@@ -21,6 +21,7 @@ import {
   MAX_EQUIP_SLOTS_CAP,
   MAX_EQUIPMENT_LEVEL,
 } from './equipment';
+import { getNextExpThreshold } from './leveling';
 import {
   canUpgradeSkill,
   computeSkillModifiers,
@@ -28,6 +29,7 @@ import {
   MAX_SKILL_LEVEL,
   SKILL_PREREQ_LEVEL,
 } from './skillTree';
+import { getFloorExpScale } from './steps/enemies/lifecycle';
 
 describe('Equipment, loadout, and growth simulation', () => {
   it('[APP-GRW-01, APP-GRW-02 & APP-GRW-05] enforces Tier-based SP costs (Tier1:7, Tier2:8, Tier3:5 = 20SP), Lv4-5 breakthroughs, Lv3+ prereqs (incl. magnet->loot->dash), and level-up notifications', () => {
@@ -504,10 +506,24 @@ describe('Equipment, loadout, and growth simulation', () => {
     while (progState.player.level < 15) stepOneLevelUp();
     expect(progState.player.level).toBe(15);
     expect(progState.player.skillPoints).toBe(20);
+    const expAtLv15 = progState.player.expToNext;
+    expect(getNextExpThreshold(1000, 15)).toBe(1320);
+    expect(getNextExpThreshold(1000, 16)).toBe(1220);
 
     while (progState.player.level < 25) stepOneLevelUp();
     expect(progState.player.level).toBe(25);
     expect(progState.player.skillPoints).toBe(40);
+    expect(progState.player.expToNext).toBe(expAtLv15 + 220 * 10);
+
+    while (progState.player.level < 35) stepOneLevelUp();
+    expect(progState.player.level).toBe(35);
+    expect(progState.player.skillPoints).toBe(60);
+
+    expect(getFloorExpScale(1)).toBe(1);
+    expect(getFloorExpScale(10)).toBe(1);
+    expect(getFloorExpScale(11)).toBeCloseTo(1.35, 4);
+    expect(getFloorExpScale(20)).toBeCloseTo(4.5, 4);
+    expect(getFloorExpScale(30)).toBeCloseTo(8.0, 4);
 
     // 2. Completing an entire branch costs 20 SP (Tier1: 7 + Tier2: 8 + Tier3: 5)
     const state = createGameState({ seed: 2020 });
