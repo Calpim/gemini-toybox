@@ -45,8 +45,9 @@ function getEquipmentNumericChips(eq: EquippedItem, state: GameState): string[] 
 
 export function renderGearTabContent(container: HTMLElement, state: GameState): void {
   const { player } = state;
+  const mods = computeSkillModifiers(player.skillLevels);
   const isMaxSlots = player.maxEquipSlots >= MAX_EQUIP_SLOTS_CAP;
-  const expandCost = getScrapExpandCost(player.maxEquipSlots);
+  const expandCost = getScrapExpandCost(player.maxEquipSlots, mods.scrapExpandDiscount);
   const progress = isMaxSlots
     ? 100
     : Math.min(100, Math.round((player.scrapExpandProgress / Math.max(1, expandCost)) * 100));

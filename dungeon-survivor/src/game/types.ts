@@ -94,6 +94,7 @@ export interface EnemyState {
   bossPatternIndex?: number;
   dashState?: 'none' | 'windup' | 'dashing' | 'recovering';
   dashTimer?: number;
+  dashCooldown?: number;
   dashDir?: Vec2;
   dashSpeed?: number;
   dashBouncesLeft?: number;

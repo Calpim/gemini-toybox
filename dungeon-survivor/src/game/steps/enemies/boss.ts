@@ -36,11 +36,11 @@ export function stepBossBehavior(
     const canBossMortar = distToPlayer > 1e-3 && distToPlayer <= (isGrand ? 780 : 400);
     if (canBossMortar && (enemy.mortarCooldown ?? 0) <= 0) {
       const mortarDuration = 0.85;
-      const burstCount = isGrand ? 3 : 1;
+      const burstCount = isGrand ? 3 : 2;
       const mortarRadius = isGrand ? 68 : 52;
       const maxLeadDist = isGrand ? 155 : 115;
       for (let b = 0; b < burstCount; b++) {
-        const leadTime = 0.55 + b * 0.28;
+        const leadTime = b === 0 ? 0 : b === 1 ? 0.55 : 0.85 + (b - 2) * 0.25;
         let leadDx = (player.velX ?? 0) * leadTime;
         let leadDy = (player.velY ?? 0) * leadTime;
         const leadLen = Math.hypot(leadDx, leadDy);
@@ -120,7 +120,7 @@ export function stepBossBehavior(
 
     if (endedDash) {
       enemy.dashState = 'recovering';
-      enemy.dashTimer = isGrand ? 1.05 : 0.95;
+      enemy.dashTimer = isGrand ? 1.05 : 0.75;
       const burstCount = isGrand ? 8 : 4;
       const burstSpd = isGrand ? 195 : 170;
       const baseBurstAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
@@ -290,7 +290,7 @@ export function stepBossBehavior(
           enemy.dashBouncesLeft = isGrand ? 1 : 0;
         }
         enemy.bossPatternIndex = (pattern + 1) % 4;
-        enemy.attackCooldown = isGrand ? 1.35 : 1.85;
+        enemy.attackCooldown = isGrand ? 1.35 : 1.5;
       }
     }
   }

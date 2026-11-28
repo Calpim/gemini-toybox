@@ -126,9 +126,9 @@ export function handleEnemyContactWithPlayer(
 ): boolean {
   const { player } = state;
   if (player.invulnTimer <= 0 && Math.hypot(player.x - enemy.x, player.y - enemy.y) <= player.radius + enemy.radius) {
-    const isDashingBoss = Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
+    const isDashingEnemy = enemy.dashState === 'dashing';
 
-    if (!isDashingBoss) {
+    if (!isDashingEnemy) {
       if (tryAegisParry(state, mods, enemy)) {
         return false;
       }
@@ -145,8 +145,8 @@ export function handleEnemyContactWithPlayer(
       return true;
     }
 
-    // Boss dash bypasses parry damage negation, but def_aegis still triggers a counter-hit (trade)
-    if (isDashingBoss && mods.hasAegisParry && player.aegisCooldown <= 0) {
+    // Dashing enemy bypasses parry damage negation, but def_aegis still triggers a counter-hit (trade)
+    if (isDashingEnemy && mods.hasAegisParry && player.aegisCooldown <= 0) {
       player.aegisCooldown = mods.aegisCooldown;
       emitSound(state, 'parry');
       damageEnemy(state, enemy, mods.aegisDamage, true);

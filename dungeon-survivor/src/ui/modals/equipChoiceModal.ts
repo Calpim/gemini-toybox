@@ -5,6 +5,7 @@ import {
   MAX_EQUIP_SLOTS_CAP,
   MAX_EQUIPMENT_LEVEL,
 } from '../../game/equipment';
+import { computeSkillModifiers } from '../../game/skillTree';
 import type { GameState } from '../../game/types';
 import type { ModalElements, ModalHandlers } from './types';
 
@@ -42,7 +43,8 @@ export function renderEquipChoiceModal(state: GameState, els: ModalElements, han
     const scrapExpandBtn = document.getElementById('scrapEquipBtn') as HTMLButtonElement | null;
     if (scrapExpandBtn) {
       const canExpand = state.player.maxEquipSlots < MAX_EQUIP_SLOTS_CAP;
-      const expandCost = getScrapExpandCost(state.player.maxEquipSlots);
+      const mods = computeSkillModifiers(state.player.skillLevels);
+      const expandCost = getScrapExpandCost(state.player.maxEquipSlots, mods.scrapExpandDiscount);
       scrapExpandBtn.disabled = !canExpand;
       scrapExpandBtn.textContent = canExpand
         ? `スクラップ＆ビルド：枠拡張へ蓄積（${state.player.scrapExpandProgress}/${expandCost}）→ ${expandCost}回で枠+1`

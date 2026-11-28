@@ -1,6 +1,7 @@
 import { getOrbitBitPositions, getSeekerDronePositions, isEnemyVisibleToPlayer } from '../../game/engine';
 import { EQUIPMENT_CATALOG, getOrbitShieldRadius, getSeekerDroneRange, MAX_TARGET_RANGE } from '../../game/equipment';
 import type { computeSkillModifiers } from '../../game/skillTree';
+import { NORMAL_DASH_DURATION_SEC, NORMAL_DASH_SPEED } from '../../game/steps/enemies/archetypes';
 import type { EnemyState, GameState } from '../../game/types';
 import { drawGlowSprite, type GlowColor } from '../sprites';
 import { setLineDashSafe } from './primitives';
@@ -146,55 +147,56 @@ function drawEnemyBody(ctx: CanvasRenderingContext2D, enemy: EnemyState, nowSec:
     ctx.stroke();
   }
 
+  if (enemy.dashState === 'windup' && enemy.dashDir) {
+    const dashDurationPreview = enemy.isRoomBoss ? (enemy.isGrandBoss ? 0.62 : 0.55) : NORMAL_DASH_DURATION_SEC;
+    const dashPreviewLen = (enemy.dashSpeed ?? (enemy.isRoomBoss ? 480 : NORMAL_DASH_SPEED)) * dashDurationPreview;
+    const tx = enemy.dashDir.x * dashPreviewLen;
+    const ty = enemy.dashDir.y * dashPreviewLen;
+    const blink = 0.55 + 0.45 * Math.sin(nowSec * 28);
+    ctx.save();
+    ctx.strokeStyle = `rgba(244, 63, 94, ${0.42 * blink})`;
+    ctx.lineWidth = enemy.radius * 1.85;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+
+    ctx.strokeStyle = `rgba(254, 205, 211, ${0.88 * blink})`;
+    ctx.lineWidth = 2;
+    setLineDashSafe(ctx, [6, 5]);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+    setLineDashSafe(ctx, []);
+    ctx.restore();
+  } else if (enemy.dashState === 'dashing') {
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.92)';
+    ctx.lineWidth = enemy.isRoomBoss ? 5 : 3.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + (enemy.isRoomBoss ? 14 : 9), 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(251, 113, 133, 0.95)';
+    ctx.lineWidth = enemy.isRoomBoss ? 3 : 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + (enemy.isRoomBoss ? 9 : 5), 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (enemy.dashState === 'recovering') {
+    const stunBlink = 0.45 + 0.55 * Math.sin(nowSec * 20);
+    ctx.save();
+    ctx.strokeStyle = `rgba(34, 211, 238, ${0.88 * stunBlink})`;
+    ctx.lineWidth = enemy.isRoomBoss ? 2.8 : 2.2;
+    setLineDashSafe(ctx, [5, 4]);
+    ctx.beginPath();
+    ctx.arc(0, 0, enemy.radius + (enemy.isRoomBoss ? 11 : 7), 0, Math.PI * 2);
+    ctx.stroke();
+    setLineDashSafe(ctx, []);
+    ctx.restore();
+  }
+
   if (enemy.isRoomBoss) {
-    if (enemy.dashState === 'windup' && enemy.dashDir) {
-      const dashPreviewLen = (enemy.dashSpeed ?? 480) * (enemy.isGrandBoss ? 0.62 : 0.55);
-      const tx = enemy.dashDir.x * dashPreviewLen;
-      const ty = enemy.dashDir.y * dashPreviewLen;
-      const blink = 0.55 + 0.45 * Math.sin(nowSec * 28);
-      ctx.save();
-      ctx.strokeStyle = `rgba(244, 63, 94, ${0.42 * blink})`;
-      ctx.lineWidth = enemy.radius * 1.85;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(tx, ty);
-      ctx.stroke();
-
-      ctx.strokeStyle = `rgba(254, 205, 211, ${0.88 * blink})`;
-      ctx.lineWidth = 2;
-      setLineDashSafe(ctx, [6, 5]);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(tx, ty);
-      ctx.stroke();
-      setLineDashSafe(ctx, []);
-      ctx.restore();
-    } else if (enemy.dashState === 'dashing') {
-      ctx.strokeStyle = 'rgba(226, 232, 240, 0.92)';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.arc(0, 0, enemy.radius + 14, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(251, 113, 133, 0.95)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, enemy.radius + 9, 0, Math.PI * 2);
-      ctx.stroke();
-    } else if (enemy.dashState === 'recovering') {
-      const stunBlink = 0.45 + 0.55 * Math.sin(nowSec * 20);
-      ctx.save();
-      ctx.strokeStyle = `rgba(34, 211, 238, ${0.88 * stunBlink})`;
-      ctx.lineWidth = 2.8;
-      setLineDashSafe(ctx, [5, 4]);
-      ctx.beginPath();
-      ctx.arc(0, 0, enemy.radius + 11, 0, Math.PI * 2);
-      ctx.stroke();
-      setLineDashSafe(ctx, []);
-      ctx.restore();
-    }
-
     const bossPulse = 0.7 + 0.3 * Math.sin(nowSec * 5);
     ctx.strokeStyle = enemy.isGrandBoss
       ? `rgba(244, 63, 94, ${0.92 * bossPulse})`

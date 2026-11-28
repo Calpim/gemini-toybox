@@ -120,9 +120,9 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     requires: 'arm_parallel',
     tagline: '螺旋貫通化＋中心極太コアレーザー追加',
     description:
-      'メイン武器CD短縮(-22% / -45%) & 弾速UP(+100 / +200) + 全弾貫通化＆螺旋の中心を貫く極太コアレーザーを追加',
+      'メイン武器CD短縮(-16% / -32%) & 弾速UP(+100 / +200) + 全弾貫通化＆螺旋の中心を貫く極太コアレーザーを追加',
     detailNote:
-      'メイン武器CD短縮(最小0.20s)＆弾速UP＆螺旋弾の貫通化に加え、二重螺旋の真ん中を一直線に貫く極太コアレーザー（Lv1: 100%威力 / Lv2: 150%威力・発光強化）を同時発射します。',
+      'メイン武器CD短縮(最小0.20s)＆弾速UP＆螺旋弾の貫通化に加え、二重螺旋の真ん中を一直線に貫く極太コアレーザー（Lv1: 80%威力 / Lv2: 120%威力・発光強化）を同時発射します。',
   },
   {
     id: 'def_sensor',
@@ -131,8 +131,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: '広域索敵',
     requires: null,
     tagline: '迎撃・装備の索敵レンジを拡大',
-    description: '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px）',
-    detailNote: '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで）。',
+    description:
+      '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px、Lv4: 枠拡張コスト-1 / Lv5: -2）',
+    detailNote:
+      '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで。Lv4で装備枠拡張スクラップコスト-1、Lv5で-2、下限1）。',
   },
   {
     id: 'def_pulse',
@@ -174,7 +176,7 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: 'トレジャー解析',
     requires: 'mob_magnet',
     tagline: '装備ドロップ率・品質とEXPを強化',
-    description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化（サブ装備固めの要）',
+    description: '装備ドロップ品質＆ドロップ率UP + 宝箱・EXP強化',
     detailNote: '基礎装備ドロップ率(1.5%)への加算と抽選品質Tier上昇に加え、宝箱率・獲得EXP倍率を強化します。',
   },
   {
@@ -222,11 +224,12 @@ const ARM_MAIN_SPIRAL_SHOTS = [1, 2, 4, 6, 6, 8] as const;
 const ARM_MAIN_EXTRA_SHOTS = [0, 0, 0, 0, 0, 0] as const;
 const ARM_MAIN_PARALLEL_DMG_PCT = [0, 0, 0.08, 0.16, 0.25, 0.35] as const;
 const ARM_MAIN_HOMING_SHOTS = [0, 2, 3, 4, 6, 8] as const;
-const ARM_MAIN_CD_REDUCTION = [0, 0.22, 0.45] as const;
+const ARM_MAIN_CD_REDUCTION = [0, 0.16, 0.32] as const;
 const ARM_MAIN_SPEED_BONUS = [0, 100, 200] as const;
 
 // Defense: Sensor range + controlled emergency defense (def_aegis capped at Lv2)
 const DEF_RANGE_PCT = [0, 0.08, 0.16, 0.24, 0.38, 0.55] as const;
+const DEF_EXPAND_DISCOUNT = [0, 0, 0, 0, 1, 2] as const;
 const DEF_PULSE_DMG = [0, 6, 8, 10, 14, 18] as const;
 const DEF_PULSE_CD = [0, 4.2, 3.9, 3.6, 3.2, 2.8] as const;
 const DEF_PULSE_RANGE = [0, 100, 108, 116, 132, 150] as const;
@@ -237,7 +240,7 @@ const DEF_AEGIS_CD = [0, 7.0, 4.5] as const;
 const MOB_MAGNET_PCT = [0, 0.22, 0.44, 0.66, 1.05, 1.6] as const;
 const MOB_HEAL_PCT = [0, 0.1, 0.2, 0.3, 0.5, 0.75] as const;
 const MOB_LOOT_PCT = [0, 0.1, 0.2, 0.3, 0.45, 0.65] as const;
-const MOB_DROP_BONUS = [0, 0.005, 0.01, 0.015, 0.023, 0.035] as const;
+const MOB_DROP_BONUS = [0, 0.008, 0.016, 0.025, 0.04, 0.06] as const;
 const MOB_DROP_QUALITY = [0, 1, 2, 3, 4, 5] as const;
 const MOB_EXP_PCT = [0, 0.08, 0.16, 0.24, 0.42, 0.68] as const;
 const MOB_DASH_INVULN = [BASE_HIT_INVULN_DURATION, 1.3, 1.6] as const;
@@ -276,6 +279,7 @@ export interface ComputedSkillModifiers {
   lootBonusRate: number;
   equipDropBonus: number;
   dropQualityTier: number;
+  scrapExpandDiscount: number;
   expMult: number;
   hasTacticalStep: boolean;
   tacticalInvulnDuration: number;
@@ -332,6 +336,7 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     lootBonusRate: curveAt(MOB_LOOT_PCT, mobLootLv),
     equipDropBonus: curveAt(MOB_DROP_BONUS, mobLootLv),
     dropQualityTier: curveAt(MOB_DROP_QUALITY, mobLootLv),
+    scrapExpandDiscount: curveAt(DEF_EXPAND_DISCOUNT, defSensorLv),
     expMult: 1 + curveAt(MOB_EXP_PCT, mobLootLv),
     hasTacticalStep: mobDashLv >= 1,
     tacticalInvulnDuration: curveAt(MOB_DASH_INVULN, mobDashLv),
@@ -357,8 +362,11 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
     }
     case 'arm_overclock':
       return `CD -${Math.round(curveAt(ARM_MAIN_CD_REDUCTION, lv) * 100)}% / 弾速+${curveAt(ARM_MAIN_SPEED_BONUS, lv)} / ${lv >= 2 ? '螺旋貫通＋極太コアレーザー強化' : '螺旋貫通＋中心コアレーザー'}`;
-    case 'def_sensor':
-      return `レンジ +${Math.round(curveAt(DEF_RANGE_PCT, lv) * 100)}%`;
+    case 'def_sensor': {
+      const rangeText = `レンジ +${Math.round(curveAt(DEF_RANGE_PCT, lv) * 100)}%`;
+      const discount = curveAt(DEF_EXPAND_DISCOUNT, lv);
+      return discount > 0 ? `${rangeText} / 枠拡張コスト-${discount}` : rangeText;
+    }
     case 'def_pulse':
       return `威力${curveAt(DEF_PULSE_DMG, lv)} / 範囲${curveAt(DEF_PULSE_RANGE, lv)} / CD ${curveAt(DEF_PULSE_CD, lv).toFixed(1)}s`;
     case 'def_aegis':

@@ -8,6 +8,7 @@ import {
   getNormalEnemyShotStats,
   getRunnerPackSize,
   getStairsLockCount,
+  getTankMortarSpec,
   SCOUT_ALERT_COOLDOWN,
   SCOUT_CHASE_DIST,
   SCOUT_KEEP_DIST,
@@ -308,12 +309,12 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     stepGame(state, { x: 0, y: 0 }, 1 / 60);
     expect(state.player.hp).toBe(40);
 
-    // Grand Boss exists with buffed HP (6.8x tank base), locks stairs, and cycles 4 patterns incl. windup->dashing
+    // Grand Boss exists with buffed HP (2.5x tank base), locks stairs, and cycles 4 patterns incl. windup->dashing
     const grandBoss = mustDefined(
       state.enemies.find((e) => e.isGrandBoss),
       'grandBoss',
     );
-    expect(grandBoss.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 10).maxHp * 6.8));
+    expect(grandBoss.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 10).maxHp * 2.5));
     expect(getStairsLockCount(state)).toBe(1);
 
     state.enemies = [grandBoss];
@@ -391,7 +392,7 @@ describe('Enemy AI, spawning, and boss simulation', () => {
       floor3.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss),
       'guardian',
     );
-    expect(guardian.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.9));
+    expect(guardian.maxHp).toBe(Math.round(createEnemyByKind(1, 'tank', 0, 0, 3).maxHp * 2.2));
     const guardianStairs = tileCenterWorld(floor3.map.stairsTile.tx, floor3.map.stairsTile.ty);
     expect(guardian.x).toBeCloseTo(guardianStairs.x, 1);
     expect(guardian.y).toBeCloseTo(guardianStairs.y, 1);
@@ -434,18 +435,17 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     expect(mortarState.mortarZones.length).toBe(0);
     expect(mortarState.player.hp).toBeLessThan(hpBeforeImpact);
 
-    // Tank predicts smoothed actual player movement (lead-target mortar) without overshooting through walls
+    // Tank 1st mortar targets current player position directly (anti-standstill; 2nd/3rd lead ahead)
     tank.attackCooldown = 0.5;
     for (let f = 0; f < 15; f++) {
       stepGame(mortarState, { x: 0, y: 1 }, 0.02);
     }
-    const playerBeforeShotY = mortarState.player.y;
     tank.attackCooldown = 0.01;
     stepGame(mortarState, { x: 0, y: 1 }, 0.02);
     expect(mortarState.mortarZones.length).toBe(1);
     expect(mortarState.mortarZones[0]?.radius).toBe(52);
     expect(mortarState.mortarZones[0]?.duration).toBeCloseTo(0.85, 2);
-    expect(mortarState.mortarZones[0]?.targetY).toBeGreaterThan(playerBeforeShotY + 70);
+    expect(mortarState.mortarZones[0]?.targetY).toBeCloseTo(mortarState.player.y, 1);
 
     // Normal enemy fires level-scaled spread shots when awake & in sight
     const normState = createGameState({ seed: 963 });
@@ -616,5 +616,148 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     expect(initialActiveWidth).toBeCloseTo(22 * 0.28, 3);
     laserSample.elapsed = 0.9; // >= windup + 0.18s -> full width
     expect(getActiveBossLaserWidth(laserSample)).toBeCloseTo(22, 3);
+  });
+
+  it('scales late-floor enemy threats: normal dash (4F+), tank multi-mortar, guardian boss buffs, and floor spawn cap', () => {
+    // 1. Normal enemy does NOT dash on 1-3F, but dashes on 4F+ with invulnerability during dashing
+    const earlyState = createGameState({ seed: 9201, startFloor: 3 });
+    earlyState.map.tiles.fill('floor');
+    earlyState.pickups = [];
+    earlyState.chests = [];
+    earlyState.player.invulnTimer = 99;
+    earlyState.player.baseAttackCooldown = 999;
+    const earlyNormal = createEnemyByKind(9201, 'normal', earlyState.player.x + 100, earlyState.player.y, 3);
+    earlyNormal.awake = true;
+    earlyNormal.attackCooldown = 99;
+    earlyState.enemies = [earlyNormal];
+    stepGame(earlyState, { x: 0, y: 0 }, 0.05);
+    expect(earlyNormal.dashState ?? 'none').toBe('none');
+
+    const lateState = createGameState({ seed: 9202, startFloor: 4 });
+    lateState.map.tiles.fill('floor');
+    lateState.pickups = [];
+    lateState.chests = [];
+    lateState.player.invulnTimer = 99;
+    lateState.player.baseAttackCooldown = 999;
+    const lateNormal = createEnemyByKind(9202, 'normal', lateState.player.x + 100, lateState.player.y, 4);
+    lateNormal.awake = true;
+    lateNormal.attackCooldown = 99;
+    lateState.enemies = [lateNormal];
+
+    stepGame(lateState, { x: 0, y: 0 }, 0.05);
+    expect(lateNormal.dashState).toBe('windup');
+
+    // Windup normal enemy is also invulnerable to normal shots
+    const windupHpBefore = lateNormal.hp;
+    lateState.projectiles.push({
+      id: 9298,
+      x: lateNormal.x,
+      y: lateNormal.y,
+      vx: 0,
+      vy: 0,
+      radius: 8,
+      damage: 25,
+      life: 1,
+      pierce: false,
+      hitEnemyIds: [],
+      color: '#38bdf8',
+    });
+    stepGame(lateState, { x: 0, y: 0 }, 0.01);
+    expect(lateNormal.hp).toBe(windupHpBefore);
+
+    for (let f = 0; f < 30; f++) {
+      stepGame(lateState, { x: 0, y: 0 }, 0.02);
+      if (lateNormal.dashState === 'dashing') break;
+    }
+    expect(lateNormal.dashState).toBe('dashing');
+
+    // Dashing normal enemy is invulnerable to normal shots but takes blade intercept (bypassDashInvuln)
+    const hpBefore = lateNormal.hp;
+    lateState.projectiles.push({
+      id: 9299,
+      x: lateNormal.x,
+      y: lateNormal.y,
+      vx: 0,
+      vy: 0,
+      radius: 8,
+      damage: 25,
+      life: 1,
+      pierce: false,
+      hitEnemyIds: [],
+      color: '#38bdf8',
+    });
+    stepGame(lateState, { x: 0, y: 0 }, 0.01);
+    expect(lateNormal.hp).toBe(hpBefore);
+
+    for (let f = 0; f < 30; f++) {
+      stepGame(lateState, { x: 0, y: 0 }, 0.02);
+      if (lateNormal.dashState === 'recovering') break;
+    }
+    expect(lateNormal.dashState).toBe('recovering');
+
+    // 2. Tank mortar burst scaling: 1-4F (1), 5-8F (2), 9F+ (3)
+    expect(getTankMortarSpec(4)).toEqual({ burstCount: 1, cooldown: 2.4 });
+    expect(getTankMortarSpec(5)).toEqual({ burstCount: 2, cooldown: 2.8 });
+    expect(getTankMortarSpec(9)).toEqual({ burstCount: 3, cooldown: 3.2 });
+
+    const tank9State = createGameState({ seed: 9203, startFloor: 9 });
+    tank9State.map.tiles.fill('floor');
+    tank9State.pickups = [];
+    tank9State.chests = [];
+    tank9State.mortarZones = [];
+    tank9State.player.invulnTimer = 99;
+    tank9State.player.baseAttackCooldown = 999;
+    const tank9 = createEnemyByKind(9203, 'tank', tank9State.player.x + 150, tank9State.player.y, 9);
+    tank9.awake = true;
+    tank9.attackCooldown = 0.01;
+    tank9State.enemies = [tank9];
+    tank9State.player.velX = 180;
+    tank9State.player.velY = 0;
+    stepGame(tank9State, { x: 1, y: 0 }, 0.02);
+    expect(tank9State.mortarZones).toHaveLength(3);
+    expect(tank9.attackCooldown).toBeCloseTo(3.2, 2);
+    // 1st mortar targets player's current position (leadTime = 0), 2nd & 3rd lead ahead
+    const [m1, m2, m3] = tank9State.mortarZones;
+    expect(mustDefined(m1).targetX).toBeCloseTo(tank9State.player.x, 1);
+    expect(mustDefined(m2).targetX).toBeGreaterThan(mustDefined(m1).targetX + 20);
+    expect(mustDefined(m3).targetX).toBeGreaterThan(mustDefined(m2).targetX + 10);
+
+    // Quadratic enemy HP scaling: 1F=26, 3F=68, 5F=138, 10F=435
+    expect(createEnemyByKind(1, 'normal', 0, 0, 1).maxHp).toBe(26);
+    expect(createEnemyByKind(1, 'normal', 0, 0, 3).maxHp).toBe(68);
+    expect(createEnemyByKind(1, 'normal', 0, 0, 5).maxHp).toBe(138);
+    expect(createEnemyByKind(1, 'normal', 0, 0, 10).maxHp).toBe(435);
+
+    // 3. Guardian boss (3/6/9F) speed, 2-burst mortar, shorter attack cooldown (1.50s), and shorter dash recovery (0.75s)
+    const g3State = createGameState({ seed: 9204, startFloor: 3 });
+    const guardian = mustDefined(g3State.enemies.find((e) => e.isRoomBoss && !e.isGrandBoss));
+    expect(guardian.speed).toBe(114);
+    guardian.awake = true;
+    guardian.mortarCooldown = 0.01;
+    guardian.dashState = 'none';
+    g3State.mortarZones = [];
+    g3State.player.x = guardian.x + 120;
+    g3State.player.y = guardian.y;
+    g3State.player.invulnTimer = 99;
+    g3State.player.baseAttackCooldown = 999;
+    stepGame(g3State, { x: 0, y: 0 }, 0.02);
+    expect(g3State.mortarZones).toHaveLength(2);
+
+    // 4. Respawn maxAlive cap is capped at 52 on 11F+
+    const deepState = createGameState({ seed: 9205, startFloor: 15 });
+    deepState.player.invulnTimer = 99;
+    deepState.player.baseAttackCooldown = 999;
+    deepState.respawnTimer = 0.01;
+    const templateEnemy = mustAt(deepState.enemies, 0);
+    deepState.enemies = deepState.enemies.slice(0, 51);
+    while (deepState.enemies.length < 51) {
+      deepState.enemies.push({ ...templateEnemy, id: deepState.nextEntityId++ });
+    }
+    expect(deepState.enemies.length).toBe(51);
+    stepGame(deepState, { x: 0, y: 0 }, 0.02);
+    expect(deepState.enemies.length).toBe(52);
+    deepState.respawnTimer = 0.01;
+    stepGame(deepState, { x: 0, y: 0 }, 0.02);
+    expect(deepState.enemies.length).toBe(52);
   });
 });

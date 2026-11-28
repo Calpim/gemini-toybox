@@ -5,7 +5,9 @@ import type { EnemyState, GameState, Vec2 } from '../types';
 import { isEnemyVisibleToPlayer } from '../vision';
 
 export function damageEnemy(state: GameState, enemy: EnemyState, amount: number, bypassDashInvuln = false): void {
-  const isDashInvuln = Boolean(enemy.isRoomBoss || enemy.isGrandBoss) && enemy.dashState === 'dashing';
+  const isNormalWindupInvuln =
+    (!enemy.kind || enemy.kind === 'normal') && !enemy.isRoomBoss && enemy.dashState === 'windup';
+  const isDashInvuln = enemy.dashState === 'dashing' || isNormalWindupInvuln;
   if (isDashInvuln && !bypassDashInvuln) {
     enemy.hitFlash = 0.06;
     spawnParticles(state, enemy.x, enemy.y, '#cbd5e1', 2, 30, 90, 1.8, 0.16);

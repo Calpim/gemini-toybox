@@ -8,7 +8,7 @@ import {
   tileIndex,
 } from '../../../core/dungeon';
 import type { createRng } from '../../../core/rng';
-import { emitSound, pushNotification } from '../../effects';
+import { emitSound, pushNotification, spawnParticles } from '../../effects';
 import { MAX_TARGET_RANGE } from '../../equipment';
 import { createEnemyByKind } from '../../spawn';
 import type { EnemyState, GameState } from '../../types';
@@ -226,6 +226,31 @@ export function stepScoutBehavior({
   }
 }
 
+export const NORMAL_DASH_UNLOCK_FLOOR = 4;
+export const NORMAL_DASH_MIN_DIST = 48;
+export const NORMAL_DASH_MAX_DIST = 160;
+export const NORMAL_DASH_WINDUP_SEC = 0.42;
+export const NORMAL_DASH_DURATION_SEC = 0.28;
+export const NORMAL_DASH_SPEED = 340;
+export const NORMAL_DASH_RECOVER_SEC = 0.55;
+export const NORMAL_DASH_COOLDOWN_SEC = 4.2;
+
+export interface TankMortarSpec {
+  burstCount: number;
+  cooldown: number;
+}
+
+export function getTankMortarSpec(floor: number): TankMortarSpec {
+  const f = Math.max(1, Math.floor(floor));
+  if (f >= 9) {
+    return { burstCount: 3, cooldown: 3.2 };
+  }
+  if (f >= 5) {
+    return { burstCount: 2, cooldown: 2.8 };
+  }
+  return { burstCount: 1, cooldown: 2.4 };
+}
+
 export function stepNormalEnemyAttack(
   state: GameState,
   enemy: EnemyState,
@@ -236,6 +261,69 @@ export function stepNormalEnemyAttack(
   clampedDt: number,
 ): void {
   const { player, map } = state;
+  if ((enemy.dashCooldown ?? 0) > 0) {
+    enemy.dashCooldown = Math.max(0, (enemy.dashCooldown ?? 0) - clampedDt);
+  }
+
+  if (enemy.dashState === 'windup') {
+    enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+    if ((enemy.dashTimer ?? 0) <= 0) {
+      enemy.dashState = 'dashing';
+      enemy.dashTimer = NORMAL_DASH_DURATION_SEC;
+      emitSound(state, 'boss_dash');
+    }
+    return;
+  }
+
+  if (enemy.dashState === 'dashing' && enemy.dashDir) {
+    const dashSpd = enemy.dashSpeed ?? NORMAL_DASH_SPEED;
+    const stepDist = dashSpd * clampedDt;
+    const resolvedDash = resolveCircleGridCollision(
+      enemy.x + enemy.dashDir.x * stepDist,
+      enemy.y + enemy.dashDir.y * stepDist,
+      enemy.radius,
+      map,
+    );
+    const moved = Math.hypot(resolvedDash.x - enemy.x, resolvedDash.y - enemy.y);
+    enemy.x = resolvedDash.x;
+    enemy.y = resolvedDash.y;
+    spawnParticles(state, enemy.x, enemy.y, '#fb7185', 1, 10, 35, 2.2, 0.18);
+    enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+    const hitWall = stepDist > 1e-4 && moved < stepDist * 0.65;
+    if (hitWall || (enemy.dashTimer ?? 0) <= 0) {
+      enemy.dashState = 'recovering';
+      enemy.dashTimer = NORMAL_DASH_RECOVER_SEC;
+    }
+    return;
+  }
+
+  if (enemy.dashState === 'recovering') {
+    enemy.dashTimer = Math.max(0, (enemy.dashTimer ?? 0) - clampedDt);
+    if ((enemy.dashTimer ?? 0) <= 0) {
+      enemy.dashState = 'none';
+      enemy.dashCooldown = NORMAL_DASH_COOLDOWN_SEC;
+    }
+    return;
+  }
+
+  const canDash =
+    wasAwake &&
+    state.floor >= NORMAL_DASH_UNLOCK_FLOOR &&
+    (enemy.dashCooldown ?? 0) <= 0 &&
+    distToPlayer >= NORMAL_DASH_MIN_DIST &&
+    distToPlayer <= NORMAL_DASH_MAX_DIST &&
+    hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
+  if (canDash) {
+    const leadPx = player.x + (player.velX ?? 0) * 0.15;
+    const leadPy = player.y + (player.velY ?? 0) * 0.15;
+    const dashAngle = Math.atan2(leadPy - enemy.y, leadPx - enemy.x);
+    enemy.dashState = 'windup';
+    enemy.dashTimer = NORMAL_DASH_WINDUP_SEC;
+    enemy.dashDir = { x: Math.cos(dashAngle), y: Math.sin(dashAngle) };
+    enemy.dashSpeed = NORMAL_DASH_SPEED;
+    return;
+  }
+
   const inSight =
     distToPlayer > 1e-3 && distToPlayer <= 190 && hasLineOfSight(enemy.x, enemy.y, player.x, player.y, map);
   if (!inSight) {
@@ -292,36 +380,39 @@ export function stepTankEnemyAttack(
     }
     if ((enemy.attackCooldown ?? 0) <= 0) {
       const mortarDuration = 0.85;
-      const leadTime = 0.55;
       const maxLeadDist = 115;
-      let leadDx = (player.velX ?? 0) * leadTime;
-      let leadDy = (player.velY ?? 0) * leadTime;
-      const leadLen = Math.hypot(leadDx, leadDy);
-      if (leadLen > maxLeadDist) {
-        leadDx = (leadDx / leadLen) * maxLeadDist;
-        leadDy = (leadDy / leadLen) * maxLeadDist;
-      }
-      let tx = player.x;
-      let ty = player.y;
-      const steps = 5;
-      for (let s = 0; s < steps; s++) {
-        const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
-        tx = stepped.x;
-        ty = stepped.y;
-      }
+      const spec = getTankMortarSpec(state.floor);
+      for (let b = 0; b < spec.burstCount; b++) {
+        const leadTime = b === 0 ? 0 : b === 1 ? 0.55 : 0.85 + (b - 2) * 0.25;
+        let leadDx = (player.velX ?? 0) * leadTime;
+        let leadDy = (player.velY ?? 0) * leadTime;
+        const leadLen = Math.hypot(leadDx, leadDy);
+        if (leadLen > maxLeadDist) {
+          leadDx = (leadDx / leadLen) * maxLeadDist;
+          leadDy = (leadDy / leadLen) * maxLeadDist;
+        }
+        let tx = player.x;
+        let ty = player.y;
+        const steps = 5;
+        for (let s = 0; s < steps; s++) {
+          const stepped = resolveCircleGridCollision(tx + leadDx / steps, ty + leadDy / steps, player.radius, map);
+          tx = stepped.x;
+          ty = stepped.y;
+        }
 
-      state.mortarZones.push({
-        id: state.nextEntityId++,
-        startX: enemy.x,
-        startY: enemy.y,
-        targetX: tx,
-        targetY: ty,
-        radius: 52,
-        damage: Math.round(enemy.damage * 1.45),
-        elapsed: 0,
-        duration: mortarDuration,
-      });
-      enemy.attackCooldown = 2.4;
+        state.mortarZones.push({
+          id: state.nextEntityId++,
+          startX: enemy.x,
+          startY: enemy.y,
+          targetX: tx,
+          targetY: ty,
+          radius: 52,
+          damage: Math.round(enemy.damage * 1.45),
+          elapsed: -b * 0.24,
+          duration: mortarDuration,
+        });
+      }
+      enemy.attackCooldown = spec.cooldown;
     }
   }
 }

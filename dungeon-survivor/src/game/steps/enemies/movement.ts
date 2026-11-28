@@ -15,11 +15,10 @@ export function stepEnemyMovement(
   getBfsDist: () => Int32Array,
 ): void {
   const { player, map } = state;
-  const isBossDashLocked =
-    enemy.isRoomBoss &&
-    (enemy.dashState === 'windup' || enemy.dashState === 'dashing' || enemy.dashState === 'recovering');
+  const isDashLocked =
+    enemy.dashState === 'windup' || enemy.dashState === 'dashing' || enemy.dashState === 'recovering';
 
-  if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isBossDashLocked) {
+  if (enemy.awake && distToPlayer > 1e-3 && enemy.speed > 0 && !isDashLocked) {
     let steerX = player.x;
     let steerY = player.y;
     if (!hasClearCorridorPath(enemy.x, enemy.y, player.x, player.y, enemy.radius, map)) {
