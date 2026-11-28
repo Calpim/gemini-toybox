@@ -131,9 +131,10 @@ export const SKILL_TREE_NODES: readonly SkillNodeDef[] = [
     name: '広域索敵',
     requires: null,
     tagline: '迎撃・装備の索敵レンジを拡大',
-    description: '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px、Lv4+で枠拡張コスト-1）',
+    description:
+      '迎撃・攻撃レンジ拡大（Lv1〜3: +8%/Lv → Lv4: +38% / Lv5: +55%、上限180px、Lv4: 枠拡張コスト-1 / Lv5: -2）',
     detailNote:
-      '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで。Lv4以上で装備枠拡張スクラップコスト-1、下限1）。',
+      '電磁リパルサーとサブ装備5種の攻撃・索敵レンジに倍率を適用します（通常索敵上限 180px まで。Lv4で装備枠拡張スクラップコスト-1、Lv5で-2、下限1）。',
   },
   {
     id: 'def_pulse',
@@ -228,6 +229,7 @@ const ARM_MAIN_SPEED_BONUS = [0, 100, 200] as const;
 
 // Defense: Sensor range + controlled emergency defense (def_aegis capped at Lv2)
 const DEF_RANGE_PCT = [0, 0.08, 0.16, 0.24, 0.38, 0.55] as const;
+const DEF_EXPAND_DISCOUNT = [0, 0, 0, 0, 1, 2] as const;
 const DEF_PULSE_DMG = [0, 6, 8, 10, 14, 18] as const;
 const DEF_PULSE_CD = [0, 4.2, 3.9, 3.6, 3.2, 2.8] as const;
 const DEF_PULSE_RANGE = [0, 100, 108, 116, 132, 150] as const;
@@ -334,7 +336,7 @@ export function computeSkillModifiers(levels: SkillLevelMap): ComputedSkillModif
     lootBonusRate: curveAt(MOB_LOOT_PCT, mobLootLv),
     equipDropBonus: curveAt(MOB_DROP_BONUS, mobLootLv),
     dropQualityTier: curveAt(MOB_DROP_QUALITY, mobLootLv),
-    scrapExpandDiscount: defSensorLv >= 4 ? 1 : 0,
+    scrapExpandDiscount: curveAt(DEF_EXPAND_DISCOUNT, defSensorLv),
     expMult: 1 + curveAt(MOB_EXP_PCT, mobLootLv),
     hasTacticalStep: mobDashLv >= 1,
     tacticalInvulnDuration: curveAt(MOB_DASH_INVULN, mobDashLv),
@@ -362,7 +364,8 @@ export function getSkillEffectSummary(nodeId: SkillNodeId, level: number): strin
       return `CD -${Math.round(curveAt(ARM_MAIN_CD_REDUCTION, lv) * 100)}% / 弾速+${curveAt(ARM_MAIN_SPEED_BONUS, lv)} / ${lv >= 2 ? '螺旋貫通＋極太コアレーザー強化' : '螺旋貫通＋中心コアレーザー'}`;
     case 'def_sensor': {
       const rangeText = `レンジ +${Math.round(curveAt(DEF_RANGE_PCT, lv) * 100)}%`;
-      return lv >= 4 ? `${rangeText} / 枠拡張コスト-1` : rangeText;
+      const discount = curveAt(DEF_EXPAND_DISCOUNT, lv);
+      return discount > 0 ? `${rangeText} / 枠拡張コスト-${discount}` : rangeText;
     }
     case 'def_pulse':
       return `威力${curveAt(DEF_PULSE_DMG, lv)} / 範囲${curveAt(DEF_PULSE_RANGE, lv)} / CD ${curveAt(DEF_PULSE_CD, lv).toFixed(1)}s`;

@@ -170,14 +170,16 @@ describe('Equipment, loadout, and growth simulation', () => {
     expect(state.player.equipment[0]?.id).toBe('ricochet_disc');
     expect(state.player.equipment[0]?.level).toBe(4);
 
-    // Scrap & Build: progressive 1 / 2 / 3 cost unlocks slots 2->3 (1), 3->4 (2), 4->5 (3); def_sensor Lv4+ discounts by 1 (min 1)
+    // Scrap & Build: progressive 1 / 2 / 3 cost unlocks slots 2->3 (1), 3->4 (2), 4->5 (3); def_sensor Lv4 discounts by 1 and Lv5 by 2 (min 1)
     expect(getScrapExpandCost(2)).toBe(1);
     expect(getScrapExpandCost(3)).toBe(2);
     expect(getScrapExpandCost(4)).toBe(3);
     expect(getScrapExpandCost(3, 1)).toBe(1);
     expect(getScrapExpandCost(4, 1)).toBe(2);
+    expect(getScrapExpandCost(4, 2)).toBe(1);
     expect(computeSkillModifiers({ def_sensor: 3, mob_loot: 4 }).scrapExpandDiscount).toBe(0);
     expect(computeSkillModifiers({ def_sensor: 4 }).scrapExpandDiscount).toBe(1);
+    expect(computeSkillModifiers({ def_sensor: 5 }).scrapExpandDiscount).toBe(2);
 
     acquireEquipment(state, createEquippedItem('pulse_blade', 1));
     expect(state.status).toBe('equip_choice');
