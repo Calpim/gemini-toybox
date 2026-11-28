@@ -15,7 +15,7 @@ function escapeHtml(str) {
 
 function renderStatusBadge(status, statusOrigin = 'human') {
   if (status === 'Confirmed' && statusOrigin === 'ai') {
-    return `<span class="badge badge-confirmed-ai">確定 (AI提案)</span>`;
+    return '<span class="badge badge-confirmed-ai">確定 (AI提案)</span>';
   }
   const map = {
     Confirmed: { label: 'Confirmed（決定済み）', cls: 'badge-confirmed' },
@@ -51,7 +51,7 @@ function renderBackgroundBox(bg) {
   if (!bg?.steps || bg.steps.length === 0) return '';
   const title = bg.name ? `背景: ${bg.name}` : '背景・決定経緯';
   return `<div class="bg-box">
-    <div class="bg-title">📋 ${escapeHtml(title)}</div>
+    <div class="bg-title">${escapeHtml(title)}</div>
     <ul class="bg-steps">
       ${bg.steps.map((s) => `<li>${escapeHtml(s.text)}</li>`).join('')}
     </ul>
@@ -72,7 +72,7 @@ function renderSourceLink(sourceFile, itemId) {
 function renderRefLinks(refs) {
   if (!refs || refs.length === 0) return '<span class="muted-text">-</span>';
   return `<div class="ref-list">${refs
-    .map((ref) => `<a class="ref-pill ref-link" href="#${escapeHtml(ref)}">${escapeHtml(ref)}</a>`)
+    .map((ref) => `<a class="ref-link" href="#${escapeHtml(ref)}">${escapeHtml(ref)}</a>`)
     .join('')}</div>`;
 }
 
@@ -87,12 +87,12 @@ function renderGlossarySection(glossary) {
     .map(
       (item) => `
       <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="glossary" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
-        <td><strong>${escapeHtml(item.term)}</strong>${item.alias ? `<div class="sub-code">${renderInlineCodeText(item.alias)}</div>` : ''}</td>
-        <td>${renderInlineCodeText(item.definition)}</td>
-        <td>${renderStatusBadge(item.status)}</td>
-        <td>${renderRefLinks(item.refs)}</td>
-        <td>${item.sourceNote ? `<div class="note-text">${renderInlineCodeText(item.sourceNote)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td class="col-id"><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+        <td class="col-term"><strong>${escapeHtml(item.term)}</strong>${item.alias ? `<div class="sub-code">${renderInlineCodeText(item.alias)}</div>` : ''}</td>
+        <td class="col-prose">${renderInlineCodeText(item.definition)}</td>
+        <td class="col-status">${renderStatusBadge(item.status)}</td>
+        <td class="col-refs">${renderRefLinks(item.refs)}</td>
+        <td class="col-source">${item.sourceNote ? `<div class="note-text">${renderInlineCodeText(item.sourceNote)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`,
     )
     .join('');
@@ -100,10 +100,7 @@ function renderGlossarySection(glossary) {
   return `
   <section id="sec-glossary" class="doc-section" data-section-name="glossary">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">GLOSSARY / 用語集</div>
-        <h2>📖 用語集 <span class="count-pill" data-section-count="glossary">(${glossary.items.length}件)</span></h2>
-      </div>
+      <h2>用語集 <span class="section-count" data-section-count="glossary">(${glossary.items.length}件)</span></h2>
       ${renderSourceLink(glossary.relativePath, '')}
     </div>
     <div class="doc-table-wrap">
@@ -124,15 +121,15 @@ function renderParametersSection(parameters) {
     .map(
       (item) => `
       <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="parameters" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
-        <td><span class="cat-pill">${escapeHtml(item.category)}</span></td>
-        <td><strong>${renderInlineCodeText(item.name)}</strong></td>
-        <td><span class="param-val">${renderInlineCodeText(item.value)}</span></td>
-        <td>${renderInlineCodeText(item.unit)}</td>
-        <td>${item.goal ? `<div class="note-text">${renderInlineCodeText(item.goal)}</div>` : '<span class="muted-text empty-goal">（空欄・人間確認待ち）</span>'}</td>
-        <td>${renderStatusBadge(item.status, item.statusOrigin)}</td>
-        <td>${renderRefLinks(item.refs)}</td>
-        <td>${item.codeRef ? `<div class="sub-code">${renderInlineCodeText(item.codeRef)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td class="col-id"><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+        <td class="col-cat"><span class="cat-label">${escapeHtml(item.category)}</span></td>
+        <td class="col-term"><strong>${renderInlineCodeText(item.name)}</strong></td>
+        <td class="col-num"><span class="param-val">${renderInlineCodeText(item.value)}</span></td>
+        <td class="col-unit">${renderInlineCodeText(item.unit)}</td>
+        <td class="col-prose">${item.goal ? `<div class="note-text">${renderInlineCodeText(item.goal)}</div>` : '<span class="muted-text empty-goal">（空欄・人間確認待ち）</span>'}</td>
+        <td class="col-status">${renderStatusBadge(item.status, item.statusOrigin)}</td>
+        <td class="col-refs">${renderRefLinks(item.refs)}</td>
+        <td class="col-source">${item.codeRef ? `<div class="sub-code">${renderInlineCodeText(item.codeRef)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`,
     )
     .join('');
@@ -140,10 +137,7 @@ function renderParametersSection(parameters) {
   return `
   <section id="sec-parameters" class="doc-section" data-section-name="parameters">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">PARAMETERS / パラメータ表</div>
-        <h2>🎛️ パラメータ表 <span class="count-pill" data-section-count="parameters">(${parameters.items.length}件)</span></h2>
-      </div>
+      <h2>パラメータ表 <span class="section-count" data-section-count="parameters">(${parameters.items.length}件)</span></h2>
       ${renderSourceLink(parameters.relativePath, '')}
     </div>
     <div class="doc-table-wrap">
@@ -176,17 +170,17 @@ function renderFormulasSection(formulas, parameters) {
       return `
       <div class="formula-chart-card" data-chart-id="${escapeHtml(chart.id)}" data-chart-payload="${payloadJson}">
         <div class="formula-chart-head">
-          <div>
-            <h3>📈 ${escapeHtml(chart.title)}</h3>
+          <div class="formula-chart-meta">
+            <h3>${escapeHtml(chart.title)}</h3>
             <div class="sub-code">${renderInlineCodeText(chart.formulaExpr)}</div>
-            <div class="ref-list" style="margin-top:6px;">
-              ${chart.formulaIds.map((id) => `<a class="id-pill id-doc" href="#${escapeHtml(id)}">${escapeHtml(id)}</a>`).join('')}
-              ${chart.paramRefs.map((id) => `<a class="ref-pill ref-link" href="#${escapeHtml(id)}">${escapeHtml(id)}</a>`).join('')}
+            <div class="ref-list formula-chart-refs">
+              ${chart.formulaIds.map((id) => `<a class="id-anchor" href="#${escapeHtml(id)}">${escapeHtml(id)}</a>`).join('')}
+              ${chart.paramRefs.map((id) => `<a class="ref-link" href="#${escapeHtml(id)}">${escapeHtml(id)}</a>`).join('')}
             </div>
           </div>
-          <button type="button" class="mini-btn toggle-formula-table-btn" data-target-chart="${escapeHtml(chart.id)}">式・数表表示切替</button>
+          <button type="button" class="mini-btn toggle-formula-table-btn" data-target-chart="${escapeHtml(chart.id)}">数表を表示</button>
         </div>
-        <div class="formula-chart-status muted-text" data-chart-status-for="${escapeHtml(chart.id)}">📊 描画未実行のため式と数表を表示しています（フォールバック）</div>
+        <div class="formula-chart-status muted-text" data-chart-status-for="${escapeHtml(chart.id)}">描画未実行のため式と数表を表示しています（フォールバック）</div>
         <div class="formula-chart-canvas hidden" data-chart-canvas-for="${escapeHtml(chart.id)}"></div>
         <div class="formula-fallback-wrap" data-chart-fallback-for="${escapeHtml(chart.id)}">
           <table class="doc-table formula-fallback-table">
@@ -202,14 +196,14 @@ function renderFormulasSection(formulas, parameters) {
     .map(
       (item) => `
       <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="formulas" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
-        <td><strong>${renderInlineCodeText(item.name)}</strong></td>
-        <td><div class="formula-expr">${renderInlineCodeText(item.formula)}</div></td>
+        <td class="col-id"><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+        <td class="col-term"><strong>${renderInlineCodeText(item.name)}</strong></td>
+        <td class="col-formula"><div class="formula-expr">${renderInlineCodeText(item.formula)}</div></td>
         <td>${renderInlineCodeText(item.inputs)}</td>
         <td>${renderInlineCodeText(item.output)}</td>
-        <td>${renderStatusBadge(item.status)}</td>
-        <td>${renderRefLinks(item.refs)}</td>
-        <td>${item.codeRef ? `<div class="sub-code">${renderInlineCodeText(item.codeRef)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td class="col-status">${renderStatusBadge(item.status)}</td>
+        <td class="col-refs">${renderRefLinks(item.refs)}</td>
+        <td class="col-source">${item.codeRef ? `<div class="sub-code">${renderInlineCodeText(item.codeRef)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`,
     )
     .join('');
@@ -217,10 +211,7 @@ function renderFormulasSection(formulas, parameters) {
   return `
   <section id="sec-formulas" class="doc-section" data-section-name="formulas">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">FORMULAS / 計算式シート</div>
-        <h2>🧮 計算式シート <span class="count-pill" data-section-count="formulas">(${formulas.items.length}件)</span></h2>
-      </div>
+      <h2>計算式シート <span class="section-count" data-section-count="formulas">(${formulas.items.length}件)</span></h2>
       ${renderSourceLink(formulas.relativePath, '')}
     </div>
     <div class="formula-charts-grid" id="formulaChartsGrid">
@@ -244,12 +235,12 @@ function renderOpenQuestionsSection(openQuestions) {
     .map(
       (item) => `
       <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="open-questions" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
-        <td><strong>${renderInlineCodeText(item.topic)}</strong></td>
-        <td>${renderStatusBadge(item.status)}</td>
-        <td>${renderRefLinks(item.refs)}</td>
-        <td><div class="note-text">${renderInlineCodeText(item.trigger)}</div></td>
-        <td><div class="note-text">${renderInlineCodeText(item.impact)}</div>${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td class="col-id"><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+        <td class="col-term"><strong>${renderInlineCodeText(item.topic)}</strong></td>
+        <td class="col-status">${renderStatusBadge(item.status)}</td>
+        <td class="col-refs">${renderRefLinks(item.refs)}</td>
+        <td class="col-prose"><div class="note-text">${renderInlineCodeText(item.trigger)}</div></td>
+        <td class="col-source"><div class="note-text">${renderInlineCodeText(item.impact)}</div>${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`,
     )
     .join('');
@@ -257,10 +248,7 @@ function renderOpenQuestionsSection(openQuestions) {
   return `
   <section id="sec-open-questions" class="doc-section" data-section-name="open-questions">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">OPEN QUESTIONS / 未決事項リスト</div>
-        <h2>❓ 未決事項リスト <span class="count-pill" data-section-count="open-questions">(${openQuestions.items.length}件)</span></h2>
-      </div>
+      <h2>未決事項リスト <span class="section-count" data-section-count="open-questions">(${openQuestions.items.length}件)</span></h2>
       ${renderSourceLink(openQuestions.relativePath, '')}
     </div>
     <div class="doc-table-wrap">
@@ -281,11 +269,11 @@ function renderNonGoalsSection(nonGoals) {
     .map(
       (item) => `
       <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="non-goals" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
-        <td><strong>${renderInlineCodeText(item.item)}</strong></td>
-        <td><div class="note-text">${renderInlineCodeText(item.reason)}</div></td>
-        <td>${renderStatusBadge(item.status)}</td>
-        <td>${renderRefLinks(item.refs)}${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td class="col-id"><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+        <td class="col-term"><strong>${renderInlineCodeText(item.item)}</strong></td>
+        <td class="col-prose"><div class="note-text">${renderInlineCodeText(item.reason)}</div></td>
+        <td class="col-status">${renderStatusBadge(item.status)}</td>
+        <td class="col-source">${renderRefLinks(item.refs)}${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`,
     )
     .join('');
@@ -293,13 +281,10 @@ function renderNonGoalsSection(nonGoals) {
   return `
   <section id="sec-non-goals" class="doc-section" data-section-name="non-goals">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">NON-GOALS / やらないことリスト</div>
-        <h2>🚫 やらないことリスト <span class="count-pill" data-section-count="non-goals">(${nonGoals.items.length}件)</span></h2>
-      </div>
+      <h2>やらないことリスト <span class="section-count" data-section-count="non-goals">(${nonGoals.items.length}件)</span></h2>
       ${renderSourceLink(nonGoals.relativePath, '')}
     </div>
-    <div class="nongoal-banner">🛑 <strong>宣言:</strong> ${escapeHtml(nonGoals.declaration)}</div>
+    <div class="nongoal-banner"><strong>宣言:</strong> ${escapeHtml(nonGoals.declaration)}</div>
     <div class="doc-table-wrap">
       <table class="doc-table">
         <thead>
@@ -319,13 +304,13 @@ function renderStateTransitionsSection(stateTransitions) {
     .map(
       (item) => `
       <tr id="${escapeHtml(item.id)}" class="spec-row ${item.isUndefined ? 'row-undefined' : ''}" data-section="transitions" data-status="${escapeHtml(item.status)}" data-undefined="${item.isUndefined ? 'true' : 'false'}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+        <td class="col-id"><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
         <td>${renderInlineCodeText(item.from)}</td>
         <td>${renderInlineCodeText(item.trigger)}</td>
-        <td>${item.isUndefined ? `<span class="undef-pill">⚠️ ${escapeHtml(item.to)}</span>` : renderInlineCodeText(item.to)}</td>
-        <td>${renderStatusBadge(item.status)}</td>
-        <td>${renderRefLinks(item.refs)}</td>
-        <td>${item.note ? `<div class="note-text">${renderInlineCodeText(item.note)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td>${item.isUndefined ? `<span class="undef-label">${escapeHtml(item.to)}</span>` : renderInlineCodeText(item.to)}</td>
+        <td class="col-status">${renderStatusBadge(item.status)}</td>
+        <td class="col-refs">${renderRefLinks(item.refs)}</td>
+        <td class="col-source">${item.note ? `<div class="note-text">${renderInlineCodeText(item.note)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`,
     )
     .join('');
@@ -333,18 +318,15 @@ function renderStateTransitionsSection(stateTransitions) {
   return `
   <section id="sec-state-transitions" class="doc-section" data-section-name="transitions">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">STATE TRANSITIONS / 状態遷移図</div>
-        <h2>🔀 状態遷移図 <span class="count-pill" data-section-count="transitions">(${stateTransitions.items.length}件)</span></h2>
-      </div>
+      <h2>状態遷移図 <span class="section-count" data-section-count="transitions">(${stateTransitions.items.length}件)</span></h2>
       ${renderSourceLink(stateTransitions.relativePath, '')}
     </div>
 
     ${
       mermaidSrc
-        ? `<div class="mermaid-card">
+        ? `<div class="mermaid-block">
             <div class="mermaid-toolbar">
-              <span id="mermaidStatus" class="mermaid-status">⏳ Mermaid 図を描画中（失敗時はソース表示に自動切替）</span>
+              <span id="mermaidStatus" class="mermaid-status">Mermaid 図を描画中（失敗時はソース表示に自動切替）</span>
               <button type="button" id="toggleMermaidSourceBtn" class="mini-btn">Mermaid ソース表示切替</button>
             </div>
             <div id="mermaidDiagram" class="mermaid-diagram hidden"></div>
@@ -371,13 +353,13 @@ function renderInvariantsSection(invariants) {
     .map(
       (item) => `
       <tr id="${escapeHtml(item.id)}" class="spec-row" data-section="invariants" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}">
-        <td><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
-        <td><span class="cat-pill">${escapeHtml(item.category)}</span></td>
-        <td>${renderInlineCodeText(item.condition)}</td>
+        <td class="col-id"><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a></td>
+        <td class="col-cat"><span class="cat-label">${escapeHtml(item.category)}</span></td>
+        <td class="col-prose">${renderInlineCodeText(item.condition)}</td>
         <td><div class="sub-code">${renderInlineCodeText(item.verification)}</div></td>
-        <td>${renderStatusBadge(item.status)}</td>
-        <td>${renderRefLinks(item.refs)}</td>
-        <td>${item.note ? `<div class="note-text">${renderInlineCodeText(item.note)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td class="col-status">${renderStatusBadge(item.status)}</td>
+        <td class="col-refs">${renderRefLinks(item.refs)}</td>
+        <td class="col-source">${item.note ? `<div class="note-text">${renderInlineCodeText(item.note)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`,
     )
     .join('');
@@ -385,10 +367,7 @@ function renderInvariantsSection(invariants) {
   return `
   <section id="sec-invariants" class="doc-section" data-section-name="invariants">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">INVARIANTS / 不変条件</div>
-        <h2>🛡️ 不変条件 <span class="count-pill" data-section-count="invariants">(${invariants.items.length}件)</span></h2>
-      </div>
+      <h2>不変条件 <span class="section-count" data-section-count="invariants">(${invariants.items.length}件)</span></h2>
       ${renderSourceLink(invariants.relativePath, '')}
     </div>
     <div class="doc-table-wrap">
@@ -425,24 +404,24 @@ function renderDecisionsSection(decisions) {
             ? `<div class="override-link-list">${overrideLinks
                 .map(
                   (ad) =>
-                    `<a class="ref-pill ref-link override-addendum-link" href="#${escapeHtml(ad.id)}">↳ ${escapeHtml(ad.id)}</a>`,
+                    `<a class="ref-link override-addendum-link" href="#${escapeHtml(ad.id)}">↳ ${escapeHtml(ad.id)}</a>`,
                 )
                 .join('')}</div>`
             : ''
         }`
       : '';
     const idCell = isAddendum
-      ? `<span class="addendum-indent">↳</span><a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>`
-      : `<a class="id-pill id-doc" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>${overrideHtml}`;
+      ? `<span class="addendum-indent">↳</span><a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>`
+      : `<a class="id-anchor" href="#${escapeHtml(item.id)}">${escapeHtml(item.id)}</a>${overrideHtml}`;
 
     return `
       <tr id="${escapeHtml(item.id)}" class="${rowClasses}" data-section="decisions" data-status="${escapeHtml(item.status)}" data-item-id="${escapeHtml(item.id)}" data-source-file="${escapeHtml(item.sourceFile)}"${parentAttr}>
-        <td>${idCell}</td>
-        <td><span class="date-pill">${escapeHtml(item.date)}</span><div class="sub-code">${escapeHtml(item.decider)}</div></td>
-        <td><strong>${renderInlineCodeText(item.decision)}</strong><div class="note-text">${renderInlineCodeText(item.reason)}</div></td>
-        <td>${renderStatusBadge(item.status)}${item.transition ? `<div class="sub-code">${escapeHtml(item.transition)}</div>` : ''}</td>
-        <td>${renderRefLinks(item.refs)}</td>
-        <td>${item.revisitTrigger ? `<div class="note-text">${renderInlineCodeText(item.revisitTrigger)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
+        <td class="col-id">${idCell}</td>
+        <td class="col-date"><span class="date-text">${escapeHtml(item.date)}</span><div class="sub-code">${escapeHtml(item.decider)}</div></td>
+        <td class="col-prose"><strong>${renderInlineCodeText(item.decision)}</strong><div class="note-text">${renderInlineCodeText(item.reason)}</div></td>
+        <td class="col-status">${renderStatusBadge(item.status)}${item.transition ? `<div class="sub-code">${escapeHtml(item.transition)}</div>` : ''}</td>
+        <td class="col-refs">${renderRefLinks(item.refs)}</td>
+        <td class="col-source">${item.revisitTrigger ? `<div class="note-text">${renderInlineCodeText(item.revisitTrigger)}</div>` : ''}${renderSourceLink(item.sourceFile, item.id)}</td>
       </tr>`;
   };
 
@@ -462,10 +441,7 @@ function renderDecisionsSection(decisions) {
   return `
   <section id="sec-decisions" class="doc-section" data-section-name="decisions">
     <div class="section-head">
-      <div>
-        <div class="section-eyebrow">DECISION LOG / 決定ログ</div>
-        <h2>🧭 決定ログ <span class="count-pill" data-section-count="decisions">(${decisions.items.length}件)</span></h2>
-      </div>
+      <h2>決定ログ <span class="section-count" data-section-count="decisions">(${decisions.items.length}件)</span></h2>
       ${renderSourceLink(decisions.relativePath, '')}
     </div>
     <div class="doc-table-wrap">
@@ -480,22 +456,8 @@ function renderDecisionsSection(decisions) {
   </section>`;
 }
 
-export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビューア', extendedSpecs = null) {
-  const { stats, bizScenarios, unlinkedBiz, orphanApps } = graph;
-  const extValidation = extendedSpecs ? validateExtendedSpecs(graph, extendedSpecs) : null;
-  const hasExtended = Boolean(
-    extendedSpecs &&
-      (extendedSpecs.glossary ||
-        extendedSpecs.parameters ||
-        extendedSpecs.formulas ||
-        extendedSpecs.stateTransitions ||
-        extendedSpecs.invariants ||
-        extendedSpecs.openQuestions ||
-        extendedSpecs.nonGoals ||
-        extendedSpecs.decisions),
-  );
-
-  const traceCards = bizScenarios
+function renderTraceCards(bizScenarios) {
+  return bizScenarios
     .map((biz) => {
       const appCards =
         biz.linkedApps.length > 0
@@ -505,9 +467,9 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
               <div class="app-card" id="${escapeHtml(app.id)}" data-status="${escapeHtml(app.status)}" data-layer="app">
                 <div class="card-head">
                   <div class="id-group">
-                    <span class="id-pill id-app">${escapeHtml(app.id)}</span>
-                    <span class="ref-pill">↳ ref: ${escapeHtml(biz.id)}</span>
-                    <span class="file-pill">${escapeHtml(app.fileName)}</span>
+                    <span class="id-tag id-app">${escapeHtml(app.id)}</span>
+                    <span class="meta-ref">ref: ${escapeHtml(biz.id)}</span>
+                    <span class="meta-file">${escapeHtml(app.fileName)}</span>
                   </div>
                   ${renderStatusBadge(app.status, app.statusOrigin)}
                 </div>
@@ -517,19 +479,19 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
               </div>`,
               )
               .join('')
-          : `<div class="empty-link">⚠️ 紐づくアプリGherkin（@ref:${escapeHtml(biz.id)}）がまだありません</div>`;
+          : `<div class="empty-link">紐づくアプリGherkin（@ref:${escapeHtml(biz.id)}）がまだありません</div>`;
 
       const statusesInGroup = new Set([biz.status, ...biz.linkedApps.map((a) => a.status)]);
       return `
-      <section class="trace-group" data-biz-status="${escapeHtml(biz.status)}" data-has-inferred="${statusesInGroup.has(
+      <article class="trace-group" data-biz-status="${escapeHtml(biz.status)}" data-has-inferred="${statusesInGroup.has(
         'Inferred',
       )}" data-has-disputed="${statusesInGroup.has('Disputed')}" data-has-unknown="${statusesInGroup.has('Unknown')}">
         <div class="biz-card" id="${escapeHtml(biz.id)}">
           <div class="card-head">
             <div class="id-group">
-              <span class="id-pill id-biz">${escapeHtml(biz.id)}</span>
-              <span class="file-pill">${escapeHtml(biz.fileName)}</span>
-              <span class="feature-pill">${escapeHtml(biz.featureName)}</span>
+              <span class="id-tag id-biz">${escapeHtml(biz.id)}</span>
+              <span class="meta-file">${escapeHtml(biz.fileName)}</span>
+              <span class="meta-feature">${escapeHtml(biz.featureName)}</span>
             </div>
             ${renderStatusBadge(biz.status, biz.statusOrigin)}
           </div>
@@ -539,7 +501,7 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
         </div>
         <details class="app-accordion">
           <summary class="app-accordion-summary">
-            <span class="app-accordion-title">⚙️ アプリ仕様（開発・テスト目線）</span>
+            <span class="app-accordion-title">アプリ仕様（開発・テスト目線）</span>
             <span class="app-accordion-meta">${biz.linkedApps.map((a) => escapeHtml(a.id)).join(', ') || '未紐付け'} (${biz.linkedApps.length}件)</span>
             <span class="app-accordion-hint"></span>
           </summary>
@@ -547,37 +509,16 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
             ${appCards}
           </div>
         </details>
-      </section>`;
+      </article>`;
     })
     .join('');
+}
 
-  const orphanBanner =
-    unlinkedBiz.length > 0 || orphanApps.length > 0
-      ? `<div class="warn-banner">
-          <strong>⚠️ トレーサビリティ不整合検知:</strong>
-          ${unlinkedBiz.length ? `未紐付けBIZ: ${escapeHtml(unlinkedBiz.join(', '))} ` : ''}
-          ${orphanApps.length ? `孤立APP: ${escapeHtml(orphanApps.map((o) => `${o.appId}(${o.reason})`).join(', '))}` : ''}
-        </div>`
-      : `<div class="ok-banner">✅ トレーサビリティチェック OK：全 ${stats.bizCount} 件のビジネス仕様と ${stats.appCount} 件のアプリ仕様が ID 紐付けされています</div>`;
-
-  const extRefBanner = extValidation
-    ? extValidation.brokenDocRefs.length > 0
-      ? `<div class="warn-banner">
-          <strong>⚠️ 拡張仕様ID参照リンク切れ検知 (${extValidation.brokenDocRefs.length}件):</strong>
-          ${escapeHtml(
-            extValidation.brokenDocRefs.map((b) => `${b.sourceId}(${b.sourceFile}) -> ${b.missingRef}`).join(', '),
-          )}
-        </div>`
-      : `<div class="ok-banner">✅ 拡張ドキュメントID参照チェック OK：全 ${extValidation.allDocItemsCount} 件の関連IDにリンク切れはありません</div>`
-    : '';
-
-  const disputedTerms = extValidation ? extValidation.disputedTerms : [];
-  const undefinedTransitions = extValidation ? extValidation.undefinedTransitions : [];
-
-  const disputedDashboardHtml = `
+function renderOverviewPanels(disputedTerms, undefinedTransitions) {
+  const disputedHtml = `
     <div class="dash-panel dash-disputed">
       <div class="dash-panel-head">
-        <h3>🚨 Disputed（要調整）用語 <span class="count-pill-red">${disputedTerms.length}件</span></h3>
+        <h3>Disputed（要調整）用語 <span class="dash-count dash-count-red">${disputedTerms.length}件</span></h3>
         <span class="dash-sub">仕様と現行実装に齟齬がある用語</span>
       </div>
       ${
@@ -587,7 +528,7 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
                 .map(
                   (t) => `<li class="dash-item" data-status="${escapeHtml(t.status)}">
                     <div class="dash-item-head">
-                      <a class="id-pill id-doc" href="#${escapeHtml(t.id)}">${escapeHtml(t.id)}</a>
+                      <a class="id-anchor" href="#${escapeHtml(t.id)}">${escapeHtml(t.id)}</a>
                       <strong>${escapeHtml(t.term)}</strong>
                       ${renderStatusBadge(t.status)}
                     </div>
@@ -597,14 +538,14 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
                 )
                 .join('')}
             </ul>`
-          : `<div class="dash-empty">Disputed な用語はありません。</div>`
+          : '<div class="dash-empty">Disputed な用語はありません。</div>'
       }
     </div>`;
 
-  const undefinedTransitionsHtml = `
+  const undefinedHtml = `
     <div class="dash-panel dash-undefined">
       <div class="dash-panel-head">
-        <h3>⚠️ 「未定義」の状態遷移 <span class="count-pill-amber">${undefinedTransitions.length}件</span></h3>
+        <h3>「未定義」の状態遷移 <span class="dash-count dash-count-amber">${undefinedTransitions.length}件</span></h3>
         <span class="dash-sub">遷移先が未定義・未実装の遷移</span>
       </div>
       ${
@@ -614,8 +555,8 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
                 .map(
                   (tr) => `<li class="dash-item" data-status="${escapeHtml(tr.status)}">
                     <div class="dash-item-head">
-                      <a class="id-pill id-doc" href="#${escapeHtml(tr.id)}">${escapeHtml(tr.id)}</a>
-                      <span class="trans-chain">${renderInlineCodeText(tr.from)} → ${renderInlineCodeText(tr.trigger)} → <span class="undef-pill">${escapeHtml(tr.to)}</span></span>
+                      <a class="id-anchor" href="#${escapeHtml(tr.id)}">${escapeHtml(tr.id)}</a>
+                      <span class="trans-chain">${renderInlineCodeText(tr.from)} → ${renderInlineCodeText(tr.trigger)} → <span class="undef-label">${escapeHtml(tr.to)}</span></span>
                       ${renderStatusBadge(tr.status)}
                     </div>
                     ${tr.note ? `<div class="dash-item-desc">${renderInlineCodeText(tr.note)}</div>` : ''}
@@ -624,133 +565,311 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
                 )
                 .join('')}
             </ul>`
-          : `<div class="dash-empty">未定義の状態遷移はありません。</div>`
+          : '<div class="dash-empty">未定義の状態遷移はありません。</div>'
       }
     </div>`;
 
-  const statusTotals = extValidation
-    ? extValidation.statusTotals
-    : {
-        Confirmed: stats.confirmedCount,
-        Inferred: stats.inferredCount,
-        Disputed: 0,
-        Unknown: 0,
-      };
+  return `<div class="dash-grid">${disputedHtml}${undefinedHtml}</div>`;
+}
 
-  const navBarHtml = `
-    <nav class="section-nav" aria-label="仕様セクション移動">
-      <a class="nav-pill" href="#sec-overview">📊 概要</a>
-      <a class="nav-pill" href="#sec-gherkin">🔗 ビジネス仕様 (${stats.bizCount}/${stats.appCount})</a>
-      ${extendedSpecs?.glossary ? `<a class="nav-pill" href="#sec-glossary">📖 用語集 (${extendedSpecs.glossary.items.length})</a>` : ''}
-      ${extendedSpecs?.parameters ? `<a class="nav-pill" href="#sec-parameters">🎛️ パラメータ表 (${extendedSpecs.parameters.items.length})</a>` : ''}
-      ${extendedSpecs?.formulas ? `<a class="nav-pill" href="#sec-formulas">🧮 計算式 (${extendedSpecs.formulas.items.length})</a>` : ''}
-      ${extendedSpecs?.stateTransitions ? `<a class="nav-pill" href="#sec-state-transitions">🔀 状態遷移図 (${extendedSpecs.stateTransitions.items.length})</a>` : ''}
-      ${extendedSpecs?.invariants ? `<a class="nav-pill" href="#sec-invariants">🛡️ 不変条件 (${extendedSpecs.invariants.items.length})</a>` : ''}
-      ${extendedSpecs?.openQuestions ? `<a class="nav-pill" href="#sec-open-questions">❓ 未決事項 (${extendedSpecs.openQuestions.items.length})</a>` : ''}
-      ${extendedSpecs?.nonGoals ? `<a class="nav-pill" href="#sec-non-goals">🚫 やらないこと (${extendedSpecs.nonGoals.items.length})</a>` : ''}
-      ${extendedSpecs?.decisions ? `<a class="nav-pill" href="#sec-decisions">🧭 決定ログ (${extendedSpecs.decisions.items.length})</a>` : ''}
-    </nav>`;
+function renderNavItems(stats, extendedSpecs) {
+  const items = [
+    { href: '#sec-overview', label: '概要', count: '' },
+    { href: '#sec-gherkin', label: 'ビジネス仕様', count: `${stats.bizCount}/${stats.appCount}` },
+  ];
+  if (extendedSpecs?.glossary) {
+    items.push({ href: '#sec-glossary', label: '用語集', count: String(extendedSpecs.glossary.items.length) });
+  }
+  if (extendedSpecs?.parameters) {
+    items.push({
+      href: '#sec-parameters',
+      label: 'パラメータ表',
+      count: String(extendedSpecs.parameters.items.length),
+    });
+  }
+  if (extendedSpecs?.formulas) {
+    items.push({ href: '#sec-formulas', label: '計算式', count: String(extendedSpecs.formulas.items.length) });
+  }
+  if (extendedSpecs?.stateTransitions) {
+    items.push({
+      href: '#sec-state-transitions',
+      label: '状態遷移図',
+      count: String(extendedSpecs.stateTransitions.items.length),
+    });
+  }
+  if (extendedSpecs?.invariants) {
+    items.push({ href: '#sec-invariants', label: '不変条件', count: String(extendedSpecs.invariants.items.length) });
+  }
+  if (extendedSpecs?.openQuestions) {
+    items.push({
+      href: '#sec-open-questions',
+      label: '未決事項',
+      count: String(extendedSpecs.openQuestions.items.length),
+    });
+  }
+  if (extendedSpecs?.nonGoals) {
+    items.push({ href: '#sec-non-goals', label: 'やらないこと', count: String(extendedSpecs.nonGoals.items.length) });
+  }
+  if (extendedSpecs?.decisions) {
+    items.push({ href: '#sec-decisions', label: '決定ログ', count: String(extendedSpecs.decisions.items.length) });
+  }
+  return items
+    .map(
+      (it) =>
+        `<a class="nav-link" href="${it.href}" data-nav-target="${it.href.slice(1)}"><span class="nav-label">${escapeHtml(it.label)}</span>${it.count ? `<span class="nav-count">${escapeHtml(it.count)}</span>` : ''}</a>`,
+    )
+    .join('');
+}
 
-  return `<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(title)}</title>
-  <style>
+function renderStyles() {
+  return `
     :root {
-      --bg: #070b14;
-      --surface: #0f1626;
-      --surface-2: #151f34;
-      --border: #24324d;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --biz: #38bdf8;
-      --app: #a78bfa;
-      --confirmed: #34d399;
-      --inferred: #fbbf24;
-      --disputed: #f87171;
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-subtle: #f1f3f6;
+      --border: #dde2e8;
+      --border-strong: #c5cdd6;
+      --text: #161b22;
+      --text-secondary: #3c444d;
+      --muted: #59636e;
+      --accent: #1d4ed8;
+      --accent-soft: #eff4ff;
+      --biz: #0369a1;
+      --app: #6d28d9;
+      --confirmed: #15803d;
+      --confirmed-bg: #f0fdf4;
+      --confirmed-border: #bbf7d0;
+      --confirmed-ai: #0f766e;
+      --confirmed-ai-bg: #f0fdfa;
+      --confirmed-ai-border: #99f6e4;
+      --inferred: #b45309;
+      --inferred-bg: #fffbeb;
+      --inferred-border: #fde68a;
+      --disputed: #b91c1c;
+      --disputed-bg: #fef2f2;
+      --disputed-border: #fecaca;
+      --unknown: #475569;
+      --unknown-bg: #f1f5f9;
+      --unknown-border: #cbd5e1;
+      --font-sans: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --text-heading: 1.25rem;
+      --text-body: 0.9375rem;
+      --text-sm: 0.8125rem;
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --sidebar-w: 244px;
     }
-    * { box-sizing: border-box; }
+
+    *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-      background: radial-gradient(circle at top right, #111b33, var(--bg) 55%);
+      font-family: var(--font-sans);
+      font-size: var(--text-body);
+      line-height: 1.65;
       color: var(--text);
-      line-height: 1.6;
-      padding: 24px 16px 64px;
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
     }
-    .container { max-width: 1140px; margin: 0 auto; }
-    header {
+
+    a { color: var(--accent); }
+    code, pre { font-family: var(--font-mono); }
+
+    /* Layout shell */
+    .layout-shell {
+      display: flex;
+      min-height: 100vh;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      flex: 0 0 var(--sidebar-w);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 14px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sidebar-brand {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      padding: 0 8px 12px;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 16px;
-      margin-bottom: 16px;
+      line-height: 1.35;
     }
-    .eyebrow, .section-eyebrow {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
-      color: var(--biz);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .sidebar-brand span {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: 2px;
     }
-    h1 { margin: 6px 0 8px; font-size: 26px; }
-    h2 { margin: 4px 0 0; font-size: 20px; color: #f8fafc; }
-    .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+
     .section-nav {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 16px;
+      flex-direction: column;
+      gap: 2px;
     }
-    .nav-pill {
-      display: inline-flex;
+
+    .nav-link {
+      display: flex;
       align-items: center;
-      gap: 4px;
-      padding: 6px 11px;
-      border-radius: 999px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: #cbd5e1;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
       text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-left: 2px solid transparent;
+      transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out), border-color 180ms var(--ease-out);
     }
-    .nav-pill:hover { border-color: #60a5fa; color: #fff; }
+    .nav-link:hover {
+      background: var(--surface-subtle);
+      color: var(--text);
+    }
+    .nav-link.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+      border-left-color: var(--accent);
+    }
+    .nav-count {
+      font-size: var(--text-sm);
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+    }
+    .nav-link.active .nav-count {
+      color: var(--accent);
+    }
+
+    .main-column {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 28px 36px 72px;
+    }
+
+    /* Mobile top bar (hidden on desktop) */
+    .mobile-nav-bar {
+      display: none;
+    }
+
+    /* Page header */
+    .doc-header {
+      padding-bottom: 18px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      color: var(--text);
+    }
+    .subtitle {
+      margin: 0;
+      max-width: 65ch;
+      font-size: var(--text-body);
+      color: var(--text-secondary);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: var(--text-heading);
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: var(--text-body);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    h4 {
+      margin: 0 0 8px;
+      font-size: var(--text-body);
+      font-weight: 600;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Overview stats strip */
     .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin: 14px 0 16px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 16px;
     }
     .stat-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
       padding: 12px 14px;
     }
-    .stat-label { font-size: 12px; color: var(--muted); }
-    .stat-val { font-size: 23px; font-weight: 800; margin-top: 2px; }
+    .stat-label {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .stat-val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      margin-top: 2px;
+      line-height: 1.2;
+    }
+
     .ok-banner, .warn-banner {
       padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 13px;
-      margin-bottom: 12px;
+      border-radius: 6px;
+      font-size: var(--text-sm);
+      margin-bottom: 10px;
+      border-left: 3px solid transparent;
     }
-    .ok-banner { background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.35); color: #6ee7b7; }
-    .warn-banner { background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.4); color: #fca5a5; }
+    .ok-banner {
+      background: var(--confirmed-bg);
+      border: 1px solid var(--confirmed-border);
+      border-left-color: var(--confirmed);
+      color: #14532d;
+    }
+    .warn-banner {
+      background: var(--disputed-bg);
+      border: 1px solid var(--disputed-border);
+      border-left-color: var(--disputed);
+      color: #7f1d1d;
+    }
+
+    /* Overview attention panels (no nested cards) */
     .dash-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 14px;
-      margin-top: 14px;
-      margin-bottom: 18px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 16px;
     }
     .dash-panel {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
+      border-radius: 8px;
+      padding: 16px;
     }
     .dash-disputed { border-top: 3px solid var(--disputed); }
     .dash-undefined { border-top: 3px solid var(--inferred); }
@@ -759,110 +878,170 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
       justify-content: space-between;
       align-items: baseline;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 6px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
     }
-    .dash-panel-head h3 { margin: 0; font-size: 15px; }
-    .dash-sub { font-size: 11px; color: var(--muted); }
+    .dash-panel-head h3 { margin: 0; }
+    .dash-sub { font-size: var(--text-sm); color: var(--muted); }
+    .dash-count {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      margin-left: 4px;
+    }
+    .dash-count-red { color: var(--disputed); }
+    .dash-count-amber { color: var(--inferred); }
     .dash-list {
       list-style: none;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
     .dash-item {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
     }
+    .dash-item:last-child { border-bottom: none; padding-bottom: 2px; }
     .dash-item-head {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       margin-bottom: 4px;
     }
-    .dash-item-desc { font-size: 12px; color: #cbd5e1; margin-bottom: 4px; }
-    .dash-empty { font-size: 13px; color: var(--muted); padding: 6px 0; }
-    .count-pill { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 6px; }
-    .count-pill-red { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: rgba(248, 113, 113, 0.2); color: #fca5a5; }
-    .count-pill-amber { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: rgba(251, 191, 36, 0.2); color: #fde68a; }
+    .dash-item-desc {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .dash-empty {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      padding: 10px 0 2px;
+    }
+
+    /* Sticky filter & search toolbar */
     .controls {
       position: sticky;
-      top: 8px;
+      top: 0;
       z-index: 20;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
       align-items: center;
-      margin-bottom: 22px;
-      background: rgba(15, 22, 38, 0.95);
+      gap: 10px;
+      margin: 0 -8px 24px;
+      padding: 10px 8px;
+      background: rgba(246, 247, 249, 0.94);
       backdrop-filter: blur(8px);
-      padding: 12px;
-      border-radius: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-segmented {
+      display: inline-flex;
+      flex-wrap: wrap;
+      background: var(--surface);
       border: 1px solid var(--border);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
     }
     .tab-btn {
-      background: var(--surface-2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 12px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      font-weight: 500;
       cursor: pointer;
-      font-weight: 600;
+      transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+    }
+    .tab-btn:hover {
+      background: var(--surface-subtle);
+      color: var(--text);
     }
     .tab-btn.active {
-      background: #1d4ed8;
-      border-color: #60a5fa;
-      color: #fff;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .action-btn {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 160ms var(--ease-out), color 160ms var(--ease-out), background-color 160ms var(--ease-out);
+    }
+    .action-btn:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-subtle);
+      color: var(--text);
     }
     .search-input {
       margin-left: auto;
-      min-width: 210px;
-      flex: 1;
-      max-width: 300px;
-      background: var(--bg);
+      min-width: 220px;
+      flex: 1 1 240px;
+      max-width: 340px;
+      background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 8px 12px;
+      padding: 7px 12px;
       border-radius: 8px;
-      font-size: 13px;
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      transition: border-color 160ms var(--ease-out);
     }
+    .search-input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+      border-color: var(--accent);
+    }
+
+    /* Sections */
     .doc-section {
-      margin-bottom: 34px;
-      scroll-margin-top: 76px;
+      margin-bottom: 40px;
+      scroll-margin-top: 68px;
     }
     .section-head {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
+      align-items: baseline;
       flex-wrap: wrap;
       gap: 10px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-      margin-bottom: 14px;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-strong);
     }
+    .section-count {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    /* Gherkin traceability groups (flat surface + dividers, no nested cards) */
     .trace-group {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       border: 1px solid var(--border);
-      border-radius: 14px;
-      background: rgba(15, 22, 38, 0.72);
+      border-radius: 8px;
+      background: var(--surface);
       overflow: hidden;
     }
     .biz-card {
-      padding: 16px 18px;
-      border-left: 4px solid var(--biz);
-      background: var(--surface);
-      scroll-margin-top: 84px;
+      padding: 16px 20px;
+      border-left: 3px solid var(--biz);
+      scroll-margin-top: 76px;
     }
     .app-accordion {
       border-top: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.35);
+      background: var(--surface-subtle);
     }
     .app-accordion-summary {
       list-style: none;
@@ -871,52 +1050,46 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
-      padding: 10px 18px;
-      font-size: 12.5px;
-      color: var(--muted);
+      padding: 10px 20px;
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
       user-select: none;
-      transition: background 0.15s ease;
+      transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
     }
     .app-accordion-summary::-webkit-details-marker { display: none; }
     .app-accordion-summary:hover {
-      background: rgba(167, 139, 250, 0.08);
+      background: #e8ecf1;
       color: var(--text);
     }
     .app-accordion-title {
-      font-weight: 700;
+      font-weight: 600;
       color: var(--app);
     }
     .app-accordion-meta {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-      color: #cbd5e1;
-      background: rgba(167, 139, 250, 0.12);
-      border: 1px solid rgba(167, 139, 250, 0.3);
-      padding: 2px 8px;
-      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--muted);
     }
     .app-accordion-hint {
       margin-left: auto;
-      font-size: 11px;
+      font-size: var(--text-sm);
       color: var(--muted);
     }
-    .app-accordion-hint::before { content: '▶ 展開する'; }
-    .app-accordion[open] > .app-accordion-summary .app-accordion-hint::before { content: '▼ 折りたたむ'; }
+    .app-accordion-hint::before { content: '展開する'; }
+    .app-accordion[open] > .app-accordion-summary .app-accordion-hint::before { content: '折りたたむ'; }
+
     .app-branch {
-      padding: 12px 18px 16px 28px;
       border-top: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      background: var(--surface);
     }
     .app-card {
-      padding: 14px 16px;
-      border-radius: 10px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--app);
-      scroll-margin-top: 84px;
+      padding: 14px 20px 14px 24px;
+      border-left: 3px solid var(--app);
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 76px;
     }
+    .app-card:last-child { border-bottom: none; }
+
     .card-head {
       display: flex;
       justify-content: space-between;
@@ -925,130 +1098,249 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
       gap: 8px;
       margin-bottom: 8px;
     }
-    .id-group, .ref-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-    .id-pill, .ref-pill, .file-pill, .feature-pill, .cat-pill, .date-pill {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 6px;
-      text-decoration: none;
+    .id-group, .ref-list {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
     }
-    .id-biz { background: rgba(56, 189, 248, 0.16); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); font-weight: 700; }
-    .id-app { background: rgba(167, 139, 250, 0.16); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.4); font-weight: 700; }
-    .id-doc { background: rgba(52, 211, 153, 0.14); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.35); font-weight: 700; display: inline-block; }
-    .id-doc:hover { border-color: #6ee7b7; background: rgba(52, 211, 153, 0.25); }
-    .ref-pill { background: rgba(148, 163, 184, 0.12); color: #cbd5e1; }
-    .ref-link:hover { background: rgba(56, 189, 248, 0.22); color: #fff; }
-    .file-pill { color: var(--muted); background: rgba(15, 23, 42, 0.8); }
-    .feature-pill { color: #93c5fd; font-family: inherit; }
-    .cat-pill { background: rgba(99, 102, 241, 0.16); color: #c7d2fe; font-family: inherit; }
-    .date-pill { background: rgba(148, 163, 184, 0.15); color: #e2e8f0; }
-    .badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 999px;
+
+    /* Plain typographic metadata & semantic IDs */
+    .id-tag, .id-anchor {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      text-decoration: none;
       white-space: nowrap;
     }
-    .badge-confirmed { background: rgba(52, 211, 153, 0.16); color: var(--confirmed); border: 1px solid rgba(52, 211, 153, 0.4); }
-    .badge-confirmed-ai { background: rgba(45, 212, 191, 0.15); color: #5eead4; border: 1px dashed rgba(94, 234, 212, 0.55); }
-    .badge-inferred { background: rgba(251, 191, 36, 0.16); color: var(--inferred); border: 1px solid rgba(251, 191, 36, 0.45); }
-    .badge-implemented { background: rgba(56, 189, 248, 0.16); color: var(--biz); border: 1px solid rgba(56, 189, 248, 0.4); }
-    .badge-disputed { background: rgba(248, 113, 113, 0.16); color: var(--disputed); border: 1px solid rgba(248, 113, 113, 0.4); }
-    .badge-unknown { background: rgba(148, 163, 184, 0.16); color: var(--muted); border: 1px solid rgba(148, 163, 184, 0.35); }
-    .badge-overridden { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); }
-    .decision-addendum-row { background: rgba(56, 189, 248, 0.05); }
-    .decision-addendum-row td:first-child { padding-left: 22px; border-left: 3px solid rgba(56, 189, 248, 0.55); }
-    .addendum-indent { color: #38bdf8; font-weight: 700; margin-right: 4px; }
-    .override-link-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    h3 { margin: 4px 0 10px; font-size: 17px; color: #f8fafc; }
-    h4 { margin: 4px 0 10px; font-size: 15px; color: #f1f5f9; }
-    .steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-    .steps li { font-size: 14px; }
+    .id-biz { color: var(--biz); }
+    .id-app { color: var(--app); }
+    .id-anchor {
+      color: var(--accent);
+    }
+    .id-anchor:hover { text-decoration: underline; }
+    .meta-ref, .meta-file {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--muted);
+    }
+    .meta-feature {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .cat-label {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .date-text {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .ref-link {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--accent);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .ref-link:hover { text-decoration: underline; }
+
+    /* Semantic status indicators */
+    .badge {
+      display: inline-block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+    .badge-confirmed { background: var(--confirmed-bg); color: var(--confirmed); border: 1px solid var(--confirmed-border); }
+    .badge-confirmed-ai { background: var(--confirmed-ai-bg); color: var(--confirmed-ai); border: 1px dashed var(--confirmed-ai-border); }
+    .badge-inferred { background: var(--inferred-bg); color: var(--inferred); border: 1px solid var(--inferred-border); }
+    .badge-implemented { background: var(--accent-soft); color: var(--accent); border: 1px solid #bfdbfe; }
+    .badge-disputed { background: var(--disputed-bg); color: var(--disputed); border: 1px solid var(--disputed-border); }
+    .badge-unknown { background: var(--unknown-bg); color: var(--unknown); border: 1px solid var(--unknown-border); }
+    .badge-overridden { background: var(--inferred-bg); color: var(--inferred); border: 1px solid var(--inferred-border); }
+
+    .undef-label {
+      display: inline-block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--inferred-bg);
+      color: var(--inferred);
+      border: 1px solid var(--inferred-border);
+    }
+
+    /* Gherkin steps */
+    .steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .steps li {
+      font-size: var(--text-body);
+      max-width: 65ch;
+    }
     .kw {
       display: inline-block;
-      min-width: 58px;
-      font-weight: 700;
-      color: #60a5fa;
+      min-width: 56px;
+      font-weight: 600;
+      color: var(--accent);
       margin-right: 6px;
     }
-    .table-wrap { overflow-x: auto; margin: 8px 0 4px 64px; }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      max-width: 100%;
+      margin: 8px 0 4px 0;
+    }
     .doc-table-wrap {
       overflow-x: auto;
+      max-width: 100%;
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 8px;
       background: var(--surface);
     }
     table {
       border-collapse: collapse;
       width: 100%;
-      font-size: 12px;
-      background: var(--bg);
-      border: 1px solid var(--border);
+      font-size: var(--text-sm);
+      font-variant-numeric: tabular-nums;
+      background: var(--surface);
     }
     .doc-table {
-      background: transparent;
-      border: none;
-      font-size: 13px;
+      font-size: var(--text-sm);
+      line-height: 1.55;
     }
     th, td {
-      border: 1px solid var(--border);
-      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
       text-align: left;
       vertical-align: top;
     }
-    .doc-table th { background: rgba(30, 41, 59, 0.9); color: #cbd5e1; white-space: nowrap; }
-    .doc-table tr.spec-row:target, .biz-card:target, .app-card:target {
-      outline: 2px solid #38bdf8;
-      background: rgba(56, 189, 248, 0.1);
+    .doc-table thead th {
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border-strong);
     }
-    .doc-table tr.row-undefined { background: rgba(251, 191, 36, 0.05); }
-    .param-val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 700; color: #7dd3fc; }
-    .sub-code { font-size: 11px; color: var(--muted); margin-top: 3px; }
-    .note-text { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+    .doc-table tbody tr:nth-child(even) {
+      background: #fafbfc;
+    }
+    .doc-table tbody tr:hover {
+      background: #f1f5fb;
+    }
+    .doc-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .doc-table tr.spec-row:target,
+    .biz-card:target,
+    .app-card:target {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+      background: var(--accent-soft);
+    }
+    .doc-table tr.row-undefined {
+      background: var(--inferred-bg);
+    }
+    .decision-addendum-row {
+      background: #f8fafc !important;
+    }
+    .decision-addendum-row td:first-child {
+      padding-left: 22px;
+      border-left: 3px solid var(--accent);
+    }
+    .addendum-indent {
+      color: var(--accent);
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .override-link-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .col-id { white-space: nowrap; }
+    .col-num { font-variant-numeric: tabular-nums; }
+    .col-prose { min-width: 200px; }
+    .col-source { min-width: 170px; }
+
+    .param-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .sub-code {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      margin-top: 3px;
+      word-break: break-word;
+    }
+    .note-text {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
     .muted-text { color: var(--muted); }
     .inline-code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.92em;
-      background: rgba(30, 41, 59, 0.85);
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
       padding: 1px 5px;
       border-radius: 4px;
-      color: #e2e8f0;
+      color: var(--text);
+      word-break: break-word;
     }
-    .source-cell { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 3px; }
+
+    .source-cell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 4px;
+    }
     .source-link {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-      color: #93c5fd;
-      text-decoration: none;
-    }
-    .source-link:hover { text-decoration: underline; }
-    .gh-link {
-      font-size: 10px;
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
       color: var(--muted);
       text-decoration: none;
-      border: 1px solid var(--border);
-      padding: 1px 5px;
-      border-radius: 4px;
+      word-break: break-all;
     }
-    .gh-link:hover { color: #fff; border-color: #60a5fa; }
-    .undef-pill {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 6px;
-      background: rgba(251, 191, 36, 0.18);
-      color: #fde68a;
-      border: 1px solid rgba(251, 191, 36, 0.45);
+    .source-link:hover { color: var(--accent); text-decoration: underline; }
+    .gh-link {
+      font-size: var(--text-sm);
+      color: var(--muted);
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .trans-chain { font-size: 13px; }
-    .mermaid-card {
+    .gh-link:hover { color: var(--accent); text-decoration: underline; }
+
+    .trans-chain { font-size: var(--text-sm); }
+
+    /* Mermaid block */
+    .mermaid-block {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
+      border-radius: 8px;
+      padding: 16px;
       margin-bottom: 16px;
     }
     .mermaid-toolbar {
@@ -1057,49 +1349,65 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
       align-items: center;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
-    .mermaid-status { font-size: 12px; color: var(--muted); }
+    .mermaid-status { font-size: var(--text-sm); color: var(--muted); }
     .mini-btn {
-      background: var(--surface-2);
-      color: var(--text);
+      background: var(--surface);
+      color: var(--text-secondary);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 11px;
+      padding: 5px 10px;
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      font-weight: 500;
       cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+    }
+    .mini-btn:hover {
+      background: var(--surface-subtle);
+      border-color: var(--border-strong);
+      color: var(--text);
     }
     .mermaid-diagram {
       overflow-x: auto;
-      padding: 10px;
-      border-radius: 8px;
-      background: rgba(7, 11, 20, 0.7);
+      max-width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
       text-align: center;
+    }
+    .mermaid-diagram svg {
+      max-width: 100%;
+      height: auto;
     }
     .mermaid-source {
       margin: 0;
-      padding: 12px;
-      border-radius: 8px;
+      padding: 14px;
+      border-radius: 6px;
       background: var(--bg);
       border: 1px solid var(--border);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
+      font-size: var(--text-sm);
       overflow-x: auto;
-      color: #cbd5e1;
+      max-width: 100%;
+      color: var(--text-secondary);
       white-space: pre;
     }
+
     .bg-box {
       margin: 8px 0 12px;
-      padding: 10px 12px;
-      border-radius: 9px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px dashed rgba(148, 163, 184, 0.4);
-      font-size: 12px;
-      color: #cbd5e1;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: var(--surface-subtle);
+      border-left: 3px solid var(--border-strong);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
     }
     .bg-title {
-      font-weight: 700;
-      color: #93c5fd;
+      font-weight: 600;
+      color: var(--text);
       margin-bottom: 4px;
     }
     .bg-steps {
@@ -1109,141 +1417,185 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
       flex-direction: column;
       gap: 3px;
     }
-    .empty-link { color: #fca5a5; font-size: 13px; padding: 8px; }
-    .section-empty { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; }
-    .empty-goal { font-size: 11px; font-style: italic; }
-    .formula-expr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #cbd5e1; word-break: break-word; }
+
+    .empty-link { color: var(--disputed); font-size: var(--text-sm); padding: 12px 20px; }
+    .section-empty { padding: 16px; font-size: var(--text-sm); color: var(--muted); text-align: center; }
+    .empty-goal { font-style: italic; }
+    .formula-expr {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--text);
+      word-break: break-word;
+    }
     .nongoal-banner {
       padding: 12px 16px;
-      border-radius: 10px;
-      background: rgba(248, 113, 113, 0.12);
-      border: 1px solid rgba(248, 113, 113, 0.45);
-      color: #fecaca;
-      font-size: 13px;
+      border-radius: 6px;
+      background: var(--disputed-bg);
+      border: 1px solid var(--disputed-border);
+      border-left: 3px solid var(--disputed);
+      color: #7f1d1d;
+      font-size: var(--text-sm);
       margin-bottom: 14px;
     }
+
+    /* Formula charts */
     .formula-charts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
       margin-bottom: 18px;
     }
     .formula-chart-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
+      border-radius: 8px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      min-width: 0;
     }
     .formula-chart-head {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 8px;
+      gap: 10px;
     }
-    .formula-chart-head h3 { margin: 0 0 4px; font-size: 14px; }
-    .formula-chart-status { font-size: 11px; }
+    .formula-chart-meta { min-width: 0; flex: 1; }
+    .formula-chart-refs { margin-top: 6px; }
+    .formula-chart-status { font-size: var(--text-sm); }
     .formula-chart-canvas {
-      background: rgba(7, 11, 20, 0.72);
+      background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px;
+      border-radius: 6px;
+      padding: 10px;
       overflow-x: auto;
+      max-width: 100%;
     }
     .formula-chart-legend {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      font-size: 11px;
-      color: #cbd5e1;
-      margin-bottom: 4px;
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin-bottom: 6px;
     }
     .legend-dot {
       display: inline-block;
       width: 9px;
       height: 9px;
       border-radius: 50%;
-      margin-right: 4px;
+      margin-right: 5px;
+      vertical-align: middle;
     }
-    .formula-fallback-wrap { overflow-x: auto; }
-    .formula-fallback-table { font-size: 11px; }
-    .formula-fallback-table th, .formula-fallback-table td { padding: 4px 7px; text-align: right; }
-    .formula-fallback-table th:first-child, .formula-fallback-table td:first-child { text-align: left; }
+    .formula-fallback-wrap {
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    .formula-fallback-table th,
+    .formula-fallback-table td {
+      padding: 6px 8px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .formula-fallback-table th:first-child,
+    .formula-fallback-table td:first-child {
+      text-align: left;
+    }
+
     .hidden { display: none !important; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <div class="eyebrow">BDD / Living Specification Hub</div>
-      <h1>${escapeHtml(title)}</h1>
-      <p class="subtitle">
-        ビジネス仕様（@BIZ-*）・アプリ仕様（@APP-*）の自動紐付けと、用語集・パラメータ表・計算式シート・状態遷移図・不変条件・未決事項・やらないこと・決定ログを横断確認できるレビュー用HTMLです。
-        状態フィルタで <strong>Inferred / Disputed / Unknown</strong> など要確認項目だけを全セクションから絞り込めます。
-      </p>
-    </header>
 
-    ${navBarHtml}
+    /* Responsive: tablet & mobile */
+    @media (max-width: 1024px) {
+      .layout-shell { display: block; }
+      .sidebar { display: none; }
+      .mobile-nav-bar {
+        display: block;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 12px;
+      }
+      .mobile-nav-scroll {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .mobile-nav-scroll::-webkit-scrollbar { display: none; }
+      .mobile-nav-scroll .nav-link {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 6px 6px 0 0;
+        padding: 6px 10px;
+      }
+      .mobile-nav-scroll .nav-link.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--accent);
+      }
+      .main-column {
+        padding: 20px 16px 56px;
+      }
+      .controls {
+        top: 49px;
+        margin: 0 -16px 20px;
+        padding: 10px 16px;
+      }
+      .doc-section {
+        scroll-margin-top: 112px;
+      }
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .dash-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
-    <section id="sec-overview" class="doc-section">
-      <div class="section-head">
-        <div>
-          <div class="section-eyebrow">OVERVIEW DASHBOARD / 概要</div>
-          <h2>📊 概要ダッシュボード</h2>
-        </div>
-      </div>
+    @media (max-width: 640px) {
+      h1 { font-size: 1.4rem; }
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .formula-charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .biz-card { padding: 14px; }
+      .app-accordion-summary { padding: 10px 14px; }
+      .app-card { padding: 12px 14px 12px 16px; }
+      .search-input {
+        margin-left: 0;
+        max-width: none;
+        width: 100%;
+      }
+      .filter-segmented {
+        width: 100%;
+      }
+      .tab-btn {
+        flex: 1 1 auto;
+        text-align: center;
+        padding: 6px 8px;
+      }
+    }
 
-      <div class="stats">
-        <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">${stats.bizCount}</div></div>
-        <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">${stats.appCount}</div></div>
-        <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">${statusTotals.Confirmed}</div></div>
-        <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">${statusTotals.Inferred}</div></div>
-        <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">${statusTotals.Disputed}</div></div>
-        <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">${statusTotals.Unknown}</div></div>
-      </div>
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  `;
+}
 
-      ${orphanBanner}
-      ${extRefBanner}
-
-      ${hasExtended ? `<div class="dash-grid">${disputedDashboardHtml}${undefinedTransitionsHtml}</div>` : ''}
-    </section>
-
-    <div class="controls">
-      <button class="tab-btn active" data-filter="all">🔗 すべて表示</button>
-      <button class="tab-btn" data-filter="inferred">⚠️ Inferred（要確認）のみ</button>
-      <button class="tab-btn" data-filter="confirmed">✅ Confirmed のみ</button>
-      <button class="tab-btn" data-filter="disputed">🚨 Disputed のみ</button>
-      <button class="tab-btn" data-filter="unknown">❔ Unknown のみ</button>
-      <input type="search" class="search-input" id="searchBox" placeholder="ID・キーワードで全セクション検索（例: 泉, PRM-06, FML-01, OQ-01, NG-01）" />
-    </div>
-
-    <section id="sec-gherkin" class="doc-section" data-section-name="gherkin">
-      <div class="section-head">
-        <div>
-          <div class="section-eyebrow">BUSINESS &amp; APP GHERKIN / ビジネス仕様（既存）</div>
-          <h2>🔗 ビジネス仕様・アプリ仕様トレーサビリティ <span class="count-pill" data-section-count="gherkin">(${stats.bizCount}件)</span></h2>
-        </div>
-        <button type="button" class="tab-btn" id="toggleAllAppsBtn">⚙️ アプリ仕様をすべて開く</button>
-      </div>
-      <main id="specList">
-        ${traceCards}
-      </main>
-      <div class="section-empty hidden" data-empty-for="gherkin">該当するシナリオはありません。</div>
-    </section>
-
-    ${renderGlossarySection(extendedSpecs?.glossary)}
-    ${renderParametersSection(extendedSpecs?.parameters)}
-    ${renderFormulasSection(extendedSpecs?.formulas, extendedSpecs?.parameters)}
-    ${renderStateTransitionsSection(extendedSpecs?.stateTransitions)}
-    ${renderInvariantsSection(extendedSpecs?.invariants)}
-    ${renderOpenQuestionsSection(extendedSpecs?.openQuestions)}
-    ${renderNonGoalsSection(extendedSpecs?.nonGoals)}
-    ${renderDecisionsSection(extendedSpecs?.decisions)}
-  </div>
-
-  <script>
+function renderClientScript() {
+  return `
     const buttons = document.querySelectorAll('.tab-btn');
     const searchBox = document.getElementById('searchBox');
     const groups = document.querySelectorAll('.trace-group');
@@ -1259,7 +1611,6 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
     function applyFilters() {
       const q = searchBox.value.trim().toLowerCase();
 
-      // 1. Existing Gherkin traceability groups (preserve exact behavior for all/inferred/confirmed + support disputed/unknown)
       let visibleGherkin = 0;
       for (const group of groups) {
         const text = (group.textContent || '').toLowerCase();
@@ -1302,7 +1653,6 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
         gherkinEmpty.classList.toggle('hidden', visibleGherkin > 0);
       }
 
-      // 2. Extended documentation sections (glossary, parameters, formulas, transitions, invariants, open-questions, non-goals, decisions)
       const sectionCounts = new Map();
       const sectionTotals = new Map();
       for (const row of specRows) {
@@ -1326,7 +1676,6 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
         if (emptyEl) emptyEl.classList.toggle('hidden', vis > 0);
       }
 
-      // 3. Overview dashboard Disputed & Undefined lists
       for (const item of dashItems) {
         const text = (item.textContent || '').toLowerCase();
         const matchesSearch = !q || text.includes(q);
@@ -1337,8 +1686,12 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
 
     buttons.forEach((btn) => {
       btn.addEventListener('click', () => {
-        buttons.forEach((b) => b.classList.remove('active'));
+        buttons.forEach((b) => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
         btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
         activeFilter = btn.dataset.filter;
         applyFilters();
       });
@@ -1363,8 +1716,8 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
         allAppsExpanded = !allAppsExpanded;
         appAccordions.forEach((acc) => { acc.open = allAppsExpanded; });
         toggleAllAppsBtn.textContent = allAppsExpanded
-          ? '⚙️ アプリ仕様をすべて折りたたむ'
-          : '⚙️ アプリ仕様をすべて開く';
+          ? 'アプリ仕様をすべて折りたたむ'
+          : 'アプリ仕様をすべて開く';
       });
     }
 
@@ -1381,6 +1734,50 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
     }
     window.addEventListener('hashchange', openAccordionForHash);
     openAccordionForHash();
+
+    // ScrollSpy: highlight current section in sidebar & mobile nav
+    (function initScrollSpy() {
+      const sections = Array.from(document.querySelectorAll('section.doc-section[id]'));
+      const navLinks = Array.from(document.querySelectorAll('.nav-link[data-nav-target]'));
+      if (sections.length === 0 || navLinks.length === 0) return;
+
+      function setActive(id) {
+        navLinks.forEach((link) => {
+          const isMatch = link.dataset.navTarget === id;
+          link.classList.toggle('active', isMatch);
+          if (isMatch) {
+            link.setAttribute('aria-current', 'location');
+          } else {
+            link.removeAttribute('aria-current');
+          }
+        });
+      }
+
+      setActive(sections[0].id);
+
+      if ('IntersectionObserver' in window) {
+        const visibleIds = new Set();
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                visibleIds.add(entry.target.id);
+              } else {
+                visibleIds.delete(entry.target.id);
+              }
+            });
+            for (const sec of sections) {
+              if (visibleIds.has(sec.id)) {
+                setActive(sec.id);
+                break;
+              }
+            }
+          },
+          { rootMargin: '-15% 0px -70% 0px', threshold: 0 },
+        );
+        sections.forEach((sec) => observer.observe(sec));
+      }
+    })();
 
     // Formula charts inside #sec-formulas only, with fallback to expression + numeric table
     (function initFormulaChartsWithFallback() {
@@ -1409,7 +1806,6 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
         svg.setAttribute('width', '100%');
         svg.setAttribute('style', 'max-height:200px;display:block;');
 
-        // Grid lines
         for (let g = 0; g <= 4; g++) {
           const gy = padT + (plotH * g) / 4;
           const line = document.createElementNS(svgNs, 'line');
@@ -1417,13 +1813,11 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
           line.setAttribute('x2', String(W - padR));
           line.setAttribute('y1', gy.toFixed(1));
           line.setAttribute('y2', gy.toFixed(1));
-          line.setAttribute('stroke', 'rgba(148,163,184,0.18)');
+          line.setAttribute('stroke', '#dde2e8');
           line.setAttribute('stroke-width', '1');
           svg.appendChild(line);
         }
 
-        // Normalize each series independently to 0..100% height when units differ,
-        // or shared scale when all series share the same unit.
         const units = new Set(series.map((s) => s.unit || ''));
         const sharedMax = units.size === 1
           ? Math.max(1, ...series.flatMap((s) => rows.map((r) => Number(r[s.key]) || 0)))
@@ -1460,26 +1854,25 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
 
           if (sIdx === 0) {
             const maxLabel = document.createElementNS(svgNs, 'text');
-            maxLabel.setAttribute('x', String(padL - 4));
+            maxLabel.setAttribute('x', String(padL - 6));
             maxLabel.setAttribute('y', String(padT + 8));
             maxLabel.setAttribute('text-anchor', 'end');
-            maxLabel.setAttribute('fill', '#94a3b8');
-            maxLabel.setAttribute('font-size', '9');
+            maxLabel.setAttribute('fill', '#59636e');
+            maxLabel.setAttribute('font-size', '10');
             maxLabel.textContent = String(maxV);
             svg.appendChild(maxLabel);
 
             const zeroLabel = document.createElementNS(svgNs, 'text');
-            zeroLabel.setAttribute('x', String(padL - 4));
+            zeroLabel.setAttribute('x', String(padL - 6));
             zeroLabel.setAttribute('y', String(padT + plotH));
             zeroLabel.setAttribute('text-anchor', 'end');
-            zeroLabel.setAttribute('fill', '#94a3b8');
-            zeroLabel.setAttribute('font-size', '9');
+            zeroLabel.setAttribute('fill', '#59636e');
+            zeroLabel.setAttribute('font-size', '10');
             zeroLabel.textContent = '0';
             svg.appendChild(zeroLabel);
           }
         });
 
-        // X-axis labels (first, middle, last)
         const labelIdxs = [0, Math.floor((rows.length - 1) / 2), rows.length - 1];
         for (const idx of new Set(labelIdxs)) {
           const lx = padL + (plotW * idx) / (rows.length - 1);
@@ -1487,8 +1880,8 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
           tx.setAttribute('x', lx.toFixed(1));
           tx.setAttribute('y', String(H - 8));
           tx.setAttribute('text-anchor', 'middle');
-          tx.setAttribute('fill', '#94a3b8');
-          tx.setAttribute('font-size', '9');
+          tx.setAttribute('fill', '#59636e');
+          tx.setAttribute('font-size', '10');
           tx.textContent = chart.xLabel + ' ' + rows[idx][chart.xLabel];
           svg.appendChild(tx);
         }
@@ -1523,14 +1916,14 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
             canvasEl.appendChild(chartNode);
             canvasEl.classList.remove('hidden');
             if (fallbackEl) fallbackEl.classList.add('hidden');
-            if (statusEl) statusEl.textContent = '✅ 計算式グラフを描画済み（パラメータ表と連動）';
+            if (statusEl) statusEl.textContent = '計算式グラフを描画済み（パラメータ表と連動）';
             chartRendered = true;
           }
         } catch (err) {
           if (canvasEl) canvasEl.classList.add('hidden');
           if (fallbackEl) fallbackEl.classList.remove('hidden');
           if (statusEl) {
-            statusEl.textContent = '⚠️ グラフ描画に失敗したため式と数表を表示しています（フォールバック）';
+            statusEl.textContent = 'グラフ描画に失敗したため式と数表を表示しています（フォールバック）';
           }
         }
 
@@ -1540,7 +1933,8 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
               fallbackEl.classList.remove('hidden');
               return;
             }
-            fallbackEl.classList.toggle('hidden');
+            const isHidden = fallbackEl.classList.toggle('hidden');
+            toggleBtn.textContent = isHidden ? '数表を表示' : '数表を隠す';
           });
         }
       });
@@ -1581,7 +1975,7 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
         const mermaid = mod.default || mod;
         mermaid.initialize({
           startOnLoad: false,
-          theme: 'dark',
+          theme: 'neutral',
           securityLevel: 'strict',
         });
         const result = await mermaid.render('dungeonSurvivorStateSvg', rawSource);
@@ -1593,19 +1987,161 @@ export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビュ�
         sourceEl.classList.add('hidden');
         renderedOk = true;
         if (statusEl) {
-          statusEl.textContent = '✅ Mermaid 状態遷移図を描画済み';
+          statusEl.textContent = 'Mermaid 状態遷移図を描画済み';
         }
       } catch (err) {
-        // Fallback: keep raw Mermaid source visible cleanly
         diagramEl.classList.add('hidden');
         sourceEl.classList.remove('hidden');
         if (statusEl) {
-          statusEl.textContent =
-            '⚠️ Mermaid 描画に失敗したためソースをそのまま表示しています（フォールバック）';
+          statusEl.textContent = 'Mermaid 描画に失敗したためソースを表示しています（フォールバック）';
         }
       }
     })();
-  </script>
+  `;
+}
+
+export function renderHtml(graph, title = 'Dungeon Survivor — 仕様書ビューア', extendedSpecs = null) {
+  const { stats, bizScenarios, unlinkedBiz, orphanApps } = graph;
+  const extValidation = extendedSpecs ? validateExtendedSpecs(graph, extendedSpecs) : null;
+  const hasExtended = Boolean(
+    extendedSpecs &&
+      (extendedSpecs.glossary ||
+        extendedSpecs.parameters ||
+        extendedSpecs.formulas ||
+        extendedSpecs.stateTransitions ||
+        extendedSpecs.invariants ||
+        extendedSpecs.openQuestions ||
+        extendedSpecs.nonGoals ||
+        extendedSpecs.decisions),
+  );
+
+  const traceCards = renderTraceCards(bizScenarios);
+
+  const orphanBanner =
+    unlinkedBiz.length > 0 || orphanApps.length > 0
+      ? `<div class="warn-banner">
+          <strong>トレーサビリティ不整合検知:</strong>
+          ${unlinkedBiz.length ? `未紐付けBIZ: ${escapeHtml(unlinkedBiz.join(', '))} ` : ''}
+          ${orphanApps.length ? `孤立APP: ${escapeHtml(orphanApps.map((o) => `${o.appId}(${o.reason})`).join(', '))}` : ''}
+        </div>`
+      : `<div class="ok-banner">トレーサビリティチェック OK：全 ${stats.bizCount} 件のビジネス仕様と ${stats.appCount} 件のアプリ仕様が ID 紐付けされています</div>`;
+
+  const extRefBanner = extValidation
+    ? extValidation.brokenDocRefs.length > 0
+      ? `<div class="warn-banner">
+          <strong>拡張仕様ID参照リンク切れ検知 (${extValidation.brokenDocRefs.length}件):</strong>
+          ${escapeHtml(
+            extValidation.brokenDocRefs.map((b) => `${b.sourceId}(${b.sourceFile}) -> ${b.missingRef}`).join(', '),
+          )}
+        </div>`
+      : `<div class="ok-banner">拡張ドキュメントID参照チェック OK：全 ${extValidation.allDocItemsCount} 件の関連IDにリンク切れはありません</div>`
+    : '';
+
+  const disputedTerms = extValidation ? extValidation.disputedTerms : [];
+  const undefinedTransitions = extValidation ? extValidation.undefinedTransitions : [];
+  const statusTotals = extValidation
+    ? extValidation.statusTotals
+    : {
+        Confirmed: stats.confirmedCount,
+        Inferred: stats.inferredCount,
+        Disputed: 0,
+        Unknown: 0,
+      };
+
+  const navItemsHtml = renderNavItems(stats, extendedSpecs);
+
+  return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(title)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>${renderStyles()}</style>
+</head>
+<body>
+  <nav class="mobile-nav-bar" aria-label="仕様セクション移動">
+    <div class="mobile-nav-scroll">
+      ${navItemsHtml}
+    </div>
+  </nav>
+
+  <div class="layout-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        Dungeon Survivor
+        <span>仕様書ビューア</span>
+      </div>
+      <nav class="section-nav" aria-label="仕様セクション目次">
+        ${navItemsHtml}
+      </nav>
+    </aside>
+
+    <div class="main-column">
+      <header class="doc-header">
+        <h1>${escapeHtml(title)}</h1>
+        <p class="subtitle">
+          ビジネス仕様（@BIZ-*）・アプリ仕様（@APP-*）の自動紐付けと、用語集・パラメータ表・計算式・状態遷移図・不変条件・未決事項・やらないこと・決定ログを横断確認できるレビュー用ドキュメントです。
+        </p>
+      </header>
+
+      <section id="sec-overview" class="doc-section">
+        <div class="section-head">
+          <h2>概要</h2>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card"><div class="stat-label">ビジネス仕様 (@BIZ)</div><div class="stat-val" style="color:var(--biz)">${stats.bizCount}</div></div>
+          <div class="stat-card"><div class="stat-label">アプリ仕様 (@APP)</div><div class="stat-val" style="color:var(--app)">${stats.appCount}</div></div>
+          <div class="stat-card"><div class="stat-label">確定済み (Confirmed)</div><div class="stat-val" style="color:var(--confirmed)">${statusTotals.Confirmed}</div></div>
+          <div class="stat-card"><div class="stat-label">AI仮提案 (Inferred)</div><div class="stat-val" style="color:var(--inferred)">${statusTotals.Inferred}</div></div>
+          <div class="stat-card"><div class="stat-label">要調整 (Disputed)</div><div class="stat-val" style="color:var(--disputed)">${statusTotals.Disputed}</div></div>
+          <div class="stat-card"><div class="stat-label">未確定 (Unknown)</div><div class="stat-val" style="color:var(--muted)">${statusTotals.Unknown}</div></div>
+        </div>
+
+        ${orphanBanner}
+        ${extRefBanner}
+
+        ${hasExtended ? renderOverviewPanels(disputedTerms, undefinedTransitions) : ''}
+      </section>
+
+      <div class="controls">
+        <div class="filter-segmented" role="group" aria-label="状態フィルタ">
+          <button type="button" class="tab-btn active" data-filter="all" aria-pressed="true">すべて表示</button>
+          <button type="button" class="tab-btn" data-filter="inferred" aria-pressed="false">Inferred</button>
+          <button type="button" class="tab-btn" data-filter="confirmed" aria-pressed="false">Confirmed</button>
+          <button type="button" class="tab-btn" data-filter="disputed" aria-pressed="false">Disputed</button>
+          <button type="button" class="tab-btn" data-filter="unknown" aria-pressed="false">Unknown</button>
+        </div>
+        <input type="search" class="search-input" id="searchBox" placeholder="ID・キーワードで全セクション検索（例: 泉, PRM-06, FML-01）" />
+      </div>
+
+      <section id="sec-gherkin" class="doc-section" data-section-name="gherkin">
+        <div class="section-head">
+          <h2>ビジネス仕様・アプリ仕様トレーサビリティ <span class="section-count" data-section-count="gherkin">(${stats.bizCount}件)</span></h2>
+          <button type="button" class="action-btn" id="toggleAllAppsBtn">アプリ仕様をすべて開く</button>
+        </div>
+        <main id="specList">
+          ${traceCards}
+        </main>
+        <div class="section-empty hidden" data-empty-for="gherkin">該当するシナリオはありません。</div>
+      </section>
+
+      ${renderGlossarySection(extendedSpecs?.glossary)}
+      ${renderParametersSection(extendedSpecs?.parameters)}
+      ${renderFormulasSection(extendedSpecs?.formulas, extendedSpecs?.parameters)}
+      ${renderStateTransitionsSection(extendedSpecs?.stateTransitions)}
+      ${renderInvariantsSection(extendedSpecs?.invariants)}
+      ${renderOpenQuestionsSection(extendedSpecs?.openQuestions)}
+      ${renderNonGoalsSection(extendedSpecs?.nonGoals)}
+      ${renderDecisionsSection(extendedSpecs?.decisions)}
+    </div>
+  </div>
+
+  <script>${renderClientScript()}</script>
 </body>
-</html>`;
+</html>
+`;
 }
