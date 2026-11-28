@@ -743,17 +743,21 @@ describe('Enemy AI, spawning, and boss simulation', () => {
     stepGame(g3State, { x: 0, y: 0 }, 0.02);
     expect(g3State.mortarZones).toHaveLength(2);
 
-    // 4. Respawn maxAlive cap is capped at 72 even on deep floors
+    // 4. Respawn maxAlive cap is capped at 52 on 11F+
     const deepState = createGameState({ seed: 9205, startFloor: 15 });
+    deepState.player.invulnTimer = 99;
+    deepState.player.baseAttackCooldown = 999;
     deepState.respawnTimer = 0.01;
     const templateEnemy = mustAt(deepState.enemies, 0);
-    deepState.enemies = deepState.enemies.slice(0, 72);
-    while (deepState.enemies.length < 72) {
+    deepState.enemies = deepState.enemies.slice(0, 51);
+    while (deepState.enemies.length < 51) {
       deepState.enemies.push({ ...templateEnemy, id: deepState.nextEntityId++ });
     }
-    const beforeRespawnCount = deepState.enemies.length;
-    expect(beforeRespawnCount).toBe(72);
+    expect(deepState.enemies.length).toBe(51);
     stepGame(deepState, { x: 0, y: 0 }, 0.02);
-    expect(deepState.enemies.length).toBe(72);
+    expect(deepState.enemies.length).toBe(52);
+    deepState.respawnTimer = 0.01;
+    stepGame(deepState, { x: 0, y: 0 }, 0.02);
+    expect(deepState.enemies.length).toBe(52);
   });
 });
