@@ -370,9 +370,9 @@ stateDiagram-v2
     assert.equal(coreChart.rows[1].shotCount, 3);
     assert.equal(coreChart.rows[5].damage, 51);
     assert.equal(coreChart.rows[5].shotCount, 5);
-    assert.equal(coreChart.rows[5].cooldown, 0.319);
+    assert.equal(coreChart.rows[5].cooldown, 0.394);
     assert.equal(coreChart.rows[5].range, 290);
-    assert.equal(coreChart.rows[5].dps, 799.4);
+    assert.equal(coreChart.rows[5].dps, 647.2);
     assert.equal(skillChart.rows[2].tier3CumSp, 5);
     assert.equal(skillChart.rows[3].tier3Cost, null);
     assert.equal(skillChart.rows[4].tier1Cost, 2);
@@ -380,7 +380,7 @@ stateDiagram-v2
     assert.equal(skillChart.rows[5].tier2CumSp, 8);
     assert.match(skillChart.formulaExpr, /Lv1-3:1\/Lv4-5:2\(計7SP\)/);
     assert.equal(skillChart.rows[5].armBasePct, 170);
-    assert.equal(skillChart.rows[5].armOverclockPct, 45);
+    assert.equal(skillChart.rows[5].armOverclockPct, 32);
 
     const formulasStart = html.indexOf('<section id="sec-formulas"');
     const transitionsStart = html.indexOf('<section id="sec-state-transitions"');
@@ -695,7 +695,7 @@ stateDiagram-v2
 
   it('validates all actual project symbol code references (src/...#symbol) with zero broken links', () => {
     const result = validateSymbolRefs(projectRoot);
-    assert.equal(result.checkedCount, 85);
+    assert.equal(result.checkedCount, 89);
     assert.deepEqual(result.brokenSymbolRefs, []);
   });
 
