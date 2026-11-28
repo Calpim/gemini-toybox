@@ -29,7 +29,9 @@ const perFile = {};
 for (const d of report.diagnostics ?? []) {
   if (d.category !== 'lint/complexity/noExcessiveCognitiveComplexity') continue;
   const score = Number(d.message.match(/complexity of (\d+)/)?.[1] ?? 0);
-  const file = String(d.location?.path ?? '').replace(/\\/g, '/');
+  // biome の JSON 診断では location.path が { file } 形式の場合があるため両対応にする
+  const rawPath = d.location?.path;
+  const file = String(typeof rawPath === 'string' ? rawPath : (rawPath?.file ?? '')).replace(/\\/g, '/');
   perFile[file] ??= { max: 0, count: 0 };
   perFile[file].max = Math.max(perFile[file].max, score);
   perFile[file].count++;

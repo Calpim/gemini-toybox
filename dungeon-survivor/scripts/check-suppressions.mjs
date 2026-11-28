@@ -8,7 +8,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SCAN_DIRS = ['src', 'scripts'];
 const SELF = 'scripts/check-suppressions.mjs';
 const ALLOWLIST = [
-  // 既存の唯一の抑制（2026-11-28 main実測）。複雑度ルールの抑制は許可しない。
+  // 既存の唯一の抑制（2026-11-28 main実測）。noExcessiveCognitiveComplexity の抑制は許可しない。
   { file: 'src/styles/theme.css', rule: 'noImportantStyles' },
 ];
 const MARKER = ['biome', 'ignore'].join('-');
